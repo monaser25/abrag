@@ -96,4 +96,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectDate => 'Select Date';
+
+  @override
+  String get expenses => 'Expenses';
+
+  @override
+  String get addExpense => 'Add Expense';
+
+  @override
+  String get expenseType => 'Expense Type';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get meterReadings => 'Meter Readings';
+
+  @override
+  String get buildingRent => 'Building Rent';
+
+  @override
+  String get maintenance => 'Maintenance';
+
+  @override
+  String get sharedExpense => 'Shared Expense';
+
+  @override
+  String get individualExpense => 'Individual Expense';
+
+  @override
+  String get previousReading => 'Previous Reading';
+
+  @override
+  String get currentReading => 'Current Reading';
 }

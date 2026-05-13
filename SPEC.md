@@ -133,10 +133,19 @@ mode: memory
 | Auth | ✅ done | flutter-auto | Implemented Login screen, Supabase integration, GoRouter redirects |
 | Localization | ✅ done | flutter-auto | Added English support (i18n) via flutter_localizations |
 | Database Sync & Drift Setup | ✅ done | flutter-auto | Established SQLite local architecture mapped to Supabase models |
-| Core Features | ✅ done | flutter-auto | Implemented Bookings & Contracts UI, UX Reviews |
+| Core Features | ✅ done | flutter-auto | Implemented Bookings & Contracts UI, Financials & Operations Domain, Reports & PDF Domain, Role-Specific Web Views & Permissions Domain |
 | Form Validation | ✅ done | flutter-auto | Implemented Business Logic Forms with Offline Insert |
 | Quality Gates | ✅ done | flutter-testing | Wrote Unit and Widget Tests, all passing |
 | Testing | ✅ done | flutter-testing | Completed |
 | Play Store Prep | ✅ done | flutter-release | Configured Android permissions. Awaiting final assets and signing. |
 
 ---
+
+## Remaining Phases (45 Screens Target)
+
+| Phase | Status | Agent | Notes |
+|---|---|---|---|
+| Phase 1: Structural Screens | ✅ done | flutter-auto | Splash, Forgot Password, Onboarding, Global Search |
+| Phase 2: Booking Details & Lifecycle | ✅ done | flutter-auto | Booking Details + Checkout, Early Checkout + Refund, Overstay/Extension, Guest Profile |
+| Phase 3: Apartment & Building Lifecycle | ✅ done | flutter-auto | Apartment Management, Apartment Profile |
+| Phase 4: Administrative Settings | ✅ done | flutter-auto | Pricing Management, Notifications, Season Transition, Users & Permissions, Admin Profile, Settings |

@@ -8,6 +8,9 @@ import 'core/config/locale_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/config/shared_prefs_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -18,9 +21,14 @@ void main() async {
     anonKey: Env.supabaseAnonKey,
   );
 
+  final sharedPrefs = await SharedPreferences.getInstance();
+
   runApp(
-    const ProviderScope(
-      child: AbragApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(sharedPrefs),
+      ],
+      child: const AbragApp(),
     ),
   );
 }

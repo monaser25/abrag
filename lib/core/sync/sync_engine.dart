@@ -44,6 +44,23 @@ class SyncEngine {
 
   Future<void> _pullRemoteChanges() async {
     try {
+      // Sync UserProfiles
+      final userProfilesData = await supabase.from('user_profiles').select();
+      for (final row in userProfilesData) {
+        await db.into(db.userProfiles).insertOnConflictUpdate(
+              UserProfilesCompanion(
+                id: Value(row['id']),
+                email: Value(row['email']),
+                fullName: Value(row['full_name'] as String?),
+                phoneNumber: Value(row['phone_number'] as String?),
+                role: Value(row['role']),
+                createdAt: Value(DateTime.parse(row['created_at'])),
+                updatedAt: Value(DateTime.parse(row['updated_at'])),
+                syncStatus: const Value(SyncStatus.synced),
+              ),
+            );
+      }
+
       // Sync Buildings
       final buildingsData = await supabase.from('buildings').select();
       for (final row in buildingsData) {

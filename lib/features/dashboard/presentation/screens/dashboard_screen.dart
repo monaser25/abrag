@@ -27,10 +27,6 @@ class DashboardScreen extends ConsumerWidget {
               ),
             );
           },
-          data: (_) {
-            // Only show success if it wasn't a loading state before
-            // Or use a more sophisticated approach
-          },
         );
       },
     );
@@ -39,6 +35,18 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.dashboardTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              context.go('/search');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              context.go('/settings');
+            },
+          ),
           IconButton(
             icon: syncState.isLoading
                 ? const SizedBox(
@@ -105,14 +113,51 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 24),
+            
+            Text('العمليات والمالية', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.money_off, color: Color(0xFFF4A225)),
+                title: Text(l10n.expenses),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/expenses'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.electric_meter, color: Color(0xFFF4A225)),
+                title: Text(l10n.meterReadings),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/meter_readings'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.home_work, color: Color(0xFFF4A225)),
+                title: Text(l10n.buildingRent),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/building_rent'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.build, color: Color(0xFFF4A225)),
+                title: Text(l10n.maintenance),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/maintenance'),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            Text('الحجوزات والعقود', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.calendar_month, color: Color(0xFFF4A225)),
                 title: Text(l10n.summerBookings),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  context.go('/summer_bookings');
-                },
+                onTap: () => context.go('/summer_bookings'),
               ),
             ),
             Card(
@@ -120,9 +165,19 @@ class DashboardScreen extends ConsumerWidget {
                 leading: const Icon(Icons.school, color: Color(0xFFF4A225)),
                 title: Text(l10n.winterContracts),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  context.go('/winter_contracts');
-                },
+                onTap: () => context.go('/winter_contracts'),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            Text('التقارير المالية', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.analytics, color: Color(0xFFF4A225)),
+                title: const Text('التقارير الإجمالية'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/reports'),
               ),
             ),
           ],

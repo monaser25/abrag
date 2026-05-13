@@ -271,6 +271,78 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'اختر التاريخ'**
   String get selectDate;
+
+  /// No description provided for @expenses.
+  ///
+  /// In ar, this message translates to:
+  /// **'المصروفات'**
+  String get expenses;
+
+  /// No description provided for @addExpense.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة مصروف'**
+  String get addExpense;
+
+  /// No description provided for @expenseType.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع المصروف'**
+  String get expenseType;
+
+  /// No description provided for @amount.
+  ///
+  /// In ar, this message translates to:
+  /// **'المبلغ'**
+  String get amount;
+
+  /// No description provided for @description.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوصف'**
+  String get description;
+
+  /// No description provided for @meterReadings.
+  ///
+  /// In ar, this message translates to:
+  /// **'قراءات العدادات'**
+  String get meterReadings;
+
+  /// No description provided for @buildingRent.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيجار المبنى'**
+  String get buildingRent;
+
+  /// No description provided for @maintenance.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصيانة'**
+  String get maintenance;
+
+  /// No description provided for @sharedExpense.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصروف مشترك'**
+  String get sharedExpense;
+
+  /// No description provided for @individualExpense.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصروف فردي'**
+  String get individualExpense;
+
+  /// No description provided for @previousReading.
+  ///
+  /// In ar, this message translates to:
+  /// **'القراءة السابقة'**
+  String get previousReading;
+
+  /// No description provided for @currentReading.
+  ///
+  /// In ar, this message translates to:
+  /// **'القراءة الحالية'**
+  String get currentReading;
 }
 
 class _AppLocalizationsDelegate

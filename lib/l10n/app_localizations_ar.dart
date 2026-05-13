@@ -96,4 +96,40 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get selectDate => 'اختر التاريخ';
+
+  @override
+  String get expenses => 'المصروفات';
+
+  @override
+  String get addExpense => 'إضافة مصروف';
+
+  @override
+  String get expenseType => 'نوع المصروف';
+
+  @override
+  String get amount => 'المبلغ';
+
+  @override
+  String get description => 'الوصف';
+
+  @override
+  String get meterReadings => 'قراءات العدادات';
+
+  @override
+  String get buildingRent => 'إيجار المبنى';
+
+  @override
+  String get maintenance => 'الصيانة';
+
+  @override
+  String get sharedExpense => 'مصروف مشترك';
+
+  @override
+  String get individualExpense => 'مصروف فردي';
+
+  @override
+  String get previousReading => 'القراءة السابقة';
+
+  @override
+  String get currentReading => 'القراءة الحالية';
 }

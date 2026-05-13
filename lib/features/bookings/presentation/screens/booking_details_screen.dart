@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/bookings_provider.dart';
+import '../providers/bookings_controller.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
   final String bookingId;
@@ -38,9 +40,18 @@ class BookingDetailsScreen extends ConsumerWidget {
                 title: 'معلومات الضيف',
                 icon: Icons.person,
                 children: [
-                  _buildDetailRow(context, 'الاسم', booking.guestName),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(booking.guestName, style: Theme.of(context).textTheme.titleMedium),
+                      TextButton(
+                        onPressed: () => context.go('/summer_bookings/guest/${booking.guestName}'),
+                        child: const Text('الملف الشخصي'),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
                   _buildDetailRow(context, 'رقم الهاتف', booking.guestPhone ?? 'غير متوفر'),
-                  _buildDetailRow(context, 'حالة المزامنة', booking.syncStatus.toString()), // Debug info
                 ],
               ),
               const SizedBox(height: 16),
@@ -71,7 +82,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        // Checkout early
+                        context.go('/summer_bookings/early_checkout/$bookingId');
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.error,
@@ -80,11 +91,21 @@ class BookingDetailsScreen extends ConsumerWidget {
                       child: const Text('تسجيل خروج مبكر'),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        context.go('/summer_bookings/overstay/$bookingId');
+                      },
+                      child: const Text('تمديد الحجز'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Confirm checkout
+                        ref.read(bookingsControllerProvider.notifier).checkoutBooking(bookingId);
+                        context.go('/summer_bookings');
                       },
                       child: const Text('تسجيل خروج'),
                     ),

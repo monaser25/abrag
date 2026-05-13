@@ -12,6 +12,19 @@ mixin SyncableTable on Table {
   DateTimeColumn get lastModifiedLocal => dateTime().withDefault(currentDateAndTime)();
 }
 
+class UserProfiles extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get email => text()();
+  TextColumn get fullName => text().nullable()();
+  TextColumn get phoneNumber => text().nullable()();
+  TextColumn get role => text().withDefault(const Constant('viewer'))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 class Buildings extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get name => text()();

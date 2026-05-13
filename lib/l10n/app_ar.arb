@@ -35,5 +35,17 @@
   "university": "الجامعة",
   "monthlyRent": "الإيجار الشهري",
   "deposit": "التأمين",
-  "selectDate": "اختر التاريخ"
+  "selectDate": "اختر التاريخ",
+  "expenses": "المصروفات",
+  "addExpense": "إضافة مصروف",
+  "expenseType": "نوع المصروف",
+  "amount": "المبلغ",
+  "description": "الوصف",
+  "meterReadings": "قراءات العدادات",
+  "buildingRent": "إيجار المبنى",
+  "maintenance": "الصيانة",
+  "sharedExpense": "مصروف مشترك",
+  "individualExpense": "مصروف فردي",
+  "previousReading": "القراءة السابقة",
+  "currentReading": "القراءة الحالية"
 }

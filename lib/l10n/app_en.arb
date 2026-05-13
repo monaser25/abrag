@@ -35,5 +35,17 @@
   "university": "University",
   "monthlyRent": "Monthly Rent",
   "deposit": "Deposit",
-  "selectDate": "Select Date"
+  "selectDate": "Select Date",
+  "expenses": "Expenses",
+  "addExpense": "Add Expense",
+  "expenseType": "Expense Type",
+  "amount": "Amount",
+  "description": "Description",
+  "meterReadings": "Meter Readings",
+  "buildingRent": "Building Rent",
+  "maintenance": "Maintenance",
+  "sharedExpense": "Shared Expense",
+  "individualExpense": "Individual Expense",
+  "previousReading": "Previous Reading",
+  "currentReading": "Current Reading"
 }

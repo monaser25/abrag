@@ -10,6 +10,7 @@ import 'tables.dart';
 part 'database.g.dart';
 
 @DriftDatabase(tables: [
+  UserProfiles,
   Buildings,
   Apartments,
   SummerBookings,

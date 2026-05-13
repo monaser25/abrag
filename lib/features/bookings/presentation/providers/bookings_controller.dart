@@ -52,4 +52,66 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       state = AsyncError(e, st);
     }
   }
+
+  Future<void> checkoutBooking(String id) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.summerBookings)..where((t) => t.id.equals(id))).write(
+        SummerBookingsCompanion(
+          status: const Value('checked_out'),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> earlyCheckoutBooking({
+    required String id,
+    required DateTime newCheckoutDate,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.summerBookings)..where((t) => t.id.equals(id))).write(
+        SummerBookingsCompanion(
+          status: const Value('checked_out'),
+          earlyCheckoutDate: Value(newCheckoutDate),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> extendBooking({
+    required String id,
+    required DateTime newCheckoutDate,
+    required int overstayDays,
+    required double additionalFeeEgp,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final booking = await (_db.select(_db.summerBookings)..where((t) => t.id.equals(id))).getSingle();
+      
+      await (_db.update(_db.summerBookings)..where((t) => t.id.equals(id))).write(
+        SummerBookingsCompanion(
+          checkOutDate: Value(newCheckoutDate),
+          overstayDays: Value(booking.overstayDays + overstayDays),
+          overstayFeeEgp: Value(booking.overstayFeeEgp + additionalFeeEgp),
+          totalPriceEgp: Value(booking.totalPriceEgp + additionalFeeEgp),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
 }
