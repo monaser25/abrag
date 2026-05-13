@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>تمديد الحجز - أبراج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#111412",
+                    "surface-container-lowest": "#0c0f0d",
+                    "on-tertiary-container": "#303b51",
+                    "on-tertiary": "#263046",
+                    "on-surface-variant": "#bcc9ce",
+                    "error-container": "#93000a",
+                    "on-secondary": "#243141",
+                    "surface-tint": "#4cd6fb",
+                    "outline": "#869398",
+                    "error": "#ffb4ab",
+                    "on-secondary-container": "#a8b6ca",
+                    "inverse-on-surface": "#2f312e",
+                    "on-surface": "#e2e3df",
+                    "surface-variant": "#333533",
+                    "surface-container-low": "#1a1c1a",
+                    "surface": "#111412",
+                    "primary-fixed": "#b3ebff",
+                    "primary": "#4cd6fb",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#101b30",
+                    "tertiary-container": "#9aa5bf",
+                    "primary-container": "#00b4d8",
+                    "on-secondary-fixed": "#0f1c2c",
+                    "on-background": "#e2e3df",
+                    "on-primary-container": "#00414f",
+                    "on-secondary-fixed-variant": "#3a4859",
+                    "secondary-fixed-dim": "#bac8dc",
+                    "on-error": "#690005",
+                    "inverse-surface": "#e2e3df",
+                    "outline-variant": "#3d494d",
+                    "on-tertiary-fixed-variant": "#3c475d",
+                    "inverse-primary": "#00677d",
+                    "surface-bright": "#373a37",
+                    "primary-fixed-dim": "#4cd6fb",
+                    "surface-container": "#1e201e",
+                    "secondary-fixed": "#d6e4f9",
+                    "tertiary-fixed": "#d7e2ff",
+                    "on-primary-fixed-variant": "#004e5f",
+                    "on-primary-fixed": "#001f27",
+                    "surface-container-high": "#282b28",
+                    "secondary": "#bac8dc",
+                    "surface-container-highest": "#333533",
+                    "surface-dim": "#111412",
+                    "secondary-container": "#3a4859",
+                    "on-primary": "#003642",
+                    "tertiary-fixed-dim": "#bbc6e2",
+                    "tertiary": "#bbc6e2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "xs": "4px",
+                    "unit": "4px",
+                    "xl": "40px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "container-margin": "20px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "label-sm": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "headline-sm": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "label-lg": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "body-sm": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "body-md": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "headline-md": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "headline-lg": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "body-lg": [
+                            "IBM Plex Sans Arabic"
+                    ]
+            },
+            "fontSize": {
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-lg": [
+                            "14px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "30px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "26px",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #0D1B2A; /* Requested visual style override for bg */
+            color: #e2e3df; /* on-surface */
+        }
+        /* Overriding specific requested colors while keeping structure */
+        .bg-custom-navy { background-color: #1B263B; }
+        .text-custom-gold { color: #F4A225; }
+        .bg-custom-gold { background-color: #F4A225; }
+        .border-custom-border { border-color: rgba(65, 90, 119, 0.3); }
+        .focus-ring-teal:focus-within { border-color: #00B4D8; box-shadow: 0 0 0 1px #00B4D8; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen flex flex-col items-center justify-center p-4">
+<!-- Mobile Device Container for Preview -->
+<div class="w-full max-w-md h-[850px] bg-[#0D1B2A] rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col border-4 border-surface-variant">
+<!-- TopAppBar (Transactional - Hidden Bottom Nav/Drawer) -->
+<header class="flex flex-row justify-between items-center px-container-margin w-full h-16 bg-[#0D1B2A] shrink-0 z-10">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors duration-200 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold">تمديد الحجز</h1>
+<div class="w-10 h-10"></div> <!-- Spacer for center alignment -->
+</header>
+<!-- Main Content Scrollable Area -->
+<main class="flex-1 overflow-y-auto px-container-margin py-md flex flex-col gap-lg pb-32">
+<!-- Current Booking Card -->
+<section class="bg-custom-navy rounded-xl border border-custom-border p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute -left-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-label-sm text-label-sm text-on-surface-variant mb-1">النزيل الحالي</h2>
+<p class="font-headline-sm text-headline-sm text-on-surface">محمد أحمد</p>
+</div>
+<div class="bg-surface-container rounded-lg px-3 py-1 flex items-center gap-2 border border-custom-border">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="apartment">apartment</span>
+<span class="font-label-lg text-label-lg text-on-surface">شقة 402</span>
+</div>
+</div>
+<div class="mt-2 pt-3 border-t border-custom-border flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="event_busy">event_busy</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">تاريخ الخروج الحالي: <span class="text-on-surface font-medium">15 مايو 2024</span></p>
+</div>
+</section>
+<!-- Season Pressure Selector -->
+<section class="flex flex-col gap-md">
+<h3 class="font-label-lg text-label-lg text-on-surface">موسم الضغط</h3>
+<!-- Segmented Control -->
+<div class="flex bg-surface-container rounded-xl p-1 border border-custom-border">
+<button class="flex-1 py-2 rounded-lg font-label-lg text-label-lg bg-custom-navy text-on-surface shadow-sm border border-custom-border transition-all">
+                        ضغط عالي
+                    </button>
+<button class="flex-1 py-2 rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-all">
+                        ضغط منخفض
+                    </button>
+</div>
+<!-- High Pressure Active State Content -->
+<div class="bg-custom-navy rounded-xl border border-custom-border p-md flex flex-col gap-sm">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-error mt-0.5" data-icon="trending_up">trending_up</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">السعر سيكون بسعر اليوم الحالي</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">يتم تطبيق تسعيرة المواسم المرتفعة تلقائياً.</p>
+</div>
+</div>
+<div class="mt-2 self-end bg-error/10 border border-error/30 rounded-lg px-3 py-1.5 flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-error">500 ج.م / يوم</span>
+</div>
+</div>
+</section>
+<!-- Extension Duration -->
+<section class="flex flex-col gap-sm">
+<h3 class="font-label-lg text-label-lg text-on-surface">عدد أيام التمديد</h3>
+<div class="bg-custom-navy rounded-xl border border-custom-border p-2 flex items-center justify-between">
+<button class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary hover:bg-surface-variant transition-colors border border-custom-border">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<div class="flex-1 text-center flex flex-col justify-center">
+<span class="font-headline-lg text-headline-lg text-on-surface">3</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">أيام</span>
+</div>
+<button class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors border border-custom-border">
+<span class="material-symbols-outlined" data-icon="remove">remove</span>
+</button>
+</div>
+</section>
+<!-- Summary Card -->
+<section class="mt-auto bg-surface-container-low rounded-xl border border-custom-border p-md flex flex-col gap-3 relative overflow-hidden">
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-[#F4A225]/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">حساب التمديد</span>
+<span class="font-body-md text-body-md text-on-surface" dir="ltr">3 × 500 ج.م</span>
+</div>
+<div class="h-px w-full bg-outline-variant/30"></div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-headline-sm text-headline-sm text-on-surface">إجمالي الإضافة</span>
+<span class="font-headline-md text-headline-md text-custom-gold font-bold">1,500 ج.م</span>
+</div>
+</section>
+</main>
+<!-- Bottom Action Bar (Fixed) -->
+<div class="absolute bottom-0 w-full bg-[#0D1B2A]/90 backdrop-blur-md p-container-margin border-t border-custom-border z-20">
+<button class="w-full h-14 bg-custom-gold hover:bg-[#D98A1B] text-[#0D1B2A] rounded-xl font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-lg shadow-[#F4A225]/20">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+                تأكيد التمديد
+            </button>
+</div>
+</div>
+</body></html>

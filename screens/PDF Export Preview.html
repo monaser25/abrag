@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>معاينة التقرير - Abrag</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#303b51",
+                        "primary": "#F4A225", 
+                        "secondary": "#bac8dc",
+                        "secondary-container": "#1B263B", 
+                        "tertiary-container": "#9aa5bf",
+                        "surface": "#0D1B2A", 
+                        "tertiary": "#bbc6e2",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e2e3df",
+                        "surface-variant": "#1B263B",
+                        "outline-variant": "#415A77", 
+                        "background": "#0D1B2A",
+                        "on-primary": "#0D1B2A",
+                        "on-primary-container": "#0D1B2A",
+                        "surface-container": "#1B263B",
+                        "on-surface-variant": "#bcc9ce",
+                        "tertiary-fixed": "#d7e2ff",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "surface-bright": "#1B263B",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "secondary-fixed": "#d6e4f9",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#101b30",
+                        "on-primary-fixed": "#0D1B2A",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "surface-container-high": "#1B263B",
+                        "on-primary-fixed-variant": "#0D1B2A",
+                        "primary-fixed-dim": "#F4A225",
+                        "on-secondary": "#243141",
+                        "on-background": "#e2e3df",
+                        "on-secondary-container": "#a8b6ca",
+                        "inverse-on-surface": "#2f312e",
+                        "error": "#ffb4ab",
+                        "primary-fixed": "#F4A225",
+                        "on-tertiary": "#263046",
+                        "surface-container-highest": "#1B263B",
+                        "outline": "#415A77",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#F4A225",
+                        "primary-container": "#F4A225",
+                        "inverse-primary": "#F4A225",
+                        "surface-container-lowest": "#0D1B2A",
+                        "surface-dim": "#0D1B2A",
+                        "on-surface": "#e2e3df",
+                        "surface-container-low": "#1B263B"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "unit": "4px",
+                        "xs": "4px",
+                        "xl": "40px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "md": "16px",
+                        "container-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface fixed top-0 w-full z-50 border-b border-outline-variant/30 flat no shadows flex flex-row justify-between items-center px-container-margin h-16">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary">معاينة التقرير</h1>
+</div>
+<div class="font-headline-lg text-headline-lg font-bold text-primary">
+            Abrag
+        </div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-16 pb-32 px-container-margin md:px-lg overflow-y-auto">
+<div class="max-w-4xl mx-auto py-lg">
+<!-- Document Preview Card (Paper-like) -->
+<div class="bg-white text-gray-900 rounded-sm shadow-xl p-8 md:p-12 min-h-[800px] border border-gray-200">
+<!-- Document Header -->
+<div class="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+<div>
+<h2 class="text-3xl font-bold text-gray-900 mb-2">تقرير كشف الحساب</h2>
+<p class="text-gray-600 text-sm">الفترة من 01/10/2023 إلى 31/10/2023</p>
+</div>
+<div class="text-left">
+<div class="text-2xl font-bold text-[#F4A225] flex items-center gap-2 justify-end">
+<span class="material-symbols-outlined text-[#F4A225]" data-icon="domain">domain</span>
+                            أبراج
+                        </div>
+<p class="text-gray-500 text-xs mt-1">إدارة الأملاك الذكية</p>
+</div>
+</div>
+<!-- Summary Section -->
+<div class="mb-10">
+<h3 class="text-lg font-semibold text-gray-800 mb-4 border-r-4 border-[#F4A225] pr-3">ملخص الأداء المالي</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-gray-300 rounded-sm overflow-hidden">
+<div class="p-4 bg-gray-50 border-b md:border-b-0 md:border-l border-gray-300">
+<p class="text-sm text-gray-600 mb-1">إجمالي الإيرادات</p>
+<p class="text-xl font-bold text-green-600">45,000 ر.س</p>
+</div>
+<div class="p-4 bg-gray-50 border-b md:border-b-0 md:border-l border-gray-300">
+<p class="text-sm text-gray-600 mb-1">إجمالي المصروفات</p>
+<p class="text-xl font-bold text-red-600">12,500 ر.س</p>
+</div>
+<div class="p-4 bg-gray-100">
+<p class="text-sm text-gray-600 mb-1">صافي الربح</p>
+<p class="text-xl font-bold text-gray-900">32,500 ر.س</p>
+</div>
+</div>
+</div>
+<!-- Transactions Table -->
+<div>
+<h3 class="text-lg font-semibold text-gray-800 mb-4 border-r-4 border-[#F4A225] pr-3">تفاصيل العمليات</h3>
+<div class="overflow-x-auto">
+<table class="w-full text-right border-collapse">
+<thead>
+<tr class="bg-gray-800 text-white">
+<th class="p-3 font-semibold text-sm border border-gray-700 w-1/4">التاريخ</th>
+<th class="p-3 font-semibold text-sm border border-gray-700 w-1/2">البيان</th>
+<th class="p-3 font-semibold text-sm border border-gray-700 w-1/4">المبلغ (ر.س)</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="border-b border-gray-200 hover:bg-gray-50">
+<td class="p-3 border-l border-gray-200">05/10/2023</td>
+<td class="p-3 border-l border-gray-200">تحصيل إيجار شقة 101</td>
+<td class="p-3 text-green-600 font-medium">+ 5,000</td>
+</tr>
+<tr class="bg-gray-50 border-b border-gray-200 hover:bg-gray-100">
+<td class="p-3 border-l border-gray-200">12/10/2023</td>
+<td class="p-3 border-l border-gray-200">صيانة مصعد العمارة أ</td>
+<td class="p-3 text-red-600 font-medium">- 1,500</td>
+</tr>
+<tr class="border-b border-gray-200 hover:bg-gray-50">
+<td class="p-3 border-l border-gray-200">18/10/2023</td>
+<td class="p-3 border-l border-gray-200">تحصيل إيجار معرض رقم 3</td>
+<td class="p-3 text-green-600 font-medium">+ 15,000</td>
+</tr>
+<tr class="bg-gray-50 border-b border-gray-200 hover:bg-gray-100">
+<td class="p-3 border-l border-gray-200">22/10/2023</td>
+<td class="p-3 border-l border-gray-200">سداد فاتورة الكهرباء المشتركة</td>
+<td class="p-3 text-red-600 font-medium">- 800</td>
+</tr>
+<tr class="border-b border-gray-200 hover:bg-gray-50">
+<td class="p-3 border-l border-gray-200">28/10/2023</td>
+<td class="p-3 border-l border-gray-200">تحصيل إيجار شقة 205</td>
+<td class="p-3 text-green-600 font-medium">+ 25,000</td>
+</tr>
+<tr class="bg-gray-50 border-b border-gray-200 hover:bg-gray-100">
+<td class="p-3 border-l border-gray-200">30/10/2023</td>
+<td class="p-3 border-l border-gray-200">رسوم إدارة أملاك (أكتوبر)</td>
+<td class="p-3 text-red-600 font-medium">- 10,200</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Document Footer -->
+<div class="mt-16 pt-6 border-t border-gray-200 flex justify-between items-center text-xs text-gray-500">
+<p>تم الإنشاء بواسطة تطبيق أبراج</p>
+<p>الصفحة 1 من 1</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Action Buttons Sticky Footer -->
+<div class="fixed bottom-0 w-full bg-surface-container/95 backdrop-blur-sm border-t border-outline-variant/30 p-container-margin z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+<div class="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4 items-center justify-between">
+<button class="w-full sm:w-auto flex-1 bg-primary text-on-primary hover:bg-primary/90 active:scale-95 transition-all rounded-lg px-6 py-3 flex items-center justify-center gap-2 font-label-lg text-label-lg shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined" data-icon="share" style="font-variation-settings: 'FILL' 1;">share</span>
+                مشاركة PDF
+            </button>
+<div class="flex w-full sm:w-auto gap-4">
+<button class="flex-1 sm:flex-none border-2 border-primary text-primary hover:bg-primary/10 active:scale-95 transition-all rounded-lg px-6 py-3 flex items-center justify-center gap-2 font-label-lg text-label-lg">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                    حفظ في الجهاز
+                </button>
+<button class="flex-1 sm:flex-none border border-outline-variant text-on-surface hover:bg-surface-variant active:scale-95 transition-all rounded-lg px-6 py-3 flex items-center justify-center gap-2 font-label-lg text-label-lg">
+<span class="material-symbols-outlined" data-icon="print">print</span>
+                    طباعة
+                </button>
+</div>
+</div>
+</div>
+</body></html>

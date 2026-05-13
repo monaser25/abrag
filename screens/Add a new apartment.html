@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إضافة شقة جديدة - أبراج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-tertiary-fixed": "#101b30",
+                        "surface-dim": "#111412",
+                        "surface-container": "#1e201e",
+                        "secondary-fixed": "#d6e4f9",
+                        "tertiary": "#bbc6e2",
+                        "surface-container-highest": "#333533",
+                        "on-primary-container": "#00414f",
+                        "outline-variant": "#3d494d",
+                        "on-secondary": "#243141",
+                        "outline": "#869398",
+                        "surface-variant": "#333533",
+                        "inverse-primary": "#00677d",
+                        "error": "#ffb4ab",
+                        "on-background": "#e2e3df",
+                        "surface-container-high": "#282b28",
+                        "surface": "#111412",
+                        "on-primary-fixed": "#001f27",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed": "#b3ebff",
+                        "inverse-on-surface": "#2f312e",
+                        "primary": "#4cd6fb",
+                        "on-tertiary": "#263046",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-secondary-container": "#a8b6ca",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-surface": "#e2e3df",
+                        "surface-container-lowest": "#0c0f0d",
+                        "secondary-container": "#3a4859",
+                        "surface-tint": "#4cd6fb",
+                        "surface-container-low": "#1a1c1a",
+                        "inverse-surface": "#e2e3df",
+                        "secondary": "#bac8dc",
+                        "on-tertiary-container": "#303b51",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "background": "#111412",
+                        "tertiary-container": "#9aa5bf",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "primary-container": "#00b4d8",
+                        "error-container": "#93000a",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-primary": "#003642",
+                        "tertiary-fixed": "#d7e2ff",
+                        "surface-bright": "#373a37",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "xl": "40px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "unit": "4px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0D1B2A; /* Overriding base theme for specific request */
+            color: #e2e3df;
+        }
+        .card-surface {
+            background-color: #1B263B;
+            border: 1px solid rgba(65, 90, 119, 0.3);
+        }
+        .text-gold { color: #F4A225; }
+        .bg-gold { background-color: #F4A225; }
+        .border-gold { border-color: #F4A225; }
+        
+        /* Custom Input Styles */
+        input[type="text"], input[type="number"], select {
+            background-color: #e2e3df; /* High contrast white/light gray */
+            color: #0D1B2A;
+            border: 1px solid transparent;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #00B4D8;
+            box-shadow: 0 0 0 2px rgba(0, 180, 216, 0.2);
+        }
+        
+        /* Custom Radio/Checkbox Styles */
+        input[type="radio"]:checked {
+            background-color: #00B4D8;
+            border-color: #00B4D8;
+        }
+        input[type="checkbox"]:checked {
+            background-color: #00B4D8;
+            border-color: #00B4D8;
+        }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #00B4D8;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #00B4D8;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md min-h-screen flex flex-col pb-safe">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky border-b border-outline-variant/30 bg-surface z-50">
+<div class="flex flex-row-reverse justify-between items-center px-container-margin h-16 w-full">
+<div class="flex items-center gap-sm">
+<!-- No trailing avatar for simple form -->
+</div>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary">أبراج</h1>
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-container-margin py-lg max-w-3xl mx-auto w-full">
+<!-- Page Title -->
+<div class="mb-lg flex items-center gap-sm">
+<span class="material-symbols-outlined text-gold text-3xl" data-icon="add_home">add_home</span>
+<h2 class="font-headline-lg text-headline-lg text-white">إضافة شقة جديدة</h2>
+</div>
+<form class="space-y-lg">
+<!-- Section 1: Basic Data -->
+<section class="card-surface rounded-xl p-md">
+<h3 class="font-headline-sm text-headline-sm text-gold border-b border-outline-variant/30 pb-sm mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+                    البيانات الأساسية
+                </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="apartment_number">رقم الشقة</label>
+<input class="rounded-lg p-sm font-body-md focus:ring-0" id="apartment_number" placeholder="مثال: 101" type="number"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="floor_number">الدور / الطابق</label>
+<input class="rounded-lg p-sm font-body-md focus:ring-0" id="floor_number" placeholder="مثال: 1" type="number"/>
+</div>
+<div class="flex flex-col gap-xs md:col-span-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="building_select">المبنى</label>
+<div class="relative">
+<select class="w-full rounded-lg p-sm font-body-md appearance-none focus:ring-0 pr-10" id="building_select">
+<option disabled="" selected="" value="">اختر المبنى</option>
+<option value="1">برج الياسمين (أ)</option>
+<option value="2">برج الياسمين (ب)</option>
+<option value="3">مجمع النور</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-tertiary-fixed pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Meter -->
+<section class="card-surface rounded-xl p-md">
+<h3 class="font-headline-sm text-headline-sm text-gold border-b border-outline-variant/30 pb-sm mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" data-icon="electric_meter">electric_meter</span>
+                    العداد
+                </h3>
+<div class="flex flex-col gap-md">
+<label class="font-label-sm text-label-sm text-on-surface-variant">نوع العداد</label>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-sm">
+<!-- Radio Option 1 -->
+<label class="flex items-center gap-sm p-sm rounded-lg border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer">
+<input class="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-surface-dim bg-surface-bright border-outline" name="meter_type" type="radio" value="independent"/>
+<span class="font-body-md text-on-surface">عداد مستقل</span>
+</label>
+<!-- Radio Option 2 (Shared) -->
+<label class="flex items-center gap-sm p-sm rounded-lg border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer bg-surface-container-high">
+<input checked="" class="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-surface-dim bg-surface-bright border-outline" name="meter_type" type="radio" value="shared"/>
+<span class="font-body-md text-on-surface">عداد مشترك</span>
+</label>
+<!-- Radio Option 3 -->
+<label class="flex items-center gap-sm p-sm rounded-lg border border-outline-variant/30 hover:bg-surface-container transition-colors cursor-pointer">
+<input class="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-surface-dim bg-surface-bright border-outline" name="meter_type" type="radio" value="none"/>
+<span class="font-body-md text-on-surface">بدون عداد</span>
+</label>
+</div>
+<!-- Conditional Fields for Shared Meter (Visible for demo) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter mt-sm p-md bg-surface-container rounded-lg border border-outline-variant/20">
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="shared_with">مشترك مع</label>
+<input class="rounded-lg p-sm font-body-md focus:ring-0" id="shared_with" placeholder="مثال: شقة 102" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="split_percentage">نسبة التوزيع %</label>
+<input class="rounded-lg p-sm font-body-md focus:ring-0" id="split_percentage" placeholder="50" type="number"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs mt-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="meter_number">رقم العداد</label>
+<input class="rounded-lg p-sm font-body-md focus:ring-0" id="meter_number" placeholder="أدخل رقم العداد" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section 3: Pricing -->
+<section class="card-surface rounded-xl p-md">
+<h3 class="font-headline-sm text-headline-sm text-gold border-b border-outline-variant/30 pb-sm mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                    التسعير
+                </h3>
+<div class="grid grid-cols-1 gap-gutter">
+<div class="flex flex-col gap-xs relative">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="default_price">السعر اليومي الافتراضي</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-lg p-sm pl-12 font-body-md focus:ring-0" id="default_price" placeholder="0.00" type="number"/>
+<span class="absolute left-3 text-on-tertiary-fixed font-label-lg">EGP</span>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="apartment_note">ملاحظة خاصة بالشقة</label>
+<textarea class="w-full rounded-lg p-sm font-body-md focus:ring-0 bg-[#e2e3df] text-[#0D1B2A] border-transparent" id="apartment_note" placeholder="مثال: إطلالة بحرية..." rows="3"></textarea>
+</div>
+</div>
+</section>
+<!-- Section 4: Special Case -->
+<section class="card-surface rounded-xl p-md">
+<h3 class="font-headline-sm text-headline-sm text-gold border-b border-outline-variant/30 pb-sm mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+                    حالة خاصة
+                </h3>
+<div class="flex items-center justify-between p-sm rounded-lg bg-surface-container border border-outline-variant/20">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">شقة الأدمن</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">يتم استبعادها من الحجوزات عند التفعيل</span>
+</div>
+<!-- Toggle Switch -->
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 top-0 left-0 transition-transform duration-200 ease-in-out peer" id="admin_toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-200 ease-in-out" for="admin_toggle"></label>
+</div>
+</div>
+</section>
+</form>
+</main>
+<!-- Bottom Action Bar (Contextual FAB replacement for form submission) -->
+<div class="fixed bottom-0 w-full p-container-margin bg-surface-container border-t border-outline-variant/30 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<div class="max-w-3xl mx-auto flex justify-end">
+<button class="bg-gold text-[#0D1B2A] font-headline-md text-headline-md py-sm px-xl rounded-xl hover:opacity-90 active:scale-95 transition-all flex items-center gap-sm shadow-md">
+<span class="material-symbols-outlined" data-icon="save">save</span>
+                حفظ البيانات
+            </button>
+</div>
+</div>
+<!-- Padding for bottom bar -->
+<div class="h-24"></div>
+</body></html>

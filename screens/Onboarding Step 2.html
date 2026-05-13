@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>أضف عمارتك الأولى - أبراج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#333533",
+                    "primary-container": "#00b4d8",
+                    "on-tertiary": "#263046",
+                    "on-surface-variant": "#bcc9ce",
+                    "tertiary": "#bbc6e2",
+                    "inverse-primary": "#00677d",
+                    "on-tertiary-fixed": "#101b30",
+                    "tertiary-fixed": "#d7e2ff",
+                    "secondary-fixed": "#d6e4f9",
+                    "on-primary-fixed-variant": "#004e5f",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#bbc6e2",
+                    "tertiary-container": "#9aa5bf",
+                    "secondary-container": "#3a4859",
+                    "surface-container-lowest": "#0c0f0d",
+                    "surface-bright": "#373a37",
+                    "on-secondary-fixed-variant": "#3a4859",
+                    "on-tertiary-container": "#303b51",
+                    "surface-tint": "#4cd6fb",
+                    "primary": "#4cd6fb",
+                    "surface-container-low": "#1a1c1a",
+                    "surface-container-high": "#282b28",
+                    "secondary-fixed-dim": "#bac8dc",
+                    "on-primary-fixed": "#001f27",
+                    "on-primary": "#003642",
+                    "surface-dim": "#111412",
+                    "on-error": "#690005",
+                    "secondary": "#bac8dc",
+                    "on-background": "#e2e3df",
+                    "inverse-surface": "#e2e3df",
+                    "primary-fixed-dim": "#4cd6fb",
+                    "on-secondary-container": "#a8b6ca",
+                    "surface-container": "#1e201e",
+                    "outline": "#869398",
+                    "primary-fixed": "#b3ebff",
+                    "background": "#111412",
+                    "error-container": "#93000a",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#333533",
+                    "on-secondary-fixed": "#0f1c2c",
+                    "on-tertiary-fixed-variant": "#3c475d",
+                    "surface": "#111412",
+                    "on-surface": "#e2e3df",
+                    "outline-variant": "#3d494d",
+                    "on-primary-container": "#00414f",
+                    "on-secondary": "#243141",
+                    "inverse-on-surface": "#2f312e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-margin": "20px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "lg": "24px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "headline-md": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "body-md": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "label-sm": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "label-lg": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "body-sm": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "headline-sm": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "headline-lg": [
+                            "IBM Plex Sans Arabic"
+                    ],
+                    "body-lg": [
+                            "IBM Plex Sans Arabic"
+                    ]
+            },
+            "fontSize": {
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "label-lg": [
+                            "14px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "30px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "26px",
+                                    "fontWeight": "400"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<main class="flex-grow flex flex-col justify-center px-container-margin py-xl md:py-0">
+<div class="max-w-xl mx-auto w-full flex flex-col gap-lg">
+<header class="flex flex-col gap-sm text-center md:text-right">
+<h1 class="text-headline-lg font-headline-lg text-primary mb-2">أضف عمارتك الأولى</h1>
+<div class="flex items-center gap-md w-full">
+<div class="text-label-sm font-label-sm text-on-surface-variant whitespace-nowrap">الخطوة 2 من 4</div>
+<div class="flex-grow bg-surface-variant h-2 rounded-full overflow-hidden flex" dir="rtl">
+<div class="bg-primary h-full w-2/4 rounded-full transition-all duration-500"></div>
+</div>
+</div>
+</header>
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-md md:p-lg shadow-lg flex flex-col gap-md">
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface text-right" for="buildingName">اسم العمارة</label>
+<input class="bg-surface-bright border border-outline/30 text-on-surface text-body-md font-body-md rounded-lg p-3 w-full focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors placeholder:text-on-surface-variant/50" id="buildingName" placeholder="مثال: عمارة الياسمين" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface text-right" for="buildingAddress">العنوان</label>
+<input class="bg-surface-bright border border-outline/30 text-on-surface text-body-md font-body-md rounded-lg p-3 w-full focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors placeholder:text-on-surface-variant/50" id="buildingAddress" placeholder="مثال: شارع الملك فهد، الرياض" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface text-right" for="ownerName">اسم صاحب العمارة</label>
+<input class="bg-surface-bright border border-outline/30 text-on-surface text-body-md font-body-md rounded-lg p-3 w-full focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors placeholder:text-on-surface-variant/50" id="ownerName" placeholder="الاسم الكامل" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface text-right" for="annualRent">الإيجار السنوي المتوقع</label>
+<div class="relative flex items-center">
+<input class="bg-surface-bright border border-outline/30 text-on-surface text-body-md font-body-md rounded-lg p-3 pl-16 w-full focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors placeholder:text-on-surface-variant/50" dir="ltr" id="annualRent" placeholder="0.00" type="number"/>
+<span class="absolute left-4 text-label-lg font-label-lg text-primary pointer-events-none">ريال</span>
+</div>
+</div>
+</div>
+<div class="flex flex-row justify-between items-center mt-md pt-md border-t border-outline-variant/30">
+<button class="flex items-center gap-2 border border-outline text-primary hover:bg-surface-variant/20 px-lg py-3 rounded-xl transition-colors" type="button">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+<span class="text-label-lg font-label-lg">السابق</span>
+</button>
+<button class="bg-primary text-on-primary hover:bg-primary/90 px-xl py-3 rounded-xl shadow-md shadow-primary/20 transition-all flex items-center gap-2" type="button">
+<span class="text-label-lg font-label-lg">التالي</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+</button>
+</div>
+</div>
+</main>
+</body></html>

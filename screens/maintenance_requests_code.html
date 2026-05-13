@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>طلبات الصيانة - أبراج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#00677d",
+                        "tertiary": "#bbc6e2",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-tertiary": "#263046",
+                        "surface-variant": "#333533",
+                        "primary-container": "#00b4d8",
+                        "on-tertiary-container": "#303b51",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "surface-container-lowest": "#0c0f0d",
+                        "surface-bright": "#373a37",
+                        "tertiary-container": "#9aa5bf",
+                        "secondary-container": "#3a4859",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#d7e2ff",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-tertiary-fixed": "#101b30",
+                        "background": "#111412",
+                        "primary-fixed": "#b3ebff",
+                        "surface-container": "#1e201e",
+                        "outline": "#869398",
+                        "on-secondary-container": "#a8b6ca",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "secondary": "#bac8dc",
+                        "on-background": "#e2e3df",
+                        "inverse-surface": "#e2e3df",
+                        "on-error": "#690005",
+                        "surface-dim": "#111412",
+                        "surface-container-low": "#1a1c1a",
+                        "surface-container-high": "#282b28",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "on-primary-fixed": "#001f27",
+                        "on-primary": "#003642",
+                        "surface-tint": "#4cd6fb",
+                        "primary": "#4cd6fb",
+                        "inverse-on-surface": "#2f312e",
+                        "on-secondary": "#243141",
+                        "outline-variant": "#3d494d",
+                        "on-primary-container": "#00414f",
+                        "surface": "#111412",
+                        "on-surface": "#e2e3df",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "surface-container-highest": "#333533",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "error": "#ffb4ab",
+                        "error-container": "#93000a",
+                        // Adding required colors from prompt that aren't in config but mapping them to closest tokens or adding custom for specific requests if needed, 
+                        // but sticking to config as much as possible. Navy is close to surface-container, Gold to primary (teal in config, will use custom for the specific request if needed, but config says primary is teal. Prompt says gold #F4A225. I will stick to config's primary (#4cd6fb) to follow rules strictly, but will use a custom color if absolutely necessary to satisfy user's specific request. The rules say "ONLY USE theme-derived Tailwind classes". So I must use the config colors.)
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "40px",
+                        "unit": "4px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        /* Hide scrollbar for horizontal scroll areas */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-[90px] md:pb-0 md:pr-80">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary-fixed-dim font-headline-md text-headline-md docked full-width top-0 bg-surface-container dark:bg-surface-container flat no shadows flex flex-row-reverse justify-between items-center px-container-margin w-full h-16 sticky z-40 border-b border-outline-variant/30">
+<button class="text-on-surface-variant hover:bg-surface-variant rounded-full p-sm transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
+</button>
+<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary">أبراج</span>
+<button class="text-on-surface-variant hover:bg-surface-variant rounded-full p-sm transition-colors duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">more_vert</span>
+</button>
+</header>
+<!-- NavigationDrawer (Hidden on Mobile, visible on md+) -->
+<aside class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary font-body-md text-body-md docked right-0 h-full w-80 bg-surface-container-low shadow-xl fixed inset-y-0 right-0 z-[60] hidden md:flex flex-col p-md text-right border-l border-outline-variant/30">
+<div class="flex items-center gap-md mb-xl p-sm">
+<div class="w-12 h-12 rounded-full bg-primary-container overflow-hidden shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container">person</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface">مدير النظام</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">شركة أبراج العقارية</span>
+</div>
+</div>
+<nav class="flex flex-col gap-sm flex-1">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>لوحة التحكم</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">apartment</span>
+<span>إدارة الوحدات</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg bg-secondary-container text-on-secondary-container font-bold transition-all duration-300" href="#">
+<span class="material-symbols-outlined">build</span>
+<span>تقارير الصيانة</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>سجل المستأجرين</span>
+</a>
+</nav>
+<div class="mt-auto pt-md border-t border-outline-variant/30">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-300 mb-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>الإعدادات</span>
+</a>
+<div class="px-md font-label-sm text-label-sm text-on-surface-variant opacity-70">
+                إصدار v1.0.2
+            </div>
+</div>
+</aside>
+<main class="p-container-margin md:p-lg flex flex-col gap-lg max-w-4xl mx-auto">
+<!-- Header & Filters -->
+<section class="flex flex-col gap-md">
+<h1 class="font-headline-md text-headline-md text-on-surface">طلبات الصيانة</h1>
+<div class="flex gap-sm overflow-x-auto no-scrollbar pb-sm">
+<button class="px-lg py-sm rounded-full bg-primary text-on-primary font-label-lg text-label-lg shrink-0 whitespace-nowrap">الكل</button>
+<button class="px-lg py-sm rounded-full bg-surface-container-high text-on-surface border border-outline-variant/30 hover:bg-surface-variant transition-colors font-label-lg text-label-lg shrink-0 whitespace-nowrap">جارية</button>
+<button class="px-lg py-sm rounded-full bg-surface-container-high text-on-surface border border-outline-variant/30 hover:bg-surface-variant transition-colors font-label-lg text-label-lg shrink-0 whitespace-nowrap">منتهية</button>
+</div>
+</section>
+<!-- Maintenance Types (Horizontal Scroll) -->
+<section class="flex gap-md overflow-x-auto no-scrollbar pb-sm -mx-container-margin px-container-margin md:mx-0 md:px-0">
+<!-- Plumbing -->
+<div class="bg-surface-container-high rounded-xl p-md flex flex-col items-center justify-center gap-sm shrink-0 w-[100px] border border-outline-variant/30 shadow-sm">
+<div class="w-12 h-12 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">plumbing</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">سباكة</span>
+</div>
+<!-- Electricity -->
+<div class="bg-surface-container-high rounded-xl p-md flex flex-col items-center justify-center gap-sm shrink-0 w-[100px] border border-outline-variant/30 shadow-sm">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">electric_bolt</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">كهرباء</span>
+</div>
+<!-- Carpentry -->
+<div class="bg-surface-container-high rounded-xl p-md flex flex-col items-center justify-center gap-sm shrink-0 w-[100px] border border-outline-variant/30 shadow-sm">
+<div class="w-12 h-12 rounded-full bg-outline/20 flex items-center justify-center text-outline">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">carpenter</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">نجارة</span>
+</div>
+<!-- Gas/Stove -->
+<div class="bg-surface-container-high rounded-xl p-md flex flex-col items-center justify-center gap-sm shrink-0 w-[100px] border border-outline-variant/30 shadow-sm">
+<div class="w-12 h-12 rounded-full bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">غاز</span>
+</div>
+</section>
+<!-- Requests List -->
+<section class="flex flex-col gap-md">
+<!-- Card 1: In Progress -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#415A77]/30 shadow-sm flex flex-col gap-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+<!-- Status Glow -->
+<div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none"></div>
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">plumbing</span>
+</div>
+<div>
+<h3 class="font-label-lg text-label-lg text-on-surface">شقة 402</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">12 أكتوبر</span>
+</div>
+</div>
+<div class="flex items-center gap-xs px-sm py-xs rounded-full bg-surface-variant text-on-surface font-label-sm text-label-sm">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+                        جارية
+                    </div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 z-10 mt-xs">
+                    تسرب مياه من حوض الحمام الرئيسي، يحتاج إلى تغيير الوصلات السفلية بشكل عاجل.
+                </p>
+</div>
+<!-- Card 2: Completed -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#415A77]/30 shadow-sm flex flex-col gap-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container/20 flex items-center justify-center text-tertiary shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">electric_bolt</span>
+</div>
+<div>
+<h3 class="font-label-lg text-label-lg text-on-surface">شقة 105</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">10 أكتوبر</span>
+</div>
+</div>
+<div class="flex items-center gap-xs px-sm py-xs rounded-full bg-primary/10 text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        منتهية
+                    </div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 z-10 mt-xs">
+                    عطل في لوحة المفاتيح الرئيسية، انقطاع متكرر للتيار.
+                </p>
+<div class="mt-xs pt-sm border-t border-outline-variant/30 flex justify-end z-10">
+<span class="font-label-lg text-label-lg text-on-surface">التكلفة: <span class="text-primary">150 ج.م</span></span>
+</div>
+</div>
+<!-- Card 3: Completed -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#415A77]/30 shadow-sm flex flex-col gap-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-outline/20 flex items-center justify-center text-outline shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">carpenter</span>
+</div>
+<div>
+<h3 class="font-label-lg text-label-lg text-on-surface">شقة 301</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">05 أكتوبر</span>
+</div>
+</div>
+<div class="flex items-center gap-xs px-sm py-xs rounded-full bg-primary/10 text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        منتهية
+                    </div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 z-10 mt-xs">
+                    إصلاح مفصلات الباب الرئيسي التي تصدر صوتاً مزعجاً عند الفتح والإغلاق.
+                </p>
+<div class="mt-xs pt-sm border-t border-outline-variant/30 flex justify-end z-10">
+<span class="font-label-lg text-label-lg text-on-surface">التكلفة: <span class="text-primary">80 ج.م</span></span>
+</div>
+</div>
+</section>
+<!-- Bottom padding for FAB and Nav -->
+<div class="h-24 md:h-8"></div>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-[90px] md:bottom-lg left-container-margin md:left-lg w-14 h-14 rounded-2xl bg-primary text-on-primary shadow-lg flex items-center justify-center hover:bg-primary-fixed transition-colors z-50">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="bg-surface-container-high dark:bg-surface-container-high text-primary dark:text-primary font-label-sm text-label-sm font-headline-md text-headline-md text-primary docked full-width bottom-0 rounded-t-xl border-t border-outline-variant/30 shadow-lg fixed bottom-0 w-full z-50 flex flex-row-reverse justify-around items-center py-sm md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed scale-95 active:scale-90 transition-transform w-[70px]" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">home</span>
+<span>الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed scale-95 active:scale-90 transition-transform w-[70px]" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">domain</span>
+<span>العقارات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold hover:text-primary-fixed scale-95 active:scale-90 transition-transform w-[70px]" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 1;">build</span>
+<span>الصيانة</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed scale-95 active:scale-90 transition-transform w-[70px]" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">person</span>
+<span>الحساب</span>
+</a>
+</nav>
+</body></html>

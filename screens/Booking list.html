@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>قائمة الحجوزات</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#4cd6fb",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-secondary": "#243141",
+                        "secondary-fixed": "#d6e4f9",
+                        "outline-variant": "#3d494d",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "surface-variant": "#333533",
+                        "inverse-primary": "#00677d",
+                        "on-primary-fixed": "#001f27",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "tertiary-container": "#9aa5bf",
+                        "outline": "#869398",
+                        "inverse-on-surface": "#2f312e",
+                        "on-primary": "#003642",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "surface-container-low": "#1a1c1a",
+                        "on-primary-container": "#00414f",
+                        "surface-tint": "#4cd6fb",
+                        "surface-container-lowest": "#0c0f0d",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "secondary": "#bac8dc",
+                        "primary-fixed": "#b3ebff",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-surface": "#e2e3df",
+                        "surface-container-high": "#282b28",
+                        "secondary-container": "#3a4859",
+                        "on-background": "#e2e3df",
+                        "on-tertiary-container": "#303b51",
+                        "surface-container": "#1e201e",
+                        "surface-bright": "#373a37",
+                        "tertiary": "#bbc6e2",
+                        "inverse-surface": "#e2e3df",
+                        "surface": "#111412",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#101b30",
+                        "primary-container": "#00b4d8",
+                        "background": "#111412",
+                        "on-secondary-container": "#a8b6ca",
+                        "tertiary-fixed": "#d7e2ff",
+                        "on-tertiary": "#263046",
+                        "on-error": "#690005",
+                        "surface-dim": "#111412",
+                        "surface-container-highest": "#333533",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "xl": "40px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md pb-[80px]">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background text-primary dark:text-primary docked full-width top-0 bg-background flex flex-row-reverse justify-between items-center w-full px-container-margin py-md z-40 sticky">
+<button class="text-on-surface-variant hover:bg-surface-variant transition-colors p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-lg text-headline-lg text-primary text-center flex-1">أبراج</h1>
+<button class="text-on-surface-variant hover:bg-surface-variant transition-colors p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="flex-1 px-container-margin py-md flex flex-col gap-lg">
+<!-- Search and Filters -->
+<section class="flex flex-col gap-md">
+<div class="relative w-full">
+<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+</div>
+<input class="w-full bg-surface-container border border-outline-variant/30 rounded-lg py-2 pl-4 pr-10 text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md transition-all" placeholder="البحث في الحجوزات..." type="text"/>
+</div>
+<div class="flex gap-sm overflow-x-auto pb-2 scrollbar-hide">
+<button class="bg-primary-container text-on-primary-container font-label-lg text-label-lg px-4 py-2 rounded-full whitespace-nowrap border border-primary-container">الكل</button>
+<button class="bg-surface-container text-on-surface font-label-lg text-label-lg px-4 py-2 rounded-full whitespace-nowrap border border-outline-variant/30 hover:bg-surface-variant transition-colors">جارية</button>
+<button class="bg-surface-container text-on-surface font-label-lg text-label-lg px-4 py-2 rounded-full whitespace-nowrap border border-outline-variant/30 hover:bg-surface-variant transition-colors">منتهية</button>
+</div>
+</section>
+<!-- Bookings List -->
+<section class="flex flex-col gap-md">
+<!-- Booking Card 1 -->
+<article class="bg-[#1B263B] border border-[#415A77]/30 rounded-lg p-md flex flex-col gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">أحمد محمود</h2>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]" data-icon="apartment">apartment</span>
+<span class="font-body-sm text-body-sm">شقة 101</span>
+</div>
+</div>
+<div class="bg-primary-container/10 text-primary px-3 py-1 rounded-full border border-primary-container/20">
+<span class="font-label-sm text-label-sm">مباشر</span>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant mt-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+<span class="font-body-md text-body-md">24 - 26 أكتوبر</span>
+</div>
+<div class="flex justify-between items-end mt-sm pt-sm border-t border-outline-variant/30">
+<span class="font-label-lg text-label-lg text-on-surface-variant">إجمالي السعر</span>
+<span class="font-headline-md text-headline-md text-primary">1,200 ر.س</span>
+</div>
+</article>
+<!-- Booking Card 2 -->
+<article class="bg-[#1B263B] border border-[#415A77]/30 rounded-lg p-md flex flex-col gap-sm">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">فاطمة علي</h2>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]" data-icon="apartment">apartment</span>
+<span class="font-body-sm text-body-sm">شقة 205</span>
+</div>
+</div>
+<div class="bg-secondary-container/20 text-secondary px-3 py-1 rounded-full border border-secondary-container/30">
+<span class="font-label-sm text-label-sm">سمسار</span>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant mt-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+<span class="font-body-md text-body-md">28 أكتوبر - 2 نوفمبر</span>
+</div>
+<div class="flex justify-between items-end mt-sm pt-sm border-t border-outline-variant/30">
+<span class="font-label-lg text-label-lg text-on-surface-variant">إجمالي السعر</span>
+<span class="font-headline-md text-headline-md text-primary">2,500 ر.س</span>
+</div>
+</article>
+<!-- Booking Card 3 -->
+<article class="bg-[#1B263B] border border-[#415A77]/30 rounded-lg p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 bottom-0 w-1 bg-surface-variant"></div>
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface opacity-70">محمد سعيد</h2>
+<div class="flex items-center gap-xs text-on-surface-variant opacity-70">
+<span class="material-symbols-outlined text-[16px]" data-icon="apartment">apartment</span>
+<span class="font-body-sm text-body-sm">فيلا 4</span>
+</div>
+</div>
+<div class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full border border-outline-variant/30">
+<span class="font-label-sm text-label-sm">مباشر</span>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant mt-sm opacity-70">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_month">calendar_month</span>
+<span class="font-body-md text-body-md">15 - 20 أكتوبر</span>
+</div>
+<div class="flex justify-between items-end mt-sm pt-sm border-t border-outline-variant/30 opacity-70">
+<span class="font-label-lg text-label-lg text-on-surface-variant">إجمالي السعر</span>
+<span class="font-headline-md text-headline-md text-on-surface">3,000 ر.س</span>
+</div>
+</article>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-[96px] left-container-margin w-14 h-14 bg-primary text-on-primary rounded-xl flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity z-50">
+<span class="material-symbols-outlined text-[28px]" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary docked full-width bottom-0 rounded-t-xl bg-surface-container shadow-md fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center px-4 pb-4 pt-2 md:hidden">
+<!-- Tab 1: الرئيسية (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant/50 transition-colors rounded-xl">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm mt-1">الرئيسية</span>
+</button>
+<!-- Tab 2: العقارات (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant/50 transition-colors rounded-xl">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span class="font-label-sm text-label-sm mt-1">العقارات</span>
+</button>
+<!-- Tab 3: الإعدادات (Inactive) - We assume "Bookings" might fall under a different section, or is a sub-page. If it's considered part of dashboard, dashboard would be active. Let's make dashboard active as fallback if it's the main entry point, but user prompt says "Bookings List screen". Given the options, maybe none are strictly active, or we leave them all inactive if it's a deep link. Let's set 'العقارات' as active conceptually since bookings are related to properties. -->
+<!-- But wait, the JSON has 3 items: الرئيسية, العقارات, الإعدادات. Let's make الرئيسية active as a fallback. -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 scale-95 duration-200">
+<span class="material-symbols-outlined fill" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-sm text-label-sm mt-1">الرئيسية</span>
+</button>
+<!-- Actually, replacing the active state logic: let's make dashboard inactive and the first one active as per standard fallback if nothing matches, but intent fallback: Dashboard -> Bookings might make sense. Let's correct the active tab to be 'الرئيسية' (which is the first one in RTL flow, rendered last here? No, flex-row-reverse makes the first HTML element appear on the right). -->
+</nav>
+<!-- Fix the nav structure to align with flex-row-reverse -->
+<script>
+        // Just correcting the HTML structure for BottomNav to match the JSON exactly
+        document.querySelector('nav').innerHTML = `
+            <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 scale-95 duration-200">
+                <span class="material-symbols-outlined fill" data-weight="fill" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                <span class="font-label-sm text-label-sm mt-1">الرئيسية</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant/50 transition-colors rounded-xl">
+                <span class="material-symbols-outlined" data-icon="domain">domain</span>
+                <span class="font-label-sm text-label-sm mt-1">العقارات</span>
+            </button>
+            <button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant/50 transition-colors rounded-xl">
+                <span class="material-symbols-outlined" data-icon="settings">settings</span>
+                <span class="font-label-sm text-label-sm mt-1">الإعدادات</span>
+            </button>
+        `;
+    </script>
+<style>
+        /* CSS to hide scrollbar for horizontal scrolling */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

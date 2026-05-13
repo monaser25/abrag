@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إيجار العمارة السنوي - أَبْرَاج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#2f312e",
+                      "tertiary-fixed-dim": "#bbc6e2",
+                      "surface-dim": "#111412",
+                      "on-primary-fixed-variant": "#004e5f",
+                      "surface-container-high": "#282b28",
+                      "tertiary-container": "#9aa5bf",
+                      "on-surface": "#e2e3df",
+                      "on-tertiary-fixed-variant": "#3c475d",
+                      "on-primary-container": "#00414f",
+                      "surface-variant": "#333533",
+                      "surface-tint": "#4cd6fb",
+                      "tertiary": "#bbc6e2",
+                      "surface": "#111412",
+                      "surface-container-lowest": "#0c0f0d",
+                      "secondary-fixed-dim": "#bac8dc",
+                      "on-tertiary": "#263046",
+                      "secondary-container": "#3a4859",
+                      "secondary": "#bac8dc",
+                      "on-secondary": "#243141",
+                      "surface-container-low": "#1a1c1a",
+                      "on-secondary-fixed-variant": "#3a4859",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed": "#d6e4f9",
+                      "on-secondary-fixed": "#0f1c2c",
+                      "surface-container-highest": "#333533",
+                      "outline": "#869398",
+                      "inverse-surface": "#e2e3df",
+                      "primary": "#4cd6fb",
+                      "outline-variant": "#3d494d",
+                      "on-secondary-container": "#a8b6ca",
+                      "surface-container": "#1e201e",
+                      "primary-fixed": "#b3ebff",
+                      "primary-container": "#00b4d8",
+                      "on-primary-fixed": "#001f27",
+                      "on-background": "#e2e3df",
+                      "error-container": "#93000a",
+                      "tertiary-fixed": "#d7e2ff",
+                      "surface-bright": "#373a37",
+                      "background": "#111412",
+                      "on-surface-variant": "#bcc9ce",
+                      "on-error": "#690005",
+                      "on-tertiary-container": "#303b51",
+                      "error": "#ffb4ab",
+                      "on-primary": "#003642",
+                      "inverse-primary": "#00677d",
+                      "on-tertiary-fixed": "#101b30",
+                      "primary-fixed-dim": "#4cd6fb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "gutter": "16px",
+                      "xs": "4px",
+                      "unit": "4px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "container-margin": "20px",
+                      "xl": "40px"
+              },
+              "fontFamily": {
+                      "label-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-md": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "label-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-md": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-lg": [
+                              "IBM Plex Sans Arabic"
+                      ]
+              },
+              "fontSize": {
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "14px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          body {
+              font-family: 'IBM Plex Sans Arabic', sans-serif;
+              /* Overriding background with the requested Dark Navy */
+              background-color: #0D1B2A; 
+          }
+          /* Custom Gold color class for accents */
+          .text-gold { color: #F4A225; }
+          .bg-gold { background-color: #F4A225; }
+          .border-gold { border-color: #F4A225; }
+          
+          /* Surface variants for cards to match the Navy theme */
+          .bg-navy-surface { background-color: #1B263B; }
+          .border-navy-outline { border-color: rgba(65, 90, 119, 0.3); }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary-fixed-dim font-headline-md text-headline-md docked full-width top-0 bg-surface-container dark:bg-surface-container flat no shadows flex flex-row-reverse justify-between items-center px-container-margin w-full h-16 sticky z-40" style="background-color: #0D1B2A;">
+<div class="flex items-center gap-md">
+<button class="hover:bg-surface-variant transition-colors duration-200 p-2 rounded-full flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary flex-1 text-center truncate px-4">
+            إيجار العمارة السنوي
+        </div>
+<div class="flex items-center gap-md">
+<button aria-label="Go back" class="hover:bg-surface-variant transition-colors duration-200 p-2 rounded-full flex items-center justify-center text-on-surface-variant">
+<!-- Flipping arrow for RTL -->
+<span class="material-symbols-outlined transform rotate-180">arrow_forward</span>
+</button>
+</div>
+</header>
+<main class="px-container-margin py-lg max-w-4xl mx-auto space-y-lg">
+<!-- Summary Card -->
+<section class="bg-navy-surface border border-navy-outline rounded-xl p-md shadow-lg relative overflow-hidden">
+<!-- Subtle glow effect -->
+<div class="absolute inset-0 bg-gold opacity-5 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-gold" style="font-variation-settings: 'FILL' 1;">person</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">صاحب العمارة: الحاج محمود السعدني</h2>
+</div>
+<div class="bg-surface-container rounded-lg p-sm flex items-center gap-md border border-navy-outline">
+<div class="p-sm bg-primary/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">إجمالي الإيجار السنوي</p>
+<p class="font-headline-md text-headline-md text-primary">1,200,000 ج.م</p>
+</div>
+</div>
+<div class="flex justify-between items-end mt-sm">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">المدفوع</p>
+<p class="font-body-lg text-body-lg text-on-surface font-semibold">600,000 ج.م</p>
+</div>
+<div class="text-left">
+<p class="font-label-sm text-label-sm text-on-surface-variant">المتبقي</p>
+<p class="font-body-lg text-body-lg text-on-surface font-semibold">600,000 ج.م</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-variant rounded-full h-2 mt-xs overflow-hidden">
+<div class="bg-gold h-2 rounded-full" style="width: 50%;"></div>
+</div>
+</div>
+</section>
+<!-- Installments List -->
+<section class="space-y-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface px-xs">الأقساط</h3>
+<!-- Card 1 (Paid) -->
+<div class="bg-navy-surface border border-navy-outline rounded-xl p-md flex flex-col sm:flex-row gap-md items-start sm:items-center justify-between shadow-md transition-transform hover:scale-[1.01]">
+<div class="flex gap-md items-start">
+<div class="h-12 w-12 rounded-lg bg-green-500/10 flex items-center justify-center border border-green-500/30 flex-shrink-0">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">القسط الأول</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">تاريخ الاستحقاق: 1 يناير 2024</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-unit">تاريخ الدفع: 5 يناير 2024</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-sm w-full sm:w-auto mt-sm sm:mt-0">
+<span class="font-headline-md text-headline-md text-primary">300,000 ج.م</span>
+<span class="px-sm py-xs rounded-full bg-green-500/10 text-green-400 font-label-sm text-label-sm border border-green-500/20">مدفوع ✓</span>
+</div>
+</div>
+<!-- Card 2 (Paid) -->
+<div class="bg-navy-surface border border-navy-outline rounded-xl p-md flex flex-col sm:flex-row gap-md items-start sm:items-center justify-between shadow-md transition-transform hover:scale-[1.01]">
+<div class="flex gap-md items-start">
+<div class="h-12 w-12 rounded-lg bg-green-500/10 flex items-center justify-center border border-green-500/30 flex-shrink-0">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">القسط الثاني</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">تاريخ الاستحقاق: 1 أبريل 2024</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-unit">تاريخ الدفع: 2 أبريل 2024</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-sm w-full sm:w-auto mt-sm sm:mt-0">
+<span class="font-headline-md text-headline-md text-primary">300,000 ج.م</span>
+<span class="px-sm py-xs rounded-full bg-green-500/10 text-green-400 font-label-sm text-label-sm border border-green-500/20">مدفوع ✓</span>
+</div>
+</div>
+<!-- Card 3 (Upcoming/Late) -->
+<div class="bg-navy-surface border-2 border-error/50 rounded-xl p-md flex flex-col sm:flex-row gap-md items-start sm:items-center justify-between shadow-md relative overflow-hidden">
+<div class="absolute right-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex gap-md items-start pl-1">
+<div class="h-12 w-12 rounded-lg bg-error/10 flex items-center justify-center border border-error/30 flex-shrink-0">
+<span class="material-symbols-outlined text-error">error</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">القسط الثالث</h4>
+<p class="font-body-sm text-body-sm text-error mt-xs">تاريخ الاستحقاق: 1 يوليو 2024</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-sm w-full sm:w-auto mt-sm sm:mt-0 pl-1">
+<span class="font-headline-md text-headline-md text-primary">300,000 ج.م</span>
+<div class="flex items-center gap-sm">
+<span class="px-sm py-xs rounded-full bg-error/10 text-error font-label-sm text-label-sm border border-error/20">لم يُدفع ✗</span>
+<button class="bg-gold text-surface-dim font-label-lg text-label-lg px-md py-sm rounded-lg hover:brightness-110 transition-all shadow-md">تسجيل الدفع</button>
+</div>
+</div>
+</div>
+<!-- Card 4 (Future) -->
+<div class="bg-navy-surface border border-navy-outline rounded-xl p-md flex flex-col sm:flex-row gap-md items-start sm:items-center justify-between shadow-md opacity-80">
+<div class="flex gap-md items-start">
+<div class="h-12 w-12 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/30 flex-shrink-0">
+<span class="material-symbols-outlined text-orange-400">schedule</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">القسط الرابع</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">تاريخ الاستحقاق: 1 أكتوبر 2024</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-sm w-full sm:w-auto mt-sm sm:mt-0">
+<span class="font-headline-md text-headline-md text-primary">300,000 ج.م</span>
+<span class="px-sm py-xs rounded-full bg-orange-500/10 text-orange-400 font-label-sm text-label-sm border border-orange-500/20">قادم 🕐</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-high dark:bg-surface-container-high text-primary dark:text-primary font-label-sm text-label-sm font-headline-md text-headline-md text-primary docked full-width bottom-0 rounded-t-xl border-t border-outline-variant/30 shadow-lg fixed bottom-0 w-full z-50 flex flex-row-reverse justify-around items-center py-sm bg-surface-container-high md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed scale-95 active:scale-90 transition-transform flex-1 py-xs">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-sm text-label-sm">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed scale-95 active:scale-90 transition-transform flex-1 py-xs">
+<span class="material-symbols-outlined mb-1">domain</span>
+<span class="font-label-sm text-label-sm">العقارات</span>
+</button>
+<!-- Active Tab: المالية -->
+<button class="flex flex-col items-center justify-center text-primary font-bold hover:text-primary-fixed scale-95 active:scale-90 transition-transform flex-1 py-xs">
+<div class="px-4 py-1 bg-primary/10 rounded-full mb-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<span class="font-label-sm text-label-sm">المالية</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed scale-95 active:scale-90 transition-transform flex-1 py-xs">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-sm text-label-sm">الحساب</span>
+</button>
+</nav>
+</body></html>

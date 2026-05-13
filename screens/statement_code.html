@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>كشف الحساب - أبراج</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#3d494d",
+                        "on-primary": "#003642",
+                        "on-background": "#e2e3df",
+                        "on-tertiary-fixed": "#101b30",
+                        "tertiary-container": "#9aa5bf",
+                        "surface-container-lowest": "#0c0f0d",
+                        "inverse-primary": "#00677d",
+                        "tertiary-fixed": "#d7e2ff",
+                        "surface-container": "#1e201e",
+                        "on-primary-fixed": "#001f27",
+                        "surface-tint": "#4cd6fb",
+                        "primary": "#4cd6fb",
+                        "surface-dim": "#111412",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "outline": "#869398",
+                        "on-tertiary-container": "#303b51",
+                        "primary-container": "#00b4d8",
+                        "on-tertiary": "#263046",
+                        "on-secondary-container": "#a8b6ca",
+                        "secondary-container": "#3a4859",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#282b28",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "surface-container-low": "#1a1c1a",
+                        "surface": "#111412",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "error-container": "#93000a",
+                        "surface-variant": "#333533",
+                        "on-surface": "#e2e3df",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#243141",
+                        "inverse-surface": "#e2e3df",
+                        "surface-container-highest": "#333533",
+                        "on-primary-container": "#00414f",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-error": "#690005",
+                        "secondary": "#bac8dc",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "primary-fixed": "#b3ebff",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "tertiary": "#bbc6e2",
+                        "surface-bright": "#373a37",
+                        "background": "#111412",
+                        "inverse-on-surface": "#2f312e",
+                        "on-secondary-fixed": "#0f1c2c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "container-margin": "20px",
+                        "xl": "40px",
+                        "unit": "4px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "sm": "8px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-[100px]">
+<!-- Top App Bar (Sub-page Header) -->
+<header class="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-outline-variant px-container-margin py-md flex items-center justify-between">
+<div class="flex items-center gap-md">
+<button class="text-on-surface hover:bg-surface-variant p-sm rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-background">كشف الحساب</h1>
+</div>
+<button class="text-primary hover:bg-surface-variant p-sm rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</button>
+</header>
+<main class="px-container-margin py-lg flex flex-col gap-lg">
+<!-- Filter Section -->
+<section class="bg-surface-container rounded-lg border border-outline-variant p-md shadow-md">
+<div class="flex flex-col gap-md">
+<!-- Date Range -->
+<div class="flex gap-md">
+<div class="flex-1 flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">من تاريخ</label>
+<div class="flex items-center bg-surface border border-outline-variant rounded-lg px-sm py-sm focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] ml-sm" data-icon="calendar_today">calendar_today</span>
+<span class="font-body-sm text-body-sm text-on-surface">٠١ / ٠١ / ٢٠٢٤</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">إلى تاريخ</label>
+<div class="flex items-center bg-surface border border-outline-variant rounded-lg px-sm py-sm focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] ml-sm" data-icon="calendar_today">calendar_today</span>
+<span class="font-body-sm text-body-sm text-on-surface">٣١ / ١٢ / ٢٠٢٤</span>
+</div>
+</div>
+</div>
+<!-- Scope Dropdown -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">نطاق التقرير</label>
+<div class="flex items-center justify-between bg-surface border border-outline-variant rounded-lg px-md py-sm focus-within:border-primary transition-colors cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface">عمارة النور - كاملة</span>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full mt-sm bg-primary-container text-on-primary-container font-label-lg text-label-lg py-md rounded-lg transition-transform active:scale-[0.98] hover:bg-primary-fixed shadow-sm flex justify-center items-center gap-sm">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+                    إنشاء الكشف
+                </button>
+</div>
+</section>
+<!-- Summary Cards -->
+<section class="grid grid-cols-3 gap-sm">
+<div class="bg-surface rounded-lg border border-outline-variant p-sm flex flex-col items-center justify-center text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-xs">الإيرادات</span>
+<span class="font-headline-sm text-headline-sm text-primary">١٢٥,٠٠٠</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ر.س</span>
+</div>
+<div class="bg-surface rounded-lg border border-outline-variant p-sm flex flex-col items-center justify-center text-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-xs">المصروفات</span>
+<span class="font-headline-sm text-headline-sm text-error">٤٥,٢٠٠</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ر.س</span>
+</div>
+<div class="bg-surface-container-high rounded-lg border border-primary/30 p-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/5"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mb-xs relative z-10">صافي الربح</span>
+<span class="font-headline-md text-headline-md text-primary relative z-10">٧٩,٨٠٠</span>
+<span class="font-label-sm text-label-sm text-primary/80 relative z-10">ر.س</span>
+</div>
+</section>
+<!-- Transactions List -->
+<section class="flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-on-background">تفاصيل المعاملات</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant">٤٨ معاملة</span>
+</div>
+<div class="flex flex-col gap-sm">
+<!-- Transaction Item (Income) -->
+<div class="bg-surface rounded-lg border border-outline-variant p-md flex items-center justify-between hover:bg-surface-variant/50 transition-colors">
+<div class="flex items-start gap-md">
+<div class="bg-primary/10 p-sm rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="arrow_downward" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-body-md text-body-md text-on-background">تحصيل إيجار شقة ١٢</span>
+<div class="flex items-center gap-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">١٥ مارس ٢٠٢٤</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary/10 text-primary">إيراد</span>
+</div>
+</div>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">
+                        +٣,٥٠٠
+                    </div>
+</div>
+<!-- Transaction Item (Expense) -->
+<div class="bg-surface rounded-lg border border-outline-variant p-md flex items-center justify-between hover:bg-surface-variant/50 transition-colors">
+<div class="flex items-start gap-md">
+<div class="bg-error/10 p-sm rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-error text-[20px]" data-icon="arrow_upward" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-body-md text-body-md text-on-background">صيانة مصعد العمارة</span>
+<div class="flex items-center gap-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">١٢ مارس ٢٠٢٤</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-error/10 text-error">مصروف</span>
+</div>
+</div>
+</div>
+<div class="font-headline-sm text-headline-sm text-error">
+                        -١,٢٠٠
+                    </div>
+</div>
+<!-- Transaction Item (Income) -->
+<div class="bg-surface rounded-lg border border-outline-variant p-md flex items-center justify-between hover:bg-surface-variant/50 transition-colors">
+<div class="flex items-start gap-md">
+<div class="bg-primary/10 p-sm rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="arrow_downward" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-body-md text-body-md text-on-background">تحصيل إيجار شقة ٨</span>
+<div class="flex items-center gap-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">٠٥ مارس ٢٠٢٤</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary/10 text-primary">إيراد</span>
+</div>
+</div>
+</div>
+<div class="font-headline-sm text-headline-sm text-primary">
+                        +٢,٨٠٠
+                    </div>
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Export Action Bar -->
+<div class="fixed bottom-0 w-full z-50 bg-surface-container-high border-t border-outline-variant px-container-margin py-md shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+<div class="flex gap-md max-w-3xl mx-auto">
+<button class="flex-1 flex items-center justify-center gap-sm bg-surface border border-outline hover:bg-surface-variant text-on-surface font-label-lg text-label-lg py-sm rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+                تحميل PDF
+            </button>
+<button class="flex-1 flex items-center justify-center gap-sm bg-secondary-container hover:bg-secondary text-on-secondary-container font-label-lg text-label-lg py-sm rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="table_chart">table_chart</span>
+                تصدير Excel
+            </button>
+</div>
+</div>
+</body></html>

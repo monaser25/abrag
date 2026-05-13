@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>تفاصيل الحجز</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#00414f",
+                      "on-secondary-fixed": "#0f1c2c",
+                      "on-background": "#e2e3df",
+                      "on-error": "#690005",
+                      "inverse-surface": "#e2e3df",
+                      "outline-variant": "#3d494d",
+                      "on-secondary-fixed-variant": "#3a4859",
+                      "secondary-fixed-dim": "#bac8dc",
+                      "on-tertiary-fixed-variant": "#3c475d",
+                      "inverse-primary": "#00677d",
+                      "surface-bright": "#373a37",
+                      "primary-fixed-dim": "#4cd6fb",
+                      "surface-container": "#1e201e",
+                      "secondary-fixed": "#d6e4f9",
+                      "tertiary-fixed": "#d7e2ff",
+                      "surface-container-high": "#282b28",
+                      "secondary": "#bac8dc",
+                      "surface-container-highest": "#333533",
+                      "on-primary-fixed-variant": "#004e5f",
+                      "on-primary-fixed": "#001f27",
+                      "tertiary-fixed-dim": "#bbc6e2",
+                      "tertiary": "#bbc6e2",
+                      "surface-dim": "#111412",
+                      "secondary-container": "#3a4859",
+                      "on-primary": "#003642",
+                      "background": "#111412",
+                      "on-tertiary-container": "#303b51",
+                      "surface-container-lowest": "#0c0f0d",
+                      "on-tertiary": "#263046",
+                      "on-surface-variant": "#bcc9ce",
+                      "surface-tint": "#4cd6fb",
+                      "error-container": "#93000a",
+                      "on-secondary": "#243141",
+                      "on-secondary-container": "#a8b6ca",
+                      "inverse-on-surface": "#2f312e",
+                      "outline": "#869398",
+                      "error": "#ffb4ab",
+                      "surface-variant": "#333533",
+                      "surface-container-low": "#1a1c1a",
+                      "on-surface": "#e2e3df",
+                      "on-error-container": "#ffdad6",
+                      "surface": "#111412",
+                      "primary-fixed": "#b3ebff",
+                      "primary": "#4cd6fb",
+                      "tertiary-container": "#9aa5bf",
+                      "primary-container": "#00b4d8",
+                      "on-tertiary-fixed": "#101b30"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "xl": "40px",
+                      "sm": "8px",
+                      "gutter": "16px",
+                      "xs": "4px",
+                      "container-margin": "20px",
+                      "lg": "24px",
+                      "md": "16px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-md": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-md": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "label-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "label-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-sm": [
+                              "IBM Plex Sans Arabic"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "14px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background text-primary dark:text-primary docked full-width top-0 bg-background flex flex-row-reverse justify-between items-center w-full px-container-margin py-md z-40 sticky">
+<button class="text-on-surface hover:bg-surface-variant transition-colors p-2 rounded-full flex items-center justify-center opacity-80 duration-150">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-background">تفاصيل الحجز</h1>
+<div class="w-10"></div> <!-- Placeholder for balance -->
+</header>
+<main class="max-w-2xl mx-auto px-container-margin pt-sm pb-xl flex flex-col gap-md">
+<!-- Status Badge -->
+<div class="flex justify-start">
+<div class="inline-flex items-center gap-xs bg-[#1B263B] border border-[#415A77]/30 px-sm py-1 rounded-full text-primary-fixed">
+<span class="w-2 h-2 rounded-full bg-primary-fixed animate-pulse shadow-[0_0_8px_rgba(76,214,251,0.5)]"></span>
+<span class="font-label-sm text-label-sm">جارٍ</span>
+</div>
+</div>
+<!-- Section 1: Guest Info -->
+<section class="bg-[#1B263B] border border-[#415A77]/30 rounded-xl p-md flex flex-col gap-sm relative overflow-hidden">
+<!-- Decorative Accent -->
+<div class="absolute right-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+                معلومات الضيف
+            </h2>
+<div class="grid grid-cols-2 gap-md">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">الاسم</span>
+<span class="font-body-md text-body-md text-on-surface">أحمد محمود</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">رقم الشقة</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary-fixed text-sm" data-icon="door_front">door_front</span>
+                        101
+                    </span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">رقم الهوية</span>
+<span class="font-body-md text-body-md text-on-surface">1234567890</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">رقم الهاتف</span>
+<span class="font-body-md text-body-md text-on-surface" dir="ltr">+966 50 123 4567</span>
+</div>
+</div>
+</section>
+<!-- Section 2: Stay Info -->
+<section class="bg-[#1B263B] border border-[#415A77]/30 rounded-xl p-md flex flex-col gap-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_month">calendar_month</span>
+                معلومات الإقامة
+            </h2>
+<div class="flex justify-between items-center border-b border-[#415A77]/30 pb-sm mb-sm">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">تاريخ الإقامة</span>
+<span class="font-body-md text-body-md text-on-surface">24 - 26 أكتوبر</span>
+</div>
+<div class="bg-surface-variant/50 px-sm py-xs rounded-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary-fixed text-sm" data-icon="bedtime">bedtime</span>
+<span class="font-label-lg text-label-lg text-primary-fixed">2 يوم</span>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">السعر اليومي</span>
+<span class="font-body-md text-body-md text-on-surface">600 ر.س</span>
+</div>
+<div class="flex flex-col gap-xs items-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">الإجمالي</span>
+<span class="font-headline-sm text-headline-sm text-primary">1,200 ر.س</span>
+</div>
+</div>
+</section>
+<!-- Section 3: Source -->
+<section class="bg-[#1B263B] border border-[#415A77]/30 rounded-xl p-md flex flex-col gap-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="handshake">handshake</span>
+                مصدر الحجز
+            </h2>
+<div class="flex justify-between items-center">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">المصدر</span>
+<span class="font-body-md text-body-md text-on-surface">سمسار</span>
+</div>
+<div class="flex flex-col gap-xs items-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant">عمولة السمسار</span>
+<span class="font-body-md text-body-md text-on-surface">120 ر.س</span>
+</div>
+</div>
+</section>
+<!-- Bottom Actions (In Page Layout) -->
+<div class="mt-md flex gap-md">
+<button class="flex-1 bg-error/20 border border-error text-error hover:bg-error/30 font-label-lg text-label-lg py-3 rounded-xl transition-colors flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-sm" data-icon="logout">logout</span>
+                تسجيل خروج
+            </button>
+<button class="flex-1 bg-transparent border border-primary text-primary hover:bg-primary/10 font-label-lg text-label-lg py-3 rounded-xl transition-colors flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                تعديل
+            </button>
+</div>
+<!-- Post-Checkout Sheet Visualization -->
+<div class="mt-xl border-t border-[#415A77]/30 pt-md">
+<div class="bg-surface-container rounded-t-2xl p-md shadow-[0_-8px_24px_rgba(0,0,0,0.3)]">
+<div class="w-12 h-1 bg-outline-variant rounded-full mx-auto mb-md"></div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface text-center mb-md">حالة الشقة بعد الخروج</h3>
+<div class="grid grid-cols-2 gap-md">
+<button class="flex flex-col items-center justify-center gap-sm p-md rounded-xl border border-[#415A77]/50 bg-background hover:border-primary transition-colors focus:border-primary focus:bg-primary/5">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="cleaning_services">cleaning_services</span>
+<span class="font-label-lg text-label-lg text-on-surface">نظيفة</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-sm p-md rounded-xl border border-[#415A77]/50 bg-background hover:border-error transition-colors focus:border-error focus:bg-error/5">
+<span class="material-symbols-outlined text-error text-3xl" data-icon="mop">mop</span>
+<span class="font-label-lg text-label-lg text-on-surface">تحتاج نظافة</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة السماسرة - أبراج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#282b28",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#3a4859",
+                        "surface": "#111412",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "surface-container-low": "#1a1c1a",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "surface-variant": "#333533",
+                        "on-surface": "#e2e3df",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#333533",
+                        "on-primary-container": "#00414f",
+                        "on-secondary": "#243141",
+                        "inverse-surface": "#e2e3df",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "primary-fixed": "#b3ebff",
+                        "on-surface-variant": "#bcc9ce",
+                        "secondary": "#bac8dc",
+                        "tertiary": "#bbc6e2",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "inverse-on-surface": "#2f312e",
+                        "surface-bright": "#373a37",
+                        "background": "#111412",
+                        "outline-variant": "#3d494d",
+                        "on-background": "#e2e3df",
+                        "on-primary": "#003642",
+                        "on-tertiary-fixed": "#101b30",
+                        "tertiary-container": "#9aa5bf",
+                        "tertiary-fixed": "#d7e2ff",
+                        "surface-container": "#1e201e",
+                        "on-primary-fixed": "#001f27",
+                        "inverse-primary": "#00677d",
+                        "surface-container-lowest": "#0c0f0d",
+                        "surface-dim": "#111412",
+                        "surface-tint": "#4cd6fb",
+                        "primary": "#4cd6fb",
+                        "outline": "#869398",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "on-secondary-container": "#a8b6ca",
+                        "on-tertiary": "#263046",
+                        "primary-container": "#00b4d8",
+                        "on-tertiary-container": "#303b51",
+                        "gold": "#F4A225"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-margin": "20px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "xl": "40px",
+                        "unit": "4px",
+                        "lg": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0D1B2A] text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary font-headline-sm text-headline-sm flex flex-row-reverse justify-between items-center px-container-margin h-16 w-full fixed top-0 z-50 flat no shadows border-b border-outline-variant/30">
+<div class="flex items-center gap-4 flex-row-reverse">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:bg-secondary-container dark:hover:bg-secondary-container transition-colors p-2 rounded-full active:scale-95 duration-150 flex items-center justify-center">
+<span class="material-symbols-outlined" style="transform: scaleX(-1);">arrow_forward</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary">إدارة السماسرة</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-variant flex-shrink-0">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a mature businessman in a dark navy suit against a soft, out-of-focus modern office background. The lighting is flattering and high-contrast, emphasizing trust and stability, aligning with the premium dark corporate theme of the application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFXloWJ-zAzPMDCwyUH9l0TtjeTP8WWrlWJt_RlMKVZdwEeVN37KAzEU_FHeXk5rxQma4kg-nrz75_QuwW4M4nBBwaBPUZNw2aPUIUcgkP391gkqVtMi77Cwyb8Ys_F4q2XQP6cm5yg9llEgziPfhuYB2uJWnVJdjOZFrtfBi5eJn9D1lcGopqieh3bBaLNUiQvl2MjkuJh7QR5BHjvxSrR9kq7Bn4fTKt8WFHrSDruIV3jOaNiVH1oheJncyCbF-34soIwD5hwTY"/>
+</div>
+</header>
+<main class="pt-24 px-container-margin max-w-4xl mx-auto space-y-lg">
+<!-- Header Summary Card -->
+<section class="bg-[#1B263B] rounded-xl p-md border border-[#415A77]/30 shadow-md relative overflow-hidden">
+<div class="absolute top-0 right-0 w-2 h-full bg-gold"></div>
+<div class="flex flex-col gap-sm">
+<h2 class="font-label-lg text-label-lg text-on-surface-variant">إجمالي العمولات المدفوعة هذا الموسم</h2>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-gold">450,000</span>
+<span class="font-body-md text-body-md text-on-surface-variant">جنيه</span>
+</div>
+</div>
+<div class="absolute bottom-[-20px] left-[-20px] opacity-10">
+<span class="material-symbols-outlined" style="font-size: 120px;">account_balance_wallet</span>
+</div>
+</section>
+<!-- Broker List -->
+<section class="space-y-md">
+<!-- Broker Card 1 -->
+<article class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-white mb-xs">أحمد محمود</h3>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-gold text-lg">call</span>
+<span class="font-body-sm text-body-sm" dir="ltr">+20 100 123 4567</span>
+</div>
+</div>
+<div class="bg-gold/10 text-gold font-label-sm text-label-sm px-3 py-1 rounded-full border border-gold/30">
+                        10% عمولة
+                    </div>
+</div>
+<div class="grid grid-cols-2 gap-md bg-[#0D1B2A]/50 rounded-lg p-sm border border-[#415A77]/20">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">عدد الحجوزات</p>
+<p class="font-body-lg text-body-lg text-white">24</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">إجمالي العمولة</p>
+<p class="font-body-lg text-body-lg text-gold">120,000 ج.م</p>
+</div>
+</div>
+</article>
+<!-- Broker Card 2 -->
+<article class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-white mb-xs">محمد طارق</h3>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-gold text-lg">call</span>
+<span class="font-body-sm text-body-sm" dir="ltr">+20 112 345 6789</span>
+</div>
+</div>
+<div class="bg-gold/10 text-gold font-label-sm text-label-sm px-3 py-1 rounded-full border border-gold/30">
+                        12% عمولة
+                    </div>
+</div>
+<div class="grid grid-cols-2 gap-md bg-[#0D1B2A]/50 rounded-lg p-sm border border-[#415A77]/20">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">عدد الحجوزات</p>
+<p class="font-body-lg text-body-lg text-white">18</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">إجمالي العمولة</p>
+<p class="font-body-lg text-body-lg text-gold">95,500 ج.م</p>
+</div>
+</div>
+</article>
+<!-- Broker Card 3 -->
+<article class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-white mb-xs">شركة النخبة العقارية</h3>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-gold text-lg">call</span>
+<span class="font-body-sm text-body-sm" dir="ltr">+20 2 2345 6789</span>
+</div>
+</div>
+<div class="bg-gold/10 text-gold font-label-sm text-label-sm px-3 py-1 rounded-full border border-gold/30">
+                        8% عمولة
+                    </div>
+</div>
+<div class="grid grid-cols-2 gap-md bg-[#0D1B2A]/50 rounded-lg p-sm border border-[#415A77]/20">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">عدد الحجوزات</p>
+<p class="font-body-lg text-body-lg text-white">45</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">إجمالي العمولة</p>
+<p class="font-body-lg text-body-lg text-gold">234,500 ج.م</p>
+</div>
+</div>
+</article>
+</section>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-24 left-6 bg-[#1B263B] border-2 border-gold text-gold w-14 h-14 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(244,162,37,0.3)] hover:scale-105 active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined" style="font-size: 28px;">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary font-label-sm text-label-sm fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant/30 shadow-md flex flex-row-reverse justify-around items-center h-20 pb-safe px-sm hidden md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span>لوحة القيادة</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">domain</span>
+<span>العقارات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span>الإعدادات</span>
+</a>
+</nav>
+<!-- Desktop Nav (Hidden on Mobile) -->
+<nav class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary font-label-sm text-label-sm fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant/30 shadow-md md:flex flex-row-reverse justify-around items-center h-20 pb-safe px-sm hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span>لوحة القيادة</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">domain</span>
+<span>العقارات</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1">settings</span>
+<span>الإعدادات</span>
+</a>
+</nav>
+</body></html>

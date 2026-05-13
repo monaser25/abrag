@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>أبراج - قراءات عداد الكهرباء</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#869398",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "primary-fixed": "#b3ebff",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-secondary-container": "#a8b6ca",
+                        "tertiary-container": "#9aa5bf",
+                        "on-tertiary-fixed": "#101b30",
+                        "background": "#111412",
+                        "on-tertiary-container": "#303b51",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "error": "#ffb4ab",
+                        "tertiary": "#bbc6e2",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "outline-variant": "#3d494d",
+                        "surface-container-high": "#282b28",
+                        "surface-container-lowest": "#0c0f0d",
+                        "surface-variant": "#333533",
+                        "surface-container-highest": "#333533",
+                        "surface": "#111412",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#111412",
+                        "surface-container": "#1e201e",
+                        "on-primary-fixed": "#001f27",
+                        "primary": "#4cd6fb",
+                        "on-surface": "#e2e3df",
+                        "primary-container": "#00b4d8",
+                        "inverse-on-surface": "#2f312e",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e2e3df",
+                        "surface-tint": "#4cd6fb",
+                        "surface-bright": "#373a37",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-tertiary": "#263046",
+                        "on-surface-variant": "#bcc9ce",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "inverse-primary": "#00677d",
+                        "on-primary-container": "#00414f",
+                        "on-background": "#e2e3df",
+                        "on-primary": "#003642",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#1a1c1a",
+                        "secondary-container": "#3a4859",
+                        "secondary": "#bac8dc",
+                        "on-secondary": "#243141",
+                        "tertiary-fixed": "#d7e2ff",
+                        "brand-gold": "#F4A225",
+                        "brand-navy": "#0D1B2A",
+                        "brand-navy-light": "#1B263B",
+                        "brand-border": "#415A77"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "40px",
+                        "unit": "4px",
+                        "container-margin": "20px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        .bg-brand-navy { background-color: #0D1B2A; }
+        .bg-brand-navy-light { background-color: #1B263B; }
+        .border-brand-subtle { border-color: rgba(65, 90, 119, 0.3); }
+        .text-brand-gold { color: #F4A225; }
+        .bg-brand-gold { background-color: #F4A225; }
+        .border-brand-gold { border-color: #F4A225; }
+        .glow-gold { box-shadow: 0 0 10px rgba(244, 162, 37, 0.1); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-brand-navy text-on-surface min-h-screen flex flex-col pt-16 pb-20 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-brand-navy flex flex-row-reverse justify-between items-center px-container-margin h-16 w-full flat no shadows">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-secondary-container transition-colors active:scale-95 duration-150 p-2 rounded-full cursor-pointer" style="transform: scaleX(-1);">arrow_forward</span>
+<h1 class="font-headline-md text-headline-md text-on-surface">أبراج</h1>
+</div>
+<div class="w-8 h-8 rounded-full bg-brand-navy-light overflow-hidden border border-brand-subtle">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxNLI_RQqel-SvvrmOsv_duSPiS9TGAHACqPb1LucZgaFJ4aKfZc2c3AEA5xsb5ZNAU2Tn5mCIsTmwgC97pd1BOpjA65FBgz6WEU8CIffjLDpr8OlYiDawoA58yrugIHAb02CiJklDEB_4gzELYVjQa4YmYwH6YZxzMzGraC2o52vmrK0aAlfkxa9UDpNBKk-T0Qhb8TyfBcIDwTDmZKaJU6CO7jfJScrkx4ov5geRitxlpZxZ2KOvkcBnsgcbc3qqXDGSu-40Vpk"/>
+</div>
+</header>
+<main class="flex-grow w-full max-w-3xl mx-auto px-container-margin py-lg flex flex-col gap-lg">
+<!-- Header Section & Dropdown -->
+<div class="flex flex-col gap-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">قراءات عداد الكهرباء</h2>
+<div class="relative w-full max-w-xs">
+<select class="w-full bg-brand-navy-light border border-brand-subtle rounded-lg py-3 px-4 appearance-none font-body-md text-body-md text-on-surface focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold cursor-pointer">
+<option>شقة 101 - برج الياسمين</option>
+<option>شقة 205 - برج النور</option>
+</select>
+<div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Current Reading Card -->
+<section class="bg-brand-navy-light rounded-xl border border-brand-gold/30 p-md glow-gold relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-gold/5 rounded-full blur-xl"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">آخر قراءة مسجلة</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">15 أكتوبر 2023</span>
+</div>
+<div class="bg-brand-gold/10 p-2 rounded-lg border border-brand-gold/20">
+<span class="material-symbols-outlined text-brand-gold">electric_meter</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2 relative z-10">
+<span class="font-headline-lg text-headline-lg text-on-surface">12,450</span>
+<span class="font-body-sm text-body-sm text-brand-gold">كيلوواط</span>
+</div>
+</section>
+<!-- Consumption Chart (Simulated with CSS/HTML for layout) -->
+<section class="bg-brand-navy-light rounded-xl border border-brand-subtle p-md flex flex-col gap-md">
+<h3 class="font-label-lg text-label-lg text-on-surface">الاستهلاك الشهري</h3>
+<div class="h-40 w-full relative flex items-end justify-between px-2 pb-6 border-b border-brand-subtle/50 pt-4">
+<!-- Chart Bars Simulate -->
+<div class="flex flex-col items-center gap-2 group w-1/5">
+<div class="w-full bg-brand-border/30 group-hover:bg-brand-gold/50 rounded-t-sm transition-all h-[40%] relative">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-label-sm text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">250</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant absolute -bottom-1">يونيو</span>
+</div>
+<div class="flex flex-col items-center gap-2 group w-1/5">
+<div class="w-full bg-brand-border/30 group-hover:bg-brand-gold/50 rounded-t-sm transition-all h-[60%] relative">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-label-sm text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">320</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant absolute -bottom-1">يوليو</span>
+</div>
+<div class="flex flex-col items-center gap-2 group w-1/5">
+<div class="w-full bg-brand-border/30 group-hover:bg-brand-gold/50 rounded-t-sm transition-all h-[80%] relative">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-label-sm text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">410</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant absolute -bottom-1">أغسطس</span>
+</div>
+<div class="flex flex-col items-center gap-2 group w-1/5">
+<div class="w-full bg-brand-border/30 group-hover:bg-brand-gold/50 rounded-t-sm transition-all h-[70%] relative">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-label-sm text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">380</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant absolute -bottom-1">سبتمبر</span>
+</div>
+<div class="flex flex-col items-center gap-2 group w-1/5">
+<div class="w-full bg-brand-gold rounded-t-sm transition-all h-[65%] relative shadow-[0_0_8px_rgba(244,162,37,0.4)]">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-label-sm text-brand-gold">350</span>
+</div>
+<span class="font-label-sm text-label-sm text-brand-gold absolute -bottom-1">أكتوبر</span>
+</div>
+</div>
+</section>
+<!-- Primary Action -->
+<button class="w-full bg-brand-gold text-brand-navy font-headline-sm text-headline-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#ffb545] transition-colors shadow-[0_4px_14px_rgba(244,162,37,0.2)] active:scale-[0.98]">
+<span class="material-symbols-outlined font-bold">add</span>
+            إضافة قراءة جديدة
+        </button>
+<!-- History List -->
+<section class="flex flex-col gap-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mt-sm">سجل القراءات</h3>
+<div class="flex flex-col gap-3">
+<!-- Item 1 -->
+<div class="bg-brand-navy-light rounded-xl border border-brand-subtle p-md flex flex-col gap-3">
+<div class="flex justify-between items-center border-b border-brand-subtle/50 pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-brand-gold text-xl">event</span>
+<span class="font-label-lg text-label-lg text-on-surface">15 أكتوبر 2023</span>
+</div>
+<span class="font-label-lg text-label-lg text-brand-gold bg-brand-gold/10 px-2 py-1 rounded">520 ج.م</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">قيمة العداد</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">12,450 كيلوواط</span>
+</div>
+<div class="flex flex-col text-left" style="text-align: left;">
+<span class="font-label-sm text-label-sm text-on-surface-variant">الاستهلاك</span>
+<span class="font-body-md text-body-md text-error">+350 كيلوواط</span>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-brand-navy-light rounded-xl border border-brand-subtle p-md flex flex-col gap-3 opacity-90">
+<div class="flex justify-between items-center border-b border-brand-subtle/50 pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">event</span>
+<span class="font-label-lg text-label-lg text-on-surface">15 سبتمبر 2023</span>
+</div>
+<span class="font-label-lg text-label-lg text-brand-gold bg-brand-gold/10 px-2 py-1 rounded">560 ج.م</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">قيمة العداد</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">12,100 كيلوواط</span>
+</div>
+<div class="flex flex-col text-left" style="text-align: left;">
+<span class="font-label-sm text-label-sm text-on-surface-variant">الاستهلاك</span>
+<span class="font-body-md text-body-md text-error">+380 كيلوواط</span>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-brand-navy-light rounded-xl border border-brand-subtle p-md flex flex-col gap-3 opacity-80">
+<div class="flex justify-between items-center border-b border-brand-subtle/50 pb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">event</span>
+<span class="font-label-lg text-label-lg text-on-surface">15 أغسطس 2023</span>
+</div>
+<span class="font-label-lg text-label-lg text-brand-gold bg-brand-gold/10 px-2 py-1 rounded">615 ج.م</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">قيمة العداد</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">11,720 كيلوواط</span>
+</div>
+<div class="flex flex-col text-left" style="text-align: left;">
+<span class="font-label-sm text-label-sm text-on-surface-variant">الاستهلاك</span>
+<span class="font-body-md text-body-md text-error">+410 كيلوواط</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Hidden on desktop, shown on mobile) -->
+<nav class="md:hidden bg-surface-container dark:bg-surface-container fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant/30 shadow-md flex flex-row-reverse justify-around items-center h-20 pb-safe px-sm">
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200 cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">لوحة القيادة</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-primary dark:text-primary rounded-xl px-4 py-1 active:scale-90 duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span class="font-label-sm text-label-sm">العقارات</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">الإعدادات</span>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>مرحباً بك في أبراج</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: IBM Plex Sans Arabic -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#333533",
+                    "primary-container": "#00b4d8",
+                    "on-tertiary": "#263046",
+                    "on-surface-variant": "#bcc9ce",
+                    "tertiary": "#bbc6e2",
+                    "inverse-primary": "#00677d",
+                    "on-tertiary-fixed": "#101b30",
+                    "tertiary-fixed": "#d7e2ff",
+                    "secondary-fixed": "#d6e4f9",
+                    "on-primary-fixed-variant": "#004e5f",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#bbc6e2",
+                    "tertiary-container": "#9aa5bf",
+                    "secondary-container": "#3a4859",
+                    "surface-container-lowest": "#0c0f0d",
+                    "surface-bright": "#373a37",
+                    "on-secondary-fixed-variant": "#3a4859",
+                    "on-tertiary-container": "#303b51",
+                    "surface-tint": "#4cd6fb",
+                    "primary": "#4cd6fb",
+                    "surface-container-low": "#1a1c1a",
+                    "surface-container-high": "#282b28",
+                    "secondary-fixed-dim": "#bac8dc",
+                    "on-primary-fixed": "#001f27",
+                    "on-primary": "#003642",
+                    "surface-dim": "#111412",
+                    "on-error": "#690005",
+                    "secondary": "#bac8dc",
+                    "on-background": "#e2e3df",
+                    "inverse-surface": "#e2e3df",
+                    "primary-fixed-dim": "#4cd6fb",
+                    "on-secondary-container": "#a8b6ca",
+                    "surface-container": "#1e201e",
+                    "outline": "#869398",
+                    "primary-fixed": "#b3ebff",
+                    "background": "#111412",
+                    "error-container": "#93000a",
+                    "error": "#ffb4ab",
+                    "surface-container-highest": "#333533",
+                    "on-secondary-fixed": "#0f1c2c",
+                    "on-tertiary-fixed-variant": "#3c475d",
+                    "surface": "#111412",
+                    "on-surface": "#e2e3df",
+                    "outline-variant": "#3d494d",
+                    "on-primary-container": "#00414f",
+                    "on-secondary": "#243141",
+                    "inverse-on-surface": "#2f312e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-margin": "20px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "lg": "24px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "headline-md": ["IBM Plex Sans Arabic"],
+                    "body-md": ["IBM Plex Sans Arabic"],
+                    "label-sm": ["IBM Plex Sans Arabic"],
+                    "label-lg": ["IBM Plex Sans Arabic"],
+                    "body-sm": ["IBM Plex Sans Arabic"],
+                    "headline-sm": ["IBM Plex Sans Arabic"],
+                    "headline-lg": ["IBM Plex Sans Arabic"],
+                    "body-lg": ["IBM Plex Sans Arabic"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["30px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Main Container -->
+<main class="flex-1 flex flex-col w-full max-w-md mx-auto px-container-margin py-lg relative">
+<!-- Progress Header -->
+<header class="w-full flex items-center justify-between mb-xl">
+<div class="text-on-surface-variant font-label-lg text-label-lg whitespace-nowrap">خطوة ١ من ٤</div>
+<div class="flex-1 mr-md bg-surface-container-high h-2 rounded-full overflow-hidden border border-outline-variant/20">
+<!-- Progress Bar Fill -->
+<div class="bg-primary h-full w-1/4 rounded-full relative">
+<div class="absolute inset-0 bg-white/20"></div>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="flex flex-col items-center text-center mb-xl pt-lg">
+<!-- App Logo Concept -->
+<div class="w-24 h-24 bg-surface-container-low border border-outline-variant/30 rounded-2xl flex items-center justify-center mb-lg shadow-lg relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent"></div>
+<span class="material-symbols-outlined text-primary text-[48px] drop-shadow-[0_0_8px_rgba(76,214,251,0.3)]">location_city</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-primary mb-sm">أبراج</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant px-md">مرحباً بك في تطبيق أبراج لإدارة الأملاك</p>
+</section>
+<!-- Form Section -->
+<section class="flex flex-col gap-lg flex-1 w-full bg-surface-container-low/50 p-md rounded-xl border border-outline-variant/20 shadow-sm backdrop-blur-sm">
+<!-- Manager Name Input -->
+<div class="flex flex-col gap-sm relative">
+<label class="text-label-sm font-label-sm text-on-surface-variant text-right" for="manager-name">اسم المدير</label>
+<div class="relative">
+<input class="w-full bg-surface-container border border-outline-variant/40 text-on-surface text-body-md font-body-md rounded-lg px-md py-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50" id="manager-name" placeholder="أدخل اسمك الكامل" type="text"/>
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline-variant text-[20px] pointer-events-none">person</span>
+</div>
+</div>
+<!-- Phone Number Input -->
+<div class="flex flex-col gap-sm relative">
+<label class="text-label-sm font-label-sm text-on-surface-variant text-right" for="phone-number">رقم الهاتف</label>
+<div class="flex bg-surface-container border border-outline-variant/40 rounded-lg overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all group">
+<!-- Country Code Prefix -->
+<div class="flex items-center gap-xs px-sm bg-surface-container-high border-l border-outline-variant/40" dir="ltr">
+<span class="text-body-md font-body-md text-on-surface">🇸🇦</span>
+<span class="text-body-md font-body-md text-on-surface font-medium mt-[2px]">+966</span>
+</div>
+<!-- Phone Input Field -->
+<input class="flex-1 bg-transparent text-on-surface text-body-md font-body-md px-md py-sm outline-none w-full placeholder:text-on-surface-variant/50 border-none focus:ring-0 text-left" dir="ltr" id="phone-number" placeholder="5X XXX XXXX" type="tel"/>
+</div>
+</div>
+</section>
+<!-- Bottom Action -->
+<footer class="mt-xl pt-md pb-safe-bottom w-full bg-surface">
+<!-- Using primary color as mandated by strict styling rules instead of arbitrary gold hex -->
+<button class="w-full bg-primary text-on-primary font-label-lg text-label-lg py-md rounded-xl hover:bg-primary-container hover:text-on-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-[0_0_12px_rgba(76,214,251,0.15)] group relative overflow-hidden">
+<span class="relative z-10 font-bold">التالي</span>
+<span class="material-symbols-outlined relative z-10 text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</button>
+</footer>
+</main>
+</body></html>

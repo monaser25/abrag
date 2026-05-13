@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إضافة حجز جديد</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#333533",
+                        "surface-container-low": "#1a1c1a",
+                        "on-surface": "#e2e3df",
+                        "on-secondary-container": "#a8b6ca",
+                        "inverse-on-surface": "#2f312e",
+                        "error": "#ffb4ab",
+                        "outline": "#869398",
+                        "tertiary-container": "#9aa5bf",
+                        "primary-container": "#00b4d8",
+                        "on-tertiary-fixed": "#101b30",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#111412",
+                        "primary-fixed": "#b3ebff",
+                        "primary": "#4cd6fb",
+                        "on-tertiary-container": "#303b51",
+                        "surface-container-lowest": "#0c0f0d",
+                        "background": "#111412",
+                        "surface-tint": "#4cd6fb",
+                        "on-secondary": "#243141",
+                        "error-container": "#93000a",
+                        "on-tertiary": "#263046",
+                        "on-surface-variant": "#bcc9ce",
+                        "tertiary-fixed": "#d7e2ff",
+                        "secondary-fixed": "#d6e4f9",
+                        "tertiary": "#bbc6e2",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-primary": "#003642",
+                        "surface-dim": "#111412",
+                        "secondary-container": "#3a4859",
+                        "surface-container-highest": "#333533",
+                        "surface-container-high": "#282b28",
+                        "secondary": "#bac8dc",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-primary-fixed": "#001f27",
+                        "outline-variant": "#3d494d",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e2e3df",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "on-primary-container": "#00414f",
+                        "on-background": "#e2e3df",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "surface-container": "#1e201e",
+                        "surface-bright": "#373a37",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "inverse-primary": "#00677d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "xl": "40px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "xs": "4px",
+                        "container-margin": "20px",
+                        "lg": "24px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation (Transactional intent - no main nav shell) -->
+<header class="bg-background text-primary px-container-margin py-md flex items-center justify-between sticky top-0 z-10 w-full">
+<button aria-label="العودة" class="text-on-surface-variant hover:bg-surface-variant transition-colors p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" type="button">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary flex-1 text-center">إضافة حجز جديد</h1>
+<!-- Invisible placeholder to balance flex layout -->
+<div class="w-10"></div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-container-margin pb-xl pt-sm flex flex-col gap-lg">
+<!-- Form Container -->
+<form class="bg-[#1B263B] rounded-xl border border-[#415A77]/30 shadow-lg p-lg flex flex-col gap-md">
+<!-- Form Section: Property Details -->
+<fieldset class="flex flex-col gap-md">
+<legend class="sr-only">تفاصيل العقار</legend>
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="apartment_number">رقم الشقة</label>
+<div class="relative">
+<select class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 appearance-none font-body-md text-body-md pr-10 text-right cursor-pointer shadow-sm" id="apartment_number" name="apartment_number">
+<option disabled="" selected="" value="">اختر الشقة</option>
+<option value="101">101</option>
+<option value="102">102</option>
+<option value="103">103</option>
+<option value="201">201</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#101b30]">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+</fieldset>
+<hr class="border-[#415A77]/20 my-2"/>
+<!-- Form Section: Guest Details -->
+<fieldset class="flex flex-col gap-md">
+<legend class="sr-only">بيانات الضيف</legend>
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="guest_name">الاسم الكامل للضيف</label>
+<div class="relative">
+<input class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 font-body-md text-body-md pr-10 text-right shadow-sm placeholder:text-gray-400" id="guest_name" name="guest_name" placeholder="أدخل اسم الضيف" type="text"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">person</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="national_id">رقم الهوية الوطنية</label>
+<div class="relative">
+<input class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 font-body-md text-body-md pr-10 text-right shadow-sm placeholder:text-gray-400" id="national_id" name="national_id" placeholder="أدخل رقم الهوية" type="text"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">badge</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="phone_number">رقم الهاتف</label>
+<div class="relative">
+<input class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 font-body-md text-body-md pr-10 text-right shadow-sm placeholder:text-gray-400" dir="ltr" id="phone_number" name="phone_number" placeholder="أدخل رقم الهاتف" type="tel"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">call</span>
+</div>
+</div>
+</div>
+</div>
+</fieldset>
+<hr class="border-[#415A77]/20 my-2"/>
+<!-- Form Section: Booking Dates & Financials -->
+<fieldset class="flex flex-col gap-md">
+<legend class="sr-only">تواريخ الحجز والتكلفة</legend>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="check_in">تاريخ تسجيل الدخول</label>
+<div class="relative">
+<input class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 font-body-md text-body-md pr-10 text-right shadow-sm cursor-pointer [&amp;::-webkit-calendar-picker-indicator]:opacity-0 [&amp;::-webkit-calendar-picker-indicator]:absolute [&amp;::-webkit-calendar-picker-indicator]:inset-0 [&amp;::-webkit-calendar-picker-indicator]:w-full [&amp;::-webkit-calendar-picker-indicator]:cursor-pointer" id="check_in" name="check_in" type="date"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="check_out">تاريخ المغادرة</label>
+<div class="relative">
+<input class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 font-body-md text-body-md pr-10 text-right shadow-sm cursor-pointer [&amp;::-webkit-calendar-picker-indicator]:opacity-0 [&amp;::-webkit-calendar-picker-indicator]:absolute [&amp;::-webkit-calendar-picker-indicator]:inset-0 [&amp;::-webkit-calendar-picker-indicator]:w-full [&amp;::-webkit-calendar-picker-indicator]:cursor-pointer" id="check_out" name="check_out" type="date"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">event_busy</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md items-end">
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="daily_price">السعر اليومي (رس)</label>
+<div class="relative">
+<input class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary h-12 px-4 font-body-md text-body-md pr-10 text-right shadow-sm placeholder:text-gray-400" id="daily_price" name="daily_price" placeholder="0.00" type="number"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#101b30]">
+<span class="material-symbols-outlined">payments</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="total_price">السعر الإجمالي</label>
+<div class="relative">
+<input class="w-full bg-surface-container-high text-on-surface rounded-lg border border-[#415A77]/30 h-12 px-4 font-headline-md text-headline-md pr-10 text-right shadow-inner cursor-not-allowed text-primary-container" id="total_price" name="total_price" readonly="" type="text" value="0.00"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-primary-container">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+</div>
+</div>
+</div>
+</fieldset>
+<hr class="border-[#415A77]/20 my-2"/>
+<!-- Form Section: Additional Info -->
+<fieldset class="flex flex-col gap-md">
+<legend class="sr-only">معلومات إضافية</legend>
+<div class="flex flex-col gap-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant text-right">مصدر الحجز</span>
+<div class="flex flex-row-reverse rounded-lg overflow-hidden border border-[#415A77]/50 p-1 bg-surface-container-low h-14 w-full md:w-2/3 mx-auto shadow-inner">
+<label class="flex-1 text-center relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="booking_source" type="radio" value="direct"/>
+<div class="h-full flex items-center justify-center font-label-lg text-label-lg text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container peer-checked:shadow-sm rounded-md transition-all duration-200">
+<span class="material-symbols-outlined ml-2 text-[20px]">person_check</span>
+                                مباشر
+                            </div>
+</label>
+<label class="flex-1 text-center relative cursor-pointer group">
+<input class="peer sr-only" name="booking_source" type="radio" value="broker"/>
+<div class="h-full flex items-center justify-center font-label-lg text-label-lg text-on-surface-variant peer-checked:bg-primary-container peer-checked:text-on-primary-container peer-checked:shadow-sm rounded-md transition-all duration-200">
+<span class="material-symbols-outlined ml-2 text-[20px]">handshake</span>
+                                سمسار
+                            </div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant text-right" for="notes">ملاحظات (اختياري)</label>
+<textarea class="w-full bg-white text-on-tertiary-fixed rounded-lg border-none focus:ring-2 focus:ring-primary p-4 font-body-md text-body-md text-right shadow-sm placeholder:text-gray-400 resize-none" id="notes" name="notes" placeholder="أضف أي ملاحظات خاصة بالحجز هنا..." rows="3"></textarea>
+</div>
+</fieldset>
+</form>
+<!-- Action Area -->
+<div class="mt-4 pb-8">
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-2 hover:bg-primary-fixed transition-colors shadow-[0_4px_14px_0_rgba(0,180,216,0.39)] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" type="submit">
+<span class="material-symbols-outlined icon-fill">save</span>
+                حفظ الحجز
+            </button>
+</div>
+</main>
+</body></html>

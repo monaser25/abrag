@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إضافة عمارة جديدة - أبراج</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#101b30",
+                      "inverse-surface": "#e2e3df",
+                      "error-container": "#93000a",
+                      "on-primary-fixed": "#001f27",
+                      "inverse-on-surface": "#2f312e",
+                      "secondary-fixed-dim": "#bac8dc",
+                      "surface-container-highest": "#333533",
+                      "on-surface-variant": "#bcc9ce",
+                      "outline-variant": "#3d494d",
+                      "on-secondary": "#243141",
+                      "secondary-fixed": "#d6e4f9",
+                      "primary-fixed-dim": "#4cd6fb",
+                      "primary": "#4cd6fb",
+                      "on-primary-fixed-variant": "#004e5f",
+                      "tertiary-fixed": "#d7e2ff",
+                      "on-surface": "#e2e3df",
+                      "on-tertiary-container": "#303b51",
+                      "on-secondary-fixed": "#0f1c2c",
+                      "on-background": "#e2e3df",
+                      "surface-container-low": "#1a1c1a",
+                      "on-error-container": "#ffdad6",
+                      "tertiary": "#bbc6e2",
+                      "surface-tint": "#4cd6fb",
+                      "surface-variant": "#333533",
+                      "surface-bright": "#373a37",
+                      "surface": "#111412",
+                      "on-secondary-fixed-variant": "#3a4859",
+                      "surface-container": "#1e201e",
+                      "on-primary": "#003642",
+                      "on-tertiary": "#263046",
+                      "surface-container-high": "#282b28",
+                      "secondary": "#bac8dc",
+                      "primary-fixed": "#b3ebff",
+                      "outline": "#869398",
+                      "error": "#ffb4ab",
+                      "on-primary-container": "#00414f",
+                      "background": "#111412",
+                      "surface-container-lowest": "#0c0f0d",
+                      "tertiary-container": "#9aa5bf",
+                      "surface-dim": "#111412",
+                      "inverse-primary": "#00677d",
+                      "on-error": "#690005",
+                      "on-secondary-container": "#a8b6ca",
+                      "tertiary-fixed-dim": "#bbc6e2",
+                      "on-tertiary-fixed-variant": "#3c475d",
+                      "secondary-container": "#3a4859",
+                      "primary-container": "#00b4d8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "xl": "40px",
+                      "gutter": "16px",
+                      "xs": "4px",
+                      "unit": "4px",
+                      "sm": "8px",
+                      "md": "16px",
+                      "container-margin": "20px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "label-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-md": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "label-lg": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-sm": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "headline-md": [
+                              "IBM Plex Sans Arabic"
+                      ],
+                      "body-sm": [
+                              "IBM Plex Sans Arabic"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "14px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        /* Custom styles to match the required #0D1B2A navy and #F4A225 gold theme while using tailwind config as base */
+        body {
+            background-color: #0D1B2A; /* Deep Navy Background */
+            color: #e2e3df; /* on-surface */
+        }
+        .bg-card-navy {
+            background-color: #1B263B; /* Slightly lighter navy for cards */
+        }
+        .text-gold {
+            color: #F4A225; /* Gold accents */
+        }
+        .bg-gold {
+            background-color: #F4A225;
+        }
+        .border-gold {
+            border-color: #F4A225;
+        }
+        
+        /* Custom Input Styling */
+        .form-input {
+            background-color: #f8fafc; /* Very light gray/white for high contrast inputs */
+            color: #0f1c2c; /* Dark text for readability */
+            border: 1px solid #3d494d;
+        }
+        .form-input:focus {
+            border-color: #F4A225; /* Gold focus instead of teal for this specific request */
+            box-shadow: 0 0 0 1px #F4A225;
+        }
+        .form-label {
+            color: #bcc9ce; /* on-surface-variant */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary font-headline-sm text-headline-sm flex items-center justify-between px-gutter w-full h-16 docked full-width top-0 border-b border-outline-variant/30 flat no shadows sticky z-40" style="background-color: #0D1B2A;">
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" style="transform: scaleX(-1);">arrow_forward</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-gold">إضافة عمارة جديدة</h1>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow p-container-margin md:p-lg pb-32">
+<div class="max-w-3xl mx-auto space-y-lg">
+<!-- Section 1: البيانات الأساسية -->
+<section class="bg-card-navy rounded-xl border border-outline-variant/30 p-md shadow-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-gold">apartment</span>
+                    البيانات الأساسية
+                </h2>
+<div class="space-y-sm">
+<!-- اسم العمارة -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="buildingName">اسم العمارة</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="buildingName" placeholder="أدخل اسم العمارة" type="text"/>
+</div>
+<!-- العنوان / الموقع -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="buildingAddress">العنوان / الموقع</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="buildingAddress" placeholder="أدخل العنوان التفصيلي" type="text"/>
+</div>
+<!-- عدد الطوابق -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="buildingFloors">عدد الطوابق</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="buildingFloors" placeholder="0" type="number"/>
+</div>
+</div>
+</section>
+<!-- Section 2: بيانات المالك -->
+<section class="bg-card-navy rounded-xl border border-outline-variant/30 p-md shadow-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-gold">person</span>
+                    بيانات المالك
+                </h2>
+<div class="space-y-sm">
+<!-- اسم صاحب العمارة -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="ownerName">اسم صاحب العمارة</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="ownerName" placeholder="الاسم الرباعي" type="text"/>
+</div>
+<!-- رقم هاتفه -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="ownerPhone">رقم هاتفه</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors text-right" dir="ltr" id="ownerPhone" placeholder="010XXXXXXXX" type="tel"/>
+</div>
+</div>
+</section>
+<!-- Section 3: الإيجار السنوي -->
+<section class="bg-card-navy rounded-xl border border-outline-variant/30 p-md shadow-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-gold">payments</span>
+                    الإيجار السنوي
+                </h2>
+<div class="space-y-sm">
+<!-- إجمالي الإيجار السنوي -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="annualRent">إجمالي الإيجار السنوي</label>
+<div class="relative">
+<input class="form-input w-full rounded-lg pr-12 pl-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="annualRent" placeholder="0" type="number"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-on-primary-fixed-variant font-label-sm font-bold">ج.م</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+<!-- تاريخ بداية العقد -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="contractStart">تاريخ بداية العقد</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="contractStart" type="date"/>
+</div>
+<!-- تاريخ نهاية العقد -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm form-label text-right" for="contractEnd">تاريخ نهاية العقد</label>
+<input class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors" id="contractEnd" type="date"/>
+</div>
+</div>
+<!-- عدد الأقساط -->
+<div class="flex flex-col gap-xs pt-2">
+<label class="font-label-sm text-label-sm form-label text-right">عدد الأقساط</label>
+<div class="bg-surface-container-high rounded-lg p-3 flex items-center justify-between border border-outline-variant/30 cursor-not-allowed opacity-80">
+<span class="font-body-md text-on-surface">4 أقساط</span>
+<span class="material-symbols-outlined text-on-surface-variant">lock</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 text-right">محدد مسبقاً (ربع سنوي)</p>
+</div>
+</div>
+</section>
+<!-- Section 4: ملاحظات -->
+<section class="bg-card-navy rounded-xl border border-outline-variant/30 p-md shadow-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-gold">notes</span>
+                    ملاحظات
+                </h2>
+<div class="flex flex-col gap-xs">
+<label class="sr-only font-label-sm text-label-sm form-label" for="buildingNotes">ملاحظات إضافية</label>
+<textarea class="form-input w-full rounded-lg px-3 py-2 font-body-md text-body-md focus:outline-none transition-colors resize-none" id="buildingNotes" placeholder="أضف أي ملاحظات أو تفاصيل أخرى هنا..." rows="4"></textarea>
+</div>
+</section>
+</div>
+</main>
+<!-- Fixed Bottom Action Area -->
+<div class="fixed bottom-0 left-0 w-full p-container-margin bg-[#0D1B2A] border-t border-outline-variant/30 z-50">
+<div class="max-w-3xl mx-auto">
+<button class="w-full bg-gold hover:bg-[#d98b1a] text-[#0D1B2A] font-headline-sm text-headline-sm font-bold py-3 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined font-bold">save</span>
+                حفظ البيانات
+            </button>
+</div>
+</div>
+</body></html>

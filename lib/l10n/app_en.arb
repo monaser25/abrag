@@ -1,0 +1,39 @@
+{
+  "@@locale": "en",
+  "appTitle": "Abrag",
+  "loginTitle": "Login",
+  "loginSubtitle": "Welcome to Abrag Management System",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "loginButton": "Login",
+  "requiredField": "Required",
+  "loginError": "Login error: {error}",
+  "@loginError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardTitle": "Dashboard",
+  "dashboardWelcome": "Welcome to the Dashboard",
+  "syncConflicts": "Sync Conflicts",
+  "summerBookings": "Summer Bookings",
+  "winterContracts": "Winter Contracts",
+  "buildings": "Buildings",
+  "apartments": "Apartments",
+  "noData": "No data available",
+  "addBooking": "Add Summer Booking",
+  "guestName": "Guest Name",
+  "guestPhone": "Phone Number",
+  "checkInDate": "Check-in Date",
+  "checkOutDate": "Check-out Date",
+  "totalPrice": "Total Price",
+  "save": "Save",
+  "addContract": "Add Winter Contract",
+  "studentName": "Student Name",
+  "university": "University",
+  "monthlyRent": "Monthly Rent",
+  "deposit": "Deposit",
+  "selectDate": "Select Date"
+}

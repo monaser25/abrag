@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ملف النزيل</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-tint": "#4cd6fb",
+                        "surface-container": "#1e201e",
+                        "on-surface": "#e2e3df",
+                        "surface-container-lowest": "#0c0f0d",
+                        "surface-container-low": "#1a1c1a",
+                        "on-tertiary-fixed": "#101b30",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#d6e4f9",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "surface-container-high": "#282b28",
+                        "background": "#111412",
+                        "on-primary-fixed": "#001f27",
+                        "on-surface-variant": "#bcc9ce",
+                        "secondary": "#bac8dc",
+                        "outline": "#869398",
+                        "on-error-container": "#ffdad6",
+                        "inverse-primary": "#00677d",
+                        "secondary-container": "#3a4859",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "inverse-on-surface": "#2f312e",
+                        "on-primary-container": "#00414f",
+                        "tertiary": "#bbc6e2",
+                        "surface-bright": "#373a37",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-background": "#e2e3df",
+                        "inverse-surface": "#e2e3df",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "outline-variant": "#3d494d",
+                        "tertiary-fixed": "#d7e2ff",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "on-primary": "#003642",
+                        "tertiary-container": "#9aa5bf",
+                        "on-tertiary-container": "#303b51",
+                        "on-tertiary": "#263046",
+                        "error-container": "#93000a",
+                        "primary": "#4cd6fb",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "surface-container-highest": "#333533",
+                        "surface-dim": "#111412",
+                        "primary-fixed": "#b3ebff",
+                        "on-secondary-container": "#a8b6ca",
+                        "surface-variant": "#333533",
+                        "primary-container": "#00b4d8",
+                        "error": "#ffb4ab",
+                        "surface": "#111412",
+                        "on-secondary": "#243141",
+                        
+                        // User requested Navy/Gold accents - mapping to available palette closest matches or using direct values for specific components if needed, 
+                        // but strictly following the system colors where possible. We will use primary-container for the high-energy actions.
+                        "custom-gold": "#F4A225", // Adding custom gold as requested by user prompt for accents.
+                        "custom-navy": "#0D1B2A", // Adding custom navy as requested by user prompt.
+                        "custom-navy-light": "#1B263B" // Lighter navy for cards.
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "xl": "40px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "unit": "4px",
+                        "lg": "24px"
+                    },
+                    fontFamily: {
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"]
+                    },
+                    fontSize: {
+                        "label-sm": ["12px", { lineHeight: "14px", fontWeight: "500" }],
+                        "label-lg": ["14px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "headline-lg": ["30px", { lineHeight: "40px", fontWeight: "700" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-lg": ["18px", { lineHeight: "26px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            /* Fallback to requested navy if tailwind custom color doesn't apply immediately */
+            background-color: #0D1B2A; 
+            color: #e2e3df; /* on-surface */
+        }
+        
+        .card-surface {
+            background-color: #1B263B;
+            border: 1px solid rgba(65, 90, 119, 0.3);
+        }
+        
+        .gold-border {
+            border-color: #F4A225;
+        }
+        
+        .gold-text {
+            color: #F4A225;
+        }
+        
+        .gold-bg {
+            background-color: #F4A225;
+        }
+        
+        /* RTL specific fixes */
+        .dir-rtl {
+            direction: rtl;
+        }
+        
+        /* Input focus state */
+        textarea:focus {
+            outline: none;
+            border-color: #F4A225 !important;
+            box-shadow: 0 0 0 1px #F4A225;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="dir-rtl bg-[#0D1B2A] text-on-surface font-body-md antialiased pb-24 min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background font-headline-sm text-headline-sm w-full top-0 sticky border-b border-outline-variant/30 flex items-center justify-between px-gutter h-16 flex-row-reverse z-40">
+<div class="flex items-center">
+<button class="text-primary hover:bg-surface-container-high transition-colors active:opacity-70 transition-opacity p-2 rounded-full">
+<span class="material-symbols-outlined" style="transform: scaleX(-1);">arrow_forward</span>
+</button>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary flex-1 text-center">ملف النزيل</h1>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</header>
+<main class="px-container-margin py-lg max-w-7xl mx-auto space-y-lg">
+<!-- Top Profile Card -->
+<section class="card-surface rounded-xl p-md border-l-4 gold-border flex flex-col md:flex-row items-center md:items-start gap-md relative">
+<!-- Avatar -->
+<div class="w-24 h-24 rounded-full gold-bg flex items-center justify-center text-on-surface font-headline-lg shrink-0 shadow-lg">
+                م.أ
+            </div>
+<!-- Details -->
+<div class="flex-1 flex flex-col gap-sm text-center md:text-right">
+<div class="flex flex-col md:flex-row items-center justify-between gap-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">محمد أحمد علي</h2>
+<!-- Badge -->
+<div class="flex items-center gap-xs bg-custom-navy-light gold-border border rounded-full px-3 py-1">
+<span class="material-symbols-outlined gold-text text-sm">star</span>
+<span class="font-label-sm text-label-sm gold-text">نزيل متكرر</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 mt-2">
+<div class="flex items-center justify-center md:justify-start gap-sm text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined gold-text text-lg">call</span>
+<span dir="ltr">0123456789</span>
+</div>
+<div class="flex items-center justify-center md:justify-start gap-sm text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined gold-text text-lg">badge</span>
+<span dir="ltr">2900101XXXXXXXX</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Row -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-sm md:gap-md">
+<div class="card-surface rounded-lg p-sm flex flex-col items-center justify-center text-center gap-1">
+<span class="material-symbols-outlined text-primary-container mb-1">home_work</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">عدد الزيارات</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">5</span>
+</div>
+<div class="card-surface rounded-lg p-sm flex flex-col items-center justify-center text-center gap-1">
+<span class="material-symbols-outlined text-primary-container mb-1">dark_mode</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">إجمالي الليالي</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">12</span>
+</div>
+<div class="card-surface rounded-lg p-sm flex flex-col items-center justify-center text-center gap-1">
+<span class="material-symbols-outlined text-primary-container mb-1">payments</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">إجمالي المدفوع</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">4500 ج.م</span>
+</div>
+<div class="card-surface rounded-lg p-sm flex flex-col items-center justify-center text-center gap-1">
+<span class="material-symbols-outlined text-primary-container mb-1">calendar_clock</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">آخر زيارة</span>
+<span class="font-headline-sm text-headline-sm text-on-surface text-sm">15/10/2023</span>
+</div>
+</section>
+<!-- Visits History List -->
+<section class="space-y-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-outline-variant/30 pb-2">سجل الزيارات</h3>
+<div class="space-y-sm">
+<!-- Stay Card 1 -->
+<div class="card-surface rounded-lg p-md flex flex-col gap-sm">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<span class="gold-bg text-on-surface px-2 py-1 rounded font-label-sm text-label-sm">شقة 104</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">مباشر</span>
+</div>
+<span class="bg-green-900/30 text-green-400 border border-green-700/50 px-2 py-1 rounded text-xs font-label-sm">مكتمل</span>
+</div>
+<div class="flex flex-col md:flex-row justify-between md:items-end gap-2 mt-2">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-sm text-outline">calendar_month</span>
+<span>12 أكتوبر - 15 أكتوبر 2023</span>
+</div>
+</div>
+<div class="text-left font-label-lg text-label-lg text-primary-container">
+                            3 أيام - 1200 ج.م
+                        </div>
+</div>
+</div>
+<!-- Stay Card 2 -->
+<div class="card-surface rounded-lg p-md flex flex-col gap-sm">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<span class="gold-bg text-on-surface px-2 py-1 rounded font-label-sm text-label-sm">شقة 201</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">سمسار: أحمد</span>
+</div>
+<span class="bg-blue-900/30 text-blue-400 border border-blue-700/50 px-2 py-1 rounded text-xs font-label-sm">ممتد</span>
+</div>
+<div class="flex flex-col md:flex-row justify-between md:items-end gap-2 mt-2">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-on-surface font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-sm text-outline">calendar_month</span>
+<span>1 سبتمبر - 5 سبتمبر 2023</span>
+</div>
+</div>
+<div class="text-left font-label-lg text-label-lg text-primary-container">
+                            4 أيام - 1800 ج.م
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Notes Section -->
+<section class="space-y-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-outline-variant/30 pb-2">ملاحظات إضافية</h3>
+<div class="w-full">
+<label class="sr-only" for="admin-notes">ملاحظات الإدارة</label>
+<textarea class="w-full bg-[#111412] text-on-surface border border-[#415A77]/50 rounded-lg p-md font-body-sm text-body-sm focus:border-[#F4A225] focus:ring-1 focus:ring-[#F4A225] transition-colors" id="admin-notes" placeholder="أضف ملاحظات حول النزيل هنا..." rows="4"></textarea>
+</div>
+<div class="flex justify-end">
+<button class="bg-primary-container text-on-primary-container font-label-lg text-label-lg py-2 px-6 rounded-lg hover:bg-primary transition-colors">
+                    حفظ الملاحظات
+                </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-low dark:bg-surface-container-low text-primary dark:text-primary font-label-sm text-label-sm font-headline-sm text-headline-sm font-black fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-low shadow-lg fixed bottom-0 right-0 flex flex-row-reverse justify-around items-center px-4 py-3 md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-primary-fixed-dim active:scale-95 transition-transform duration-200 w-16">
+<span class="material-symbols-outlined">home</span>
+<span>الرئيسية</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary font-bold gap-1 hover:text-primary-fixed-dim active:scale-95 transition-transform duration-200 w-16">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span>المباني</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-primary-fixed-dim active:scale-95 transition-transform duration-200 w-16">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span>المحفظة</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant gap-1 hover:text-primary-fixed-dim active:scale-95 transition-transform duration-200 w-16">
+<span class="material-symbols-outlined">settings</span>
+<span>الإعدادات</span>
+</button>
+</nav>
+</body></html>

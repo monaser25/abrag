@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>التحكم في الشقق المتاحة للسماسرة</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#333533",
+                        "on-secondary-container": "#a8b6ca",
+                        "on-tertiary-container": "#303b51",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-surface-variant": "#bcc9ce",
+                        "surface-dim": "#111412",
+                        "surface-variant": "#333533",
+                        "tertiary-container": "#9aa5bf",
+                        "tertiary": "#bbc6e2",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "primary-fixed": "#b3ebff",
+                        "on-primary": "#003642",
+                        "surface-container": "#1e201e",
+                        "surface": "#111412",
+                        "surface-container-lowest": "#0c0f0d",
+                        "on-primary-container": "#00414f",
+                        "background": "#111412",
+                        "error-container": "#93000a",
+                        "secondary-container": "#3a4859",
+                        "outline-variant": "#3d494d",
+                        "on-surface": "#e2e3df",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "inverse-primary": "#00677d",
+                        "on-background": "#e2e3df",
+                        "inverse-on-surface": "#2f312e",
+                        "secondary": "#bac8dc",
+                        "surface-bright": "#373a37",
+                        "tertiary-fixed": "#d7e2ff",
+                        "on-tertiary": "#263046",
+                        "on-secondary": "#243141",
+                        "error": "#ffb4ab",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "primary-container": "#00b4d8",
+                        "surface-tint": "#4cd6fb",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-primary-fixed": "#001f27",
+                        "primary": "#4cd6fb",
+                        "outline": "#869398",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-tertiary-fixed": "#101b30",
+                        "inverse-surface": "#e2e3df",
+                        "surface-container-high": "#282b28",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "surface-container-low": "#1a1c1a",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-error-container": "#ffdad6",
+                        "abrag-gold": "#F4A225",
+                        "abrag-navy": "#0D1B2A",
+                        "abrag-green": "#2ECC71"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "40px",
+                        "unit": "4px",
+                        "md": "16px",
+                        "container-margin": "20px",
+                        "gutter": "16px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0D1B2A;
+            color: #e2e3df;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111412; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3d494d; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #869398; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-background min-h-screen pb-32">
+<!-- Top App Bar (From Shared Components) -->
+<header class="fixed top-0 right-0 w-full z-50 bg-surface-container-low dark:bg-surface-container-low border-b border-outline-variant flat no shadows flex items-center justify-between px-container-margin h-16 w-full flex-row-reverse">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">إدارة رؤية الوسطاء</span>
+</div>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-variant transition-colors active:opacity-80 transition-opacity p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-container-margin max-w-4xl mx-auto space-y-lg">
+<!-- Global Control Card -->
+<div class="bg-surface-container rounded-2xl p-md border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-abrag-gold" data-weight="fill" style="font-variation-settings: 'FILL' 1;">toggle_on</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">وضع التحكم اليدوي</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">التحكم الدقيق في ظهور كل وحدة للوسطاء.</p>
+</div>
+</div>
+<!-- Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-abrag-gold"></div>
+</label>
+</div>
+<!-- Vacant Apartments Grid -->
+<section>
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">الوحدات الشاغرة</h3>
+<span class="font-label-sm text-label-sm bg-abrag-green/20 text-abrag-green px-2 py-1 rounded-md">3 وحدات</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Apartment Card 1 -->
+<div class="bg-surface-container rounded-2xl p-md border border-outline-variant/30 flex flex-col gap-md relative overflow-hidden group hover:border-abrag-green/50 transition-colors">
+<!-- Subtle Green Glow Indicator -->
+<div class="absolute -top-10 -right-10 w-24 h-24 bg-abrag-green/10 rounded-full blur-2xl"></div>
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-abrag-green/20 flex items-center justify-center text-abrag-green">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">apartment</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-surface flex items-baseline gap-1">شقة <span class="font-bold">101</span></h4>
+<div class="flex items-center text-abrag-green gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">فاضية منذ 3 ساعات</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Visibility Controls -->
+<div class="z-10 bg-surface-dim rounded-xl p-sm border border-outline-variant/20">
+<label class="font-label-sm text-label-sm text-on-surface-variant block mb-sm">حالة الظهور:</label>
+<div class="flex bg-surface-container-highest rounded-lg p-1 gap-1">
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">للجميع</button>
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">مخفية</button>
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md bg-abrag-navy text-on-surface border border-outline-variant/50 transition-colors">سمسار محدد</button>
+</div>
+<!-- Broker Selection Dropdown (Visible when 'Specific' is selected) -->
+<div class="mt-sm">
+<select class="w-full bg-surface-container-highest border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg focus:ring-abrag-gold focus:border-abrag-gold p-2 block rtl">
+<option disabled="" selected="" value="">اختر السمسار...</option>
+<option value="1">أحمد سمير</option>
+<option value="2">مكتب النور للعقارات</option>
+<option value="3">خالد العتيبي</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Apartment Card 2 -->
+<div class="bg-surface-container rounded-2xl p-md border border-outline-variant/30 flex flex-col gap-md relative overflow-hidden group hover:border-abrag-green/50 transition-colors">
+<div class="absolute -top-10 -right-10 w-24 h-24 bg-abrag-green/10 rounded-full blur-2xl"></div>
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-abrag-green/20 flex items-center justify-center text-abrag-green">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">apartment</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-surface flex items-baseline gap-1">شقة <span class="font-bold">204</span></h4>
+<div class="flex items-center text-abrag-green gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">فاضية منذ يومين</span>
+</div>
+</div>
+</div>
+</div>
+<div class="z-10 bg-surface-dim rounded-xl p-sm border border-outline-variant/20">
+<label class="font-label-sm text-label-sm text-on-surface-variant block mb-sm">حالة الظهور:</label>
+<div class="flex bg-surface-container-highest rounded-lg p-1 gap-1">
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md bg-abrag-navy text-on-surface border border-outline-variant/50 transition-colors">للجميع</button>
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">مخفية</button>
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">سمسار محدد</button>
+</div>
+</div>
+</div>
+<!-- Apartment Card 3 -->
+<div class="bg-surface-container rounded-2xl p-md border border-outline-variant/30 flex flex-col gap-md relative overflow-hidden group hover:border-abrag-green/50 transition-colors md:col-span-2">
+<div class="absolute -top-10 -right-10 w-24 h-24 bg-abrag-green/10 rounded-full blur-2xl"></div>
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-abrag-green/20 flex items-center justify-center text-abrag-green">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">apartment</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-on-surface flex items-baseline gap-1">شقة <span class="font-bold">305</span></h4>
+<div class="flex items-center text-abrag-green gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">فاضية منذ 5 أيام</span>
+</div>
+</div>
+</div>
+</div>
+<div class="z-10 bg-surface-dim rounded-xl p-sm border border-outline-variant/20 md:w-1/2">
+<label class="font-label-sm text-label-sm text-on-surface-variant block mb-sm">حالة الظهور:</label>
+<div class="flex bg-surface-container-highest rounded-lg p-1 gap-1">
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">للجميع</button>
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md bg-abrag-navy text-on-surface border border-outline-variant/50 transition-colors">مخفية</button>
+<button class="flex-1 font-label-sm text-label-sm py-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors">سمسار محدد</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Available Brokers List -->
+<section class="bg-surface-container rounded-2xl p-md border border-outline-variant/30">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">السماسرة المتاحون</h3>
+<div class="space-y-sm">
+<!-- Broker Row 1 -->
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-variant transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<span class="font-body-md text-body-md text-on-surface block">أحمد سمير</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">مستقل</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-abrag-gold"></div>
+</label>
+</div>
+<!-- Broker Row 2 -->
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-variant transition-colors border border-transparent hover:border-outline-variant/20">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div>
+<span class="font-body-md text-body-md text-on-surface block">مكتب النور للعقارات</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">مكتب وساطة</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-abrag-gold"></div>
+</label>
+</div>
+<!-- Broker Row 3 -->
+<div class="flex items-center justify-between p-sm rounded-lg hover:bg-surface-variant transition-colors border border-transparent hover:border-outline-variant/20 opacity-60">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<span class="font-body-md text-body-md text-on-surface block">خالد العتيبي</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">مستقل - محظور مؤقتاً</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" disabled="" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-gray-400 after:border-gray-500 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+</label>
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Bottom Actions Area -->
+<div class="fixed bottom-0 left-0 right-0 p-container-margin bg-surface-dim/90 backdrop-blur-md border-t border-outline-variant/30 z-40">
+<div class="max-w-4xl mx-auto flex flex-col gap-sm">
+<!-- Warning Banner -->
+<div class="bg-error-container/20 border border-error-container/50 rounded-lg p-sm flex items-center gap-sm text-error">
+<span class="material-symbols-outlined text-[18px]">info</span>
+<span class="font-label-sm text-label-sm">الشقق غير المحددة لن تظهر لأي سمسار</span>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full bg-[#F4A225] hover:bg-[#d98f20] text-[#0D1B2A] font-headline-sm text-headline-sm py-3 rounded-xl transition-colors shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">save</span>
+                حفظ التغييرات
+            </button>
+</div>
+</div>
+</body></html>

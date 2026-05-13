@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة موسم الشتاء</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "surface-variant": "#333533",
+                        "on-surface": "#e2e3df",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary": "#243141",
+                        "inverse-surface": "#e2e3df",
+                        "surface-container-highest": "#333533",
+                        "on-primary-container": "#00414f",
+                        "secondary-container": "#3a4859",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#282b28",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "surface-container-low": "#1a1c1a",
+                        "surface": "#111412",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "tertiary": "#bbc6e2",
+                        "surface-bright": "#373a37",
+                        "background": "#0D1B2A", /* User specified dark navy */
+                        "inverse-on-surface": "#2f312e",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-error": "#690005",
+                        "secondary": "#bac8dc",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "primary-fixed": "#b3ebff",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-tertiary-fixed": "#101b30",
+                        "tertiary-container": "#9aa5bf",
+                        "outline-variant": "#3d494d",
+                        "on-primary": "#003642",
+                        "on-background": "#e2e3df",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "outline": "#869398",
+                        "on-tertiary-container": "#303b51",
+                        "primary-container": "#F4A225", /* Gold override for primary container */
+                        "on-tertiary": "#263046",
+                        "on-secondary-container": "#a8b6ca",
+                        "surface-container-lowest": "#0c0f0d",
+                        "inverse-primary": "#00677d",
+                        "tertiary-fixed": "#d7e2ff",
+                        "surface-container": "#1e201e",
+                        "on-primary-fixed": "#001f27",
+                        "surface-tint": "#F4A225",
+                        "primary": "#F4A225", /* Gold override for primary */
+                        "surface-dim": "#111412",
+                        "gold": "#F4A225",
+                        "navy-card": "#1B263B"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-margin": "20px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "unit": "4px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "xl": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #0D1B2A; /* Force user background */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0D1B2A] text-on-background min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface fixed top-0 w-full z-50 border-b border-outline-variant/30 flat no shadows flex flex-row-reverse justify-between items-center px-container-margin h-16 w-full">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary active:scale-95 transition-transform hover:bg-surface-container-high transition-colors p-sm rounded-full cursor-pointer">menu</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary">أبراج</h1>
+</div>
+<div class="font-headline-sm text-headline-sm text-on-surface">إدارة موسم الشتاء</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant active:scale-95 transition-transform hover:bg-surface-container-high transition-colors p-sm rounded-full cursor-pointer">notifications</span>
+</div>
+</header>
+<main class="pt-24 px-container-margin md:px-lg max-w-7xl mx-auto space-y-lg">
+<!-- Season Indicator -->
+<div class="flex justify-center">
+<div class="bg-primary/10 border border-primary/30 rounded-xl px-lg py-sm inline-flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">ac_unit</span>
+<span class="font-headline-sm text-headline-sm text-primary">موسم الشتاء 2024-2025</span>
+</div>
+</div>
+<!-- Summary Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 flex flex-col items-center justify-center text-center gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-2xl">home_work</span>
+<span class="font-label-lg text-label-lg text-on-surface-variant">المشغولة</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">12</span>
+</div>
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 flex flex-col items-center justify-center text-center gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-2xl">key_off</span>
+<span class="font-label-lg text-label-lg text-on-surface-variant">الفاضية</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">3</span>
+</div>
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/40 flex flex-col items-center justify-center text-center gap-xs relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/5"></div>
+<span class="material-symbols-outlined text-primary text-2xl relative z-10">payments</span>
+<span class="font-label-lg text-label-lg text-on-surface-variant relative z-10">إجمالي الإيجارات الشهرية</span>
+<span class="font-headline-lg text-headline-lg text-primary relative z-10">45,000 ج.م</span>
+</div>
+</div>
+<!-- Section Title -->
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">قائمة المستأجرين</h2>
+<div class="flex items-center gap-xs text-primary cursor-pointer hover:bg-primary/10 px-sm py-xs rounded-lg transition-colors">
+<span class="font-label-lg text-label-lg">تصفية</span>
+<span class="material-symbols-outlined">filter_list</span>
+</div>
+</div>
+<!-- Tenant Cards List -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Card 1 -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors flex flex-col gap-md">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 101</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg font-bold text-on-surface">أحمد علي</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-xs mt-xs">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                                من 01/10 إلى 30/04
+                            </div>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm text-primary">3,500 ج.م</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mt-xs text-left">شهرياً</div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant/30">
+<div class="inline-flex items-center gap-xs px-sm py-xs rounded-lg bg-green-900/30 text-green-400 border border-green-800/50">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-sm text-label-sm">دفع ✓</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-sm py-xs rounded-lg">
+                        كهرباء: على الطالب
+                    </div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors flex flex-col gap-md">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 102</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg font-bold text-on-surface">محمد محمود</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-xs mt-xs">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                                من 15/10 إلى 15/05
+                            </div>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm text-primary">4,000 ج.م</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mt-xs text-left">شهرياً</div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant/30">
+<div class="inline-flex items-center gap-xs px-sm py-xs rounded-lg bg-red-900/30 text-red-400 border border-red-800/50">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">cancel</span>
+<span class="font-label-sm text-label-sm">لم يدفع ✗</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-sm py-xs rounded-lg">
+                        كهرباء: على المالك
+                    </div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors flex flex-col gap-md">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 205</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg font-bold text-on-surface">سارة حسن</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-xs mt-xs">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                                من 01/11 إلى 30/03
+                            </div>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm text-primary">3,200 ج.م</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mt-xs text-left">شهرياً</div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant/30">
+<div class="inline-flex items-center gap-xs px-sm py-xs rounded-lg bg-green-900/30 text-green-400 border border-green-800/50">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-sm text-label-sm">دفع ✓</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-sm py-xs rounded-lg">
+                        كهرباء: على الطالب
+                    </div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-[#1B263B] rounded-xl p-md border border-[#F4A225]/20 hover:border-[#F4A225]/50 transition-colors flex flex-col gap-md">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 302</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg font-bold text-on-surface">خالد إبراهيم</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-xs mt-xs">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                                من 01/09 إلى 30/05
+                            </div>
+</div>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-headline-sm text-primary">4,500 ج.م</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mt-xs text-left">شهرياً</div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant/30">
+<div class="inline-flex items-center gap-xs px-sm py-xs rounded-lg bg-green-900/30 text-green-400 border border-green-800/50">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-sm text-label-sm">دفع ✓</span>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-sm py-xs rounded-lg">
+                        كهرباء: مشترك
+                    </div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-24 left-6 md:left-12 w-14 h-14 bg-primary text-background rounded-2xl shadow-lg flex items-center justify-center hover:bg-primary/90 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container fixed bottom-0 w-full z-50 rounded-t-xl border-t border-outline-variant/30 shadow-lg flex flex-row-reverse justify-around items-center h-20 px-4 w-full md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-lg text-label-lg mt-1">الرئيسية</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span class="font-label-lg text-label-lg mt-1">العقارات</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-lg text-label-lg mt-1">الإعدادات</span>
+</div>
+</nav>
+</body></html>

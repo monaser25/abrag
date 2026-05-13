@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Shared Meter Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#00414f",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "inverse-primary": "#00677d",
+                        "on-tertiary": "#263046",
+                        "on-surface-variant": "#bcc9ce",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "surface-bright": "#373a37",
+                        "surface-tint": "#4cd6fb",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e2e3df",
+                        "inverse-on-surface": "#2f312e",
+                        "primary-container": "#00b4d8",
+                        "on-surface": "#e2e3df",
+                        "primary": "#4cd6fb",
+                        "surface-container": "#1e201e",
+                        "on-primary-fixed": "#001f27",
+                        "surface-dim": "#111412",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#d7e2ff",
+                        "secondary": "#bac8dc",
+                        "on-secondary": "#243141",
+                        "surface-container-low": "#1a1c1a",
+                        "secondary-container": "#3a4859",
+                        "on-primary": "#003642",
+                        "error-container": "#93000a",
+                        "on-background": "#e2e3df",
+                        "tertiary": "#bbc6e2",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "on-tertiary-container": "#303b51",
+                        "tertiary-container": "#9aa5bf",
+                        "on-tertiary-fixed": "#101b30",
+                        "background": "#111412",
+                        "on-secondary-container": "#a8b6ca",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "primary-fixed": "#b3ebff",
+                        "outline": "#869398",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "surface": "#111412",
+                        "surface-container-highest": "#333533",
+                        "surface-variant": "#333533",
+                        "surface-container-lowest": "#0c0f0d",
+                        "surface-container-high": "#282b28",
+                        "outline-variant": "#3d494d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "xl": "40px",
+                        "unit": "4px",
+                        "container-margin": "20px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: #0D1B2A; /* Custom requirement override */
+            color: #FFFFFF;
+        }
+        /* Scoped overrides to match user request while keeping tailwind structure intact where possible */
+        .bg-custom-surface { background-color: #1A1C1A; }
+        .text-custom-gold { color: #F4A225; }
+        .bg-custom-gold { background-color: #F4A225; }
+        .border-custom-gold { border-color: #F4A225; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased min-h-screen pb-24">
+<!-- TopAppBar (Transactional - Suppressed global nav shell, kept localized back navigation) -->
+<header class="flex flex-row justify-between items-center px-container-margin w-full h-16 bg-custom-surface shadow-sm z-10 sticky top-0">
+<div class="flex items-center gap-sm">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors duration-200">
+<span class="material-symbols-outlined text-custom-gold" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-white">إدارة العداد المشترك</h1>
+</div>
+</header>
+<main class="p-container-margin flex flex-col gap-lg max-w-2xl mx-auto">
+<!-- Warning Info Card -->
+<section class="bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 rounded-xl p-md flex items-start gap-sm">
+<span class="material-symbols-outlined text-error mt-1 shrink-0" data-icon="warning" data-weight="fill" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div>
+<p class="font-body-md text-body-md text-white">شقة 7 + الماطور العمومي على عداد واحد</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">يجب تقسيم التكلفة بينهما لضمان العدالة في الفواتير.</p>
+</div>
+</section>
+<!-- Input Section -->
+<section class="flex flex-col gap-md">
+<div class="flex flex-col gap-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant" for="current_reading">القراءة الحالية</label>
+<div class="relative">
+<input class="w-full bg-custom-surface border border-outline-variant/30 rounded-lg px-md py-sm font-body-md text-body-md text-white focus:outline-none focus:border-custom-gold focus:ring-1 focus:ring-custom-gold transition-colors" dir="rtl" id="current_reading" placeholder="أدخل القراءة بالكيلوواط" type="number"/>
+<span class="absolute left-md top-1/2 -translate-y-1/2 font-body-sm text-body-sm text-on-surface-variant">ك.و</span>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant" for="reading_date">تاريخ القراءة</label>
+<div class="relative">
+<input class="w-full bg-custom-surface border border-outline-variant/30 rounded-lg px-md py-sm font-body-md text-body-md text-white focus:outline-none focus:border-custom-gold focus:ring-1 focus:ring-custom-gold transition-colors" dir="rtl" id="reading_date" type="date" value="2023-10-25"/>
+</div>
+</div>
+</section>
+<!-- Split Method Selector -->
+<section class="flex flex-col gap-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant mb-1">طريقة التقسيم</label>
+<div class="flex bg-custom-surface border border-outline-variant/30 rounded-lg p-1">
+<button class="flex-1 py-2 text-center rounded-md bg-secondary-container text-white font-label-lg text-label-lg shadow-sm transition-all">بالتساوي 50% / 50%</button>
+<button class="flex-1 py-2 text-center rounded-md text-on-surface-variant hover:text-white font-label-lg text-label-lg transition-all">نسبة مخصصة</button>
+</div>
+</section>
+<!-- Result Preview Card -->
+<section class="bg-custom-surface border border-custom-gold rounded-xl p-md relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-16 h-16 bg-custom-gold/10 rounded-full blur-xl"></div>
+<h3 class="font-label-lg text-label-lg text-custom-gold mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="calculate">calculate</span>
+                معاينة التقسيم
+            </h3>
+<div class="flex flex-col gap-md">
+<div class="flex justify-between items-center border-b border-outline-variant/30 pb-sm">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]" data-icon="apartment">apartment</span>
+</div>
+<span class="font-body-md text-body-md text-white">شقة 7</span>
+</div>
+<div class="text-left">
+<div class="font-body-md text-body-md font-semibold text-white">120 كيلوواط</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">= 180 ج.م</div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px]" data-icon="water_damage">water_damage</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-white">الماطور العمومي</span>
+<span class="font-label-sm text-label-sm text-custom-gold">مصروفات مبنى</span>
+</div>
+</div>
+<div class="text-left">
+<div class="font-body-md text-body-md font-semibold text-white">80 كيلوواط</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">= 120 ج.م</div>
+</div>
+</div>
+</div>
+</section>
+<!-- History Section -->
+<section class="flex flex-col gap-sm mt-sm">
+<h3 class="font-headline-sm text-headline-sm text-white mb-2">سجل القراءات السابقة</h3>
+<div class="flex flex-col gap-sm">
+<!-- History Item 1 -->
+<div class="bg-custom-surface border border-outline-variant/30 rounded-lg p-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-white">سبتمبر 2023</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">إجمالي: 190 ك.و (50/50)</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-white">285 ج.م</span>
+</div>
+<!-- History Item 2 -->
+<div class="bg-custom-surface border border-outline-variant/30 rounded-lg p-sm flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-white">أغسطس 2023</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">إجمالي: 210 ك.و (50/50)</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-white">315 ج.م</span>
+</div>
+</div>
+</section>
+<!-- Bottom Note -->
+<a class="text-center font-label-lg text-label-lg text-custom-gold hover:underline mt-4 mb-xl inline-block transition-all" href="#">
+            عند إضافة عداد جديد، اضغط هنا لفصل الشقة
+        </a>
+</main>
+<!-- Floating Action / Save Button Area (Bottom Fixed) -->
+<div class="fixed bottom-0 left-0 right-0 p-container-margin bg-[#0D1B2A]/90 backdrop-blur-sm border-t border-outline-variant/30 z-20">
+<button class="w-full bg-custom-gold text-[#0D1B2A] font-headline-sm text-headline-sm py-sm rounded-xl shadow-lg hover:opacity-90 active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+<span class="material-symbols-outlined" data-icon="save">save</span>
+            حفظ القراءة
+        </button>
+</div>
+</body></html>

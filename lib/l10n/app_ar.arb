@@ -1,0 +1,39 @@
+{
+  "@@locale": "ar",
+  "appTitle": "أبراج",
+  "loginTitle": "تسجيل الدخول",
+  "loginSubtitle": "مرحباً بك في نظام إدارة أبراج",
+  "emailLabel": "البريد الإلكتروني",
+  "passwordLabel": "كلمة المرور",
+  "loginButton": "دخول",
+  "requiredField": "مطلوب",
+  "loginError": "خطأ في تسجيل الدخول: {error}",
+  "@loginError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardTitle": "لوحة التحكم",
+  "dashboardWelcome": "مرحباً بك في لوحة التحكم",
+  "syncConflicts": "تعارضات المزامنة",
+  "summerBookings": "حجوزات الصيف",
+  "winterContracts": "عقود الشتاء",
+  "buildings": "المباني",
+  "apartments": "الشقق",
+  "noData": "لا توجد بيانات متاحة",
+  "addBooking": "إضافة حجز صيفي",
+  "guestName": "اسم الضيف",
+  "guestPhone": "رقم الهاتف",
+  "checkInDate": "تاريخ الدخول",
+  "checkOutDate": "تاريخ الخروج",
+  "totalPrice": "السعر الإجمالي",
+  "save": "حفظ",
+  "addContract": "إضافة عقد شتوي",
+  "studentName": "اسم الطالب",
+  "university": "الجامعة",
+  "monthlyRent": "الإيجار الشهري",
+  "deposit": "التأمين",
+  "selectDate": "اختر التاريخ"
+}

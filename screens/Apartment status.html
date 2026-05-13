@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>أبراج - حالة الشقق</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#9aa5bf",
+                        "tertiary": "#bbc6e2",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "primary-fixed": "#b3ebff",
+                        "surface-container": "#1e201e",
+                        "surface": "#111412",
+                        "on-primary": "#003642",
+                        "surface-container-lowest": "#0c0f0d",
+                        "on-primary-container": "#00414f",
+                        "error-container": "#93000a",
+                        "background": "#111412",
+                        "surface-container-highest": "#333533",
+                        "on-secondary-container": "#a8b6ca",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-tertiary-container": "#303b51",
+                        "on-surface-variant": "#bcc9ce",
+                        "surface-dim": "#111412",
+                        "surface-variant": "#333533",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "primary-container": "#00b4d8",
+                        "secondary-fixed": "#d6e4f9",
+                        "on-primary-fixed": "#001f27",
+                        "surface-tint": "#4cd6fb",
+                        "on-error": "#690005",
+                        "primary": "#4cd6fb",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-tertiary-fixed": "#101b30",
+                        "inverse-surface": "#e2e3df",
+                        "outline": "#869398",
+                        "surface-container-low": "#1a1c1a",
+                        "surface-container-high": "#282b28",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#3d494d",
+                        "on-surface": "#e2e3df",
+                        "secondary-container": "#3a4859",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "inverse-primary": "#00677d",
+                        "on-background": "#e2e3df",
+                        "secondary": "#bac8dc",
+                        "inverse-on-surface": "#2f312e",
+                        "surface-bright": "#373a37",
+                        "on-tertiary": "#263046",
+                        "tertiary-fixed": "#d7e2ff",
+                        "on-secondary": "#243141",
+                        "error": "#ffb4ab",
+                        // Custom Status Colors
+                        "status-available": "#00c853",
+                        "status-occupied": "#d50000",
+                        "status-cleaning": "#ff9100"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "gutter": "16px",
+                        "md": "16px",
+                        "container-margin": "20px",
+                        "xl": "40px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background dark:bg-background text-on-background min-h-screen pb-24 md:pb-0 md:pt-24 flex flex-col items-center">
+<!-- TopAppBar (Mobile & Desktop) -->
+<header class="flex flex-row-reverse justify-between items-center w-full px-container-margin py-md bg-background dark:bg-background text-primary dark:text-primary docked full-width top-0 flat no shadows fixed z-50">
+<!-- Brand Logo -->
+<div class="font-headline-lg text-headline-lg text-primary">
+            أبراج
+        </div>
+<!-- Right Icons (RTL flow: left side of screen) -->
+<div class="flex items-center gap-4">
+<button class="hover:bg-surface-variant transition-colors p-2 rounded-full text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-surface-variant transition-colors p-2 rounded-full text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<!-- SideNav (Desktop Only - replacing BottomNavBar on Web) -->
+<nav class="hidden md:flex flex-col fixed right-0 top-24 bottom-0 w-64 bg-surface-container dark:bg-surface-container shadow-md z-40 p-4 gap-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-lg text-label-lg">الرئيسية</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg bg-primary-container text-on-primary-container opacity-80 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span class="font-label-lg text-label-lg">العقارات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-lg text-label-lg">الإعدادات</span>
+</a>
+</nav>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-7xl px-container-margin md:mr-64 mt-20 md:mt-0 flex-1">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-lg pt-4 md:pt-8">
+<h1 class="font-headline-md text-headline-md text-on-background">حالة الشقق</h1>
+<!-- Legend -->
+<div class="flex flex-wrap items-center gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant/30">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-status-available"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">متاحة</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-status-occupied"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">مشغولة</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-status-cleaning"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">تحتاج نظافة</span>
+</div>
+</div>
+</div>
+<!-- Apartments Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-gutter">
+<!-- Apartment Card 1 (Available) -->
+<div class="bg-surface border border-status-available/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(0,200,83,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-available/10">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">101</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">متاحة</span>
+</div>
+<!-- Apartment Card 2 (Occupied) -->
+<div class="bg-surface border border-status-occupied/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(213,0,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-occupied/10">
+<span class="w-2 h-2 rounded-full bg-status-occupied"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface opacity-60">102</span>
+<span class="font-label-sm text-label-sm text-status-occupied mt-2">مشغولة</span>
+</div>
+<!-- Apartment Card 3 (Needs Cleaning) -->
+<div class="bg-surface border border-status-cleaning/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(255,145,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-cleaning/10">
+<span class="w-2 h-2 rounded-full bg-status-cleaning"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">103</span>
+<span class="font-label-sm text-label-sm text-status-cleaning mt-2">نظافة</span>
+</div>
+<!-- Apartment Card 4 (Occupied) -->
+<div class="bg-surface border border-status-occupied/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(213,0,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-occupied/10">
+<span class="w-2 h-2 rounded-full bg-status-occupied"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface opacity-60">104</span>
+<span class="font-label-sm text-label-sm text-status-occupied mt-2">مشغولة</span>
+</div>
+<!-- Apartment Card 5 (Available) -->
+<div class="bg-surface border border-status-available/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(0,200,83,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-available/10">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">105</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">متاحة</span>
+</div>
+<!-- Additional Cards to complete 15 -->
+<div class="bg-surface border border-status-available/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(0,200,83,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-available/10">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">201</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">متاحة</span>
+</div>
+<div class="bg-surface border border-status-occupied/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(213,0,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-occupied/10">
+<span class="w-2 h-2 rounded-full bg-status-occupied"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface opacity-60">202</span>
+<span class="font-label-sm text-label-sm text-status-occupied mt-2">مشغولة</span>
+</div>
+<div class="bg-surface border border-status-occupied/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(213,0,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-occupied/10">
+<span class="w-2 h-2 rounded-full bg-status-occupied"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface opacity-60">203</span>
+<span class="font-label-sm text-label-sm text-status-occupied mt-2">مشغولة</span>
+</div>
+<div class="bg-surface border border-status-cleaning/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(255,145,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-cleaning/10">
+<span class="w-2 h-2 rounded-full bg-status-cleaning"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">204</span>
+<span class="font-label-sm text-label-sm text-status-cleaning mt-2">نظافة</span>
+</div>
+<div class="bg-surface border border-status-available/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(0,200,83,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-available/10">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">205</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">متاحة</span>
+</div>
+<div class="bg-surface border border-status-available/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(0,200,83,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-available/10">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">301</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">متاحة</span>
+</div>
+<div class="bg-surface border border-status-cleaning/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(255,145,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-cleaning/10">
+<span class="w-2 h-2 rounded-full bg-status-cleaning"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">302</span>
+<span class="font-label-sm text-label-sm text-status-cleaning mt-2">نظافة</span>
+</div>
+<div class="bg-surface border border-status-occupied/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(213,0,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-occupied/10">
+<span class="w-2 h-2 rounded-full bg-status-occupied"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface opacity-60">303</span>
+<span class="font-label-sm text-label-sm text-status-occupied mt-2">مشغولة</span>
+</div>
+<div class="bg-surface border border-status-occupied/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(213,0,0,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-occupied/10">
+<span class="w-2 h-2 rounded-full bg-status-occupied"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface opacity-60">304</span>
+<span class="font-label-sm text-label-sm text-status-occupied mt-2">مشغولة</span>
+</div>
+<div class="bg-surface border border-status-available/30 rounded-xl p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-surface-container-high transition-colors aspect-square shadow-[0_0_10px_rgba(0,200,83,0.05)]">
+<div class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-status-available/10">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">305</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">متاحة</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex flex-row-reverse justify-around items-center px-4 pb-4 pt-2 bg-surface-container dark:bg-surface-container shadow-md docked full-width bottom-0 rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm mt-1">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 scale-95 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">domain</span>
+<span class="font-label-sm text-label-sm mt-1">العقارات</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm mt-1">الإعدادات</span>
+</button>
+</nav>
+</body></html>

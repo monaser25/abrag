@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>أبراج - الإعدادات</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#1a1c1a",
+                        "on-primary-container": "#00414f",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "secondary": "#bac8dc",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "surface-tint": "#4cd6fb",
+                        "surface-container-lowest": "#0c0f0d",
+                        "outline-variant": "#3d494d",
+                        "secondary-fixed": "#d6e4f9",
+                        "primary": "#4cd6fb",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-secondary": "#243141",
+                        "tertiary-container": "#9aa5bf",
+                        "outline": "#869398",
+                        "inverse-on-surface": "#2f312e",
+                        "on-primary": "#003642",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed": "#001f27",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "surface-variant": "#333533",
+                        "inverse-primary": "#00677d",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "on-secondary-container": "#a8b6ca",
+                        "background": "#111412",
+                        "on-tertiary-fixed": "#101b30",
+                        "primary-container": "#00b4d8",
+                        "surface-dim": "#111412",
+                        "surface-container-highest": "#333533",
+                        "error-container": "#93000a",
+                        "on-tertiary": "#263046",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#d7e2ff",
+                        "surface-container-high": "#282b28",
+                        "secondary-container": "#3a4859",
+                        "on-background": "#e2e3df",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-surface": "#e2e3df",
+                        "primary-fixed": "#b3ebff",
+                        "tertiary": "#bbc6e2",
+                        "inverse-surface": "#e2e3df",
+                        "surface": "#111412",
+                        "error": "#ffb4ab",
+                        "surface-container": "#1e201e",
+                        "surface-bright": "#373a37",
+                        "on-tertiary-container": "#303b51"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "xl": "40px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary font-headline-sm text-headline-sm fixed top-0 w-full z-50 flex flex-row-reverse justify-between items-center px-container-margin h-16 shadow-none">
+<div class="flex items-center gap-2 hover:bg-secondary-container dark:hover:bg-secondary-container transition-colors active:scale-95 duration-150 p-2 rounded-full cursor-pointer">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<div class="font-headline-md text-headline-md text-primary dark:text-primary flex-1 text-center">الإعدادات</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden flex items-center justify-center border border-outline-variant/30">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="person">person</span>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 mt-16 px-container-margin md:px-lg max-w-4xl mx-auto w-full space-y-xl py-6">
+<!-- Section 1: Apartments -->
+<section class="space-y-md">
+<div class="flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="apartment">apartment</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">الشقق (أرقام العدادات)</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
+<!-- Generate 15 items -->
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm flex justify-between items-center focus-within:border-primary-container focus-within:shadow-[0_0_8px_rgba(0,180,216,0.1)] transition-all">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 101</span>
+<input class="bg-surface-container-highest text-on-surface border-none rounded-md px-2 py-1 font-body-sm text-body-sm w-24 text-left focus:ring-1 focus:ring-primary-container" dir="ltr" type="text" value="MTR-8472"/>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm flex justify-between items-center focus-within:border-primary-container focus-within:shadow-[0_0_8px_rgba(0,180,216,0.1)] transition-all">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 102</span>
+<input class="bg-surface-container-highest text-on-surface border-none rounded-md px-2 py-1 font-body-sm text-body-sm w-24 text-left focus:ring-1 focus:ring-primary-container" dir="ltr" type="text" value="MTR-8473"/>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm flex justify-between items-center focus-within:border-primary-container focus-within:shadow-[0_0_8px_rgba(0,180,216,0.1)] transition-all">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 103</span>
+<input class="bg-surface-container-highest text-on-surface border-none rounded-md px-2 py-1 font-body-sm text-body-sm w-24 text-left focus:ring-1 focus:ring-primary-container" dir="ltr" type="text" value="MTR-8474"/>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm flex justify-between items-center focus-within:border-primary-container focus-within:shadow-[0_0_8px_rgba(0,180,216,0.1)] transition-all">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 201</span>
+<input class="bg-surface-container-highest text-on-surface border-none rounded-md px-2 py-1 font-body-sm text-body-sm w-24 text-left focus:ring-1 focus:ring-primary-container" dir="ltr" type="text" value="MTR-8475"/>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm flex justify-between items-center focus-within:border-primary-container focus-within:shadow-[0_0_8px_rgba(0,180,216,0.1)] transition-all">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 202</span>
+<input class="bg-surface-container-highest text-on-surface border-none rounded-md px-2 py-1 font-body-sm text-body-sm w-24 text-left focus:ring-1 focus:ring-primary-container" dir="ltr" type="text" value="MTR-8476"/>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-sm flex justify-between items-center focus-within:border-primary-container focus-within:shadow-[0_0_8px_rgba(0,180,216,0.1)] transition-all">
+<span class="font-label-lg text-label-lg text-on-surface">شقة 203</span>
+<input class="bg-surface-container-highest text-on-surface border-none rounded-md px-2 py-1 font-body-sm text-body-sm w-24 text-left focus:ring-1 focus:ring-primary-container" dir="ltr" type="text" value="MTR-8477"/>
+</div>
+</div>
+<div class="flex justify-end">
+<button class="text-primary-container font-label-lg text-label-lg hover:text-primary transition-colors flex items-center gap-1">
+<span>عرض المزيد</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+</section>
+<!-- Section 2: Pricing -->
+<section class="space-y-md">
+<div class="flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="payments">payments</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">التسعير</h2>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-md space-y-lg">
+<div class="flex flex-col md:flex-row gap-md justify-between items-start md:items-center">
+<div class="flex flex-col gap-1 w-full md:w-1/2">
+<label class="font-label-sm text-label-sm text-on-surface-variant">السعر اليومي الافتراضي</label>
+<div class="relative flex items-center w-full">
+<input class="w-full bg-surface-container-highest text-on-surface border border-outline-variant/50 rounded-lg px-3 py-2 font-body-md text-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" dir="ltr" type="number" value="1500"/>
+<span class="absolute left-3 text-on-surface-variant font-body-sm text-body-sm">ج.م</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 w-full md:w-1/2">
+<label class="font-label-sm text-label-sm text-on-surface-variant">زيادة سعر عطلة نهاية الأسبوع (%)</label>
+<div class="relative flex items-center w-full">
+<input class="w-full bg-surface-container-highest text-on-surface border border-outline-variant/50 rounded-lg px-3 py-2 font-body-md text-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" dir="ltr" type="number" value="15"/>
+<span class="absolute left-3 text-on-surface-variant font-body-sm text-body-sm">%</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Brokers -->
+<section class="space-y-md">
+<div class="flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="handshake">handshake</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">السماسرة</h2>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-md">
+<div class="flex flex-col gap-1 w-full md:w-1/2">
+<label class="font-label-sm text-label-sm text-on-surface-variant">عمولة السمسار الافتراضية (%)</label>
+<div class="relative flex items-center w-full">
+<input class="w-full bg-surface-container-highest text-on-surface border border-outline-variant/50 rounded-lg px-3 py-2 font-body-md text-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" dir="ltr" type="number" value="10"/>
+<span class="absolute left-3 text-on-surface-variant font-body-sm text-body-sm">%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Expense Types -->
+<section class="space-y-md">
+<div class="flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="receipt_long">receipt_long</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">أنواع المصروفات</h2>
+</div>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-md flex flex-wrap gap-2 items-center">
+<div class="flex items-center gap-1 bg-surface-container-highest border border-outline-variant/30 rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface">
+<span>كهرباء</span>
+<button class="text-on-surface-variant hover:text-error transition-colors rounded-full p-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest border border-outline-variant/30 rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface">
+<span>مياه</span>
+<button class="text-on-surface-variant hover:text-error transition-colors rounded-full p-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest border border-outline-variant/30 rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface">
+<span>غاز</span>
+<button class="text-on-surface-variant hover:text-error transition-colors rounded-full p-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest border border-outline-variant/30 rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface">
+<span>نظافة</span>
+<button class="text-on-surface-variant hover:text-error transition-colors rounded-full p-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest border border-outline-variant/30 rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface">
+<span>صيانة</span>
+<button class="text-on-surface-variant hover:text-error transition-colors rounded-full p-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest border border-outline-variant/30 rounded-full px-3 py-1 font-body-sm text-body-sm text-on-surface">
+<span>أخرى</span>
+<button class="text-on-surface-variant hover:text-error transition-colors rounded-full p-0.5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<button class="flex items-center gap-1 border border-dashed border-primary-container text-primary-container rounded-full px-3 py-1 font-body-sm text-body-sm hover:bg-primary-container/10 transition-colors ml-auto">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>إضافة نوع جديد</span>
+</button>
+</div>
+</section>
+<div class="pt-lg flex justify-end">
+<button class="bg-primary-container text-on-primary-container font-label-lg text-label-lg px-6 py-2 rounded-xl hover:bg-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="save">save</span>
+<span>حفظ التغييرات</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary font-label-sm text-label-sm fixed bottom-0 w-full z-50 rounded-t-xl shadow-md border-t-none md:hidden flex flex-row-reverse justify-around items-center h-20 pb-safe px-sm">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>لوحة القيادة</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span>العقارات</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-primary dark:text-primary rounded-xl px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings" data-weight="fill">settings</span>
+<span>الإعدادات</span>
+</a>
+</nav>
+</body></html>

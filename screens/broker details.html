@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Broker Details - Abrag</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#333533",
+                        "surface": "#111412",
+                        "outline-variant": "#3d494d",
+                        "inverse-on-surface": "#2f312e",
+                        "on-primary-container": "#00414f",
+                        "secondary": "#bac8dc",
+                        "surface-container": "#1e201e",
+                        "background": "#111412",
+                        "primary-fixed-dim": "#4cd6fb",
+                        "on-tertiary-fixed": "#101b30",
+                        "on-primary": "#003642",
+                        "tertiary": "#bbc6e2",
+                        "inverse-primary": "#00677d",
+                        "on-secondary-container": "#a8b6ca",
+                        "on-tertiary-container": "#303b51",
+                        "tertiary-fixed-dim": "#bbc6e2",
+                        "on-tertiary": "#263046",
+                        "surface-bright": "#373a37",
+                        "surface-dim": "#111412",
+                        "error-container": "#93000a",
+                        "primary": "#4cd6fb",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e2e3df",
+                        "surface-container-high": "#282b28",
+                        "secondary-container": "#3a4859",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-container": "#9aa5bf",
+                        "secondary-fixed": "#d6e4f9",
+                        "surface-container-lowest": "#0c0f0d",
+                        "tertiary-fixed": "#d7e2ff",
+                        "on-secondary-fixed-variant": "#3a4859",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "surface-tint": "#4cd6fb",
+                        "primary-fixed": "#b3ebff",
+                        "on-surface-variant": "#bcc9ce",
+                        "on-primary-fixed": "#001f27",
+                        "on-background": "#e2e3df",
+                        "surface-container-low": "#1a1c1a",
+                        "surface-container-highest": "#333533",
+                        "secondary-fixed-dim": "#bac8dc",
+                        "outline": "#869398",
+                        "on-secondary": "#243141",
+                        "on-tertiary-fixed-variant": "#3c475d",
+                        "on-secondary-fixed": "#0f1c2c",
+                        "on-error": "#690005",
+                        "primary-container": "#00b4d8",
+                        "on-surface": "#e2e3df"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "xl": "40px",
+                        "container-margin": "20px",
+                        "md": "16px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["IBM Plex Sans Arabic"],
+                        "body-lg": ["IBM Plex Sans Arabic"],
+                        "headline-md": ["IBM Plex Sans Arabic"],
+                        "headline-lg": ["IBM Plex Sans Arabic"],
+                        "headline-sm": ["IBM Plex Sans Arabic"],
+                        "body-md": ["IBM Plex Sans Arabic"],
+                        "label-sm": ["IBM Plex Sans Arabic"],
+                        "body-sm": ["IBM Plex Sans Arabic"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased">
+<!-- TopAppBar Component (from JSON) -->
+<header class="bg-surface-container-high dark:bg-surface-container-high docked full-width top-0 border-b border-outline-variant/30 flat no shadows flex flex-row-reverse justify-between items-center w-full px-container-margin py-sm z-50 sticky">
+<div class="flex items-center gap-sm">
+<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed">Abrag</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed cursor-pointer" data-icon="notifications">notifications</span>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-outline-variant/30">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="person">person</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area (Nav Suppressed due to Sub-page/Details intent) -->
+<main class="flex-grow flex flex-col items-center p-container-margin md:p-lg lg:p-xl overflow-y-auto pb-24 md:pb-lg">
+<!-- Back Navigation (RTL Arrow) -->
+<div class="w-full max-w-4xl flex justify-start mb-md">
+<button class="flex items-center text-primary-fixed hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined ml-xs rotate-180" data-icon="arrow_back">arrow_back</span>
+<span class="font-label-lg text-label-lg">العودة</span>
+</button>
+</div>
+<div class="w-full max-w-4xl flex flex-col gap-lg">
+<!-- Broker Identity Card (Bento Style) -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 p-lg flex flex-col md:flex-row md:items-start justify-between gap-md relative overflow-hidden">
+<!-- Subtle glow decoration -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+<div class="flex flex-col md:flex-row gap-md items-start z-10">
+<div class="w-20 h-20 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/30 flex-shrink-0">
+<span class="material-symbols-outlined text-4xl text-on-secondary-container" data-icon="person">person</span>
+</div>
+<div class="flex flex-col gap-xs">
+<div class="flex items-center gap-sm">
+<h1 class="font-headline-md text-headline-md text-on-surface">أحمد عبدالله</h1>
+<div class="bg-primary-container/10 text-primary-fixed border border-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="percent">percent</span>
+<span class="font-label-sm text-label-sm">عمولة 10%</span>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-md text-body-md">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="call">call</span>
+<span dir="ltr">+966 50 123 4567</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-sm z-10">
+<!-- Status Toggle (Simulated) -->
+<div class="bg-surface flex items-center rounded-lg border border-outline-variant/30 p-1">
+<button class="bg-primary/10 text-primary-fixed font-label-sm text-label-sm px-4 py-2 rounded-md transition-colors flex items-center gap-1">
+<div class="w-2 h-2 rounded-full bg-primary-fixed"></div>
+                            نشط
+                        </button>
+<button class="text-on-surface-variant font-label-sm text-label-sm px-4 py-2 rounded-md hover:bg-surface-bright transition-colors">
+                            موقوف
+                        </button>
+</div>
+</div>
+</section>
+<!-- Season Stats Row (4 Cards) -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-md flex flex-col gap-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="book_online">book_online</span>
+<h3 class="font-label-sm text-label-sm">عدد الحجوزات</h3>
+</div>
+<p class="font-headline-lg text-headline-lg text-on-surface">42</p>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-md flex flex-col gap-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="bed">bed</span>
+<h3 class="font-label-sm text-label-sm">إجمالي الليالي</h3>
+</div>
+<p class="font-headline-lg text-headline-lg text-on-surface">128</p>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-md flex flex-col gap-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="payments">payments</span>
+<h3 class="font-label-sm text-label-sm">إجمالي الإيرادات</h3>
+</div>
+<p class="font-headline-lg text-headline-lg text-on-surface">54,000<span class="font-label-sm text-label-sm text-on-surface-variant ml-1">ر.س</span></p>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-md flex flex-col gap-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="account_balance_wallet">account_balance_wallet</span>
+<h3 class="font-label-sm text-label-sm">إجمالي العمولات</h3>
+</div>
+<p class="font-headline-lg text-headline-lg text-primary-fixed">5,400<span class="font-label-sm text-label-sm text-on-surface-variant ml-1">ر.س</span></p>
+</div>
+</section>
+<!-- Performance Section (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Mini Bar Chart Container (Simulated) -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-md md:col-span-2 flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md">أداء الحجوزات (الموسم الحالي)</h2>
+<div class="flex-grow flex items-end justify-between h-32 gap-2 mt-auto">
+<!-- Simulated Bars -->
+<div class="w-full bg-primary-fixed/20 rounded-t-md h-[40%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-on-surface font-label-sm text-label-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">12</div>
+</div>
+<div class="w-full bg-primary-fixed/40 rounded-t-md h-[60%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-on-surface font-label-sm text-label-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">18</div>
+</div>
+<div class="w-full bg-primary-fixed/80 rounded-t-md h-[90%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-on-surface font-label-sm text-label-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">27</div>
+</div>
+<div class="w-full bg-primary-fixed rounded-t-md h-[100%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-on-surface font-label-sm text-label-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">30</div>
+</div>
+<div class="w-full bg-primary-fixed/30 rounded-t-md h-[30%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface text-on-surface font-label-sm text-label-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">9</div>
+</div>
+</div>
+<div class="flex justify-between mt-2 text-on-surface-variant font-label-sm text-label-sm border-t border-outline-variant/30 pt-2">
+<span>يناير</span>
+<span>فبراير</span>
+<span>مارس</span>
+<span>أبريل</span>
+<span>مايو</span>
+</div>
+</div>
+<!-- Best Performing Apartment -->
+<div class="bg-surface-container rounded-xl border border-outline-variant/30 p-md flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-bl from-primary/5 to-transparent opacity-50"></div>
+<div class="z-10 flex flex-col gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center mb-sm">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="star">star</span>
+</div>
+<h2 class="font-label-lg text-label-lg text-on-surface-variant">الشقة الأعلى أداءً</h2>
+<p class="font-headline-sm text-headline-sm text-on-surface">شقة 102 - عمارة النور</p>
+</div>
+<div class="z-10 mt-md">
+<p class="font-body-sm text-body-sm text-on-surface-variant">ساهمت بـ <span class="text-primary-fixed font-bold">35%</span> من إجمالي حجوزات الوسيط.</p>
+</div>
+</div>
+</section>
+<!-- Bookings History List -->
+<section class="bg-surface-container rounded-xl border border-outline-variant/30 p-0 overflow-hidden">
+<div class="p-md border-b border-outline-variant/30 flex justify-between items-center bg-surface/50">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">سجل الحجوزات (لهذا الوسيط)</h2>
+<button class="text-primary-fixed font-label-sm text-label-sm hover:underline">عرض الكل</button>
+</div>
+<div class="flex flex-col">
+<!-- List Item 1 -->
+<div class="p-md border-b border-outline-variant/30 hover:bg-surface-bright/30 transition-colors flex flex-col md:flex-row justify-between gap-sm md:items-center">
+<div class="flex flex-col gap-1">
+<p class="font-label-lg text-label-lg text-on-surface">خالد عبدالرحمن</p>
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span>
+<span>15 مايو - 20 مايو 2024</span>
+</div>
+</div>
+<div class="flex flex-col md:items-end gap-1">
+<div class="bg-secondary-container/30 text-on-secondary-container px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant/20 inline-block w-fit">شقة 102 - عمارة النور</div>
+<div class="flex items-center gap-2 font-body-sm text-body-sm">
+<span class="text-on-surface">2,500 ر.س</span>
+<span class="text-primary-fixed bg-primary-fixed/10 px-1.5 py-0.5 rounded text-xs">- 250 ر.س عمولة</span>
+</div>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="p-md border-b border-outline-variant/30 hover:bg-surface-bright/30 transition-colors flex flex-col md:flex-row justify-between gap-sm md:items-center">
+<div class="flex flex-col gap-1">
+<p class="font-label-lg text-label-lg text-on-surface">سالم الدوسري</p>
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span>
+<span>10 مايو - 12 مايو 2024</span>
+</div>
+</div>
+<div class="flex flex-col md:items-end gap-1">
+<div class="bg-secondary-container/30 text-on-secondary-container px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant/20 inline-block w-fit">شقة 304 - برج العز</div>
+<div class="flex items-center gap-2 font-body-sm text-body-sm">
+<span class="text-on-surface">1,200 ر.س</span>
+<span class="text-primary-fixed bg-primary-fixed/10 px-1.5 py-0.5 rounded text-xs">- 120 ر.س عمولة</span>
+</div>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="p-md hover:bg-surface-bright/30 transition-colors flex flex-col md:flex-row justify-between gap-sm md:items-center">
+<div class="flex flex-col gap-1">
+<p class="font-label-lg text-label-lg text-on-surface">عمر الفهد</p>
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span>
+<span>01 مايو - 05 مايو 2024</span>
+</div>
+</div>
+<div class="flex flex-col md:items-end gap-1">
+<div class="bg-secondary-container/30 text-on-secondary-container px-2 py-1 rounded font-label-sm text-label-sm border border-outline-variant/20 inline-block w-fit">شقة 102 - عمارة النور</div>
+<div class="flex items-center gap-2 font-body-sm text-body-sm">
+<span class="text-on-surface">3,000 ر.س</span>
+<span class="text-primary-fixed bg-primary-fixed/10 px-1.5 py-0.5 rounded text-xs">- 300 ر.س عمولة</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Comparison Note -->
+<div class="bg-surface border border-outline-variant/30 rounded-xl p-md flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="trending_up">trending_up</span>
+<p class="font-body-md text-body-md text-on-surface">هذا الموسم مقارنة بالموسم السابق: <span class="text-primary-fixed font-bold">↑ 20%</span> زيادة في الحجوزات</p>
+</div>
+</div>
+</main>
+</body></html>
