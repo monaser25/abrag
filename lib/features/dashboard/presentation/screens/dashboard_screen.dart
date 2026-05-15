@@ -15,21 +15,18 @@ class DashboardScreen extends ConsumerWidget {
     final buildingsCount = ref.watch(buildingsCountProvider);
     final apartmentsCount = ref.watch(apartmentsCountProvider);
 
-    ref.listen<AsyncValue<void>>(
-      syncControllerProvider,
-      (_, state) {
-        state.whenOrNull(
-          error: (error, _) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Sync failed: $error'),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
-          },
-        );
-      },
-    );
+    ref.listen<AsyncValue<void>>(syncControllerProvider, (_, state) {
+      state.whenOrNull(
+        error: (error, _) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sync failed: $error'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        },
+      );
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -113,8 +110,11 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 24),
-            
-            Text('العمليات والمالية', style: Theme.of(context).textTheme.titleLarge),
+
+            Text(
+              'العمليات والمالية',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Card(
               child: ListTile(
@@ -122,14 +122,6 @@ class DashboardScreen extends ConsumerWidget {
                 title: Text(l10n.expenses),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => context.go('/expenses'),
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.electric_meter, color: Color(0xFFF4A225)),
-                title: Text(l10n.meterReadings),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => context.go('/meter_readings'),
               ),
             ),
             Card(
@@ -148,13 +140,46 @@ class DashboardScreen extends ConsumerWidget {
                 onTap: () => context.go('/maintenance'),
               ),
             ),
-            
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.engineering, color: Color(0xFFF4A225)),
+                title: const Text('العمال والفنيين'),
+                subtitle: const Text('إدارة عمال الصيانة والسباكة والنجارة'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/technicians'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.cleaning_services, color: Color(0xFFF4A225)),
+                title: const Text('أدوات ومواد النظافة'),
+                subtitle: const Text('إدارة المخزون من المنظفات وتسجيل الاستهلاك'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/cleaning_supplies'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.check_circle_outline, color: Color(0xFFF4A225)),
+                title: const Text('فحص واستلام الشقق'),
+                subtitle: const Text('تسجيل حالة الشقة، التلفيات، وغرامات المستأجرين'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/inspections'),
+              ),
+            ),
+
             const SizedBox(height: 24),
-            Text('الحجوزات والعقود', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'الحجوزات والعقود',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Card(
               child: ListTile(
-                leading: const Icon(Icons.calendar_month, color: Color(0xFFF4A225)),
+                leading: const Icon(
+                  Icons.calendar_month,
+                  color: Color(0xFFF4A225),
+                ),
                 title: Text(l10n.summerBookings),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => context.go('/summer_bookings'),
@@ -168,9 +193,21 @@ class DashboardScreen extends ConsumerWidget {
                 onTap: () => context.go('/winter_contracts'),
               ),
             ),
-            
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.handshake, color: Color(0xFFF4A225)),
+                title: const Text('إدارة السماسرة'),
+                subtitle: const Text('إضافة سماسرة ومتابعة أرقامهم وعمولاتهم'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/brokers'),
+              ),
+            ),
+
             const SizedBox(height: 24),
-            Text('التقارير المالية', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'التقارير المالية',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Card(
               child: ListTile(
@@ -208,15 +245,9 @@ class _StatCard extends StatelessWidget {
           children: [
             Icon(icon, size: 40, color: Theme.of(context).primaryColor),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.displaySmall,
-            ),
+            Text(value, style: Theme.of(context).textTheme.displaySmall),
             const SizedBox(height: 4),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
           ],
         ),
       ),

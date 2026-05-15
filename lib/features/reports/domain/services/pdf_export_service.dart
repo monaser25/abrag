@@ -16,6 +16,9 @@ class PdfExportService {
     // Load the Arabic font
     final fontData = await rootBundle.load('assets/fonts/IBMPlexSansArabic-Regular.ttf');
     final ttf = pw.Font.ttf(fontData);
+    
+    final fontDataBold = await rootBundle.load('assets/fonts/IBMPlexSansArabic-Bold.ttf');
+    final ttfBold = pw.Font.ttf(fontDataBold);
 
     pdf.addPage(
       pw.MultiPage(
@@ -23,6 +26,12 @@ class PdfExportService {
         textDirection: pw.TextDirection.rtl, // CRITICAL FOR ARABIC
         theme: pw.ThemeData.withFont(
           base: ttf,
+          bold: ttfBold,
+        ).copyWith(
+          defaultTextStyle: pw.TextStyle(
+            font: ttf,
+            fontFallback: [ttf, ttfBold],
+          ),
         ),
         header: (context) {
           return pw.Column(

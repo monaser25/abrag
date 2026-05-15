@@ -23,6 +23,7 @@ class ContractPaymentController extends StateNotifier<AsyncValue<void>> {
     required String contractId,
     required double amount,
     required DateTime date,
+    required String paymentMethod,
   }) async {
     state = const AsyncLoading();
     try {
@@ -33,8 +34,29 @@ class ContractPaymentController extends StateNotifier<AsyncValue<void>> {
           contractId: contractId,
           amountEgp: amount,
           paymentDate: date,
+          paymentMethod: Value(paymentMethod),
           syncStatus: const Value(SyncStatus.pendingInsert),
           createdAt: DateTime.now(),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> updatePayment({
+    required String id,
+    required double amount,
+    required String paymentMethod,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.winterPayments)..where((t) => t.id.equals(id))).write(
+        WinterPaymentsCompanion(
+          amountEgp: Value(amount),
+          paymentMethod: Value(paymentMethod),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
       );
       state = const AsyncData(null);

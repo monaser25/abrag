@@ -6,3 +6,8 @@ final winterContractsProvider = StreamProvider<List<WinterContract>>((ref) {
   final db = ref.watch(databaseProvider);
   return db.select(db.winterContracts).watch();
 });
+
+final allWinterPaymentsProvider = StreamProvider<List<WinterPayment>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.select(db.winterPayments).watch();
+});

@@ -635,6 +635,29 @@ class $BuildingsTable extends Buildings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _annualRentEgpMeta = const VerificationMeta(
+    'annualRentEgp',
+  );
+  @override
+  late final GeneratedColumn<double> annualRentEgp = GeneratedColumn<double>(
+    'annual_rent_egp',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _rentInstallmentsDatesMeta =
+      const VerificationMeta('rentInstallmentsDates');
+  @override
+  late final GeneratedColumn<String> rentInstallmentsDates =
+      GeneratedColumn<String>(
+        'rent_installments_dates',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _totalApartmentsMeta = const VerificationMeta(
     'totalApartments',
   );
@@ -665,6 +688,8 @@ class $BuildingsTable extends Buildings
     id,
     name,
     address,
+    annualRentEgp,
+    rentInstallmentsDates,
     totalApartments,
     createdAt,
   ];
@@ -706,6 +731,24 @@ class $BuildingsTable extends Buildings
       context.handle(
         _addressMeta,
         address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('annual_rent_egp')) {
+      context.handle(
+        _annualRentEgpMeta,
+        annualRentEgp.isAcceptableOrUnknown(
+          data['annual_rent_egp']!,
+          _annualRentEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rent_installments_dates')) {
+      context.handle(
+        _rentInstallmentsDatesMeta,
+        rentInstallmentsDates.isAcceptableOrUnknown(
+          data['rent_installments_dates']!,
+          _rentInstallmentsDatesMeta,
+        ),
       );
     }
     if (data.containsKey('total_apartments')) {
@@ -756,6 +799,14 @@ class $BuildingsTable extends Buildings
         DriftSqlType.string,
         data['${effectivePrefix}address'],
       ),
+      annualRentEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}annual_rent_egp'],
+      )!,
+      rentInstallmentsDates: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rent_installments_dates'],
+      ),
       totalApartments: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}total_apartments'],
@@ -782,6 +833,8 @@ class Building extends DataClass implements Insertable<Building> {
   final String id;
   final String name;
   final String? address;
+  final double annualRentEgp;
+  final String? rentInstallmentsDates;
   final int totalApartments;
   final DateTime createdAt;
   const Building({
@@ -790,6 +843,8 @@ class Building extends DataClass implements Insertable<Building> {
     required this.id,
     required this.name,
     this.address,
+    required this.annualRentEgp,
+    this.rentInstallmentsDates,
     required this.totalApartments,
     required this.createdAt,
   });
@@ -807,6 +862,10 @@ class Building extends DataClass implements Insertable<Building> {
     if (!nullToAbsent || address != null) {
       map['address'] = Variable<String>(address);
     }
+    map['annual_rent_egp'] = Variable<double>(annualRentEgp);
+    if (!nullToAbsent || rentInstallmentsDates != null) {
+      map['rent_installments_dates'] = Variable<String>(rentInstallmentsDates);
+    }
     map['total_apartments'] = Variable<int>(totalApartments);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -821,6 +880,10 @@ class Building extends DataClass implements Insertable<Building> {
       address: address == null && nullToAbsent
           ? const Value.absent()
           : Value(address),
+      annualRentEgp: Value(annualRentEgp),
+      rentInstallmentsDates: rentInstallmentsDates == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rentInstallmentsDates),
       totalApartments: Value(totalApartments),
       createdAt: Value(createdAt),
     );
@@ -841,6 +904,10 @@ class Building extends DataClass implements Insertable<Building> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       address: serializer.fromJson<String?>(json['address']),
+      annualRentEgp: serializer.fromJson<double>(json['annualRentEgp']),
+      rentInstallmentsDates: serializer.fromJson<String?>(
+        json['rentInstallmentsDates'],
+      ),
       totalApartments: serializer.fromJson<int>(json['totalApartments']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -856,6 +923,10 @@ class Building extends DataClass implements Insertable<Building> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'address': serializer.toJson<String?>(address),
+      'annualRentEgp': serializer.toJson<double>(annualRentEgp),
+      'rentInstallmentsDates': serializer.toJson<String?>(
+        rentInstallmentsDates,
+      ),
       'totalApartments': serializer.toJson<int>(totalApartments),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -867,6 +938,8 @@ class Building extends DataClass implements Insertable<Building> {
     String? id,
     String? name,
     Value<String?> address = const Value.absent(),
+    double? annualRentEgp,
+    Value<String?> rentInstallmentsDates = const Value.absent(),
     int? totalApartments,
     DateTime? createdAt,
   }) => Building(
@@ -875,6 +948,10 @@ class Building extends DataClass implements Insertable<Building> {
     id: id ?? this.id,
     name: name ?? this.name,
     address: address.present ? address.value : this.address,
+    annualRentEgp: annualRentEgp ?? this.annualRentEgp,
+    rentInstallmentsDates: rentInstallmentsDates.present
+        ? rentInstallmentsDates.value
+        : this.rentInstallmentsDates,
     totalApartments: totalApartments ?? this.totalApartments,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -889,6 +966,12 @@ class Building extends DataClass implements Insertable<Building> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       address: data.address.present ? data.address.value : this.address,
+      annualRentEgp: data.annualRentEgp.present
+          ? data.annualRentEgp.value
+          : this.annualRentEgp,
+      rentInstallmentsDates: data.rentInstallmentsDates.present
+          ? data.rentInstallmentsDates.value
+          : this.rentInstallmentsDates,
       totalApartments: data.totalApartments.present
           ? data.totalApartments.value
           : this.totalApartments,
@@ -904,6 +987,8 @@ class Building extends DataClass implements Insertable<Building> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('address: $address, ')
+          ..write('annualRentEgp: $annualRentEgp, ')
+          ..write('rentInstallmentsDates: $rentInstallmentsDates, ')
           ..write('totalApartments: $totalApartments, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -917,6 +1002,8 @@ class Building extends DataClass implements Insertable<Building> {
     id,
     name,
     address,
+    annualRentEgp,
+    rentInstallmentsDates,
     totalApartments,
     createdAt,
   );
@@ -929,6 +1016,8 @@ class Building extends DataClass implements Insertable<Building> {
           other.id == this.id &&
           other.name == this.name &&
           other.address == this.address &&
+          other.annualRentEgp == this.annualRentEgp &&
+          other.rentInstallmentsDates == this.rentInstallmentsDates &&
           other.totalApartments == this.totalApartments &&
           other.createdAt == this.createdAt);
 }
@@ -939,6 +1028,8 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> address;
+  final Value<double> annualRentEgp;
+  final Value<String?> rentInstallmentsDates;
   final Value<int> totalApartments;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -948,6 +1039,8 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.address = const Value.absent(),
+    this.annualRentEgp = const Value.absent(),
+    this.rentInstallmentsDates = const Value.absent(),
     this.totalApartments = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -958,6 +1051,8 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
     required String id,
     required String name,
     this.address = const Value.absent(),
+    this.annualRentEgp = const Value.absent(),
+    this.rentInstallmentsDates = const Value.absent(),
     this.totalApartments = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -970,6 +1065,8 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? address,
+    Expression<double>? annualRentEgp,
+    Expression<String>? rentInstallmentsDates,
     Expression<int>? totalApartments,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -980,6 +1077,9 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (address != null) 'address': address,
+      if (annualRentEgp != null) 'annual_rent_egp': annualRentEgp,
+      if (rentInstallmentsDates != null)
+        'rent_installments_dates': rentInstallmentsDates,
       if (totalApartments != null) 'total_apartments': totalApartments,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -992,6 +1092,8 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
     Value<String>? id,
     Value<String>? name,
     Value<String?>? address,
+    Value<double>? annualRentEgp,
+    Value<String?>? rentInstallmentsDates,
     Value<int>? totalApartments,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -1002,6 +1104,9 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
       id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
+      annualRentEgp: annualRentEgp ?? this.annualRentEgp,
+      rentInstallmentsDates:
+          rentInstallmentsDates ?? this.rentInstallmentsDates,
       totalApartments: totalApartments ?? this.totalApartments,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -1028,6 +1133,14 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
     if (address.present) {
       map['address'] = Variable<String>(address.value);
     }
+    if (annualRentEgp.present) {
+      map['annual_rent_egp'] = Variable<double>(annualRentEgp.value);
+    }
+    if (rentInstallmentsDates.present) {
+      map['rent_installments_dates'] = Variable<String>(
+        rentInstallmentsDates.value,
+      );
+    }
     if (totalApartments.present) {
       map['total_apartments'] = Variable<int>(totalApartments.value);
     }
@@ -1048,6 +1161,8 @@ class BuildingsCompanion extends UpdateCompanion<Building> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('address: $address, ')
+          ..write('annualRentEgp: $annualRentEgp, ')
+          ..write('rentInstallmentsDates: $rentInstallmentsDates, ')
           ..write('totalApartments: $totalApartments, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -1157,6 +1272,17 @@ class $ApartmentsTable extends Apartments
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _inventoryMeta = const VerificationMeta(
+    'inventory',
+  );
+  @override
+  late final GeneratedColumn<String> inventory = GeneratedColumn<String>(
+    'inventory',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1189,6 +1315,7 @@ class $ApartmentsTable extends Apartments
     floorNumber,
     cleaningStatus,
     brokerVisibility,
+    inventory,
     createdAt,
     updatedAt,
   ];
@@ -1264,6 +1391,12 @@ class $ApartmentsTable extends Apartments
         ),
       );
     }
+    if (data.containsKey('inventory')) {
+      context.handle(
+        _inventoryMeta,
+        inventory.isAcceptableOrUnknown(data['inventory']!, _inventoryMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1323,6 +1456,10 @@ class $ApartmentsTable extends Apartments
         DriftSqlType.bool,
         data['${effectivePrefix}broker_visibility'],
       )!,
+      inventory: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}inventory'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1352,6 +1489,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
   final int? floorNumber;
   final String cleaningStatus;
   final bool brokerVisibility;
+  final String? inventory;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Apartment({
@@ -1363,6 +1501,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
     this.floorNumber,
     required this.cleaningStatus,
     required this.brokerVisibility,
+    this.inventory,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1383,6 +1522,9 @@ class Apartment extends DataClass implements Insertable<Apartment> {
     }
     map['cleaning_status'] = Variable<String>(cleaningStatus);
     map['broker_visibility'] = Variable<bool>(brokerVisibility);
+    if (!nullToAbsent || inventory != null) {
+      map['inventory'] = Variable<String>(inventory);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1400,6 +1542,9 @@ class Apartment extends DataClass implements Insertable<Apartment> {
           : Value(floorNumber),
       cleaningStatus: Value(cleaningStatus),
       brokerVisibility: Value(brokerVisibility),
+      inventory: inventory == null && nullToAbsent
+          ? const Value.absent()
+          : Value(inventory),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1423,6 +1568,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
       floorNumber: serializer.fromJson<int?>(json['floorNumber']),
       cleaningStatus: serializer.fromJson<String>(json['cleaningStatus']),
       brokerVisibility: serializer.fromJson<bool>(json['brokerVisibility']),
+      inventory: serializer.fromJson<String?>(json['inventory']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1441,6 +1587,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
       'floorNumber': serializer.toJson<int?>(floorNumber),
       'cleaningStatus': serializer.toJson<String>(cleaningStatus),
       'brokerVisibility': serializer.toJson<bool>(brokerVisibility),
+      'inventory': serializer.toJson<String?>(inventory),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1455,6 +1602,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
     Value<int?> floorNumber = const Value.absent(),
     String? cleaningStatus,
     bool? brokerVisibility,
+    Value<String?> inventory = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Apartment(
@@ -1466,6 +1614,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
     floorNumber: floorNumber.present ? floorNumber.value : this.floorNumber,
     cleaningStatus: cleaningStatus ?? this.cleaningStatus,
     brokerVisibility: brokerVisibility ?? this.brokerVisibility,
+    inventory: inventory.present ? inventory.value : this.inventory,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1493,6 +1642,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
       brokerVisibility: data.brokerVisibility.present
           ? data.brokerVisibility.value
           : this.brokerVisibility,
+      inventory: data.inventory.present ? data.inventory.value : this.inventory,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1509,6 +1659,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
           ..write('floorNumber: $floorNumber, ')
           ..write('cleaningStatus: $cleaningStatus, ')
           ..write('brokerVisibility: $brokerVisibility, ')
+          ..write('inventory: $inventory, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1525,6 +1676,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
     floorNumber,
     cleaningStatus,
     brokerVisibility,
+    inventory,
     createdAt,
     updatedAt,
   );
@@ -1540,6 +1692,7 @@ class Apartment extends DataClass implements Insertable<Apartment> {
           other.floorNumber == this.floorNumber &&
           other.cleaningStatus == this.cleaningStatus &&
           other.brokerVisibility == this.brokerVisibility &&
+          other.inventory == this.inventory &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1553,6 +1706,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
   final Value<int?> floorNumber;
   final Value<String> cleaningStatus;
   final Value<bool> brokerVisibility;
+  final Value<String?> inventory;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1565,6 +1719,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
     this.floorNumber = const Value.absent(),
     this.cleaningStatus = const Value.absent(),
     this.brokerVisibility = const Value.absent(),
+    this.inventory = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1578,6 +1733,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
     this.floorNumber = const Value.absent(),
     this.cleaningStatus = const Value.absent(),
     this.brokerVisibility = const Value.absent(),
+    this.inventory = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -1595,6 +1751,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
     Expression<int>? floorNumber,
     Expression<String>? cleaningStatus,
     Expression<bool>? brokerVisibility,
+    Expression<String>? inventory,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1608,6 +1765,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
       if (floorNumber != null) 'floor_number': floorNumber,
       if (cleaningStatus != null) 'cleaning_status': cleaningStatus,
       if (brokerVisibility != null) 'broker_visibility': brokerVisibility,
+      if (inventory != null) 'inventory': inventory,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1623,6 +1781,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
     Value<int?>? floorNumber,
     Value<String>? cleaningStatus,
     Value<bool>? brokerVisibility,
+    Value<String?>? inventory,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -1636,6 +1795,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
       floorNumber: floorNumber ?? this.floorNumber,
       cleaningStatus: cleaningStatus ?? this.cleaningStatus,
       brokerVisibility: brokerVisibility ?? this.brokerVisibility,
+      inventory: inventory ?? this.inventory,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1671,6 +1831,9 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
     if (brokerVisibility.present) {
       map['broker_visibility'] = Variable<bool>(brokerVisibility.value);
     }
+    if (inventory.present) {
+      map['inventory'] = Variable<String>(inventory.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1694,6 +1857,7 @@ class ApartmentsCompanion extends UpdateCompanion<Apartment> {
           ..write('floorNumber: $floorNumber, ')
           ..write('cleaningStatus: $cleaningStatus, ')
           ..write('brokerVisibility: $brokerVisibility, ')
+          ..write('inventory: $inventory, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -1831,6 +1995,18 @@ class $SummerBookingsTable extends SummerBookings
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
+    'paymentMethod',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('cash'),
+  );
   static const VerificationMeta _brokerIdMeta = const VerificationMeta(
     'brokerId',
   );
@@ -1842,6 +2018,29 @@ class $SummerBookingsTable extends SummerBookings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _brokerNameMeta = const VerificationMeta(
+    'brokerName',
+  );
+  @override
+  late final GeneratedColumn<String> brokerName = GeneratedColumn<String>(
+    'broker_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _brokerCommissionTypeMeta =
+      const VerificationMeta('brokerCommissionType');
+  @override
+  late final GeneratedColumn<String> brokerCommissionType =
+      GeneratedColumn<String>(
+        'broker_commission_type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('none'),
+      );
   static const VerificationMeta _brokerCommissionPercentageMeta =
       const VerificationMeta('brokerCommissionPercentage');
   @override
@@ -1853,6 +2052,18 @@ class $SummerBookingsTable extends SummerBookings
         type: DriftSqlType.double,
         requiredDuringInsert: false,
         defaultValue: const Constant(10.0),
+      );
+  static const VerificationMeta _brokerCommissionFixedEgpMeta =
+      const VerificationMeta('brokerCommissionFixedEgp');
+  @override
+  late final GeneratedColumn<double> brokerCommissionFixedEgp =
+      GeneratedColumn<double>(
+        'broker_commission_fixed_egp',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
       );
   static const VerificationMeta _brokerCommissionAmountEgpMeta =
       const VerificationMeta('brokerCommissionAmountEgp');
@@ -1901,6 +2112,39 @@ class $SummerBookingsTable extends SummerBookings
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _nationalIdMeta = const VerificationMeta(
+    'nationalId',
+  );
+  @override
+  late final GeneratedColumn<String> nationalId = GeneratedColumn<String>(
+    'national_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idFrontImageMeta = const VerificationMeta(
+    'idFrontImage',
+  );
+  @override
+  late final GeneratedColumn<String> idFrontImage = GeneratedColumn<String>(
+    'id_front_image',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idBackImageMeta = const VerificationMeta(
+    'idBackImage',
+  );
+  @override
+  late final GeneratedColumn<String> idBackImage = GeneratedColumn<String>(
+    'id_back_image',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1936,12 +2180,19 @@ class $SummerBookingsTable extends SummerBookings
     status,
     totalPriceEgp,
     amountPaidEgp,
+    paymentMethod,
     brokerId,
+    brokerName,
+    brokerCommissionType,
     brokerCommissionPercentage,
+    brokerCommissionFixedEgp,
     brokerCommissionAmountEgp,
     earlyCheckoutDate,
     overstayDays,
     overstayFeeEgp,
+    nationalId,
+    idFrontImage,
+    idBackImage,
     createdAt,
     updatedAt,
   ];
@@ -2044,10 +2295,34 @@ class $SummerBookingsTable extends SummerBookings
         ),
       );
     }
+    if (data.containsKey('payment_method')) {
+      context.handle(
+        _paymentMethodMeta,
+        paymentMethod.isAcceptableOrUnknown(
+          data['payment_method']!,
+          _paymentMethodMeta,
+        ),
+      );
+    }
     if (data.containsKey('broker_id')) {
       context.handle(
         _brokerIdMeta,
         brokerId.isAcceptableOrUnknown(data['broker_id']!, _brokerIdMeta),
+      );
+    }
+    if (data.containsKey('broker_name')) {
+      context.handle(
+        _brokerNameMeta,
+        brokerName.isAcceptableOrUnknown(data['broker_name']!, _brokerNameMeta),
+      );
+    }
+    if (data.containsKey('broker_commission_type')) {
+      context.handle(
+        _brokerCommissionTypeMeta,
+        brokerCommissionType.isAcceptableOrUnknown(
+          data['broker_commission_type']!,
+          _brokerCommissionTypeMeta,
+        ),
       );
     }
     if (data.containsKey('broker_commission_percentage')) {
@@ -2056,6 +2331,15 @@ class $SummerBookingsTable extends SummerBookings
         brokerCommissionPercentage.isAcceptableOrUnknown(
           data['broker_commission_percentage']!,
           _brokerCommissionPercentageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('broker_commission_fixed_egp')) {
+      context.handle(
+        _brokerCommissionFixedEgpMeta,
+        brokerCommissionFixedEgp.isAcceptableOrUnknown(
+          data['broker_commission_fixed_egp']!,
+          _brokerCommissionFixedEgpMeta,
         ),
       );
     }
@@ -2092,6 +2376,30 @@ class $SummerBookingsTable extends SummerBookings
         overstayFeeEgp.isAcceptableOrUnknown(
           data['overstay_fee_egp']!,
           _overstayFeeEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('national_id')) {
+      context.handle(
+        _nationalIdMeta,
+        nationalId.isAcceptableOrUnknown(data['national_id']!, _nationalIdMeta),
+      );
+    }
+    if (data.containsKey('id_front_image')) {
+      context.handle(
+        _idFrontImageMeta,
+        idFrontImage.isAcceptableOrUnknown(
+          data['id_front_image']!,
+          _idFrontImageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id_back_image')) {
+      context.handle(
+        _idBackImageMeta,
+        idBackImage.isAcceptableOrUnknown(
+          data['id_back_image']!,
+          _idBackImageMeta,
         ),
       );
     }
@@ -2166,13 +2474,29 @@ class $SummerBookingsTable extends SummerBookings
         DriftSqlType.double,
         data['${effectivePrefix}amount_paid_egp'],
       )!,
+      paymentMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_method'],
+      )!,
       brokerId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}broker_id'],
       ),
+      brokerName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}broker_name'],
+      ),
+      brokerCommissionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}broker_commission_type'],
+      )!,
       brokerCommissionPercentage: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}broker_commission_percentage'],
+      )!,
+      brokerCommissionFixedEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}broker_commission_fixed_egp'],
       )!,
       brokerCommissionAmountEgp: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -2190,6 +2514,18 @@ class $SummerBookingsTable extends SummerBookings
         DriftSqlType.double,
         data['${effectivePrefix}overstay_fee_egp'],
       )!,
+      nationalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}national_id'],
+      ),
+      idFrontImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_front_image'],
+      ),
+      idBackImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_back_image'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2222,12 +2558,19 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
   final String status;
   final double totalPriceEgp;
   final double amountPaidEgp;
+  final String paymentMethod;
   final String? brokerId;
+  final String? brokerName;
+  final String brokerCommissionType;
   final double brokerCommissionPercentage;
+  final double brokerCommissionFixedEgp;
   final double? brokerCommissionAmountEgp;
   final DateTime? earlyCheckoutDate;
   final int overstayDays;
   final double overstayFeeEgp;
+  final String? nationalId;
+  final String? idFrontImage;
+  final String? idBackImage;
   final DateTime createdAt;
   final DateTime updatedAt;
   const SummerBooking({
@@ -2242,12 +2585,19 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     required this.status,
     required this.totalPriceEgp,
     required this.amountPaidEgp,
+    required this.paymentMethod,
     this.brokerId,
+    this.brokerName,
+    required this.brokerCommissionType,
     required this.brokerCommissionPercentage,
+    required this.brokerCommissionFixedEgp,
     this.brokerCommissionAmountEgp,
     this.earlyCheckoutDate,
     required this.overstayDays,
     required this.overstayFeeEgp,
+    this.nationalId,
+    this.idFrontImage,
+    this.idBackImage,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -2271,11 +2621,19 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     map['status'] = Variable<String>(status);
     map['total_price_egp'] = Variable<double>(totalPriceEgp);
     map['amount_paid_egp'] = Variable<double>(amountPaidEgp);
+    map['payment_method'] = Variable<String>(paymentMethod);
     if (!nullToAbsent || brokerId != null) {
       map['broker_id'] = Variable<String>(brokerId);
     }
+    if (!nullToAbsent || brokerName != null) {
+      map['broker_name'] = Variable<String>(brokerName);
+    }
+    map['broker_commission_type'] = Variable<String>(brokerCommissionType);
     map['broker_commission_percentage'] = Variable<double>(
       brokerCommissionPercentage,
+    );
+    map['broker_commission_fixed_egp'] = Variable<double>(
+      brokerCommissionFixedEgp,
     );
     if (!nullToAbsent || brokerCommissionAmountEgp != null) {
       map['broker_commission_amount_egp'] = Variable<double>(
@@ -2287,6 +2645,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     }
     map['overstay_days'] = Variable<int>(overstayDays);
     map['overstay_fee_egp'] = Variable<double>(overstayFeeEgp);
+    if (!nullToAbsent || nationalId != null) {
+      map['national_id'] = Variable<String>(nationalId);
+    }
+    if (!nullToAbsent || idFrontImage != null) {
+      map['id_front_image'] = Variable<String>(idFrontImage);
+    }
+    if (!nullToAbsent || idBackImage != null) {
+      map['id_back_image'] = Variable<String>(idBackImage);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -2307,10 +2674,16 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       status: Value(status),
       totalPriceEgp: Value(totalPriceEgp),
       amountPaidEgp: Value(amountPaidEgp),
+      paymentMethod: Value(paymentMethod),
       brokerId: brokerId == null && nullToAbsent
           ? const Value.absent()
           : Value(brokerId),
+      brokerName: brokerName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(brokerName),
+      brokerCommissionType: Value(brokerCommissionType),
       brokerCommissionPercentage: Value(brokerCommissionPercentage),
+      brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
       brokerCommissionAmountEgp:
           brokerCommissionAmountEgp == null && nullToAbsent
           ? const Value.absent()
@@ -2320,6 +2693,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           : Value(earlyCheckoutDate),
       overstayDays: Value(overstayDays),
       overstayFeeEgp: Value(overstayFeeEgp),
+      nationalId: nationalId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nationalId),
+      idFrontImage: idFrontImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idFrontImage),
+      idBackImage: idBackImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idBackImage),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2346,9 +2728,17 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       status: serializer.fromJson<String>(json['status']),
       totalPriceEgp: serializer.fromJson<double>(json['totalPriceEgp']),
       amountPaidEgp: serializer.fromJson<double>(json['amountPaidEgp']),
+      paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
       brokerId: serializer.fromJson<String?>(json['brokerId']),
+      brokerName: serializer.fromJson<String?>(json['brokerName']),
+      brokerCommissionType: serializer.fromJson<String>(
+        json['brokerCommissionType'],
+      ),
       brokerCommissionPercentage: serializer.fromJson<double>(
         json['brokerCommissionPercentage'],
+      ),
+      brokerCommissionFixedEgp: serializer.fromJson<double>(
+        json['brokerCommissionFixedEgp'],
       ),
       brokerCommissionAmountEgp: serializer.fromJson<double?>(
         json['brokerCommissionAmountEgp'],
@@ -2358,6 +2748,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       ),
       overstayDays: serializer.fromJson<int>(json['overstayDays']),
       overstayFeeEgp: serializer.fromJson<double>(json['overstayFeeEgp']),
+      nationalId: serializer.fromJson<String?>(json['nationalId']),
+      idFrontImage: serializer.fromJson<String?>(json['idFrontImage']),
+      idBackImage: serializer.fromJson<String?>(json['idBackImage']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2379,9 +2772,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       'status': serializer.toJson<String>(status),
       'totalPriceEgp': serializer.toJson<double>(totalPriceEgp),
       'amountPaidEgp': serializer.toJson<double>(amountPaidEgp),
+      'paymentMethod': serializer.toJson<String>(paymentMethod),
       'brokerId': serializer.toJson<String?>(brokerId),
+      'brokerName': serializer.toJson<String?>(brokerName),
+      'brokerCommissionType': serializer.toJson<String>(brokerCommissionType),
       'brokerCommissionPercentage': serializer.toJson<double>(
         brokerCommissionPercentage,
+      ),
+      'brokerCommissionFixedEgp': serializer.toJson<double>(
+        brokerCommissionFixedEgp,
       ),
       'brokerCommissionAmountEgp': serializer.toJson<double?>(
         brokerCommissionAmountEgp,
@@ -2389,6 +2788,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       'earlyCheckoutDate': serializer.toJson<DateTime?>(earlyCheckoutDate),
       'overstayDays': serializer.toJson<int>(overstayDays),
       'overstayFeeEgp': serializer.toJson<double>(overstayFeeEgp),
+      'nationalId': serializer.toJson<String?>(nationalId),
+      'idFrontImage': serializer.toJson<String?>(idFrontImage),
+      'idBackImage': serializer.toJson<String?>(idBackImage),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2406,12 +2808,19 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     String? status,
     double? totalPriceEgp,
     double? amountPaidEgp,
+    String? paymentMethod,
     Value<String?> brokerId = const Value.absent(),
+    Value<String?> brokerName = const Value.absent(),
+    String? brokerCommissionType,
     double? brokerCommissionPercentage,
+    double? brokerCommissionFixedEgp,
     Value<double?> brokerCommissionAmountEgp = const Value.absent(),
     Value<DateTime?> earlyCheckoutDate = const Value.absent(),
     int? overstayDays,
     double? overstayFeeEgp,
+    Value<String?> nationalId = const Value.absent(),
+    Value<String?> idFrontImage = const Value.absent(),
+    Value<String?> idBackImage = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => SummerBooking(
@@ -2426,9 +2835,14 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     status: status ?? this.status,
     totalPriceEgp: totalPriceEgp ?? this.totalPriceEgp,
     amountPaidEgp: amountPaidEgp ?? this.amountPaidEgp,
+    paymentMethod: paymentMethod ?? this.paymentMethod,
     brokerId: brokerId.present ? brokerId.value : this.brokerId,
+    brokerName: brokerName.present ? brokerName.value : this.brokerName,
+    brokerCommissionType: brokerCommissionType ?? this.brokerCommissionType,
     brokerCommissionPercentage:
         brokerCommissionPercentage ?? this.brokerCommissionPercentage,
+    brokerCommissionFixedEgp:
+        brokerCommissionFixedEgp ?? this.brokerCommissionFixedEgp,
     brokerCommissionAmountEgp: brokerCommissionAmountEgp.present
         ? brokerCommissionAmountEgp.value
         : this.brokerCommissionAmountEgp,
@@ -2437,6 +2851,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
         : this.earlyCheckoutDate,
     overstayDays: overstayDays ?? this.overstayDays,
     overstayFeeEgp: overstayFeeEgp ?? this.overstayFeeEgp,
+    nationalId: nationalId.present ? nationalId.value : this.nationalId,
+    idFrontImage: idFrontImage.present ? idFrontImage.value : this.idFrontImage,
+    idBackImage: idBackImage.present ? idBackImage.value : this.idBackImage,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -2469,10 +2886,22 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       amountPaidEgp: data.amountPaidEgp.present
           ? data.amountPaidEgp.value
           : this.amountPaidEgp,
+      paymentMethod: data.paymentMethod.present
+          ? data.paymentMethod.value
+          : this.paymentMethod,
       brokerId: data.brokerId.present ? data.brokerId.value : this.brokerId,
+      brokerName: data.brokerName.present
+          ? data.brokerName.value
+          : this.brokerName,
+      brokerCommissionType: data.brokerCommissionType.present
+          ? data.brokerCommissionType.value
+          : this.brokerCommissionType,
       brokerCommissionPercentage: data.brokerCommissionPercentage.present
           ? data.brokerCommissionPercentage.value
           : this.brokerCommissionPercentage,
+      brokerCommissionFixedEgp: data.brokerCommissionFixedEgp.present
+          ? data.brokerCommissionFixedEgp.value
+          : this.brokerCommissionFixedEgp,
       brokerCommissionAmountEgp: data.brokerCommissionAmountEgp.present
           ? data.brokerCommissionAmountEgp.value
           : this.brokerCommissionAmountEgp,
@@ -2485,6 +2914,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       overstayFeeEgp: data.overstayFeeEgp.present
           ? data.overstayFeeEgp.value
           : this.overstayFeeEgp,
+      nationalId: data.nationalId.present
+          ? data.nationalId.value
+          : this.nationalId,
+      idFrontImage: data.idFrontImage.present
+          ? data.idFrontImage.value
+          : this.idFrontImage,
+      idBackImage: data.idBackImage.present
+          ? data.idBackImage.value
+          : this.idBackImage,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2504,12 +2942,19 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           ..write('status: $status, ')
           ..write('totalPriceEgp: $totalPriceEgp, ')
           ..write('amountPaidEgp: $amountPaidEgp, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('brokerId: $brokerId, ')
+          ..write('brokerName: $brokerName, ')
+          ..write('brokerCommissionType: $brokerCommissionType, ')
           ..write('brokerCommissionPercentage: $brokerCommissionPercentage, ')
+          ..write('brokerCommissionFixedEgp: $brokerCommissionFixedEgp, ')
           ..write('brokerCommissionAmountEgp: $brokerCommissionAmountEgp, ')
           ..write('earlyCheckoutDate: $earlyCheckoutDate, ')
           ..write('overstayDays: $overstayDays, ')
           ..write('overstayFeeEgp: $overstayFeeEgp, ')
+          ..write('nationalId: $nationalId, ')
+          ..write('idFrontImage: $idFrontImage, ')
+          ..write('idBackImage: $idBackImage, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2517,7 +2962,7 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     syncStatus,
     lastModifiedLocal,
     id,
@@ -2529,15 +2974,22 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     status,
     totalPriceEgp,
     amountPaidEgp,
+    paymentMethod,
     brokerId,
+    brokerName,
+    brokerCommissionType,
     brokerCommissionPercentage,
+    brokerCommissionFixedEgp,
     brokerCommissionAmountEgp,
     earlyCheckoutDate,
     overstayDays,
     overstayFeeEgp,
+    nationalId,
+    idFrontImage,
+    idBackImage,
     createdAt,
     updatedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2553,12 +3005,19 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           other.status == this.status &&
           other.totalPriceEgp == this.totalPriceEgp &&
           other.amountPaidEgp == this.amountPaidEgp &&
+          other.paymentMethod == this.paymentMethod &&
           other.brokerId == this.brokerId &&
+          other.brokerName == this.brokerName &&
+          other.brokerCommissionType == this.brokerCommissionType &&
           other.brokerCommissionPercentage == this.brokerCommissionPercentage &&
+          other.brokerCommissionFixedEgp == this.brokerCommissionFixedEgp &&
           other.brokerCommissionAmountEgp == this.brokerCommissionAmountEgp &&
           other.earlyCheckoutDate == this.earlyCheckoutDate &&
           other.overstayDays == this.overstayDays &&
           other.overstayFeeEgp == this.overstayFeeEgp &&
+          other.nationalId == this.nationalId &&
+          other.idFrontImage == this.idFrontImage &&
+          other.idBackImage == this.idBackImage &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2575,12 +3034,19 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
   final Value<String> status;
   final Value<double> totalPriceEgp;
   final Value<double> amountPaidEgp;
+  final Value<String> paymentMethod;
   final Value<String?> brokerId;
+  final Value<String?> brokerName;
+  final Value<String> brokerCommissionType;
   final Value<double> brokerCommissionPercentage;
+  final Value<double> brokerCommissionFixedEgp;
   final Value<double?> brokerCommissionAmountEgp;
   final Value<DateTime?> earlyCheckoutDate;
   final Value<int> overstayDays;
   final Value<double> overstayFeeEgp;
+  final Value<String?> nationalId;
+  final Value<String?> idFrontImage;
+  final Value<String?> idBackImage;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -2596,12 +3062,19 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     this.status = const Value.absent(),
     this.totalPriceEgp = const Value.absent(),
     this.amountPaidEgp = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
     this.brokerId = const Value.absent(),
+    this.brokerName = const Value.absent(),
+    this.brokerCommissionType = const Value.absent(),
     this.brokerCommissionPercentage = const Value.absent(),
+    this.brokerCommissionFixedEgp = const Value.absent(),
     this.brokerCommissionAmountEgp = const Value.absent(),
     this.earlyCheckoutDate = const Value.absent(),
     this.overstayDays = const Value.absent(),
     this.overstayFeeEgp = const Value.absent(),
+    this.nationalId = const Value.absent(),
+    this.idFrontImage = const Value.absent(),
+    this.idBackImage = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2618,12 +3091,19 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     this.status = const Value.absent(),
     required double totalPriceEgp,
     this.amountPaidEgp = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
     this.brokerId = const Value.absent(),
+    this.brokerName = const Value.absent(),
+    this.brokerCommissionType = const Value.absent(),
     this.brokerCommissionPercentage = const Value.absent(),
+    this.brokerCommissionFixedEgp = const Value.absent(),
     this.brokerCommissionAmountEgp = const Value.absent(),
     this.earlyCheckoutDate = const Value.absent(),
     this.overstayDays = const Value.absent(),
     this.overstayFeeEgp = const Value.absent(),
+    this.nationalId = const Value.absent(),
+    this.idFrontImage = const Value.absent(),
+    this.idBackImage = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -2647,12 +3127,19 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     Expression<String>? status,
     Expression<double>? totalPriceEgp,
     Expression<double>? amountPaidEgp,
+    Expression<String>? paymentMethod,
     Expression<String>? brokerId,
+    Expression<String>? brokerName,
+    Expression<String>? brokerCommissionType,
     Expression<double>? brokerCommissionPercentage,
+    Expression<double>? brokerCommissionFixedEgp,
     Expression<double>? brokerCommissionAmountEgp,
     Expression<DateTime>? earlyCheckoutDate,
     Expression<int>? overstayDays,
     Expression<double>? overstayFeeEgp,
+    Expression<String>? nationalId,
+    Expression<String>? idFrontImage,
+    Expression<String>? idBackImage,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -2669,14 +3156,23 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
       if (status != null) 'status': status,
       if (totalPriceEgp != null) 'total_price_egp': totalPriceEgp,
       if (amountPaidEgp != null) 'amount_paid_egp': amountPaidEgp,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
       if (brokerId != null) 'broker_id': brokerId,
+      if (brokerName != null) 'broker_name': brokerName,
+      if (brokerCommissionType != null)
+        'broker_commission_type': brokerCommissionType,
       if (brokerCommissionPercentage != null)
         'broker_commission_percentage': brokerCommissionPercentage,
+      if (brokerCommissionFixedEgp != null)
+        'broker_commission_fixed_egp': brokerCommissionFixedEgp,
       if (brokerCommissionAmountEgp != null)
         'broker_commission_amount_egp': brokerCommissionAmountEgp,
       if (earlyCheckoutDate != null) 'early_checkout_date': earlyCheckoutDate,
       if (overstayDays != null) 'overstay_days': overstayDays,
       if (overstayFeeEgp != null) 'overstay_fee_egp': overstayFeeEgp,
+      if (nationalId != null) 'national_id': nationalId,
+      if (idFrontImage != null) 'id_front_image': idFrontImage,
+      if (idBackImage != null) 'id_back_image': idBackImage,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2695,12 +3191,19 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     Value<String>? status,
     Value<double>? totalPriceEgp,
     Value<double>? amountPaidEgp,
+    Value<String>? paymentMethod,
     Value<String?>? brokerId,
+    Value<String?>? brokerName,
+    Value<String>? brokerCommissionType,
     Value<double>? brokerCommissionPercentage,
+    Value<double>? brokerCommissionFixedEgp,
     Value<double?>? brokerCommissionAmountEgp,
     Value<DateTime?>? earlyCheckoutDate,
     Value<int>? overstayDays,
     Value<double>? overstayFeeEgp,
+    Value<String?>? nationalId,
+    Value<String?>? idFrontImage,
+    Value<String?>? idBackImage,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -2717,14 +3220,22 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
       status: status ?? this.status,
       totalPriceEgp: totalPriceEgp ?? this.totalPriceEgp,
       amountPaidEgp: amountPaidEgp ?? this.amountPaidEgp,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       brokerId: brokerId ?? this.brokerId,
+      brokerName: brokerName ?? this.brokerName,
+      brokerCommissionType: brokerCommissionType ?? this.brokerCommissionType,
       brokerCommissionPercentage:
           brokerCommissionPercentage ?? this.brokerCommissionPercentage,
+      brokerCommissionFixedEgp:
+          brokerCommissionFixedEgp ?? this.brokerCommissionFixedEgp,
       brokerCommissionAmountEgp:
           brokerCommissionAmountEgp ?? this.brokerCommissionAmountEgp,
       earlyCheckoutDate: earlyCheckoutDate ?? this.earlyCheckoutDate,
       overstayDays: overstayDays ?? this.overstayDays,
       overstayFeeEgp: overstayFeeEgp ?? this.overstayFeeEgp,
+      nationalId: nationalId ?? this.nationalId,
+      idFrontImage: idFrontImage ?? this.idFrontImage,
+      idBackImage: idBackImage ?? this.idBackImage,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2769,12 +3280,28 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     if (amountPaidEgp.present) {
       map['amount_paid_egp'] = Variable<double>(amountPaidEgp.value);
     }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(paymentMethod.value);
+    }
     if (brokerId.present) {
       map['broker_id'] = Variable<String>(brokerId.value);
+    }
+    if (brokerName.present) {
+      map['broker_name'] = Variable<String>(brokerName.value);
+    }
+    if (brokerCommissionType.present) {
+      map['broker_commission_type'] = Variable<String>(
+        brokerCommissionType.value,
+      );
     }
     if (brokerCommissionPercentage.present) {
       map['broker_commission_percentage'] = Variable<double>(
         brokerCommissionPercentage.value,
+      );
+    }
+    if (brokerCommissionFixedEgp.present) {
+      map['broker_commission_fixed_egp'] = Variable<double>(
+        brokerCommissionFixedEgp.value,
       );
     }
     if (brokerCommissionAmountEgp.present) {
@@ -2790,6 +3317,15 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     }
     if (overstayFeeEgp.present) {
       map['overstay_fee_egp'] = Variable<double>(overstayFeeEgp.value);
+    }
+    if (nationalId.present) {
+      map['national_id'] = Variable<String>(nationalId.value);
+    }
+    if (idFrontImage.present) {
+      map['id_front_image'] = Variable<String>(idFrontImage.value);
+    }
+    if (idBackImage.present) {
+      map['id_back_image'] = Variable<String>(idBackImage.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -2817,12 +3353,19 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
           ..write('status: $status, ')
           ..write('totalPriceEgp: $totalPriceEgp, ')
           ..write('amountPaidEgp: $amountPaidEgp, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('brokerId: $brokerId, ')
+          ..write('brokerName: $brokerName, ')
+          ..write('brokerCommissionType: $brokerCommissionType, ')
           ..write('brokerCommissionPercentage: $brokerCommissionPercentage, ')
+          ..write('brokerCommissionFixedEgp: $brokerCommissionFixedEgp, ')
           ..write('brokerCommissionAmountEgp: $brokerCommissionAmountEgp, ')
           ..write('earlyCheckoutDate: $earlyCheckoutDate, ')
           ..write('overstayDays: $overstayDays, ')
           ..write('overstayFeeEgp: $overstayFeeEgp, ')
+          ..write('nationalId: $nationalId, ')
+          ..write('idFrontImage: $idFrontImage, ')
+          ..write('idBackImage: $idBackImage, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -2882,6 +3425,18 @@ class $WinterContractsTable extends WinterContracts
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES apartments (id)',
     ),
+  );
+  static const VerificationMeta _contractTypeMeta = const VerificationMeta(
+    'contractType',
+  );
+  @override
+  late final GeneratedColumn<String> contractType = GeneratedColumn<String>(
+    'contract_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('student'),
   );
   static const VerificationMeta _studentNameMeta = const VerificationMeta(
     'studentName',
@@ -2998,6 +3553,118 @@ class $WinterContractsTable extends WinterContracts
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _isElectricityOnStudentMeta =
+      const VerificationMeta('isElectricityOnStudent');
+  @override
+  late final GeneratedColumn<bool> isElectricityOnStudent =
+      GeneratedColumn<bool>(
+        'is_electricity_on_student',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_electricity_on_student" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
+  static const VerificationMeta _isGasOnStudentMeta = const VerificationMeta(
+    'isGasOnStudent',
+  );
+  @override
+  late final GeneratedColumn<bool> isGasOnStudent = GeneratedColumn<bool>(
+    'is_gas_on_student',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_gas_on_student" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _isWaterOnStudentMeta = const VerificationMeta(
+    'isWaterOnStudent',
+  );
+  @override
+  late final GeneratedColumn<bool> isWaterOnStudent = GeneratedColumn<bool>(
+    'is_water_on_student',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_water_on_student" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _roommatesMeta = const VerificationMeta(
+    'roommates',
+  );
+  @override
+  late final GeneratedColumn<String> roommates = GeneratedColumn<String>(
+    'roommates',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nationalIdMeta = const VerificationMeta(
+    'nationalId',
+  );
+  @override
+  late final GeneratedColumn<String> nationalId = GeneratedColumn<String>(
+    'national_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idFrontImageMeta = const VerificationMeta(
+    'idFrontImage',
+  );
+  @override
+  late final GeneratedColumn<String> idFrontImage = GeneratedColumn<String>(
+    'id_front_image',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idBackImageMeta = const VerificationMeta(
+    'idBackImage',
+  );
+  @override
+  late final GeneratedColumn<String> idBackImage = GeneratedColumn<String>(
+    'id_back_image',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contractFrontImageMeta =
+      const VerificationMeta('contractFrontImage');
+  @override
+  late final GeneratedColumn<String> contractFrontImage =
+      GeneratedColumn<String>(
+        'contract_front_image',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _contractBackImageMeta = const VerificationMeta(
+    'contractBackImage',
+  );
+  @override
+  late final GeneratedColumn<String> contractBackImage =
+      GeneratedColumn<String>(
+        'contract_back_image',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3026,6 +3693,7 @@ class $WinterContractsTable extends WinterContracts
     lastModifiedLocal,
     id,
     apartmentId,
+    contractType,
     studentName,
     university,
     parentName,
@@ -3036,6 +3704,15 @@ class $WinterContractsTable extends WinterContracts
     monthlyRentEgp,
     depositEgp,
     isActive,
+    isElectricityOnStudent,
+    isGasOnStudent,
+    isWaterOnStudent,
+    roommates,
+    nationalId,
+    idFrontImage,
+    idBackImage,
+    contractFrontImage,
+    contractBackImage,
     createdAt,
     updatedAt,
   ];
@@ -3075,6 +3752,15 @@ class $WinterContractsTable extends WinterContracts
       );
     } else if (isInserting) {
       context.missing(_apartmentIdMeta);
+    }
+    if (data.containsKey('contract_type')) {
+      context.handle(
+        _contractTypeMeta,
+        contractType.isAcceptableOrUnknown(
+          data['contract_type']!,
+          _contractTypeMeta,
+        ),
+      );
     }
     if (data.containsKey('student_name')) {
       context.handle(
@@ -3156,6 +3842,81 @@ class $WinterContractsTable extends WinterContracts
         isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
       );
     }
+    if (data.containsKey('is_electricity_on_student')) {
+      context.handle(
+        _isElectricityOnStudentMeta,
+        isElectricityOnStudent.isAcceptableOrUnknown(
+          data['is_electricity_on_student']!,
+          _isElectricityOnStudentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_gas_on_student')) {
+      context.handle(
+        _isGasOnStudentMeta,
+        isGasOnStudent.isAcceptableOrUnknown(
+          data['is_gas_on_student']!,
+          _isGasOnStudentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_water_on_student')) {
+      context.handle(
+        _isWaterOnStudentMeta,
+        isWaterOnStudent.isAcceptableOrUnknown(
+          data['is_water_on_student']!,
+          _isWaterOnStudentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('roommates')) {
+      context.handle(
+        _roommatesMeta,
+        roommates.isAcceptableOrUnknown(data['roommates']!, _roommatesMeta),
+      );
+    }
+    if (data.containsKey('national_id')) {
+      context.handle(
+        _nationalIdMeta,
+        nationalId.isAcceptableOrUnknown(data['national_id']!, _nationalIdMeta),
+      );
+    }
+    if (data.containsKey('id_front_image')) {
+      context.handle(
+        _idFrontImageMeta,
+        idFrontImage.isAcceptableOrUnknown(
+          data['id_front_image']!,
+          _idFrontImageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id_back_image')) {
+      context.handle(
+        _idBackImageMeta,
+        idBackImage.isAcceptableOrUnknown(
+          data['id_back_image']!,
+          _idBackImageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('contract_front_image')) {
+      context.handle(
+        _contractFrontImageMeta,
+        contractFrontImage.isAcceptableOrUnknown(
+          data['contract_front_image']!,
+          _contractFrontImageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('contract_back_image')) {
+      context.handle(
+        _contractBackImageMeta,
+        contractBackImage.isAcceptableOrUnknown(
+          data['contract_back_image']!,
+          _contractBackImageMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3199,6 +3960,10 @@ class $WinterContractsTable extends WinterContracts
         DriftSqlType.string,
         data['${effectivePrefix}apartment_id'],
       )!,
+      contractType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contract_type'],
+      )!,
       studentName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}student_name'],
@@ -3239,6 +4004,42 @@ class $WinterContractsTable extends WinterContracts
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
       )!,
+      isElectricityOnStudent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_electricity_on_student'],
+      )!,
+      isGasOnStudent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_gas_on_student'],
+      )!,
+      isWaterOnStudent: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_water_on_student'],
+      )!,
+      roommates: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}roommates'],
+      ),
+      nationalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}national_id'],
+      ),
+      idFrontImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_front_image'],
+      ),
+      idBackImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id_back_image'],
+      ),
+      contractFrontImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contract_front_image'],
+      ),
+      contractBackImage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contract_back_image'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3264,6 +4065,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
   final DateTime lastModifiedLocal;
   final String id;
   final String apartmentId;
+  final String contractType;
   final String studentName;
   final String? university;
   final String? parentName;
@@ -3274,6 +4076,15 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
   final double monthlyRentEgp;
   final double depositEgp;
   final bool isActive;
+  final bool isElectricityOnStudent;
+  final bool isGasOnStudent;
+  final bool isWaterOnStudent;
+  final String? roommates;
+  final String? nationalId;
+  final String? idFrontImage;
+  final String? idBackImage;
+  final String? contractFrontImage;
+  final String? contractBackImage;
   final DateTime createdAt;
   final DateTime updatedAt;
   const WinterContract({
@@ -3281,6 +4092,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     required this.lastModifiedLocal,
     required this.id,
     required this.apartmentId,
+    required this.contractType,
     required this.studentName,
     this.university,
     this.parentName,
@@ -3291,6 +4103,15 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     required this.monthlyRentEgp,
     required this.depositEgp,
     required this.isActive,
+    required this.isElectricityOnStudent,
+    required this.isGasOnStudent,
+    required this.isWaterOnStudent,
+    this.roommates,
+    this.nationalId,
+    this.idFrontImage,
+    this.idBackImage,
+    this.contractFrontImage,
+    this.contractBackImage,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -3305,6 +4126,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
     map['id'] = Variable<String>(id);
     map['apartment_id'] = Variable<String>(apartmentId);
+    map['contract_type'] = Variable<String>(contractType);
     map['student_name'] = Variable<String>(studentName);
     if (!nullToAbsent || university != null) {
       map['university'] = Variable<String>(university);
@@ -3323,6 +4145,27 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     map['monthly_rent_egp'] = Variable<double>(monthlyRentEgp);
     map['deposit_egp'] = Variable<double>(depositEgp);
     map['is_active'] = Variable<bool>(isActive);
+    map['is_electricity_on_student'] = Variable<bool>(isElectricityOnStudent);
+    map['is_gas_on_student'] = Variable<bool>(isGasOnStudent);
+    map['is_water_on_student'] = Variable<bool>(isWaterOnStudent);
+    if (!nullToAbsent || roommates != null) {
+      map['roommates'] = Variable<String>(roommates);
+    }
+    if (!nullToAbsent || nationalId != null) {
+      map['national_id'] = Variable<String>(nationalId);
+    }
+    if (!nullToAbsent || idFrontImage != null) {
+      map['id_front_image'] = Variable<String>(idFrontImage);
+    }
+    if (!nullToAbsent || idBackImage != null) {
+      map['id_back_image'] = Variable<String>(idBackImage);
+    }
+    if (!nullToAbsent || contractFrontImage != null) {
+      map['contract_front_image'] = Variable<String>(contractFrontImage);
+    }
+    if (!nullToAbsent || contractBackImage != null) {
+      map['contract_back_image'] = Variable<String>(contractBackImage);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -3334,6 +4177,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       lastModifiedLocal: Value(lastModifiedLocal),
       id: Value(id),
       apartmentId: Value(apartmentId),
+      contractType: Value(contractType),
       studentName: Value(studentName),
       university: university == null && nullToAbsent
           ? const Value.absent()
@@ -3352,6 +4196,27 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       monthlyRentEgp: Value(monthlyRentEgp),
       depositEgp: Value(depositEgp),
       isActive: Value(isActive),
+      isElectricityOnStudent: Value(isElectricityOnStudent),
+      isGasOnStudent: Value(isGasOnStudent),
+      isWaterOnStudent: Value(isWaterOnStudent),
+      roommates: roommates == null && nullToAbsent
+          ? const Value.absent()
+          : Value(roommates),
+      nationalId: nationalId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nationalId),
+      idFrontImage: idFrontImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idFrontImage),
+      idBackImage: idBackImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idBackImage),
+      contractFrontImage: contractFrontImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contractFrontImage),
+      contractBackImage: contractBackImage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contractBackImage),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -3371,6 +4236,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       ),
       id: serializer.fromJson<String>(json['id']),
       apartmentId: serializer.fromJson<String>(json['apartmentId']),
+      contractType: serializer.fromJson<String>(json['contractType']),
       studentName: serializer.fromJson<String>(json['studentName']),
       university: serializer.fromJson<String?>(json['university']),
       parentName: serializer.fromJson<String?>(json['parentName']),
@@ -3381,6 +4247,21 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       monthlyRentEgp: serializer.fromJson<double>(json['monthlyRentEgp']),
       depositEgp: serializer.fromJson<double>(json['depositEgp']),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      isElectricityOnStudent: serializer.fromJson<bool>(
+        json['isElectricityOnStudent'],
+      ),
+      isGasOnStudent: serializer.fromJson<bool>(json['isGasOnStudent']),
+      isWaterOnStudent: serializer.fromJson<bool>(json['isWaterOnStudent']),
+      roommates: serializer.fromJson<String?>(json['roommates']),
+      nationalId: serializer.fromJson<String?>(json['nationalId']),
+      idFrontImage: serializer.fromJson<String?>(json['idFrontImage']),
+      idBackImage: serializer.fromJson<String?>(json['idBackImage']),
+      contractFrontImage: serializer.fromJson<String?>(
+        json['contractFrontImage'],
+      ),
+      contractBackImage: serializer.fromJson<String?>(
+        json['contractBackImage'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -3395,6 +4276,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
       'id': serializer.toJson<String>(id),
       'apartmentId': serializer.toJson<String>(apartmentId),
+      'contractType': serializer.toJson<String>(contractType),
       'studentName': serializer.toJson<String>(studentName),
       'university': serializer.toJson<String?>(university),
       'parentName': serializer.toJson<String?>(parentName),
@@ -3405,6 +4287,15 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       'monthlyRentEgp': serializer.toJson<double>(monthlyRentEgp),
       'depositEgp': serializer.toJson<double>(depositEgp),
       'isActive': serializer.toJson<bool>(isActive),
+      'isElectricityOnStudent': serializer.toJson<bool>(isElectricityOnStudent),
+      'isGasOnStudent': serializer.toJson<bool>(isGasOnStudent),
+      'isWaterOnStudent': serializer.toJson<bool>(isWaterOnStudent),
+      'roommates': serializer.toJson<String?>(roommates),
+      'nationalId': serializer.toJson<String?>(nationalId),
+      'idFrontImage': serializer.toJson<String?>(idFrontImage),
+      'idBackImage': serializer.toJson<String?>(idBackImage),
+      'contractFrontImage': serializer.toJson<String?>(contractFrontImage),
+      'contractBackImage': serializer.toJson<String?>(contractBackImage),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -3415,6 +4306,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     DateTime? lastModifiedLocal,
     String? id,
     String? apartmentId,
+    String? contractType,
     String? studentName,
     Value<String?> university = const Value.absent(),
     Value<String?> parentName = const Value.absent(),
@@ -3425,6 +4317,15 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     double? monthlyRentEgp,
     double? depositEgp,
     bool? isActive,
+    bool? isElectricityOnStudent,
+    bool? isGasOnStudent,
+    bool? isWaterOnStudent,
+    Value<String?> roommates = const Value.absent(),
+    Value<String?> nationalId = const Value.absent(),
+    Value<String?> idFrontImage = const Value.absent(),
+    Value<String?> idBackImage = const Value.absent(),
+    Value<String?> contractFrontImage = const Value.absent(),
+    Value<String?> contractBackImage = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => WinterContract(
@@ -3432,6 +4333,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
     id: id ?? this.id,
     apartmentId: apartmentId ?? this.apartmentId,
+    contractType: contractType ?? this.contractType,
     studentName: studentName ?? this.studentName,
     university: university.present ? university.value : this.university,
     parentName: parentName.present ? parentName.value : this.parentName,
@@ -3442,6 +4344,20 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     monthlyRentEgp: monthlyRentEgp ?? this.monthlyRentEgp,
     depositEgp: depositEgp ?? this.depositEgp,
     isActive: isActive ?? this.isActive,
+    isElectricityOnStudent:
+        isElectricityOnStudent ?? this.isElectricityOnStudent,
+    isGasOnStudent: isGasOnStudent ?? this.isGasOnStudent,
+    isWaterOnStudent: isWaterOnStudent ?? this.isWaterOnStudent,
+    roommates: roommates.present ? roommates.value : this.roommates,
+    nationalId: nationalId.present ? nationalId.value : this.nationalId,
+    idFrontImage: idFrontImage.present ? idFrontImage.value : this.idFrontImage,
+    idBackImage: idBackImage.present ? idBackImage.value : this.idBackImage,
+    contractFrontImage: contractFrontImage.present
+        ? contractFrontImage.value
+        : this.contractFrontImage,
+    contractBackImage: contractBackImage.present
+        ? contractBackImage.value
+        : this.contractBackImage,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -3457,6 +4373,9 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
       apartmentId: data.apartmentId.present
           ? data.apartmentId.value
           : this.apartmentId,
+      contractType: data.contractType.present
+          ? data.contractType.value
+          : this.contractType,
       studentName: data.studentName.present
           ? data.studentName.value
           : this.studentName,
@@ -3481,6 +4400,31 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
           ? data.depositEgp.value
           : this.depositEgp,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      isElectricityOnStudent: data.isElectricityOnStudent.present
+          ? data.isElectricityOnStudent.value
+          : this.isElectricityOnStudent,
+      isGasOnStudent: data.isGasOnStudent.present
+          ? data.isGasOnStudent.value
+          : this.isGasOnStudent,
+      isWaterOnStudent: data.isWaterOnStudent.present
+          ? data.isWaterOnStudent.value
+          : this.isWaterOnStudent,
+      roommates: data.roommates.present ? data.roommates.value : this.roommates,
+      nationalId: data.nationalId.present
+          ? data.nationalId.value
+          : this.nationalId,
+      idFrontImage: data.idFrontImage.present
+          ? data.idFrontImage.value
+          : this.idFrontImage,
+      idBackImage: data.idBackImage.present
+          ? data.idBackImage.value
+          : this.idBackImage,
+      contractFrontImage: data.contractFrontImage.present
+          ? data.contractFrontImage.value
+          : this.contractFrontImage,
+      contractBackImage: data.contractBackImage.present
+          ? data.contractBackImage.value
+          : this.contractBackImage,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -3493,6 +4437,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
           ..write('lastModifiedLocal: $lastModifiedLocal, ')
           ..write('id: $id, ')
           ..write('apartmentId: $apartmentId, ')
+          ..write('contractType: $contractType, ')
           ..write('studentName: $studentName, ')
           ..write('university: $university, ')
           ..write('parentName: $parentName, ')
@@ -3503,6 +4448,15 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
           ..write('monthlyRentEgp: $monthlyRentEgp, ')
           ..write('depositEgp: $depositEgp, ')
           ..write('isActive: $isActive, ')
+          ..write('isElectricityOnStudent: $isElectricityOnStudent, ')
+          ..write('isGasOnStudent: $isGasOnStudent, ')
+          ..write('isWaterOnStudent: $isWaterOnStudent, ')
+          ..write('roommates: $roommates, ')
+          ..write('nationalId: $nationalId, ')
+          ..write('idFrontImage: $idFrontImage, ')
+          ..write('idBackImage: $idBackImage, ')
+          ..write('contractFrontImage: $contractFrontImage, ')
+          ..write('contractBackImage: $contractBackImage, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3510,11 +4464,12 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     syncStatus,
     lastModifiedLocal,
     id,
     apartmentId,
+    contractType,
     studentName,
     university,
     parentName,
@@ -3525,9 +4480,18 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
     monthlyRentEgp,
     depositEgp,
     isActive,
+    isElectricityOnStudent,
+    isGasOnStudent,
+    isWaterOnStudent,
+    roommates,
+    nationalId,
+    idFrontImage,
+    idBackImage,
+    contractFrontImage,
+    contractBackImage,
     createdAt,
     updatedAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3536,6 +4500,7 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
           other.lastModifiedLocal == this.lastModifiedLocal &&
           other.id == this.id &&
           other.apartmentId == this.apartmentId &&
+          other.contractType == this.contractType &&
           other.studentName == this.studentName &&
           other.university == this.university &&
           other.parentName == this.parentName &&
@@ -3546,6 +4511,15 @@ class WinterContract extends DataClass implements Insertable<WinterContract> {
           other.monthlyRentEgp == this.monthlyRentEgp &&
           other.depositEgp == this.depositEgp &&
           other.isActive == this.isActive &&
+          other.isElectricityOnStudent == this.isElectricityOnStudent &&
+          other.isGasOnStudent == this.isGasOnStudent &&
+          other.isWaterOnStudent == this.isWaterOnStudent &&
+          other.roommates == this.roommates &&
+          other.nationalId == this.nationalId &&
+          other.idFrontImage == this.idFrontImage &&
+          other.idBackImage == this.idBackImage &&
+          other.contractFrontImage == this.contractFrontImage &&
+          other.contractBackImage == this.contractBackImage &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -3555,6 +4529,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
   final Value<DateTime> lastModifiedLocal;
   final Value<String> id;
   final Value<String> apartmentId;
+  final Value<String> contractType;
   final Value<String> studentName;
   final Value<String?> university;
   final Value<String?> parentName;
@@ -3565,6 +4540,15 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
   final Value<double> monthlyRentEgp;
   final Value<double> depositEgp;
   final Value<bool> isActive;
+  final Value<bool> isElectricityOnStudent;
+  final Value<bool> isGasOnStudent;
+  final Value<bool> isWaterOnStudent;
+  final Value<String?> roommates;
+  final Value<String?> nationalId;
+  final Value<String?> idFrontImage;
+  final Value<String?> idBackImage;
+  final Value<String?> contractFrontImage;
+  final Value<String?> contractBackImage;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -3573,6 +4557,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     this.lastModifiedLocal = const Value.absent(),
     this.id = const Value.absent(),
     this.apartmentId = const Value.absent(),
+    this.contractType = const Value.absent(),
     this.studentName = const Value.absent(),
     this.university = const Value.absent(),
     this.parentName = const Value.absent(),
@@ -3583,6 +4568,15 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     this.monthlyRentEgp = const Value.absent(),
     this.depositEgp = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.isElectricityOnStudent = const Value.absent(),
+    this.isGasOnStudent = const Value.absent(),
+    this.isWaterOnStudent = const Value.absent(),
+    this.roommates = const Value.absent(),
+    this.nationalId = const Value.absent(),
+    this.idFrontImage = const Value.absent(),
+    this.idBackImage = const Value.absent(),
+    this.contractFrontImage = const Value.absent(),
+    this.contractBackImage = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3592,6 +4586,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     this.lastModifiedLocal = const Value.absent(),
     required String id,
     required String apartmentId,
+    this.contractType = const Value.absent(),
     required String studentName,
     this.university = const Value.absent(),
     this.parentName = const Value.absent(),
@@ -3602,6 +4597,15 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     required double monthlyRentEgp,
     this.depositEgp = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.isElectricityOnStudent = const Value.absent(),
+    this.isGasOnStudent = const Value.absent(),
+    this.isWaterOnStudent = const Value.absent(),
+    this.roommates = const Value.absent(),
+    this.nationalId = const Value.absent(),
+    this.idFrontImage = const Value.absent(),
+    this.idBackImage = const Value.absent(),
+    this.contractFrontImage = const Value.absent(),
+    this.contractBackImage = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -3618,6 +4622,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     Expression<DateTime>? lastModifiedLocal,
     Expression<String>? id,
     Expression<String>? apartmentId,
+    Expression<String>? contractType,
     Expression<String>? studentName,
     Expression<String>? university,
     Expression<String>? parentName,
@@ -3628,6 +4633,15 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     Expression<double>? monthlyRentEgp,
     Expression<double>? depositEgp,
     Expression<bool>? isActive,
+    Expression<bool>? isElectricityOnStudent,
+    Expression<bool>? isGasOnStudent,
+    Expression<bool>? isWaterOnStudent,
+    Expression<String>? roommates,
+    Expression<String>? nationalId,
+    Expression<String>? idFrontImage,
+    Expression<String>? idBackImage,
+    Expression<String>? contractFrontImage,
+    Expression<String>? contractBackImage,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -3637,6 +4651,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
       if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
       if (id != null) 'id': id,
       if (apartmentId != null) 'apartment_id': apartmentId,
+      if (contractType != null) 'contract_type': contractType,
       if (studentName != null) 'student_name': studentName,
       if (university != null) 'university': university,
       if (parentName != null) 'parent_name': parentName,
@@ -3647,6 +4662,17 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
       if (monthlyRentEgp != null) 'monthly_rent_egp': monthlyRentEgp,
       if (depositEgp != null) 'deposit_egp': depositEgp,
       if (isActive != null) 'is_active': isActive,
+      if (isElectricityOnStudent != null)
+        'is_electricity_on_student': isElectricityOnStudent,
+      if (isGasOnStudent != null) 'is_gas_on_student': isGasOnStudent,
+      if (isWaterOnStudent != null) 'is_water_on_student': isWaterOnStudent,
+      if (roommates != null) 'roommates': roommates,
+      if (nationalId != null) 'national_id': nationalId,
+      if (idFrontImage != null) 'id_front_image': idFrontImage,
+      if (idBackImage != null) 'id_back_image': idBackImage,
+      if (contractFrontImage != null)
+        'contract_front_image': contractFrontImage,
+      if (contractBackImage != null) 'contract_back_image': contractBackImage,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3658,6 +4684,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     Value<DateTime>? lastModifiedLocal,
     Value<String>? id,
     Value<String>? apartmentId,
+    Value<String>? contractType,
     Value<String>? studentName,
     Value<String?>? university,
     Value<String?>? parentName,
@@ -3668,6 +4695,15 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     Value<double>? monthlyRentEgp,
     Value<double>? depositEgp,
     Value<bool>? isActive,
+    Value<bool>? isElectricityOnStudent,
+    Value<bool>? isGasOnStudent,
+    Value<bool>? isWaterOnStudent,
+    Value<String?>? roommates,
+    Value<String?>? nationalId,
+    Value<String?>? idFrontImage,
+    Value<String?>? idBackImage,
+    Value<String?>? contractFrontImage,
+    Value<String?>? contractBackImage,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -3677,6 +4713,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
       lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
       id: id ?? this.id,
       apartmentId: apartmentId ?? this.apartmentId,
+      contractType: contractType ?? this.contractType,
       studentName: studentName ?? this.studentName,
       university: university ?? this.university,
       parentName: parentName ?? this.parentName,
@@ -3687,6 +4724,16 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
       monthlyRentEgp: monthlyRentEgp ?? this.monthlyRentEgp,
       depositEgp: depositEgp ?? this.depositEgp,
       isActive: isActive ?? this.isActive,
+      isElectricityOnStudent:
+          isElectricityOnStudent ?? this.isElectricityOnStudent,
+      isGasOnStudent: isGasOnStudent ?? this.isGasOnStudent,
+      isWaterOnStudent: isWaterOnStudent ?? this.isWaterOnStudent,
+      roommates: roommates ?? this.roommates,
+      nationalId: nationalId ?? this.nationalId,
+      idFrontImage: idFrontImage ?? this.idFrontImage,
+      idBackImage: idBackImage ?? this.idBackImage,
+      contractFrontImage: contractFrontImage ?? this.contractFrontImage,
+      contractBackImage: contractBackImage ?? this.contractBackImage,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -3709,6 +4756,9 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     }
     if (apartmentId.present) {
       map['apartment_id'] = Variable<String>(apartmentId.value);
+    }
+    if (contractType.present) {
+      map['contract_type'] = Variable<String>(contractType.value);
     }
     if (studentName.present) {
       map['student_name'] = Variable<String>(studentName.value);
@@ -3740,6 +4790,35 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
+    if (isElectricityOnStudent.present) {
+      map['is_electricity_on_student'] = Variable<bool>(
+        isElectricityOnStudent.value,
+      );
+    }
+    if (isGasOnStudent.present) {
+      map['is_gas_on_student'] = Variable<bool>(isGasOnStudent.value);
+    }
+    if (isWaterOnStudent.present) {
+      map['is_water_on_student'] = Variable<bool>(isWaterOnStudent.value);
+    }
+    if (roommates.present) {
+      map['roommates'] = Variable<String>(roommates.value);
+    }
+    if (nationalId.present) {
+      map['national_id'] = Variable<String>(nationalId.value);
+    }
+    if (idFrontImage.present) {
+      map['id_front_image'] = Variable<String>(idFrontImage.value);
+    }
+    if (idBackImage.present) {
+      map['id_back_image'] = Variable<String>(idBackImage.value);
+    }
+    if (contractFrontImage.present) {
+      map['contract_front_image'] = Variable<String>(contractFrontImage.value);
+    }
+    if (contractBackImage.present) {
+      map['contract_back_image'] = Variable<String>(contractBackImage.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3759,6 +4838,7 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
           ..write('lastModifiedLocal: $lastModifiedLocal, ')
           ..write('id: $id, ')
           ..write('apartmentId: $apartmentId, ')
+          ..write('contractType: $contractType, ')
           ..write('studentName: $studentName, ')
           ..write('university: $university, ')
           ..write('parentName: $parentName, ')
@@ -3769,6 +4849,15 @@ class WinterContractsCompanion extends UpdateCompanion<WinterContract> {
           ..write('monthlyRentEgp: $monthlyRentEgp, ')
           ..write('depositEgp: $depositEgp, ')
           ..write('isActive: $isActive, ')
+          ..write('isElectricityOnStudent: $isElectricityOnStudent, ')
+          ..write('isGasOnStudent: $isGasOnStudent, ')
+          ..write('isWaterOnStudent: $isWaterOnStudent, ')
+          ..write('roommates: $roommates, ')
+          ..write('nationalId: $nationalId, ')
+          ..write('idFrontImage: $idFrontImage, ')
+          ..write('idBackImage: $idBackImage, ')
+          ..write('contractFrontImage: $contractFrontImage, ')
+          ..write('contractBackImage: $contractBackImage, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -3851,6 +4940,18 @@ class $WinterPaymentsTable extends WinterPayments
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
+    'paymentMethod',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('cash'),
+  );
   static const VerificationMeta _receiptUrlMeta = const VerificationMeta(
     'receiptUrl',
   );
@@ -3881,6 +4982,7 @@ class $WinterPaymentsTable extends WinterPayments
     contractId,
     amountEgp,
     paymentDate,
+    paymentMethod,
     receiptUrl,
     createdAt,
   ];
@@ -3937,6 +5039,15 @@ class $WinterPaymentsTable extends WinterPayments
     } else if (isInserting) {
       context.missing(_paymentDateMeta);
     }
+    if (data.containsKey('payment_method')) {
+      context.handle(
+        _paymentMethodMeta,
+        paymentMethod.isAcceptableOrUnknown(
+          data['payment_method']!,
+          _paymentMethodMeta,
+        ),
+      );
+    }
     if (data.containsKey('receipt_url')) {
       context.handle(
         _receiptUrlMeta,
@@ -3986,6 +5097,10 @@ class $WinterPaymentsTable extends WinterPayments
         DriftSqlType.dateTime,
         data['${effectivePrefix}payment_date'],
       )!,
+      paymentMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_method'],
+      )!,
       receiptUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}receipt_url'],
@@ -4013,6 +5128,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
   final String contractId;
   final double amountEgp;
   final DateTime paymentDate;
+  final String paymentMethod;
   final String? receiptUrl;
   final DateTime createdAt;
   const WinterPayment({
@@ -4022,6 +5138,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
     required this.contractId,
     required this.amountEgp,
     required this.paymentDate,
+    required this.paymentMethod,
     this.receiptUrl,
     required this.createdAt,
   });
@@ -4038,6 +5155,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
     map['contract_id'] = Variable<String>(contractId);
     map['amount_egp'] = Variable<double>(amountEgp);
     map['payment_date'] = Variable<DateTime>(paymentDate);
+    map['payment_method'] = Variable<String>(paymentMethod);
     if (!nullToAbsent || receiptUrl != null) {
       map['receipt_url'] = Variable<String>(receiptUrl);
     }
@@ -4053,6 +5171,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
       contractId: Value(contractId),
       amountEgp: Value(amountEgp),
       paymentDate: Value(paymentDate),
+      paymentMethod: Value(paymentMethod),
       receiptUrl: receiptUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(receiptUrl),
@@ -4076,6 +5195,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
       contractId: serializer.fromJson<String>(json['contractId']),
       amountEgp: serializer.fromJson<double>(json['amountEgp']),
       paymentDate: serializer.fromJson<DateTime>(json['paymentDate']),
+      paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
       receiptUrl: serializer.fromJson<String?>(json['receiptUrl']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -4092,6 +5212,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
       'contractId': serializer.toJson<String>(contractId),
       'amountEgp': serializer.toJson<double>(amountEgp),
       'paymentDate': serializer.toJson<DateTime>(paymentDate),
+      'paymentMethod': serializer.toJson<String>(paymentMethod),
       'receiptUrl': serializer.toJson<String?>(receiptUrl),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -4104,6 +5225,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
     String? contractId,
     double? amountEgp,
     DateTime? paymentDate,
+    String? paymentMethod,
     Value<String?> receiptUrl = const Value.absent(),
     DateTime? createdAt,
   }) => WinterPayment(
@@ -4113,6 +5235,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
     contractId: contractId ?? this.contractId,
     amountEgp: amountEgp ?? this.amountEgp,
     paymentDate: paymentDate ?? this.paymentDate,
+    paymentMethod: paymentMethod ?? this.paymentMethod,
     receiptUrl: receiptUrl.present ? receiptUrl.value : this.receiptUrl,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -4132,6 +5255,9 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
       paymentDate: data.paymentDate.present
           ? data.paymentDate.value
           : this.paymentDate,
+      paymentMethod: data.paymentMethod.present
+          ? data.paymentMethod.value
+          : this.paymentMethod,
       receiptUrl: data.receiptUrl.present
           ? data.receiptUrl.value
           : this.receiptUrl,
@@ -4148,6 +5274,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
           ..write('contractId: $contractId, ')
           ..write('amountEgp: $amountEgp, ')
           ..write('paymentDate: $paymentDate, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('receiptUrl: $receiptUrl, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -4162,6 +5289,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
     contractId,
     amountEgp,
     paymentDate,
+    paymentMethod,
     receiptUrl,
     createdAt,
   );
@@ -4175,6 +5303,7 @@ class WinterPayment extends DataClass implements Insertable<WinterPayment> {
           other.contractId == this.contractId &&
           other.amountEgp == this.amountEgp &&
           other.paymentDate == this.paymentDate &&
+          other.paymentMethod == this.paymentMethod &&
           other.receiptUrl == this.receiptUrl &&
           other.createdAt == this.createdAt);
 }
@@ -4186,6 +5315,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
   final Value<String> contractId;
   final Value<double> amountEgp;
   final Value<DateTime> paymentDate;
+  final Value<String> paymentMethod;
   final Value<String?> receiptUrl;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -4196,6 +5326,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
     this.contractId = const Value.absent(),
     this.amountEgp = const Value.absent(),
     this.paymentDate = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
     this.receiptUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -4207,6 +5338,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
     required String contractId,
     required double amountEgp,
     required DateTime paymentDate,
+    this.paymentMethod = const Value.absent(),
     this.receiptUrl = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -4222,6 +5354,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
     Expression<String>? contractId,
     Expression<double>? amountEgp,
     Expression<DateTime>? paymentDate,
+    Expression<String>? paymentMethod,
     Expression<String>? receiptUrl,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -4233,6 +5366,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
       if (contractId != null) 'contract_id': contractId,
       if (amountEgp != null) 'amount_egp': amountEgp,
       if (paymentDate != null) 'payment_date': paymentDate,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
       if (receiptUrl != null) 'receipt_url': receiptUrl,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -4246,6 +5380,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
     Value<String>? contractId,
     Value<double>? amountEgp,
     Value<DateTime>? paymentDate,
+    Value<String>? paymentMethod,
     Value<String?>? receiptUrl,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -4257,6 +5392,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
       contractId: contractId ?? this.contractId,
       amountEgp: amountEgp ?? this.amountEgp,
       paymentDate: paymentDate ?? this.paymentDate,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       receiptUrl: receiptUrl ?? this.receiptUrl,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -4286,6 +5422,9 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
     if (paymentDate.present) {
       map['payment_date'] = Variable<DateTime>(paymentDate.value);
     }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(paymentMethod.value);
+    }
     if (receiptUrl.present) {
       map['receipt_url'] = Variable<String>(receiptUrl.value);
     }
@@ -4307,6 +5446,7 @@ class WinterPaymentsCompanion extends UpdateCompanion<WinterPayment> {
           ..write('contractId: $contractId, ')
           ..write('amountEgp: $amountEgp, ')
           ..write('paymentDate: $paymentDate, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('receiptUrl: $receiptUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -5107,6 +6247,29 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _discountEgpMeta = const VerificationMeta(
+    'discountEgp',
+  );
+  @override
+  late final GeneratedColumn<double> discountEgp = GeneratedColumn<double>(
+    'discount_egp',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _discountReasonMeta = const VerificationMeta(
+    'discountReason',
+  );
+  @override
+  late final GeneratedColumn<String> discountReason = GeneratedColumn<String>(
+    'discount_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _expenseDateMeta = const VerificationMeta(
     'expenseDate',
   );
@@ -5171,6 +6334,8 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     apartmentId,
     expenseType,
     amountEgp,
+    discountEgp,
+    discountReason,
     expenseDate,
     installmentNumber,
     description,
@@ -5236,6 +6401,24 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
       );
     } else if (isInserting) {
       context.missing(_amountEgpMeta);
+    }
+    if (data.containsKey('discount_egp')) {
+      context.handle(
+        _discountEgpMeta,
+        discountEgp.isAcceptableOrUnknown(
+          data['discount_egp']!,
+          _discountEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('discount_reason')) {
+      context.handle(
+        _discountReasonMeta,
+        discountReason.isAcceptableOrUnknown(
+          data['discount_reason']!,
+          _discountReasonMeta,
+        ),
+      );
     }
     if (data.containsKey('expense_date')) {
       context.handle(
@@ -5319,6 +6502,14 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         DriftSqlType.double,
         data['${effectivePrefix}amount_egp'],
       )!,
+      discountEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}discount_egp'],
+      )!,
+      discountReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}discount_reason'],
+      ),
       expenseDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}expense_date'],
@@ -5359,6 +6550,8 @@ class Expense extends DataClass implements Insertable<Expense> {
   final String? apartmentId;
   final String expenseType;
   final double amountEgp;
+  final double discountEgp;
+  final String? discountReason;
   final DateTime expenseDate;
   final int? installmentNumber;
   final String? description;
@@ -5372,6 +6565,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     this.apartmentId,
     required this.expenseType,
     required this.amountEgp,
+    required this.discountEgp,
+    this.discountReason,
     required this.expenseDate,
     this.installmentNumber,
     this.description,
@@ -5396,6 +6591,10 @@ class Expense extends DataClass implements Insertable<Expense> {
     }
     map['expense_type'] = Variable<String>(expenseType);
     map['amount_egp'] = Variable<double>(amountEgp);
+    map['discount_egp'] = Variable<double>(discountEgp);
+    if (!nullToAbsent || discountReason != null) {
+      map['discount_reason'] = Variable<String>(discountReason);
+    }
     map['expense_date'] = Variable<DateTime>(expenseDate);
     if (!nullToAbsent || installmentNumber != null) {
       map['installment_number'] = Variable<int>(installmentNumber);
@@ -5423,6 +6622,10 @@ class Expense extends DataClass implements Insertable<Expense> {
           : Value(apartmentId),
       expenseType: Value(expenseType),
       amountEgp: Value(amountEgp),
+      discountEgp: Value(discountEgp),
+      discountReason: discountReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(discountReason),
       expenseDate: Value(expenseDate),
       installmentNumber: installmentNumber == null && nullToAbsent
           ? const Value.absent()
@@ -5454,6 +6657,8 @@ class Expense extends DataClass implements Insertable<Expense> {
       apartmentId: serializer.fromJson<String?>(json['apartmentId']),
       expenseType: serializer.fromJson<String>(json['expenseType']),
       amountEgp: serializer.fromJson<double>(json['amountEgp']),
+      discountEgp: serializer.fromJson<double>(json['discountEgp']),
+      discountReason: serializer.fromJson<String?>(json['discountReason']),
       expenseDate: serializer.fromJson<DateTime>(json['expenseDate']),
       installmentNumber: serializer.fromJson<int?>(json['installmentNumber']),
       description: serializer.fromJson<String?>(json['description']),
@@ -5474,6 +6679,8 @@ class Expense extends DataClass implements Insertable<Expense> {
       'apartmentId': serializer.toJson<String?>(apartmentId),
       'expenseType': serializer.toJson<String>(expenseType),
       'amountEgp': serializer.toJson<double>(amountEgp),
+      'discountEgp': serializer.toJson<double>(discountEgp),
+      'discountReason': serializer.toJson<String?>(discountReason),
       'expenseDate': serializer.toJson<DateTime>(expenseDate),
       'installmentNumber': serializer.toJson<int?>(installmentNumber),
       'description': serializer.toJson<String?>(description),
@@ -5490,6 +6697,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     Value<String?> apartmentId = const Value.absent(),
     String? expenseType,
     double? amountEgp,
+    double? discountEgp,
+    Value<String?> discountReason = const Value.absent(),
     DateTime? expenseDate,
     Value<int?> installmentNumber = const Value.absent(),
     Value<String?> description = const Value.absent(),
@@ -5503,6 +6712,10 @@ class Expense extends DataClass implements Insertable<Expense> {
     apartmentId: apartmentId.present ? apartmentId.value : this.apartmentId,
     expenseType: expenseType ?? this.expenseType,
     amountEgp: amountEgp ?? this.amountEgp,
+    discountEgp: discountEgp ?? this.discountEgp,
+    discountReason: discountReason.present
+        ? discountReason.value
+        : this.discountReason,
     expenseDate: expenseDate ?? this.expenseDate,
     installmentNumber: installmentNumber.present
         ? installmentNumber.value
@@ -5530,6 +6743,12 @@ class Expense extends DataClass implements Insertable<Expense> {
           ? data.expenseType.value
           : this.expenseType,
       amountEgp: data.amountEgp.present ? data.amountEgp.value : this.amountEgp,
+      discountEgp: data.discountEgp.present
+          ? data.discountEgp.value
+          : this.discountEgp,
+      discountReason: data.discountReason.present
+          ? data.discountReason.value
+          : this.discountReason,
       expenseDate: data.expenseDate.present
           ? data.expenseDate.value
           : this.expenseDate,
@@ -5556,6 +6775,8 @@ class Expense extends DataClass implements Insertable<Expense> {
           ..write('apartmentId: $apartmentId, ')
           ..write('expenseType: $expenseType, ')
           ..write('amountEgp: $amountEgp, ')
+          ..write('discountEgp: $discountEgp, ')
+          ..write('discountReason: $discountReason, ')
           ..write('expenseDate: $expenseDate, ')
           ..write('installmentNumber: $installmentNumber, ')
           ..write('description: $description, ')
@@ -5574,6 +6795,8 @@ class Expense extends DataClass implements Insertable<Expense> {
     apartmentId,
     expenseType,
     amountEgp,
+    discountEgp,
+    discountReason,
     expenseDate,
     installmentNumber,
     description,
@@ -5591,6 +6814,8 @@ class Expense extends DataClass implements Insertable<Expense> {
           other.apartmentId == this.apartmentId &&
           other.expenseType == this.expenseType &&
           other.amountEgp == this.amountEgp &&
+          other.discountEgp == this.discountEgp &&
+          other.discountReason == this.discountReason &&
           other.expenseDate == this.expenseDate &&
           other.installmentNumber == this.installmentNumber &&
           other.description == this.description &&
@@ -5606,6 +6831,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   final Value<String?> apartmentId;
   final Value<String> expenseType;
   final Value<double> amountEgp;
+  final Value<double> discountEgp;
+  final Value<String?> discountReason;
   final Value<DateTime> expenseDate;
   final Value<int?> installmentNumber;
   final Value<String?> description;
@@ -5620,6 +6847,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     this.apartmentId = const Value.absent(),
     this.expenseType = const Value.absent(),
     this.amountEgp = const Value.absent(),
+    this.discountEgp = const Value.absent(),
+    this.discountReason = const Value.absent(),
     this.expenseDate = const Value.absent(),
     this.installmentNumber = const Value.absent(),
     this.description = const Value.absent(),
@@ -5635,6 +6864,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     this.apartmentId = const Value.absent(),
     required String expenseType,
     required double amountEgp,
+    this.discountEgp = const Value.absent(),
+    this.discountReason = const Value.absent(),
     required DateTime expenseDate,
     this.installmentNumber = const Value.absent(),
     this.description = const Value.absent(),
@@ -5654,6 +6885,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Expression<String>? apartmentId,
     Expression<String>? expenseType,
     Expression<double>? amountEgp,
+    Expression<double>? discountEgp,
+    Expression<String>? discountReason,
     Expression<DateTime>? expenseDate,
     Expression<int>? installmentNumber,
     Expression<String>? description,
@@ -5669,6 +6902,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       if (apartmentId != null) 'apartment_id': apartmentId,
       if (expenseType != null) 'expense_type': expenseType,
       if (amountEgp != null) 'amount_egp': amountEgp,
+      if (discountEgp != null) 'discount_egp': discountEgp,
+      if (discountReason != null) 'discount_reason': discountReason,
       if (expenseDate != null) 'expense_date': expenseDate,
       if (installmentNumber != null) 'installment_number': installmentNumber,
       if (description != null) 'description': description,
@@ -5686,6 +6921,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Value<String?>? apartmentId,
     Value<String>? expenseType,
     Value<double>? amountEgp,
+    Value<double>? discountEgp,
+    Value<String?>? discountReason,
     Value<DateTime>? expenseDate,
     Value<int?>? installmentNumber,
     Value<String?>? description,
@@ -5701,6 +6938,8 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       apartmentId: apartmentId ?? this.apartmentId,
       expenseType: expenseType ?? this.expenseType,
       amountEgp: amountEgp ?? this.amountEgp,
+      discountEgp: discountEgp ?? this.discountEgp,
+      discountReason: discountReason ?? this.discountReason,
       expenseDate: expenseDate ?? this.expenseDate,
       installmentNumber: installmentNumber ?? this.installmentNumber,
       description: description ?? this.description,
@@ -5736,6 +6975,12 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     if (amountEgp.present) {
       map['amount_egp'] = Variable<double>(amountEgp.value);
     }
+    if (discountEgp.present) {
+      map['discount_egp'] = Variable<double>(discountEgp.value);
+    }
+    if (discountReason.present) {
+      map['discount_reason'] = Variable<String>(discountReason.value);
+    }
     if (expenseDate.present) {
       map['expense_date'] = Variable<DateTime>(expenseDate.value);
     }
@@ -5767,11 +7012,2550 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
           ..write('apartmentId: $apartmentId, ')
           ..write('expenseType: $expenseType, ')
           ..write('amountEgp: $amountEgp, ')
+          ..write('discountEgp: $discountEgp, ')
+          ..write('discountReason: $discountReason, ')
           ..write('expenseDate: $expenseDate, ')
           ..write('installmentNumber: $installmentNumber, ')
           ..write('description: $description, ')
           ..write('receiptUrl: $receiptUrl, ')
           ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TechniciansTable extends Technicians
+    with TableInfo<$TechniciansTable, Technician> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TechniciansTable(this.attachedDatabase, [this._alias]);
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, int> syncStatus =
+      GeneratedColumn<int>(
+        'sync_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SyncStatus>($TechniciansTable.$convertersyncStatus);
+  static const VerificationMeta _lastModifiedLocalMeta = const VerificationMeta(
+    'lastModifiedLocal',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModifiedLocal =
+      GeneratedColumn<DateTime>(
+        'last_modified_local',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: currentDateAndTime,
+      );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _specialtyMeta = const VerificationMeta(
+    'specialty',
+  );
+  @override
+  late final GeneratedColumn<String> specialty = GeneratedColumn<String>(
+    'specialty',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    name,
+    phone,
+    specialty,
+    notes,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'technicians';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Technician> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('last_modified_local')) {
+      context.handle(
+        _lastModifiedLocalMeta,
+        lastModifiedLocal.isAcceptableOrUnknown(
+          data['last_modified_local']!,
+          _lastModifiedLocalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('specialty')) {
+      context.handle(
+        _specialtyMeta,
+        specialty.isAcceptableOrUnknown(data['specialty']!, _specialtyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_specialtyMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Technician map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Technician(
+      syncStatus: $TechniciansTable.$convertersyncStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}sync_status'],
+        )!,
+      ),
+      lastModifiedLocal: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified_local'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      specialty: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}specialty'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TechniciansTable createAlias(String alias) {
+    return $TechniciansTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SyncStatus, int, int> $convertersyncStatus =
+      const EnumIndexConverter<SyncStatus>(SyncStatus.values);
+}
+
+class Technician extends DataClass implements Insertable<Technician> {
+  final SyncStatus syncStatus;
+  final DateTime lastModifiedLocal;
+  final String id;
+  final String name;
+  final String? phone;
+  final String specialty;
+  final String? notes;
+  final DateTime createdAt;
+  const Technician({
+    required this.syncStatus,
+    required this.lastModifiedLocal,
+    required this.id,
+    required this.name,
+    this.phone,
+    required this.specialty,
+    this.notes,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    {
+      map['sync_status'] = Variable<int>(
+        $TechniciansTable.$convertersyncStatus.toSql(syncStatus),
+      );
+    }
+    map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    map['specialty'] = Variable<String>(specialty);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  TechniciansCompanion toCompanion(bool nullToAbsent) {
+    return TechniciansCompanion(
+      syncStatus: Value(syncStatus),
+      lastModifiedLocal: Value(lastModifiedLocal),
+      id: Value(id),
+      name: Value(name),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      specialty: Value(specialty),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Technician.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Technician(
+      syncStatus: $TechniciansTable.$convertersyncStatus.fromJson(
+        serializer.fromJson<int>(json['syncStatus']),
+      ),
+      lastModifiedLocal: serializer.fromJson<DateTime>(
+        json['lastModifiedLocal'],
+      ),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      specialty: serializer.fromJson<String>(json['specialty']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncStatus': serializer.toJson<int>(
+        $TechniciansTable.$convertersyncStatus.toJson(syncStatus),
+      ),
+      'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'phone': serializer.toJson<String?>(phone),
+      'specialty': serializer.toJson<String>(specialty),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Technician copyWith({
+    SyncStatus? syncStatus,
+    DateTime? lastModifiedLocal,
+    String? id,
+    String? name,
+    Value<String?> phone = const Value.absent(),
+    String? specialty,
+    Value<String?> notes = const Value.absent(),
+    DateTime? createdAt,
+  }) => Technician(
+    syncStatus: syncStatus ?? this.syncStatus,
+    lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    phone: phone.present ? phone.value : this.phone,
+    specialty: specialty ?? this.specialty,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Technician copyWithCompanion(TechniciansCompanion data) {
+    return Technician(
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      lastModifiedLocal: data.lastModifiedLocal.present
+          ? data.lastModifiedLocal.value
+          : this.lastModifiedLocal,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      specialty: data.specialty.present ? data.specialty.value : this.specialty,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Technician(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phone: $phone, ')
+          ..write('specialty: $specialty, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    name,
+    phone,
+    specialty,
+    notes,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Technician &&
+          other.syncStatus == this.syncStatus &&
+          other.lastModifiedLocal == this.lastModifiedLocal &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.phone == this.phone &&
+          other.specialty == this.specialty &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt);
+}
+
+class TechniciansCompanion extends UpdateCompanion<Technician> {
+  final Value<SyncStatus> syncStatus;
+  final Value<DateTime> lastModifiedLocal;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> phone;
+  final Value<String> specialty;
+  final Value<String?> notes;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const TechniciansCompanion({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.specialty = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TechniciansCompanion.insert({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    required String id,
+    required String name,
+    this.phone = const Value.absent(),
+    required String specialty,
+    this.notes = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       specialty = Value(specialty),
+       createdAt = Value(createdAt);
+  static Insertable<Technician> custom({
+    Expression<int>? syncStatus,
+    Expression<DateTime>? lastModifiedLocal,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? phone,
+    Expression<String>? specialty,
+    Expression<String>? notes,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (phone != null) 'phone': phone,
+      if (specialty != null) 'specialty': specialty,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TechniciansCompanion copyWith({
+    Value<SyncStatus>? syncStatus,
+    Value<DateTime>? lastModifiedLocal,
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? phone,
+    Value<String>? specialty,
+    Value<String?>? notes,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return TechniciansCompanion(
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      specialty: specialty ?? this.specialty,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(
+        $TechniciansTable.$convertersyncStatus.toSql(syncStatus.value),
+      );
+    }
+    if (lastModifiedLocal.present) {
+      map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (specialty.present) {
+      map['specialty'] = Variable<String>(specialty.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TechniciansCompanion(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phone: $phone, ')
+          ..write('specialty: $specialty, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CleaningSuppliesTable extends CleaningSupplies
+    with TableInfo<$CleaningSuppliesTable, CleaningSupply> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CleaningSuppliesTable(this.attachedDatabase, [this._alias]);
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, int> syncStatus =
+      GeneratedColumn<int>(
+        'sync_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SyncStatus>($CleaningSuppliesTable.$convertersyncStatus);
+  static const VerificationMeta _lastModifiedLocalMeta = const VerificationMeta(
+    'lastModifiedLocal',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModifiedLocal =
+      GeneratedColumn<DateTime>(
+        'last_modified_local',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: currentDateAndTime,
+      );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stockQuantityMeta = const VerificationMeta(
+    'stockQuantity',
+  );
+  @override
+  late final GeneratedColumn<double> stockQuantity = GeneratedColumn<double>(
+    'stock_quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('عبوة'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    name,
+    stockQuantity,
+    unit,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cleaning_supplies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CleaningSupply> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('last_modified_local')) {
+      context.handle(
+        _lastModifiedLocalMeta,
+        lastModifiedLocal.isAcceptableOrUnknown(
+          data['last_modified_local']!,
+          _lastModifiedLocalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('stock_quantity')) {
+      context.handle(
+        _stockQuantityMeta,
+        stockQuantity.isAcceptableOrUnknown(
+          data['stock_quantity']!,
+          _stockQuantityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CleaningSupply map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CleaningSupply(
+      syncStatus: $CleaningSuppliesTable.$convertersyncStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}sync_status'],
+        )!,
+      ),
+      lastModifiedLocal: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified_local'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      stockQuantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}stock_quantity'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CleaningSuppliesTable createAlias(String alias) {
+    return $CleaningSuppliesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SyncStatus, int, int> $convertersyncStatus =
+      const EnumIndexConverter<SyncStatus>(SyncStatus.values);
+}
+
+class CleaningSupply extends DataClass implements Insertable<CleaningSupply> {
+  final SyncStatus syncStatus;
+  final DateTime lastModifiedLocal;
+  final String id;
+  final String name;
+  final double stockQuantity;
+  final String unit;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const CleaningSupply({
+    required this.syncStatus,
+    required this.lastModifiedLocal,
+    required this.id,
+    required this.name,
+    required this.stockQuantity,
+    required this.unit,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    {
+      map['sync_status'] = Variable<int>(
+        $CleaningSuppliesTable.$convertersyncStatus.toSql(syncStatus),
+      );
+    }
+    map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['stock_quantity'] = Variable<double>(stockQuantity);
+    map['unit'] = Variable<String>(unit);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CleaningSuppliesCompanion toCompanion(bool nullToAbsent) {
+    return CleaningSuppliesCompanion(
+      syncStatus: Value(syncStatus),
+      lastModifiedLocal: Value(lastModifiedLocal),
+      id: Value(id),
+      name: Value(name),
+      stockQuantity: Value(stockQuantity),
+      unit: Value(unit),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CleaningSupply.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CleaningSupply(
+      syncStatus: $CleaningSuppliesTable.$convertersyncStatus.fromJson(
+        serializer.fromJson<int>(json['syncStatus']),
+      ),
+      lastModifiedLocal: serializer.fromJson<DateTime>(
+        json['lastModifiedLocal'],
+      ),
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      stockQuantity: serializer.fromJson<double>(json['stockQuantity']),
+      unit: serializer.fromJson<String>(json['unit']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncStatus': serializer.toJson<int>(
+        $CleaningSuppliesTable.$convertersyncStatus.toJson(syncStatus),
+      ),
+      'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'stockQuantity': serializer.toJson<double>(stockQuantity),
+      'unit': serializer.toJson<String>(unit),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CleaningSupply copyWith({
+    SyncStatus? syncStatus,
+    DateTime? lastModifiedLocal,
+    String? id,
+    String? name,
+    double? stockQuantity,
+    String? unit,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => CleaningSupply(
+    syncStatus: syncStatus ?? this.syncStatus,
+    lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    stockQuantity: stockQuantity ?? this.stockQuantity,
+    unit: unit ?? this.unit,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CleaningSupply copyWithCompanion(CleaningSuppliesCompanion data) {
+    return CleaningSupply(
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      lastModifiedLocal: data.lastModifiedLocal.present
+          ? data.lastModifiedLocal.value
+          : this.lastModifiedLocal,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      stockQuantity: data.stockQuantity.present
+          ? data.stockQuantity.value
+          : this.stockQuantity,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CleaningSupply(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('stockQuantity: $stockQuantity, ')
+          ..write('unit: $unit, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    name,
+    stockQuantity,
+    unit,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CleaningSupply &&
+          other.syncStatus == this.syncStatus &&
+          other.lastModifiedLocal == this.lastModifiedLocal &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.stockQuantity == this.stockQuantity &&
+          other.unit == this.unit &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CleaningSuppliesCompanion extends UpdateCompanion<CleaningSupply> {
+  final Value<SyncStatus> syncStatus;
+  final Value<DateTime> lastModifiedLocal;
+  final Value<String> id;
+  final Value<String> name;
+  final Value<double> stockQuantity;
+  final Value<String> unit;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CleaningSuppliesCompanion({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.stockQuantity = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CleaningSuppliesCompanion.insert({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    required String id,
+    required String name,
+    this.stockQuantity = const Value.absent(),
+    this.unit = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<CleaningSupply> custom({
+    Expression<int>? syncStatus,
+    Expression<DateTime>? lastModifiedLocal,
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<double>? stockQuantity,
+    Expression<String>? unit,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (stockQuantity != null) 'stock_quantity': stockQuantity,
+      if (unit != null) 'unit': unit,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CleaningSuppliesCompanion copyWith({
+    Value<SyncStatus>? syncStatus,
+    Value<DateTime>? lastModifiedLocal,
+    Value<String>? id,
+    Value<String>? name,
+    Value<double>? stockQuantity,
+    Value<String>? unit,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CleaningSuppliesCompanion(
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      stockQuantity: stockQuantity ?? this.stockQuantity,
+      unit: unit ?? this.unit,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(
+        $CleaningSuppliesTable.$convertersyncStatus.toSql(syncStatus.value),
+      );
+    }
+    if (lastModifiedLocal.present) {
+      map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (stockQuantity.present) {
+      map['stock_quantity'] = Variable<double>(stockQuantity.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CleaningSuppliesCompanion(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('stockQuantity: $stockQuantity, ')
+          ..write('unit: $unit, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CleaningTransactionsTable extends CleaningTransactions
+    with TableInfo<$CleaningTransactionsTable, CleaningTransaction> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CleaningTransactionsTable(this.attachedDatabase, [this._alias]);
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, int> syncStatus =
+      GeneratedColumn<int>(
+        'sync_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SyncStatus>(
+        $CleaningTransactionsTable.$convertersyncStatus,
+      );
+  static const VerificationMeta _lastModifiedLocalMeta = const VerificationMeta(
+    'lastModifiedLocal',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModifiedLocal =
+      GeneratedColumn<DateTime>(
+        'last_modified_local',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: currentDateAndTime,
+      );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _supplyIdMeta = const VerificationMeta(
+    'supplyId',
+  );
+  @override
+  late final GeneratedColumn<String> supplyId = GeneratedColumn<String>(
+    'supply_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cleaning_supplies (id)',
+    ),
+  );
+  static const VerificationMeta _transactionTypeMeta = const VerificationMeta(
+    'transactionType',
+  );
+  @override
+  late final GeneratedColumn<String> transactionType = GeneratedColumn<String>(
+    'transaction_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _costEgpMeta = const VerificationMeta(
+    'costEgp',
+  );
+  @override
+  late final GeneratedColumn<double> costEgp = GeneratedColumn<double>(
+    'cost_egp',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _transactionDateMeta = const VerificationMeta(
+    'transactionDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> transactionDate =
+      GeneratedColumn<DateTime>(
+        'transaction_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    supplyId,
+    transactionType,
+    quantity,
+    costEgp,
+    transactionDate,
+    notes,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cleaning_transactions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CleaningTransaction> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('last_modified_local')) {
+      context.handle(
+        _lastModifiedLocalMeta,
+        lastModifiedLocal.isAcceptableOrUnknown(
+          data['last_modified_local']!,
+          _lastModifiedLocalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('supply_id')) {
+      context.handle(
+        _supplyIdMeta,
+        supplyId.isAcceptableOrUnknown(data['supply_id']!, _supplyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_supplyIdMeta);
+    }
+    if (data.containsKey('transaction_type')) {
+      context.handle(
+        _transactionTypeMeta,
+        transactionType.isAcceptableOrUnknown(
+          data['transaction_type']!,
+          _transactionTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transactionTypeMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('cost_egp')) {
+      context.handle(
+        _costEgpMeta,
+        costEgp.isAcceptableOrUnknown(data['cost_egp']!, _costEgpMeta),
+      );
+    }
+    if (data.containsKey('transaction_date')) {
+      context.handle(
+        _transactionDateMeta,
+        transactionDate.isAcceptableOrUnknown(
+          data['transaction_date']!,
+          _transactionDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_transactionDateMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CleaningTransaction map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CleaningTransaction(
+      syncStatus: $CleaningTransactionsTable.$convertersyncStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}sync_status'],
+        )!,
+      ),
+      lastModifiedLocal: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified_local'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      supplyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supply_id'],
+      )!,
+      transactionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_type'],
+      )!,
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}quantity'],
+      )!,
+      costEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cost_egp'],
+      )!,
+      transactionDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}transaction_date'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CleaningTransactionsTable createAlias(String alias) {
+    return $CleaningTransactionsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SyncStatus, int, int> $convertersyncStatus =
+      const EnumIndexConverter<SyncStatus>(SyncStatus.values);
+}
+
+class CleaningTransaction extends DataClass
+    implements Insertable<CleaningTransaction> {
+  final SyncStatus syncStatus;
+  final DateTime lastModifiedLocal;
+  final String id;
+  final String supplyId;
+  final String transactionType;
+  final double quantity;
+  final double costEgp;
+  final DateTime transactionDate;
+  final String? notes;
+  final DateTime createdAt;
+  const CleaningTransaction({
+    required this.syncStatus,
+    required this.lastModifiedLocal,
+    required this.id,
+    required this.supplyId,
+    required this.transactionType,
+    required this.quantity,
+    required this.costEgp,
+    required this.transactionDate,
+    this.notes,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    {
+      map['sync_status'] = Variable<int>(
+        $CleaningTransactionsTable.$convertersyncStatus.toSql(syncStatus),
+      );
+    }
+    map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
+    map['id'] = Variable<String>(id);
+    map['supply_id'] = Variable<String>(supplyId);
+    map['transaction_type'] = Variable<String>(transactionType);
+    map['quantity'] = Variable<double>(quantity);
+    map['cost_egp'] = Variable<double>(costEgp);
+    map['transaction_date'] = Variable<DateTime>(transactionDate);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  CleaningTransactionsCompanion toCompanion(bool nullToAbsent) {
+    return CleaningTransactionsCompanion(
+      syncStatus: Value(syncStatus),
+      lastModifiedLocal: Value(lastModifiedLocal),
+      id: Value(id),
+      supplyId: Value(supplyId),
+      transactionType: Value(transactionType),
+      quantity: Value(quantity),
+      costEgp: Value(costEgp),
+      transactionDate: Value(transactionDate),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CleaningTransaction.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CleaningTransaction(
+      syncStatus: $CleaningTransactionsTable.$convertersyncStatus.fromJson(
+        serializer.fromJson<int>(json['syncStatus']),
+      ),
+      lastModifiedLocal: serializer.fromJson<DateTime>(
+        json['lastModifiedLocal'],
+      ),
+      id: serializer.fromJson<String>(json['id']),
+      supplyId: serializer.fromJson<String>(json['supplyId']),
+      transactionType: serializer.fromJson<String>(json['transactionType']),
+      quantity: serializer.fromJson<double>(json['quantity']),
+      costEgp: serializer.fromJson<double>(json['costEgp']),
+      transactionDate: serializer.fromJson<DateTime>(json['transactionDate']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncStatus': serializer.toJson<int>(
+        $CleaningTransactionsTable.$convertersyncStatus.toJson(syncStatus),
+      ),
+      'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
+      'id': serializer.toJson<String>(id),
+      'supplyId': serializer.toJson<String>(supplyId),
+      'transactionType': serializer.toJson<String>(transactionType),
+      'quantity': serializer.toJson<double>(quantity),
+      'costEgp': serializer.toJson<double>(costEgp),
+      'transactionDate': serializer.toJson<DateTime>(transactionDate),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  CleaningTransaction copyWith({
+    SyncStatus? syncStatus,
+    DateTime? lastModifiedLocal,
+    String? id,
+    String? supplyId,
+    String? transactionType,
+    double? quantity,
+    double? costEgp,
+    DateTime? transactionDate,
+    Value<String?> notes = const Value.absent(),
+    DateTime? createdAt,
+  }) => CleaningTransaction(
+    syncStatus: syncStatus ?? this.syncStatus,
+    lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+    id: id ?? this.id,
+    supplyId: supplyId ?? this.supplyId,
+    transactionType: transactionType ?? this.transactionType,
+    quantity: quantity ?? this.quantity,
+    costEgp: costEgp ?? this.costEgp,
+    transactionDate: transactionDate ?? this.transactionDate,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  CleaningTransaction copyWithCompanion(CleaningTransactionsCompanion data) {
+    return CleaningTransaction(
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      lastModifiedLocal: data.lastModifiedLocal.present
+          ? data.lastModifiedLocal.value
+          : this.lastModifiedLocal,
+      id: data.id.present ? data.id.value : this.id,
+      supplyId: data.supplyId.present ? data.supplyId.value : this.supplyId,
+      transactionType: data.transactionType.present
+          ? data.transactionType.value
+          : this.transactionType,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      costEgp: data.costEgp.present ? data.costEgp.value : this.costEgp,
+      transactionDate: data.transactionDate.present
+          ? data.transactionDate.value
+          : this.transactionDate,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CleaningTransaction(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('supplyId: $supplyId, ')
+          ..write('transactionType: $transactionType, ')
+          ..write('quantity: $quantity, ')
+          ..write('costEgp: $costEgp, ')
+          ..write('transactionDate: $transactionDate, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    supplyId,
+    transactionType,
+    quantity,
+    costEgp,
+    transactionDate,
+    notes,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CleaningTransaction &&
+          other.syncStatus == this.syncStatus &&
+          other.lastModifiedLocal == this.lastModifiedLocal &&
+          other.id == this.id &&
+          other.supplyId == this.supplyId &&
+          other.transactionType == this.transactionType &&
+          other.quantity == this.quantity &&
+          other.costEgp == this.costEgp &&
+          other.transactionDate == this.transactionDate &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt);
+}
+
+class CleaningTransactionsCompanion
+    extends UpdateCompanion<CleaningTransaction> {
+  final Value<SyncStatus> syncStatus;
+  final Value<DateTime> lastModifiedLocal;
+  final Value<String> id;
+  final Value<String> supplyId;
+  final Value<String> transactionType;
+  final Value<double> quantity;
+  final Value<double> costEgp;
+  final Value<DateTime> transactionDate;
+  final Value<String?> notes;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const CleaningTransactionsCompanion({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    this.id = const Value.absent(),
+    this.supplyId = const Value.absent(),
+    this.transactionType = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.costEgp = const Value.absent(),
+    this.transactionDate = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CleaningTransactionsCompanion.insert({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    required String id,
+    required String supplyId,
+    required String transactionType,
+    required double quantity,
+    this.costEgp = const Value.absent(),
+    required DateTime transactionDate,
+    this.notes = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       supplyId = Value(supplyId),
+       transactionType = Value(transactionType),
+       quantity = Value(quantity),
+       transactionDate = Value(transactionDate),
+       createdAt = Value(createdAt);
+  static Insertable<CleaningTransaction> custom({
+    Expression<int>? syncStatus,
+    Expression<DateTime>? lastModifiedLocal,
+    Expression<String>? id,
+    Expression<String>? supplyId,
+    Expression<String>? transactionType,
+    Expression<double>? quantity,
+    Expression<double>? costEgp,
+    Expression<DateTime>? transactionDate,
+    Expression<String>? notes,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
+      if (id != null) 'id': id,
+      if (supplyId != null) 'supply_id': supplyId,
+      if (transactionType != null) 'transaction_type': transactionType,
+      if (quantity != null) 'quantity': quantity,
+      if (costEgp != null) 'cost_egp': costEgp,
+      if (transactionDate != null) 'transaction_date': transactionDate,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CleaningTransactionsCompanion copyWith({
+    Value<SyncStatus>? syncStatus,
+    Value<DateTime>? lastModifiedLocal,
+    Value<String>? id,
+    Value<String>? supplyId,
+    Value<String>? transactionType,
+    Value<double>? quantity,
+    Value<double>? costEgp,
+    Value<DateTime>? transactionDate,
+    Value<String?>? notes,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return CleaningTransactionsCompanion(
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+      id: id ?? this.id,
+      supplyId: supplyId ?? this.supplyId,
+      transactionType: transactionType ?? this.transactionType,
+      quantity: quantity ?? this.quantity,
+      costEgp: costEgp ?? this.costEgp,
+      transactionDate: transactionDate ?? this.transactionDate,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(
+        $CleaningTransactionsTable.$convertersyncStatus.toSql(syncStatus.value),
+      );
+    }
+    if (lastModifiedLocal.present) {
+      map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (supplyId.present) {
+      map['supply_id'] = Variable<String>(supplyId.value);
+    }
+    if (transactionType.present) {
+      map['transaction_type'] = Variable<String>(transactionType.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (costEgp.present) {
+      map['cost_egp'] = Variable<double>(costEgp.value);
+    }
+    if (transactionDate.present) {
+      map['transaction_date'] = Variable<DateTime>(transactionDate.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CleaningTransactionsCompanion(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('supplyId: $supplyId, ')
+          ..write('transactionType: $transactionType, ')
+          ..write('quantity: $quantity, ')
+          ..write('costEgp: $costEgp, ')
+          ..write('transactionDate: $transactionDate, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ApartmentInspectionsTable extends ApartmentInspections
+    with TableInfo<$ApartmentInspectionsTable, ApartmentInspection> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ApartmentInspectionsTable(this.attachedDatabase, [this._alias]);
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, int> syncStatus =
+      GeneratedColumn<int>(
+        'sync_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SyncStatus>(
+        $ApartmentInspectionsTable.$convertersyncStatus,
+      );
+  static const VerificationMeta _lastModifiedLocalMeta = const VerificationMeta(
+    'lastModifiedLocal',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModifiedLocal =
+      GeneratedColumn<DateTime>(
+        'last_modified_local',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: currentDateAndTime,
+      );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _apartmentIdMeta = const VerificationMeta(
+    'apartmentId',
+  );
+  @override
+  late final GeneratedColumn<String> apartmentId = GeneratedColumn<String>(
+    'apartment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES apartments (id)',
+    ),
+  );
+  static const VerificationMeta _inspectionDateMeta = const VerificationMeta(
+    'inspectionDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> inspectionDate =
+      GeneratedColumn<DateTime>(
+        'inspection_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _isCleanMeta = const VerificationMeta(
+    'isClean',
+  );
+  @override
+  late final GeneratedColumn<bool> isClean = GeneratedColumn<bool>(
+    'is_clean',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_clean" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _hasDamagesMeta = const VerificationMeta(
+    'hasDamages',
+  );
+  @override
+  late final GeneratedColumn<bool> hasDamages = GeneratedColumn<bool>(
+    'has_damages',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("has_damages" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _damagesDescriptionMeta =
+      const VerificationMeta('damagesDescription');
+  @override
+  late final GeneratedColumn<String> damagesDescription =
+      GeneratedColumn<String>(
+        'damages_description',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _tenantFineEgpMeta = const VerificationMeta(
+    'tenantFineEgp',
+  );
+  @override
+  late final GeneratedColumn<double> tenantFineEgp = GeneratedColumn<double>(
+    'tenant_fine_egp',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _ownerRepairCostEgpMeta =
+      const VerificationMeta('ownerRepairCostEgp');
+  @override
+  late final GeneratedColumn<double> ownerRepairCostEgp =
+      GeneratedColumn<double>(
+        'owner_repair_cost_egp',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _inspectorNameMeta = const VerificationMeta(
+    'inspectorName',
+  );
+  @override
+  late final GeneratedColumn<String> inspectorName = GeneratedColumn<String>(
+    'inspector_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    apartmentId,
+    inspectionDate,
+    isClean,
+    hasDamages,
+    damagesDescription,
+    tenantFineEgp,
+    ownerRepairCostEgp,
+    inspectorName,
+    notes,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'apartment_inspections';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ApartmentInspection> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('last_modified_local')) {
+      context.handle(
+        _lastModifiedLocalMeta,
+        lastModifiedLocal.isAcceptableOrUnknown(
+          data['last_modified_local']!,
+          _lastModifiedLocalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('apartment_id')) {
+      context.handle(
+        _apartmentIdMeta,
+        apartmentId.isAcceptableOrUnknown(
+          data['apartment_id']!,
+          _apartmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_apartmentIdMeta);
+    }
+    if (data.containsKey('inspection_date')) {
+      context.handle(
+        _inspectionDateMeta,
+        inspectionDate.isAcceptableOrUnknown(
+          data['inspection_date']!,
+          _inspectionDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inspectionDateMeta);
+    }
+    if (data.containsKey('is_clean')) {
+      context.handle(
+        _isCleanMeta,
+        isClean.isAcceptableOrUnknown(data['is_clean']!, _isCleanMeta),
+      );
+    }
+    if (data.containsKey('has_damages')) {
+      context.handle(
+        _hasDamagesMeta,
+        hasDamages.isAcceptableOrUnknown(data['has_damages']!, _hasDamagesMeta),
+      );
+    }
+    if (data.containsKey('damages_description')) {
+      context.handle(
+        _damagesDescriptionMeta,
+        damagesDescription.isAcceptableOrUnknown(
+          data['damages_description']!,
+          _damagesDescriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tenant_fine_egp')) {
+      context.handle(
+        _tenantFineEgpMeta,
+        tenantFineEgp.isAcceptableOrUnknown(
+          data['tenant_fine_egp']!,
+          _tenantFineEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('owner_repair_cost_egp')) {
+      context.handle(
+        _ownerRepairCostEgpMeta,
+        ownerRepairCostEgp.isAcceptableOrUnknown(
+          data['owner_repair_cost_egp']!,
+          _ownerRepairCostEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('inspector_name')) {
+      context.handle(
+        _inspectorNameMeta,
+        inspectorName.isAcceptableOrUnknown(
+          data['inspector_name']!,
+          _inspectorNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_inspectorNameMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ApartmentInspection map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ApartmentInspection(
+      syncStatus: $ApartmentInspectionsTable.$convertersyncStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}sync_status'],
+        )!,
+      ),
+      lastModifiedLocal: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified_local'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      apartmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}apartment_id'],
+      )!,
+      inspectionDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}inspection_date'],
+      )!,
+      isClean: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_clean'],
+      )!,
+      hasDamages: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_damages'],
+      )!,
+      damagesDescription: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}damages_description'],
+      ),
+      tenantFineEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}tenant_fine_egp'],
+      )!,
+      ownerRepairCostEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}owner_repair_cost_egp'],
+      )!,
+      inspectorName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}inspector_name'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ApartmentInspectionsTable createAlias(String alias) {
+    return $ApartmentInspectionsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SyncStatus, int, int> $convertersyncStatus =
+      const EnumIndexConverter<SyncStatus>(SyncStatus.values);
+}
+
+class ApartmentInspection extends DataClass
+    implements Insertable<ApartmentInspection> {
+  final SyncStatus syncStatus;
+  final DateTime lastModifiedLocal;
+  final String id;
+  final String apartmentId;
+  final DateTime inspectionDate;
+  final bool isClean;
+  final bool hasDamages;
+  final String? damagesDescription;
+  final double tenantFineEgp;
+  final double ownerRepairCostEgp;
+  final String inspectorName;
+  final String? notes;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const ApartmentInspection({
+    required this.syncStatus,
+    required this.lastModifiedLocal,
+    required this.id,
+    required this.apartmentId,
+    required this.inspectionDate,
+    required this.isClean,
+    required this.hasDamages,
+    this.damagesDescription,
+    required this.tenantFineEgp,
+    required this.ownerRepairCostEgp,
+    required this.inspectorName,
+    this.notes,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    {
+      map['sync_status'] = Variable<int>(
+        $ApartmentInspectionsTable.$convertersyncStatus.toSql(syncStatus),
+      );
+    }
+    map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
+    map['id'] = Variable<String>(id);
+    map['apartment_id'] = Variable<String>(apartmentId);
+    map['inspection_date'] = Variable<DateTime>(inspectionDate);
+    map['is_clean'] = Variable<bool>(isClean);
+    map['has_damages'] = Variable<bool>(hasDamages);
+    if (!nullToAbsent || damagesDescription != null) {
+      map['damages_description'] = Variable<String>(damagesDescription);
+    }
+    map['tenant_fine_egp'] = Variable<double>(tenantFineEgp);
+    map['owner_repair_cost_egp'] = Variable<double>(ownerRepairCostEgp);
+    map['inspector_name'] = Variable<String>(inspectorName);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ApartmentInspectionsCompanion toCompanion(bool nullToAbsent) {
+    return ApartmentInspectionsCompanion(
+      syncStatus: Value(syncStatus),
+      lastModifiedLocal: Value(lastModifiedLocal),
+      id: Value(id),
+      apartmentId: Value(apartmentId),
+      inspectionDate: Value(inspectionDate),
+      isClean: Value(isClean),
+      hasDamages: Value(hasDamages),
+      damagesDescription: damagesDescription == null && nullToAbsent
+          ? const Value.absent()
+          : Value(damagesDescription),
+      tenantFineEgp: Value(tenantFineEgp),
+      ownerRepairCostEgp: Value(ownerRepairCostEgp),
+      inspectorName: Value(inspectorName),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ApartmentInspection.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ApartmentInspection(
+      syncStatus: $ApartmentInspectionsTable.$convertersyncStatus.fromJson(
+        serializer.fromJson<int>(json['syncStatus']),
+      ),
+      lastModifiedLocal: serializer.fromJson<DateTime>(
+        json['lastModifiedLocal'],
+      ),
+      id: serializer.fromJson<String>(json['id']),
+      apartmentId: serializer.fromJson<String>(json['apartmentId']),
+      inspectionDate: serializer.fromJson<DateTime>(json['inspectionDate']),
+      isClean: serializer.fromJson<bool>(json['isClean']),
+      hasDamages: serializer.fromJson<bool>(json['hasDamages']),
+      damagesDescription: serializer.fromJson<String?>(
+        json['damagesDescription'],
+      ),
+      tenantFineEgp: serializer.fromJson<double>(json['tenantFineEgp']),
+      ownerRepairCostEgp: serializer.fromJson<double>(
+        json['ownerRepairCostEgp'],
+      ),
+      inspectorName: serializer.fromJson<String>(json['inspectorName']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncStatus': serializer.toJson<int>(
+        $ApartmentInspectionsTable.$convertersyncStatus.toJson(syncStatus),
+      ),
+      'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
+      'id': serializer.toJson<String>(id),
+      'apartmentId': serializer.toJson<String>(apartmentId),
+      'inspectionDate': serializer.toJson<DateTime>(inspectionDate),
+      'isClean': serializer.toJson<bool>(isClean),
+      'hasDamages': serializer.toJson<bool>(hasDamages),
+      'damagesDescription': serializer.toJson<String?>(damagesDescription),
+      'tenantFineEgp': serializer.toJson<double>(tenantFineEgp),
+      'ownerRepairCostEgp': serializer.toJson<double>(ownerRepairCostEgp),
+      'inspectorName': serializer.toJson<String>(inspectorName),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ApartmentInspection copyWith({
+    SyncStatus? syncStatus,
+    DateTime? lastModifiedLocal,
+    String? id,
+    String? apartmentId,
+    DateTime? inspectionDate,
+    bool? isClean,
+    bool? hasDamages,
+    Value<String?> damagesDescription = const Value.absent(),
+    double? tenantFineEgp,
+    double? ownerRepairCostEgp,
+    String? inspectorName,
+    Value<String?> notes = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => ApartmentInspection(
+    syncStatus: syncStatus ?? this.syncStatus,
+    lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+    id: id ?? this.id,
+    apartmentId: apartmentId ?? this.apartmentId,
+    inspectionDate: inspectionDate ?? this.inspectionDate,
+    isClean: isClean ?? this.isClean,
+    hasDamages: hasDamages ?? this.hasDamages,
+    damagesDescription: damagesDescription.present
+        ? damagesDescription.value
+        : this.damagesDescription,
+    tenantFineEgp: tenantFineEgp ?? this.tenantFineEgp,
+    ownerRepairCostEgp: ownerRepairCostEgp ?? this.ownerRepairCostEgp,
+    inspectorName: inspectorName ?? this.inspectorName,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ApartmentInspection copyWithCompanion(ApartmentInspectionsCompanion data) {
+    return ApartmentInspection(
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      lastModifiedLocal: data.lastModifiedLocal.present
+          ? data.lastModifiedLocal.value
+          : this.lastModifiedLocal,
+      id: data.id.present ? data.id.value : this.id,
+      apartmentId: data.apartmentId.present
+          ? data.apartmentId.value
+          : this.apartmentId,
+      inspectionDate: data.inspectionDate.present
+          ? data.inspectionDate.value
+          : this.inspectionDate,
+      isClean: data.isClean.present ? data.isClean.value : this.isClean,
+      hasDamages: data.hasDamages.present
+          ? data.hasDamages.value
+          : this.hasDamages,
+      damagesDescription: data.damagesDescription.present
+          ? data.damagesDescription.value
+          : this.damagesDescription,
+      tenantFineEgp: data.tenantFineEgp.present
+          ? data.tenantFineEgp.value
+          : this.tenantFineEgp,
+      ownerRepairCostEgp: data.ownerRepairCostEgp.present
+          ? data.ownerRepairCostEgp.value
+          : this.ownerRepairCostEgp,
+      inspectorName: data.inspectorName.present
+          ? data.inspectorName.value
+          : this.inspectorName,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ApartmentInspection(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('apartmentId: $apartmentId, ')
+          ..write('inspectionDate: $inspectionDate, ')
+          ..write('isClean: $isClean, ')
+          ..write('hasDamages: $hasDamages, ')
+          ..write('damagesDescription: $damagesDescription, ')
+          ..write('tenantFineEgp: $tenantFineEgp, ')
+          ..write('ownerRepairCostEgp: $ownerRepairCostEgp, ')
+          ..write('inspectorName: $inspectorName, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    apartmentId,
+    inspectionDate,
+    isClean,
+    hasDamages,
+    damagesDescription,
+    tenantFineEgp,
+    ownerRepairCostEgp,
+    inspectorName,
+    notes,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ApartmentInspection &&
+          other.syncStatus == this.syncStatus &&
+          other.lastModifiedLocal == this.lastModifiedLocal &&
+          other.id == this.id &&
+          other.apartmentId == this.apartmentId &&
+          other.inspectionDate == this.inspectionDate &&
+          other.isClean == this.isClean &&
+          other.hasDamages == this.hasDamages &&
+          other.damagesDescription == this.damagesDescription &&
+          other.tenantFineEgp == this.tenantFineEgp &&
+          other.ownerRepairCostEgp == this.ownerRepairCostEgp &&
+          other.inspectorName == this.inspectorName &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ApartmentInspectionsCompanion
+    extends UpdateCompanion<ApartmentInspection> {
+  final Value<SyncStatus> syncStatus;
+  final Value<DateTime> lastModifiedLocal;
+  final Value<String> id;
+  final Value<String> apartmentId;
+  final Value<DateTime> inspectionDate;
+  final Value<bool> isClean;
+  final Value<bool> hasDamages;
+  final Value<String?> damagesDescription;
+  final Value<double> tenantFineEgp;
+  final Value<double> ownerRepairCostEgp;
+  final Value<String> inspectorName;
+  final Value<String?> notes;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ApartmentInspectionsCompanion({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    this.id = const Value.absent(),
+    this.apartmentId = const Value.absent(),
+    this.inspectionDate = const Value.absent(),
+    this.isClean = const Value.absent(),
+    this.hasDamages = const Value.absent(),
+    this.damagesDescription = const Value.absent(),
+    this.tenantFineEgp = const Value.absent(),
+    this.ownerRepairCostEgp = const Value.absent(),
+    this.inspectorName = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ApartmentInspectionsCompanion.insert({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    required String id,
+    required String apartmentId,
+    required DateTime inspectionDate,
+    this.isClean = const Value.absent(),
+    this.hasDamages = const Value.absent(),
+    this.damagesDescription = const Value.absent(),
+    this.tenantFineEgp = const Value.absent(),
+    this.ownerRepairCostEgp = const Value.absent(),
+    required String inspectorName,
+    this.notes = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       apartmentId = Value(apartmentId),
+       inspectionDate = Value(inspectionDate),
+       inspectorName = Value(inspectorName),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<ApartmentInspection> custom({
+    Expression<int>? syncStatus,
+    Expression<DateTime>? lastModifiedLocal,
+    Expression<String>? id,
+    Expression<String>? apartmentId,
+    Expression<DateTime>? inspectionDate,
+    Expression<bool>? isClean,
+    Expression<bool>? hasDamages,
+    Expression<String>? damagesDescription,
+    Expression<double>? tenantFineEgp,
+    Expression<double>? ownerRepairCostEgp,
+    Expression<String>? inspectorName,
+    Expression<String>? notes,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
+      if (id != null) 'id': id,
+      if (apartmentId != null) 'apartment_id': apartmentId,
+      if (inspectionDate != null) 'inspection_date': inspectionDate,
+      if (isClean != null) 'is_clean': isClean,
+      if (hasDamages != null) 'has_damages': hasDamages,
+      if (damagesDescription != null) 'damages_description': damagesDescription,
+      if (tenantFineEgp != null) 'tenant_fine_egp': tenantFineEgp,
+      if (ownerRepairCostEgp != null)
+        'owner_repair_cost_egp': ownerRepairCostEgp,
+      if (inspectorName != null) 'inspector_name': inspectorName,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ApartmentInspectionsCompanion copyWith({
+    Value<SyncStatus>? syncStatus,
+    Value<DateTime>? lastModifiedLocal,
+    Value<String>? id,
+    Value<String>? apartmentId,
+    Value<DateTime>? inspectionDate,
+    Value<bool>? isClean,
+    Value<bool>? hasDamages,
+    Value<String?>? damagesDescription,
+    Value<double>? tenantFineEgp,
+    Value<double>? ownerRepairCostEgp,
+    Value<String>? inspectorName,
+    Value<String?>? notes,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ApartmentInspectionsCompanion(
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+      id: id ?? this.id,
+      apartmentId: apartmentId ?? this.apartmentId,
+      inspectionDate: inspectionDate ?? this.inspectionDate,
+      isClean: isClean ?? this.isClean,
+      hasDamages: hasDamages ?? this.hasDamages,
+      damagesDescription: damagesDescription ?? this.damagesDescription,
+      tenantFineEgp: tenantFineEgp ?? this.tenantFineEgp,
+      ownerRepairCostEgp: ownerRepairCostEgp ?? this.ownerRepairCostEgp,
+      inspectorName: inspectorName ?? this.inspectorName,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(
+        $ApartmentInspectionsTable.$convertersyncStatus.toSql(syncStatus.value),
+      );
+    }
+    if (lastModifiedLocal.present) {
+      map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (apartmentId.present) {
+      map['apartment_id'] = Variable<String>(apartmentId.value);
+    }
+    if (inspectionDate.present) {
+      map['inspection_date'] = Variable<DateTime>(inspectionDate.value);
+    }
+    if (isClean.present) {
+      map['is_clean'] = Variable<bool>(isClean.value);
+    }
+    if (hasDamages.present) {
+      map['has_damages'] = Variable<bool>(hasDamages.value);
+    }
+    if (damagesDescription.present) {
+      map['damages_description'] = Variable<String>(damagesDescription.value);
+    }
+    if (tenantFineEgp.present) {
+      map['tenant_fine_egp'] = Variable<double>(tenantFineEgp.value);
+    }
+    if (ownerRepairCostEgp.present) {
+      map['owner_repair_cost_egp'] = Variable<double>(ownerRepairCostEgp.value);
+    }
+    if (inspectorName.present) {
+      map['inspector_name'] = Variable<String>(inspectorName.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ApartmentInspectionsCompanion(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('apartmentId: $apartmentId, ')
+          ..write('inspectionDate: $inspectionDate, ')
+          ..write('isClean: $isClean, ')
+          ..write('hasDamages: $hasDamages, ')
+          ..write('damagesDescription: $damagesDescription, ')
+          ..write('tenantFineEgp: $tenantFineEgp, ')
+          ..write('ownerRepairCostEgp: $ownerRepairCostEgp, ')
+          ..write('inspectorName: $inspectorName, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5830,6 +9614,20 @@ class $MaintenanceRequestsTable extends MaintenanceRequests
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES apartments (id)',
+    ),
+  );
+  static const VerificationMeta _technicianIdMeta = const VerificationMeta(
+    'technicianId',
+  );
+  @override
+  late final GeneratedColumn<String> technicianId = GeneratedColumn<String>(
+    'technician_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES technicians (id)',
     ),
   );
   static const VerificationMeta _reportedByMeta = const VerificationMeta(
@@ -5915,6 +9713,7 @@ class $MaintenanceRequestsTable extends MaintenanceRequests
     lastModifiedLocal,
     id,
     apartmentId,
+    technicianId,
     reportedBy,
     issueDescription,
     status,
@@ -5959,6 +9758,15 @@ class $MaintenanceRequestsTable extends MaintenanceRequests
       );
     } else if (isInserting) {
       context.missing(_apartmentIdMeta);
+    }
+    if (data.containsKey('technician_id')) {
+      context.handle(
+        _technicianIdMeta,
+        technicianId.isAcceptableOrUnknown(
+          data['technician_id']!,
+          _technicianIdMeta,
+        ),
+      );
     }
     if (data.containsKey('reported_by')) {
       context.handle(
@@ -6040,6 +9848,10 @@ class $MaintenanceRequestsTable extends MaintenanceRequests
         DriftSqlType.string,
         data['${effectivePrefix}apartment_id'],
       )!,
+      technicianId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}technician_id'],
+      ),
       reportedBy: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}reported_by'],
@@ -6086,6 +9898,7 @@ class MaintenanceRequest extends DataClass
   final DateTime lastModifiedLocal;
   final String id;
   final String apartmentId;
+  final String? technicianId;
   final String reportedBy;
   final String issueDescription;
   final String status;
@@ -6098,6 +9911,7 @@ class MaintenanceRequest extends DataClass
     required this.lastModifiedLocal,
     required this.id,
     required this.apartmentId,
+    this.technicianId,
     required this.reportedBy,
     required this.issueDescription,
     required this.status,
@@ -6117,6 +9931,9 @@ class MaintenanceRequest extends DataClass
     map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
     map['id'] = Variable<String>(id);
     map['apartment_id'] = Variable<String>(apartmentId);
+    if (!nullToAbsent || technicianId != null) {
+      map['technician_id'] = Variable<String>(technicianId);
+    }
     map['reported_by'] = Variable<String>(reportedBy);
     map['issue_description'] = Variable<String>(issueDescription);
     map['status'] = Variable<String>(status);
@@ -6135,6 +9952,9 @@ class MaintenanceRequest extends DataClass
       lastModifiedLocal: Value(lastModifiedLocal),
       id: Value(id),
       apartmentId: Value(apartmentId),
+      technicianId: technicianId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(technicianId),
       reportedBy: Value(reportedBy),
       issueDescription: Value(issueDescription),
       status: Value(status),
@@ -6161,6 +9981,7 @@ class MaintenanceRequest extends DataClass
       ),
       id: serializer.fromJson<String>(json['id']),
       apartmentId: serializer.fromJson<String>(json['apartmentId']),
+      technicianId: serializer.fromJson<String?>(json['technicianId']),
       reportedBy: serializer.fromJson<String>(json['reportedBy']),
       issueDescription: serializer.fromJson<String>(json['issueDescription']),
       status: serializer.fromJson<String>(json['status']),
@@ -6180,6 +10001,7 @@ class MaintenanceRequest extends DataClass
       'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
       'id': serializer.toJson<String>(id),
       'apartmentId': serializer.toJson<String>(apartmentId),
+      'technicianId': serializer.toJson<String?>(technicianId),
       'reportedBy': serializer.toJson<String>(reportedBy),
       'issueDescription': serializer.toJson<String>(issueDescription),
       'status': serializer.toJson<String>(status),
@@ -6195,6 +10017,7 @@ class MaintenanceRequest extends DataClass
     DateTime? lastModifiedLocal,
     String? id,
     String? apartmentId,
+    Value<String?> technicianId = const Value.absent(),
     String? reportedBy,
     String? issueDescription,
     String? status,
@@ -6207,6 +10030,7 @@ class MaintenanceRequest extends DataClass
     lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
     id: id ?? this.id,
     apartmentId: apartmentId ?? this.apartmentId,
+    technicianId: technicianId.present ? technicianId.value : this.technicianId,
     reportedBy: reportedBy ?? this.reportedBy,
     issueDescription: issueDescription ?? this.issueDescription,
     status: status ?? this.status,
@@ -6227,6 +10051,9 @@ class MaintenanceRequest extends DataClass
       apartmentId: data.apartmentId.present
           ? data.apartmentId.value
           : this.apartmentId,
+      technicianId: data.technicianId.present
+          ? data.technicianId.value
+          : this.technicianId,
       reportedBy: data.reportedBy.present
           ? data.reportedBy.value
           : this.reportedBy,
@@ -6250,6 +10077,7 @@ class MaintenanceRequest extends DataClass
           ..write('lastModifiedLocal: $lastModifiedLocal, ')
           ..write('id: $id, ')
           ..write('apartmentId: $apartmentId, ')
+          ..write('technicianId: $technicianId, ')
           ..write('reportedBy: $reportedBy, ')
           ..write('issueDescription: $issueDescription, ')
           ..write('status: $status, ')
@@ -6267,6 +10095,7 @@ class MaintenanceRequest extends DataClass
     lastModifiedLocal,
     id,
     apartmentId,
+    technicianId,
     reportedBy,
     issueDescription,
     status,
@@ -6283,6 +10112,7 @@ class MaintenanceRequest extends DataClass
           other.lastModifiedLocal == this.lastModifiedLocal &&
           other.id == this.id &&
           other.apartmentId == this.apartmentId &&
+          other.technicianId == this.technicianId &&
           other.reportedBy == this.reportedBy &&
           other.issueDescription == this.issueDescription &&
           other.status == this.status &&
@@ -6297,6 +10127,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
   final Value<DateTime> lastModifiedLocal;
   final Value<String> id;
   final Value<String> apartmentId;
+  final Value<String?> technicianId;
   final Value<String> reportedBy;
   final Value<String> issueDescription;
   final Value<String> status;
@@ -6310,6 +10141,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
     this.lastModifiedLocal = const Value.absent(),
     this.id = const Value.absent(),
     this.apartmentId = const Value.absent(),
+    this.technicianId = const Value.absent(),
     this.reportedBy = const Value.absent(),
     this.issueDescription = const Value.absent(),
     this.status = const Value.absent(),
@@ -6324,6 +10156,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
     this.lastModifiedLocal = const Value.absent(),
     required String id,
     required String apartmentId,
+    this.technicianId = const Value.absent(),
     required String reportedBy,
     required String issueDescription,
     this.status = const Value.absent(),
@@ -6343,6 +10176,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
     Expression<DateTime>? lastModifiedLocal,
     Expression<String>? id,
     Expression<String>? apartmentId,
+    Expression<String>? technicianId,
     Expression<String>? reportedBy,
     Expression<String>? issueDescription,
     Expression<String>? status,
@@ -6357,6 +10191,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
       if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
       if (id != null) 'id': id,
       if (apartmentId != null) 'apartment_id': apartmentId,
+      if (technicianId != null) 'technician_id': technicianId,
       if (reportedBy != null) 'reported_by': reportedBy,
       if (issueDescription != null) 'issue_description': issueDescription,
       if (status != null) 'status': status,
@@ -6373,6 +10208,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
     Value<DateTime>? lastModifiedLocal,
     Value<String>? id,
     Value<String>? apartmentId,
+    Value<String?>? technicianId,
     Value<String>? reportedBy,
     Value<String>? issueDescription,
     Value<String>? status,
@@ -6387,6 +10223,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
       lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
       id: id ?? this.id,
       apartmentId: apartmentId ?? this.apartmentId,
+      technicianId: technicianId ?? this.technicianId,
       reportedBy: reportedBy ?? this.reportedBy,
       issueDescription: issueDescription ?? this.issueDescription,
       status: status ?? this.status,
@@ -6414,6 +10251,9 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
     }
     if (apartmentId.present) {
       map['apartment_id'] = Variable<String>(apartmentId.value);
+    }
+    if (technicianId.present) {
+      map['technician_id'] = Variable<String>(technicianId.value);
     }
     if (reportedBy.present) {
       map['reported_by'] = Variable<String>(reportedBy.value);
@@ -6449,6 +10289,7 @@ class MaintenanceRequestsCompanion extends UpdateCompanion<MaintenanceRequest> {
           ..write('lastModifiedLocal: $lastModifiedLocal, ')
           ..write('id: $id, ')
           ..write('apartmentId: $apartmentId, ')
+          ..write('technicianId: $technicianId, ')
           ..write('reportedBy: $reportedBy, ')
           ..write('issueDescription: $issueDescription, ')
           ..write('status: $status, ')
@@ -6475,6 +10316,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WinterPaymentsTable winterPayments = $WinterPaymentsTable(this);
   late final $MeterReadingsTable meterReadings = $MeterReadingsTable(this);
   late final $ExpensesTable expenses = $ExpensesTable(this);
+  late final $TechniciansTable technicians = $TechniciansTable(this);
+  late final $CleaningSuppliesTable cleaningSupplies = $CleaningSuppliesTable(
+    this,
+  );
+  late final $CleaningTransactionsTable cleaningTransactions =
+      $CleaningTransactionsTable(this);
+  late final $ApartmentInspectionsTable apartmentInspections =
+      $ApartmentInspectionsTable(this);
   late final $MaintenanceRequestsTable maintenanceRequests =
       $MaintenanceRequestsTable(this);
   @override
@@ -6490,6 +10339,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     winterPayments,
     meterReadings,
     expenses,
+    technicians,
+    cleaningSupplies,
+    cleaningTransactions,
+    apartmentInspections,
     maintenanceRequests,
   ];
 }
@@ -6785,6 +10638,8 @@ typedef $$BuildingsTableCreateCompanionBuilder =
       required String id,
       required String name,
       Value<String?> address,
+      Value<double> annualRentEgp,
+      Value<String?> rentInstallmentsDates,
       Value<int> totalApartments,
       required DateTime createdAt,
       Value<int> rowid,
@@ -6796,6 +10651,8 @@ typedef $$BuildingsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String?> address,
+      Value<double> annualRentEgp,
+      Value<String?> rentInstallmentsDates,
       Value<int> totalApartments,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -6896,6 +10753,16 @@ class $$BuildingsTableFilterComposer
 
   ColumnFilters<String> get address => $composableBuilder(
     column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get annualRentEgp => $composableBuilder(
+    column: $table.annualRentEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rentInstallmentsDates => $composableBuilder(
+    column: $table.rentInstallmentsDates,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7019,6 +10886,16 @@ class $$BuildingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get annualRentEgp => $composableBuilder(
+    column: $table.annualRentEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rentInstallmentsDates => $composableBuilder(
+    column: $table.rentInstallmentsDates,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get totalApartments => $composableBuilder(
     column: $table.totalApartments,
     builder: (column) => ColumnOrderings(column),
@@ -7058,6 +10935,16 @@ class $$BuildingsTableAnnotationComposer
 
   GeneratedColumn<String> get address =>
       $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<double> get annualRentEgp => $composableBuilder(
+    column: $table.annualRentEgp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get rentInstallmentsDates => $composableBuilder(
+    column: $table.rentInstallmentsDates,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get totalApartments => $composableBuilder(
     column: $table.totalApartments,
@@ -7180,6 +11067,8 @@ class $$BuildingsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> address = const Value.absent(),
+                Value<double> annualRentEgp = const Value.absent(),
+                Value<String?> rentInstallmentsDates = const Value.absent(),
                 Value<int> totalApartments = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -7189,6 +11078,8 @@ class $$BuildingsTableTableManager
                 id: id,
                 name: name,
                 address: address,
+                annualRentEgp: annualRentEgp,
+                rentInstallmentsDates: rentInstallmentsDates,
                 totalApartments: totalApartments,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -7200,6 +11091,8 @@ class $$BuildingsTableTableManager
                 required String id,
                 required String name,
                 Value<String?> address = const Value.absent(),
+                Value<double> annualRentEgp = const Value.absent(),
+                Value<String?> rentInstallmentsDates = const Value.absent(),
                 Value<int> totalApartments = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -7209,6 +11102,8 @@ class $$BuildingsTableTableManager
                 id: id,
                 name: name,
                 address: address,
+                annualRentEgp: annualRentEgp,
+                rentInstallmentsDates: rentInstallmentsDates,
                 totalApartments: totalApartments,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -7336,6 +11231,7 @@ typedef $$ApartmentsTableCreateCompanionBuilder =
       Value<int?> floorNumber,
       Value<String> cleaningStatus,
       Value<bool> brokerVisibility,
+      Value<String?> inventory,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -7350,6 +11246,7 @@ typedef $$ApartmentsTableUpdateCompanionBuilder =
       Value<int?> floorNumber,
       Value<String> cleaningStatus,
       Value<bool> brokerVisibility,
+      Value<String?> inventory,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -7463,6 +11360,34 @@ final class $$ApartmentsTableReferences
   }
 
   static MultiTypedResultKey<
+    $ApartmentInspectionsTable,
+    List<ApartmentInspection>
+  >
+  _apartmentInspectionsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.apartmentInspections,
+        aliasName: $_aliasNameGenerator(
+          db.apartments.id,
+          db.apartmentInspections.apartmentId,
+        ),
+      );
+
+  $$ApartmentInspectionsTableProcessedTableManager
+  get apartmentInspectionsRefs {
+    final manager = $$ApartmentInspectionsTableTableManager(
+      $_db,
+      $_db.apartmentInspections,
+    ).filter((f) => f.apartmentId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _apartmentInspectionsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
     $MaintenanceRequestsTable,
     List<MaintenanceRequest>
   >
@@ -7532,6 +11457,11 @@ class $$ApartmentsTableFilterComposer
 
   ColumnFilters<bool> get brokerVisibility => $composableBuilder(
     column: $table.brokerVisibility,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get inventory => $composableBuilder(
+    column: $table.inventory,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7668,6 +11598,31 @@ class $$ApartmentsTableFilterComposer
     return f(composer);
   }
 
+  Expression<bool> apartmentInspectionsRefs(
+    Expression<bool> Function($$ApartmentInspectionsTableFilterComposer f) f,
+  ) {
+    final $$ApartmentInspectionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.apartmentInspections,
+      getReferencedColumn: (t) => t.apartmentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ApartmentInspectionsTableFilterComposer(
+            $db: $db,
+            $table: $db.apartmentInspections,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<bool> maintenanceRequestsRefs(
     Expression<bool> Function($$MaintenanceRequestsTableFilterComposer f) f,
   ) {
@@ -7735,6 +11690,11 @@ class $$ApartmentsTableOrderingComposer
 
   ColumnOrderings<bool> get brokerVisibility => $composableBuilder(
     column: $table.brokerVisibility,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get inventory => $composableBuilder(
+    column: $table.inventory,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -7814,6 +11774,9 @@ class $$ApartmentsTableAnnotationComposer
     column: $table.brokerVisibility,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get inventory =>
+      $composableBuilder(column: $table.inventory, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -7944,6 +11907,32 @@ class $$ApartmentsTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> apartmentInspectionsRefs<T extends Object>(
+    Expression<T> Function($$ApartmentInspectionsTableAnnotationComposer a) f,
+  ) {
+    final $$ApartmentInspectionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.apartmentInspections,
+          getReferencedColumn: (t) => t.apartmentId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ApartmentInspectionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.apartmentInspections,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> maintenanceRequestsRefs<T extends Object>(
     Expression<T> Function($$MaintenanceRequestsTableAnnotationComposer a) f,
   ) {
@@ -7990,6 +11979,7 @@ class $$ApartmentsTableTableManager
             bool winterContractsRefs,
             bool meterReadingsRefs,
             bool expensesRefs,
+            bool apartmentInspectionsRefs,
             bool maintenanceRequestsRefs,
           })
         > {
@@ -8014,6 +12004,7 @@ class $$ApartmentsTableTableManager
                 Value<int?> floorNumber = const Value.absent(),
                 Value<String> cleaningStatus = const Value.absent(),
                 Value<bool> brokerVisibility = const Value.absent(),
+                Value<String?> inventory = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -8026,6 +12017,7 @@ class $$ApartmentsTableTableManager
                 floorNumber: floorNumber,
                 cleaningStatus: cleaningStatus,
                 brokerVisibility: brokerVisibility,
+                inventory: inventory,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -8040,6 +12032,7 @@ class $$ApartmentsTableTableManager
                 Value<int?> floorNumber = const Value.absent(),
                 Value<String> cleaningStatus = const Value.absent(),
                 Value<bool> brokerVisibility = const Value.absent(),
+                Value<String?> inventory = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -8052,6 +12045,7 @@ class $$ApartmentsTableTableManager
                 floorNumber: floorNumber,
                 cleaningStatus: cleaningStatus,
                 brokerVisibility: brokerVisibility,
+                inventory: inventory,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -8071,6 +12065,7 @@ class $$ApartmentsTableTableManager
                 winterContractsRefs = false,
                 meterReadingsRefs = false,
                 expensesRefs = false,
+                apartmentInspectionsRefs = false,
                 maintenanceRequestsRefs = false,
               }) {
                 return PrefetchHooks(
@@ -8080,6 +12075,7 @@ class $$ApartmentsTableTableManager
                     if (winterContractsRefs) db.winterContracts,
                     if (meterReadingsRefs) db.meterReadings,
                     if (expensesRefs) db.expenses,
+                    if (apartmentInspectionsRefs) db.apartmentInspections,
                     if (maintenanceRequestsRefs) db.maintenanceRequests,
                   ],
                   addJoins:
@@ -8201,6 +12197,27 @@ class $$ApartmentsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (apartmentInspectionsRefs)
+                        await $_getPrefetchedData<
+                          Apartment,
+                          $ApartmentsTable,
+                          ApartmentInspection
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ApartmentsTableReferences
+                              ._apartmentInspectionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ApartmentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).apartmentInspectionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.apartmentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (maintenanceRequestsRefs)
                         await $_getPrefetchedData<
                           Apartment,
@@ -8248,6 +12265,7 @@ typedef $$ApartmentsTableProcessedTableManager =
         bool winterContractsRefs,
         bool meterReadingsRefs,
         bool expensesRefs,
+        bool apartmentInspectionsRefs,
         bool maintenanceRequestsRefs,
       })
     >;
@@ -8264,12 +12282,19 @@ typedef $$SummerBookingsTableCreateCompanionBuilder =
       Value<String> status,
       required double totalPriceEgp,
       Value<double> amountPaidEgp,
+      Value<String> paymentMethod,
       Value<String?> brokerId,
+      Value<String?> brokerName,
+      Value<String> brokerCommissionType,
       Value<double> brokerCommissionPercentage,
+      Value<double> brokerCommissionFixedEgp,
       Value<double?> brokerCommissionAmountEgp,
       Value<DateTime?> earlyCheckoutDate,
       Value<int> overstayDays,
       Value<double> overstayFeeEgp,
+      Value<String?> nationalId,
+      Value<String?> idFrontImage,
+      Value<String?> idBackImage,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -8287,12 +12312,19 @@ typedef $$SummerBookingsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<double> totalPriceEgp,
       Value<double> amountPaidEgp,
+      Value<String> paymentMethod,
       Value<String?> brokerId,
+      Value<String?> brokerName,
+      Value<String> brokerCommissionType,
       Value<double> brokerCommissionPercentage,
+      Value<double> brokerCommissionFixedEgp,
       Value<double?> brokerCommissionAmountEgp,
       Value<DateTime?> earlyCheckoutDate,
       Value<int> overstayDays,
       Value<double> overstayFeeEgp,
+      Value<String?> nationalId,
+      Value<String?> idFrontImage,
+      Value<String?> idBackImage,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -8386,13 +12418,33 @@ class $$SummerBookingsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get brokerId => $composableBuilder(
     column: $table.brokerId,
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get brokerName => $composableBuilder(
+    column: $table.brokerName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get brokerCommissionType => $composableBuilder(
+    column: $table.brokerCommissionType,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get brokerCommissionPercentage => $composableBuilder(
     column: $table.brokerCommissionPercentage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get brokerCommissionFixedEgp => $composableBuilder(
+    column: $table.brokerCommissionFixedEgp,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8413,6 +12465,21 @@ class $$SummerBookingsTableFilterComposer
 
   ColumnFilters<double> get overstayFeeEgp => $composableBuilder(
     column: $table.overstayFeeEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nationalId => $composableBuilder(
+    column: $table.nationalId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idFrontImage => $composableBuilder(
+    column: $table.idFrontImage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idBackImage => $composableBuilder(
+    column: $table.idBackImage,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8509,13 +12576,33 @@ class $$SummerBookingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get brokerId => $composableBuilder(
     column: $table.brokerId,
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get brokerName => $composableBuilder(
+    column: $table.brokerName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get brokerCommissionType => $composableBuilder(
+    column: $table.brokerCommissionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get brokerCommissionPercentage => $composableBuilder(
     column: $table.brokerCommissionPercentage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get brokerCommissionFixedEgp => $composableBuilder(
+    column: $table.brokerCommissionFixedEgp,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -8536,6 +12623,21 @@ class $$SummerBookingsTableOrderingComposer
 
   ColumnOrderings<double> get overstayFeeEgp => $composableBuilder(
     column: $table.overstayFeeEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nationalId => $composableBuilder(
+    column: $table.nationalId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get idFrontImage => $composableBuilder(
+    column: $table.idFrontImage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get idBackImage => $composableBuilder(
+    column: $table.idBackImage,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -8627,11 +12729,31 @@ class $$SummerBookingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get brokerId =>
       $composableBuilder(column: $table.brokerId, builder: (column) => column);
 
+  GeneratedColumn<String> get brokerName => $composableBuilder(
+    column: $table.brokerName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get brokerCommissionType => $composableBuilder(
+    column: $table.brokerCommissionType,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get brokerCommissionPercentage => $composableBuilder(
     column: $table.brokerCommissionPercentage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get brokerCommissionFixedEgp => $composableBuilder(
+    column: $table.brokerCommissionFixedEgp,
     builder: (column) => column,
   );
 
@@ -8652,6 +12774,21 @@ class $$SummerBookingsTableAnnotationComposer
 
   GeneratedColumn<double> get overstayFeeEgp => $composableBuilder(
     column: $table.overstayFeeEgp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get nationalId => $composableBuilder(
+    column: $table.nationalId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get idFrontImage => $composableBuilder(
+    column: $table.idFrontImage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get idBackImage => $composableBuilder(
+    column: $table.idBackImage,
     builder: (column) => column,
   );
 
@@ -8726,12 +12863,19 @@ class $$SummerBookingsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<double> totalPriceEgp = const Value.absent(),
                 Value<double> amountPaidEgp = const Value.absent(),
+                Value<String> paymentMethod = const Value.absent(),
                 Value<String?> brokerId = const Value.absent(),
+                Value<String?> brokerName = const Value.absent(),
+                Value<String> brokerCommissionType = const Value.absent(),
                 Value<double> brokerCommissionPercentage = const Value.absent(),
+                Value<double> brokerCommissionFixedEgp = const Value.absent(),
                 Value<double?> brokerCommissionAmountEgp = const Value.absent(),
                 Value<DateTime?> earlyCheckoutDate = const Value.absent(),
                 Value<int> overstayDays = const Value.absent(),
                 Value<double> overstayFeeEgp = const Value.absent(),
+                Value<String?> nationalId = const Value.absent(),
+                Value<String?> idFrontImage = const Value.absent(),
+                Value<String?> idBackImage = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -8747,12 +12891,19 @@ class $$SummerBookingsTableTableManager
                 status: status,
                 totalPriceEgp: totalPriceEgp,
                 amountPaidEgp: amountPaidEgp,
+                paymentMethod: paymentMethod,
                 brokerId: brokerId,
+                brokerName: brokerName,
+                brokerCommissionType: brokerCommissionType,
                 brokerCommissionPercentage: brokerCommissionPercentage,
+                brokerCommissionFixedEgp: brokerCommissionFixedEgp,
                 brokerCommissionAmountEgp: brokerCommissionAmountEgp,
                 earlyCheckoutDate: earlyCheckoutDate,
                 overstayDays: overstayDays,
                 overstayFeeEgp: overstayFeeEgp,
+                nationalId: nationalId,
+                idFrontImage: idFrontImage,
+                idBackImage: idBackImage,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -8770,12 +12921,19 @@ class $$SummerBookingsTableTableManager
                 Value<String> status = const Value.absent(),
                 required double totalPriceEgp,
                 Value<double> amountPaidEgp = const Value.absent(),
+                Value<String> paymentMethod = const Value.absent(),
                 Value<String?> brokerId = const Value.absent(),
+                Value<String?> brokerName = const Value.absent(),
+                Value<String> brokerCommissionType = const Value.absent(),
                 Value<double> brokerCommissionPercentage = const Value.absent(),
+                Value<double> brokerCommissionFixedEgp = const Value.absent(),
                 Value<double?> brokerCommissionAmountEgp = const Value.absent(),
                 Value<DateTime?> earlyCheckoutDate = const Value.absent(),
                 Value<int> overstayDays = const Value.absent(),
                 Value<double> overstayFeeEgp = const Value.absent(),
+                Value<String?> nationalId = const Value.absent(),
+                Value<String?> idFrontImage = const Value.absent(),
+                Value<String?> idBackImage = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -8791,12 +12949,19 @@ class $$SummerBookingsTableTableManager
                 status: status,
                 totalPriceEgp: totalPriceEgp,
                 amountPaidEgp: amountPaidEgp,
+                paymentMethod: paymentMethod,
                 brokerId: brokerId,
+                brokerName: brokerName,
+                brokerCommissionType: brokerCommissionType,
                 brokerCommissionPercentage: brokerCommissionPercentage,
+                brokerCommissionFixedEgp: brokerCommissionFixedEgp,
                 brokerCommissionAmountEgp: brokerCommissionAmountEgp,
                 earlyCheckoutDate: earlyCheckoutDate,
                 overstayDays: overstayDays,
                 overstayFeeEgp: overstayFeeEgp,
+                nationalId: nationalId,
+                idFrontImage: idFrontImage,
+                idBackImage: idBackImage,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -8875,6 +13040,7 @@ typedef $$WinterContractsTableCreateCompanionBuilder =
       Value<DateTime> lastModifiedLocal,
       required String id,
       required String apartmentId,
+      Value<String> contractType,
       required String studentName,
       Value<String?> university,
       Value<String?> parentName,
@@ -8885,6 +13051,15 @@ typedef $$WinterContractsTableCreateCompanionBuilder =
       required double monthlyRentEgp,
       Value<double> depositEgp,
       Value<bool> isActive,
+      Value<bool> isElectricityOnStudent,
+      Value<bool> isGasOnStudent,
+      Value<bool> isWaterOnStudent,
+      Value<String?> roommates,
+      Value<String?> nationalId,
+      Value<String?> idFrontImage,
+      Value<String?> idBackImage,
+      Value<String?> contractFrontImage,
+      Value<String?> contractBackImage,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -8895,6 +13070,7 @@ typedef $$WinterContractsTableUpdateCompanionBuilder =
       Value<DateTime> lastModifiedLocal,
       Value<String> id,
       Value<String> apartmentId,
+      Value<String> contractType,
       Value<String> studentName,
       Value<String?> university,
       Value<String?> parentName,
@@ -8905,6 +13081,15 @@ typedef $$WinterContractsTableUpdateCompanionBuilder =
       Value<double> monthlyRentEgp,
       Value<double> depositEgp,
       Value<bool> isActive,
+      Value<bool> isElectricityOnStudent,
+      Value<bool> isGasOnStudent,
+      Value<bool> isWaterOnStudent,
+      Value<String?> roommates,
+      Value<String?> nationalId,
+      Value<String?> idFrontImage,
+      Value<String?> idBackImage,
+      Value<String?> contractFrontImage,
+      Value<String?> contractBackImage,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -8985,6 +13170,11 @@ class $$WinterContractsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get contractType => $composableBuilder(
+    column: $table.contractType,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get studentName => $composableBuilder(
     column: $table.studentName,
     builder: (column) => ColumnFilters(column),
@@ -9032,6 +13222,51 @@ class $$WinterContractsTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isElectricityOnStudent => $composableBuilder(
+    column: $table.isElectricityOnStudent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isGasOnStudent => $composableBuilder(
+    column: $table.isGasOnStudent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isWaterOnStudent => $composableBuilder(
+    column: $table.isWaterOnStudent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get roommates => $composableBuilder(
+    column: $table.roommates,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nationalId => $composableBuilder(
+    column: $table.nationalId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idFrontImage => $composableBuilder(
+    column: $table.idFrontImage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get idBackImage => $composableBuilder(
+    column: $table.idBackImage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contractFrontImage => $composableBuilder(
+    column: $table.contractFrontImage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contractBackImage => $composableBuilder(
+    column: $table.contractBackImage,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9118,6 +13353,11 @@ class $$WinterContractsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get contractType => $composableBuilder(
+    column: $table.contractType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get studentName => $composableBuilder(
     column: $table.studentName,
     builder: (column) => ColumnOrderings(column),
@@ -9165,6 +13405,51 @@ class $$WinterContractsTableOrderingComposer
 
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isElectricityOnStudent => $composableBuilder(
+    column: $table.isElectricityOnStudent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isGasOnStudent => $composableBuilder(
+    column: $table.isGasOnStudent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isWaterOnStudent => $composableBuilder(
+    column: $table.isWaterOnStudent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get roommates => $composableBuilder(
+    column: $table.roommates,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nationalId => $composableBuilder(
+    column: $table.nationalId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get idFrontImage => $composableBuilder(
+    column: $table.idFrontImage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get idBackImage => $composableBuilder(
+    column: $table.idBackImage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contractFrontImage => $composableBuilder(
+    column: $table.contractFrontImage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contractBackImage => $composableBuilder(
+    column: $table.contractBackImage,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9225,6 +13510,11 @@ class $$WinterContractsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<String> get contractType => $composableBuilder(
+    column: $table.contractType,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get studentName => $composableBuilder(
     column: $table.studentName,
     builder: (column) => column,
@@ -9268,6 +13558,49 @@ class $$WinterContractsTableAnnotationComposer
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<bool> get isElectricityOnStudent => $composableBuilder(
+    column: $table.isElectricityOnStudent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isGasOnStudent => $composableBuilder(
+    column: $table.isGasOnStudent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isWaterOnStudent => $composableBuilder(
+    column: $table.isWaterOnStudent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get roommates =>
+      $composableBuilder(column: $table.roommates, builder: (column) => column);
+
+  GeneratedColumn<String> get nationalId => $composableBuilder(
+    column: $table.nationalId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get idFrontImage => $composableBuilder(
+    column: $table.idFrontImage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get idBackImage => $composableBuilder(
+    column: $table.idBackImage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get contractFrontImage => $composableBuilder(
+    column: $table.contractFrontImage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get contractBackImage => $composableBuilder(
+    column: $table.contractBackImage,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -9358,6 +13691,7 @@ class $$WinterContractsTableTableManager
                 Value<DateTime> lastModifiedLocal = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> apartmentId = const Value.absent(),
+                Value<String> contractType = const Value.absent(),
                 Value<String> studentName = const Value.absent(),
                 Value<String?> university = const Value.absent(),
                 Value<String?> parentName = const Value.absent(),
@@ -9368,6 +13702,15 @@ class $$WinterContractsTableTableManager
                 Value<double> monthlyRentEgp = const Value.absent(),
                 Value<double> depositEgp = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<bool> isElectricityOnStudent = const Value.absent(),
+                Value<bool> isGasOnStudent = const Value.absent(),
+                Value<bool> isWaterOnStudent = const Value.absent(),
+                Value<String?> roommates = const Value.absent(),
+                Value<String?> nationalId = const Value.absent(),
+                Value<String?> idFrontImage = const Value.absent(),
+                Value<String?> idBackImage = const Value.absent(),
+                Value<String?> contractFrontImage = const Value.absent(),
+                Value<String?> contractBackImage = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -9376,6 +13719,7 @@ class $$WinterContractsTableTableManager
                 lastModifiedLocal: lastModifiedLocal,
                 id: id,
                 apartmentId: apartmentId,
+                contractType: contractType,
                 studentName: studentName,
                 university: university,
                 parentName: parentName,
@@ -9386,6 +13730,15 @@ class $$WinterContractsTableTableManager
                 monthlyRentEgp: monthlyRentEgp,
                 depositEgp: depositEgp,
                 isActive: isActive,
+                isElectricityOnStudent: isElectricityOnStudent,
+                isGasOnStudent: isGasOnStudent,
+                isWaterOnStudent: isWaterOnStudent,
+                roommates: roommates,
+                nationalId: nationalId,
+                idFrontImage: idFrontImage,
+                idBackImage: idBackImage,
+                contractFrontImage: contractFrontImage,
+                contractBackImage: contractBackImage,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -9396,6 +13749,7 @@ class $$WinterContractsTableTableManager
                 Value<DateTime> lastModifiedLocal = const Value.absent(),
                 required String id,
                 required String apartmentId,
+                Value<String> contractType = const Value.absent(),
                 required String studentName,
                 Value<String?> university = const Value.absent(),
                 Value<String?> parentName = const Value.absent(),
@@ -9406,6 +13760,15 @@ class $$WinterContractsTableTableManager
                 required double monthlyRentEgp,
                 Value<double> depositEgp = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
+                Value<bool> isElectricityOnStudent = const Value.absent(),
+                Value<bool> isGasOnStudent = const Value.absent(),
+                Value<bool> isWaterOnStudent = const Value.absent(),
+                Value<String?> roommates = const Value.absent(),
+                Value<String?> nationalId = const Value.absent(),
+                Value<String?> idFrontImage = const Value.absent(),
+                Value<String?> idBackImage = const Value.absent(),
+                Value<String?> contractFrontImage = const Value.absent(),
+                Value<String?> contractBackImage = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -9414,6 +13777,7 @@ class $$WinterContractsTableTableManager
                 lastModifiedLocal: lastModifiedLocal,
                 id: id,
                 apartmentId: apartmentId,
+                contractType: contractType,
                 studentName: studentName,
                 university: university,
                 parentName: parentName,
@@ -9424,6 +13788,15 @@ class $$WinterContractsTableTableManager
                 monthlyRentEgp: monthlyRentEgp,
                 depositEgp: depositEgp,
                 isActive: isActive,
+                isElectricityOnStudent: isElectricityOnStudent,
+                isGasOnStudent: isGasOnStudent,
+                isWaterOnStudent: isWaterOnStudent,
+                roommates: roommates,
+                nationalId: nationalId,
+                idFrontImage: idFrontImage,
+                idBackImage: idBackImage,
+                contractFrontImage: contractFrontImage,
+                contractBackImage: contractBackImage,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -9530,6 +13903,7 @@ typedef $$WinterPaymentsTableCreateCompanionBuilder =
       required String contractId,
       required double amountEgp,
       required DateTime paymentDate,
+      Value<String> paymentMethod,
       Value<String?> receiptUrl,
       required DateTime createdAt,
       Value<int> rowid,
@@ -9542,6 +13916,7 @@ typedef $$WinterPaymentsTableUpdateCompanionBuilder =
       Value<String> contractId,
       Value<double> amountEgp,
       Value<DateTime> paymentDate,
+      Value<String> paymentMethod,
       Value<String?> receiptUrl,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -9613,6 +13988,11 @@ class $$WinterPaymentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get receiptUrl => $composableBuilder(
     column: $table.receiptUrl,
     builder: (column) => ColumnFilters(column),
@@ -9681,6 +14061,11 @@ class $$WinterPaymentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get receiptUrl => $composableBuilder(
     column: $table.receiptUrl,
     builder: (column) => ColumnOrderings(column),
@@ -9743,6 +14128,11 @@ class $$WinterPaymentsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get paymentDate => $composableBuilder(
     column: $table.paymentDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
     builder: (column) => column,
   );
 
@@ -9814,6 +14204,7 @@ class $$WinterPaymentsTableTableManager
                 Value<String> contractId = const Value.absent(),
                 Value<double> amountEgp = const Value.absent(),
                 Value<DateTime> paymentDate = const Value.absent(),
+                Value<String> paymentMethod = const Value.absent(),
                 Value<String?> receiptUrl = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -9824,6 +14215,7 @@ class $$WinterPaymentsTableTableManager
                 contractId: contractId,
                 amountEgp: amountEgp,
                 paymentDate: paymentDate,
+                paymentMethod: paymentMethod,
                 receiptUrl: receiptUrl,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -9836,6 +14228,7 @@ class $$WinterPaymentsTableTableManager
                 required String contractId,
                 required double amountEgp,
                 required DateTime paymentDate,
+                Value<String> paymentMethod = const Value.absent(),
                 Value<String?> receiptUrl = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -9846,6 +14239,7 @@ class $$WinterPaymentsTableTableManager
                 contractId: contractId,
                 amountEgp: amountEgp,
                 paymentDate: paymentDate,
+                paymentMethod: paymentMethod,
                 receiptUrl: receiptUrl,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -10466,6 +14860,8 @@ typedef $$ExpensesTableCreateCompanionBuilder =
       Value<String?> apartmentId,
       required String expenseType,
       required double amountEgp,
+      Value<double> discountEgp,
+      Value<String?> discountReason,
       required DateTime expenseDate,
       Value<int?> installmentNumber,
       Value<String?> description,
@@ -10482,6 +14878,8 @@ typedef $$ExpensesTableUpdateCompanionBuilder =
       Value<String?> apartmentId,
       Value<String> expenseType,
       Value<double> amountEgp,
+      Value<double> discountEgp,
+      Value<String?> discountReason,
       Value<DateTime> expenseDate,
       Value<int?> installmentNumber,
       Value<String?> description,
@@ -10565,6 +14963,16 @@ class $$ExpensesTableFilterComposer
 
   ColumnFilters<double> get amountEgp => $composableBuilder(
     column: $table.amountEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get discountEgp => $composableBuilder(
+    column: $table.discountEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get discountReason => $composableBuilder(
+    column: $table.discountReason,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10674,6 +15082,16 @@ class $$ExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get discountEgp => $composableBuilder(
+    column: $table.discountEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get discountReason => $composableBuilder(
+    column: $table.discountReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get expenseDate => $composableBuilder(
     column: $table.expenseDate,
     builder: (column) => ColumnOrderings(column),
@@ -10776,6 +15194,16 @@ class $$ExpensesTableAnnotationComposer
 
   GeneratedColumn<double> get amountEgp =>
       $composableBuilder(column: $table.amountEgp, builder: (column) => column);
+
+  GeneratedColumn<double> get discountEgp => $composableBuilder(
+    column: $table.discountEgp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get discountReason => $composableBuilder(
+    column: $table.discountReason,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get expenseDate => $composableBuilder(
     column: $table.expenseDate,
@@ -10882,6 +15310,8 @@ class $$ExpensesTableTableManager
                 Value<String?> apartmentId = const Value.absent(),
                 Value<String> expenseType = const Value.absent(),
                 Value<double> amountEgp = const Value.absent(),
+                Value<double> discountEgp = const Value.absent(),
+                Value<String?> discountReason = const Value.absent(),
                 Value<DateTime> expenseDate = const Value.absent(),
                 Value<int?> installmentNumber = const Value.absent(),
                 Value<String?> description = const Value.absent(),
@@ -10896,6 +15326,8 @@ class $$ExpensesTableTableManager
                 apartmentId: apartmentId,
                 expenseType: expenseType,
                 amountEgp: amountEgp,
+                discountEgp: discountEgp,
+                discountReason: discountReason,
                 expenseDate: expenseDate,
                 installmentNumber: installmentNumber,
                 description: description,
@@ -10912,6 +15344,8 @@ class $$ExpensesTableTableManager
                 Value<String?> apartmentId = const Value.absent(),
                 required String expenseType,
                 required double amountEgp,
+                Value<double> discountEgp = const Value.absent(),
+                Value<String?> discountReason = const Value.absent(),
                 required DateTime expenseDate,
                 Value<int?> installmentNumber = const Value.absent(),
                 Value<String?> description = const Value.absent(),
@@ -10926,6 +15360,8 @@ class $$ExpensesTableTableManager
                 apartmentId: apartmentId,
                 expenseType: expenseType,
                 amountEgp: amountEgp,
+                discountEgp: discountEgp,
+                discountReason: discountReason,
                 expenseDate: expenseDate,
                 installmentNumber: installmentNumber,
                 description: description,
@@ -11013,12 +15449,1753 @@ typedef $$ExpensesTableProcessedTableManager =
       Expense,
       PrefetchHooks Function({bool buildingId, bool apartmentId})
     >;
+typedef $$TechniciansTableCreateCompanionBuilder =
+    TechniciansCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      required String id,
+      required String name,
+      Value<String?> phone,
+      required String specialty,
+      Value<String?> notes,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$TechniciansTableUpdateCompanionBuilder =
+    TechniciansCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      Value<String> id,
+      Value<String> name,
+      Value<String?> phone,
+      Value<String> specialty,
+      Value<String?> notes,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$TechniciansTableReferences
+    extends BaseReferences<_$AppDatabase, $TechniciansTable, Technician> {
+  $$TechniciansTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    $MaintenanceRequestsTable,
+    List<MaintenanceRequest>
+  >
+  _maintenanceRequestsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.maintenanceRequests,
+        aliasName: $_aliasNameGenerator(
+          db.technicians.id,
+          db.maintenanceRequests.technicianId,
+        ),
+      );
+
+  $$MaintenanceRequestsTableProcessedTableManager get maintenanceRequestsRefs {
+    final manager = $$MaintenanceRequestsTableTableManager(
+      $_db,
+      $_db.maintenanceRequests,
+    ).filter((f) => f.technicianId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _maintenanceRequestsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$TechniciansTableFilterComposer
+    extends Composer<_$AppDatabase, $TechniciansTable> {
+  $$TechniciansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<SyncStatus, SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get specialty => $composableBuilder(
+    column: $table.specialty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> maintenanceRequestsRefs(
+    Expression<bool> Function($$MaintenanceRequestsTableFilterComposer f) f,
+  ) {
+    final $$MaintenanceRequestsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.maintenanceRequests,
+      getReferencedColumn: (t) => t.technicianId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MaintenanceRequestsTableFilterComposer(
+            $db: $db,
+            $table: $db.maintenanceRequests,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$TechniciansTableOrderingComposer
+    extends Composer<_$AppDatabase, $TechniciansTable> {
+  $$TechniciansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get specialty => $composableBuilder(
+    column: $table.specialty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TechniciansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TechniciansTable> {
+  $$TechniciansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get specialty =>
+      $composableBuilder(column: $table.specialty, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> maintenanceRequestsRefs<T extends Object>(
+    Expression<T> Function($$MaintenanceRequestsTableAnnotationComposer a) f,
+  ) {
+    final $$MaintenanceRequestsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.maintenanceRequests,
+          getReferencedColumn: (t) => t.technicianId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$MaintenanceRequestsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.maintenanceRequests,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$TechniciansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TechniciansTable,
+          Technician,
+          $$TechniciansTableFilterComposer,
+          $$TechniciansTableOrderingComposer,
+          $$TechniciansTableAnnotationComposer,
+          $$TechniciansTableCreateCompanionBuilder,
+          $$TechniciansTableUpdateCompanionBuilder,
+          (Technician, $$TechniciansTableReferences),
+          Technician,
+          PrefetchHooks Function({bool maintenanceRequestsRefs})
+        > {
+  $$TechniciansTableTableManager(_$AppDatabase db, $TechniciansTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TechniciansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TechniciansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TechniciansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String> specialty = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TechniciansCompanion(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                name: name,
+                phone: phone,
+                specialty: specialty,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                required String id,
+                required String name,
+                Value<String?> phone = const Value.absent(),
+                required String specialty,
+                Value<String?> notes = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TechniciansCompanion.insert(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                name: name,
+                phone: phone,
+                specialty: specialty,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$TechniciansTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({maintenanceRequestsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (maintenanceRequestsRefs) db.maintenanceRequests,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (maintenanceRequestsRefs)
+                    await $_getPrefetchedData<
+                      Technician,
+                      $TechniciansTable,
+                      MaintenanceRequest
+                    >(
+                      currentTable: table,
+                      referencedTable: $$TechniciansTableReferences
+                          ._maintenanceRequestsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$TechniciansTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).maintenanceRequestsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.technicianId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$TechniciansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TechniciansTable,
+      Technician,
+      $$TechniciansTableFilterComposer,
+      $$TechniciansTableOrderingComposer,
+      $$TechniciansTableAnnotationComposer,
+      $$TechniciansTableCreateCompanionBuilder,
+      $$TechniciansTableUpdateCompanionBuilder,
+      (Technician, $$TechniciansTableReferences),
+      Technician,
+      PrefetchHooks Function({bool maintenanceRequestsRefs})
+    >;
+typedef $$CleaningSuppliesTableCreateCompanionBuilder =
+    CleaningSuppliesCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      required String id,
+      required String name,
+      Value<double> stockQuantity,
+      Value<String> unit,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CleaningSuppliesTableUpdateCompanionBuilder =
+    CleaningSuppliesCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      Value<String> id,
+      Value<String> name,
+      Value<double> stockQuantity,
+      Value<String> unit,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$CleaningSuppliesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $CleaningSuppliesTable, CleaningSupply> {
+  $$CleaningSuppliesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<
+    $CleaningTransactionsTable,
+    List<CleaningTransaction>
+  >
+  _cleaningTransactionsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.cleaningTransactions,
+        aliasName: $_aliasNameGenerator(
+          db.cleaningSupplies.id,
+          db.cleaningTransactions.supplyId,
+        ),
+      );
+
+  $$CleaningTransactionsTableProcessedTableManager
+  get cleaningTransactionsRefs {
+    final manager = $$CleaningTransactionsTableTableManager(
+      $_db,
+      $_db.cleaningTransactions,
+    ).filter((f) => f.supplyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _cleaningTransactionsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CleaningSuppliesTableFilterComposer
+    extends Composer<_$AppDatabase, $CleaningSuppliesTable> {
+  $$CleaningSuppliesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<SyncStatus, SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get stockQuantity => $composableBuilder(
+    column: $table.stockQuantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> cleaningTransactionsRefs(
+    Expression<bool> Function($$CleaningTransactionsTableFilterComposer f) f,
+  ) {
+    final $$CleaningTransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.cleaningTransactions,
+      getReferencedColumn: (t) => t.supplyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CleaningTransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.cleaningTransactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CleaningSuppliesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CleaningSuppliesTable> {
+  $$CleaningSuppliesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get stockQuantity => $composableBuilder(
+    column: $table.stockQuantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CleaningSuppliesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CleaningSuppliesTable> {
+  $$CleaningSuppliesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get stockQuantity => $composableBuilder(
+    column: $table.stockQuantity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  Expression<T> cleaningTransactionsRefs<T extends Object>(
+    Expression<T> Function($$CleaningTransactionsTableAnnotationComposer a) f,
+  ) {
+    final $$CleaningTransactionsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.cleaningTransactions,
+          getReferencedColumn: (t) => t.supplyId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CleaningTransactionsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.cleaningTransactions,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$CleaningSuppliesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CleaningSuppliesTable,
+          CleaningSupply,
+          $$CleaningSuppliesTableFilterComposer,
+          $$CleaningSuppliesTableOrderingComposer,
+          $$CleaningSuppliesTableAnnotationComposer,
+          $$CleaningSuppliesTableCreateCompanionBuilder,
+          $$CleaningSuppliesTableUpdateCompanionBuilder,
+          (CleaningSupply, $$CleaningSuppliesTableReferences),
+          CleaningSupply,
+          PrefetchHooks Function({bool cleaningTransactionsRefs})
+        > {
+  $$CleaningSuppliesTableTableManager(
+    _$AppDatabase db,
+    $CleaningSuppliesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CleaningSuppliesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CleaningSuppliesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CleaningSuppliesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> stockQuantity = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CleaningSuppliesCompanion(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                name: name,
+                stockQuantity: stockQuantity,
+                unit: unit,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                required String id,
+                required String name,
+                Value<double> stockQuantity = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CleaningSuppliesCompanion.insert(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                name: name,
+                stockQuantity: stockQuantity,
+                unit: unit,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CleaningSuppliesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({cleaningTransactionsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (cleaningTransactionsRefs) db.cleaningTransactions,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (cleaningTransactionsRefs)
+                    await $_getPrefetchedData<
+                      CleaningSupply,
+                      $CleaningSuppliesTable,
+                      CleaningTransaction
+                    >(
+                      currentTable: table,
+                      referencedTable: $$CleaningSuppliesTableReferences
+                          ._cleaningTransactionsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CleaningSuppliesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).cleaningTransactionsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.supplyId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CleaningSuppliesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CleaningSuppliesTable,
+      CleaningSupply,
+      $$CleaningSuppliesTableFilterComposer,
+      $$CleaningSuppliesTableOrderingComposer,
+      $$CleaningSuppliesTableAnnotationComposer,
+      $$CleaningSuppliesTableCreateCompanionBuilder,
+      $$CleaningSuppliesTableUpdateCompanionBuilder,
+      (CleaningSupply, $$CleaningSuppliesTableReferences),
+      CleaningSupply,
+      PrefetchHooks Function({bool cleaningTransactionsRefs})
+    >;
+typedef $$CleaningTransactionsTableCreateCompanionBuilder =
+    CleaningTransactionsCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      required String id,
+      required String supplyId,
+      required String transactionType,
+      required double quantity,
+      Value<double> costEgp,
+      required DateTime transactionDate,
+      Value<String?> notes,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$CleaningTransactionsTableUpdateCompanionBuilder =
+    CleaningTransactionsCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      Value<String> id,
+      Value<String> supplyId,
+      Value<String> transactionType,
+      Value<double> quantity,
+      Value<double> costEgp,
+      Value<DateTime> transactionDate,
+      Value<String?> notes,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$CleaningTransactionsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $CleaningTransactionsTable,
+          CleaningTransaction
+        > {
+  $$CleaningTransactionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CleaningSuppliesTable _supplyIdTable(_$AppDatabase db) =>
+      db.cleaningSupplies.createAlias(
+        $_aliasNameGenerator(
+          db.cleaningTransactions.supplyId,
+          db.cleaningSupplies.id,
+        ),
+      );
+
+  $$CleaningSuppliesTableProcessedTableManager get supplyId {
+    final $_column = $_itemColumn<String>('supply_id')!;
+
+    final manager = $$CleaningSuppliesTableTableManager(
+      $_db,
+      $_db.cleaningSupplies,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_supplyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CleaningTransactionsTableFilterComposer
+    extends Composer<_$AppDatabase, $CleaningTransactionsTable> {
+  $$CleaningTransactionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<SyncStatus, SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get costEgp => $composableBuilder(
+    column: $table.costEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get transactionDate => $composableBuilder(
+    column: $table.transactionDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CleaningSuppliesTableFilterComposer get supplyId {
+    final $$CleaningSuppliesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.supplyId,
+      referencedTable: $db.cleaningSupplies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CleaningSuppliesTableFilterComposer(
+            $db: $db,
+            $table: $db.cleaningSupplies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CleaningTransactionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CleaningTransactionsTable> {
+  $$CleaningTransactionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get costEgp => $composableBuilder(
+    column: $table.costEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get transactionDate => $composableBuilder(
+    column: $table.transactionDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CleaningSuppliesTableOrderingComposer get supplyId {
+    final $$CleaningSuppliesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.supplyId,
+      referencedTable: $db.cleaningSupplies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CleaningSuppliesTableOrderingComposer(
+            $db: $db,
+            $table: $db.cleaningSupplies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CleaningTransactionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CleaningTransactionsTable> {
+  $$CleaningTransactionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get transactionType => $composableBuilder(
+    column: $table.transactionType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<double> get costEgp =>
+      $composableBuilder(column: $table.costEgp, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get transactionDate => $composableBuilder(
+    column: $table.transactionDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$CleaningSuppliesTableAnnotationComposer get supplyId {
+    final $$CleaningSuppliesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.supplyId,
+      referencedTable: $db.cleaningSupplies,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CleaningSuppliesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cleaningSupplies,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CleaningTransactionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CleaningTransactionsTable,
+          CleaningTransaction,
+          $$CleaningTransactionsTableFilterComposer,
+          $$CleaningTransactionsTableOrderingComposer,
+          $$CleaningTransactionsTableAnnotationComposer,
+          $$CleaningTransactionsTableCreateCompanionBuilder,
+          $$CleaningTransactionsTableUpdateCompanionBuilder,
+          (CleaningTransaction, $$CleaningTransactionsTableReferences),
+          CleaningTransaction,
+          PrefetchHooks Function({bool supplyId})
+        > {
+  $$CleaningTransactionsTableTableManager(
+    _$AppDatabase db,
+    $CleaningTransactionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CleaningTransactionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CleaningTransactionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CleaningTransactionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> supplyId = const Value.absent(),
+                Value<String> transactionType = const Value.absent(),
+                Value<double> quantity = const Value.absent(),
+                Value<double> costEgp = const Value.absent(),
+                Value<DateTime> transactionDate = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CleaningTransactionsCompanion(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                supplyId: supplyId,
+                transactionType: transactionType,
+                quantity: quantity,
+                costEgp: costEgp,
+                transactionDate: transactionDate,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                required String id,
+                required String supplyId,
+                required String transactionType,
+                required double quantity,
+                Value<double> costEgp = const Value.absent(),
+                required DateTime transactionDate,
+                Value<String?> notes = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CleaningTransactionsCompanion.insert(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                supplyId: supplyId,
+                transactionType: transactionType,
+                quantity: quantity,
+                costEgp: costEgp,
+                transactionDate: transactionDate,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CleaningTransactionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({supplyId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (supplyId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.supplyId,
+                                referencedTable:
+                                    $$CleaningTransactionsTableReferences
+                                        ._supplyIdTable(db),
+                                referencedColumn:
+                                    $$CleaningTransactionsTableReferences
+                                        ._supplyIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CleaningTransactionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CleaningTransactionsTable,
+      CleaningTransaction,
+      $$CleaningTransactionsTableFilterComposer,
+      $$CleaningTransactionsTableOrderingComposer,
+      $$CleaningTransactionsTableAnnotationComposer,
+      $$CleaningTransactionsTableCreateCompanionBuilder,
+      $$CleaningTransactionsTableUpdateCompanionBuilder,
+      (CleaningTransaction, $$CleaningTransactionsTableReferences),
+      CleaningTransaction,
+      PrefetchHooks Function({bool supplyId})
+    >;
+typedef $$ApartmentInspectionsTableCreateCompanionBuilder =
+    ApartmentInspectionsCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      required String id,
+      required String apartmentId,
+      required DateTime inspectionDate,
+      Value<bool> isClean,
+      Value<bool> hasDamages,
+      Value<String?> damagesDescription,
+      Value<double> tenantFineEgp,
+      Value<double> ownerRepairCostEgp,
+      required String inspectorName,
+      Value<String?> notes,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ApartmentInspectionsTableUpdateCompanionBuilder =
+    ApartmentInspectionsCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      Value<String> id,
+      Value<String> apartmentId,
+      Value<DateTime> inspectionDate,
+      Value<bool> isClean,
+      Value<bool> hasDamages,
+      Value<String?> damagesDescription,
+      Value<double> tenantFineEgp,
+      Value<double> ownerRepairCostEgp,
+      Value<String> inspectorName,
+      Value<String?> notes,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$ApartmentInspectionsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ApartmentInspectionsTable,
+          ApartmentInspection
+        > {
+  $$ApartmentInspectionsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ApartmentsTable _apartmentIdTable(_$AppDatabase db) =>
+      db.apartments.createAlias(
+        $_aliasNameGenerator(
+          db.apartmentInspections.apartmentId,
+          db.apartments.id,
+        ),
+      );
+
+  $$ApartmentsTableProcessedTableManager get apartmentId {
+    final $_column = $_itemColumn<String>('apartment_id')!;
+
+    final manager = $$ApartmentsTableTableManager(
+      $_db,
+      $_db.apartments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_apartmentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ApartmentInspectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ApartmentInspectionsTable> {
+  $$ApartmentInspectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<SyncStatus, SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get inspectionDate => $composableBuilder(
+    column: $table.inspectionDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isClean => $composableBuilder(
+    column: $table.isClean,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hasDamages => $composableBuilder(
+    column: $table.hasDamages,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get damagesDescription => $composableBuilder(
+    column: $table.damagesDescription,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tenantFineEgp => $composableBuilder(
+    column: $table.tenantFineEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get ownerRepairCostEgp => $composableBuilder(
+    column: $table.ownerRepairCostEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get inspectorName => $composableBuilder(
+    column: $table.inspectorName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ApartmentsTableFilterComposer get apartmentId {
+    final $$ApartmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.apartmentId,
+      referencedTable: $db.apartments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ApartmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.apartments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ApartmentInspectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ApartmentInspectionsTable> {
+  $$ApartmentInspectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get inspectionDate => $composableBuilder(
+    column: $table.inspectionDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isClean => $composableBuilder(
+    column: $table.isClean,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hasDamages => $composableBuilder(
+    column: $table.hasDamages,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get damagesDescription => $composableBuilder(
+    column: $table.damagesDescription,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tenantFineEgp => $composableBuilder(
+    column: $table.tenantFineEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get ownerRepairCostEgp => $composableBuilder(
+    column: $table.ownerRepairCostEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get inspectorName => $composableBuilder(
+    column: $table.inspectorName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ApartmentsTableOrderingComposer get apartmentId {
+    final $$ApartmentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.apartmentId,
+      referencedTable: $db.apartments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ApartmentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.apartments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ApartmentInspectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ApartmentInspectionsTable> {
+  $$ApartmentInspectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get inspectionDate => $composableBuilder(
+    column: $table.inspectionDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isClean =>
+      $composableBuilder(column: $table.isClean, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasDamages => $composableBuilder(
+    column: $table.hasDamages,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get damagesDescription => $composableBuilder(
+    column: $table.damagesDescription,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get tenantFineEgp => $composableBuilder(
+    column: $table.tenantFineEgp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get ownerRepairCostEgp => $composableBuilder(
+    column: $table.ownerRepairCostEgp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get inspectorName => $composableBuilder(
+    column: $table.inspectorName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ApartmentsTableAnnotationComposer get apartmentId {
+    final $$ApartmentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.apartmentId,
+      referencedTable: $db.apartments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ApartmentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.apartments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ApartmentInspectionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ApartmentInspectionsTable,
+          ApartmentInspection,
+          $$ApartmentInspectionsTableFilterComposer,
+          $$ApartmentInspectionsTableOrderingComposer,
+          $$ApartmentInspectionsTableAnnotationComposer,
+          $$ApartmentInspectionsTableCreateCompanionBuilder,
+          $$ApartmentInspectionsTableUpdateCompanionBuilder,
+          (ApartmentInspection, $$ApartmentInspectionsTableReferences),
+          ApartmentInspection,
+          PrefetchHooks Function({bool apartmentId})
+        > {
+  $$ApartmentInspectionsTableTableManager(
+    _$AppDatabase db,
+    $ApartmentInspectionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ApartmentInspectionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ApartmentInspectionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ApartmentInspectionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> apartmentId = const Value.absent(),
+                Value<DateTime> inspectionDate = const Value.absent(),
+                Value<bool> isClean = const Value.absent(),
+                Value<bool> hasDamages = const Value.absent(),
+                Value<String?> damagesDescription = const Value.absent(),
+                Value<double> tenantFineEgp = const Value.absent(),
+                Value<double> ownerRepairCostEgp = const Value.absent(),
+                Value<String> inspectorName = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ApartmentInspectionsCompanion(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                apartmentId: apartmentId,
+                inspectionDate: inspectionDate,
+                isClean: isClean,
+                hasDamages: hasDamages,
+                damagesDescription: damagesDescription,
+                tenantFineEgp: tenantFineEgp,
+                ownerRepairCostEgp: ownerRepairCostEgp,
+                inspectorName: inspectorName,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                required String id,
+                required String apartmentId,
+                required DateTime inspectionDate,
+                Value<bool> isClean = const Value.absent(),
+                Value<bool> hasDamages = const Value.absent(),
+                Value<String?> damagesDescription = const Value.absent(),
+                Value<double> tenantFineEgp = const Value.absent(),
+                Value<double> ownerRepairCostEgp = const Value.absent(),
+                required String inspectorName,
+                Value<String?> notes = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ApartmentInspectionsCompanion.insert(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                apartmentId: apartmentId,
+                inspectionDate: inspectionDate,
+                isClean: isClean,
+                hasDamages: hasDamages,
+                damagesDescription: damagesDescription,
+                tenantFineEgp: tenantFineEgp,
+                ownerRepairCostEgp: ownerRepairCostEgp,
+                inspectorName: inspectorName,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ApartmentInspectionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({apartmentId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (apartmentId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.apartmentId,
+                                referencedTable:
+                                    $$ApartmentInspectionsTableReferences
+                                        ._apartmentIdTable(db),
+                                referencedColumn:
+                                    $$ApartmentInspectionsTableReferences
+                                        ._apartmentIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ApartmentInspectionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ApartmentInspectionsTable,
+      ApartmentInspection,
+      $$ApartmentInspectionsTableFilterComposer,
+      $$ApartmentInspectionsTableOrderingComposer,
+      $$ApartmentInspectionsTableAnnotationComposer,
+      $$ApartmentInspectionsTableCreateCompanionBuilder,
+      $$ApartmentInspectionsTableUpdateCompanionBuilder,
+      (ApartmentInspection, $$ApartmentInspectionsTableReferences),
+      ApartmentInspection,
+      PrefetchHooks Function({bool apartmentId})
+    >;
 typedef $$MaintenanceRequestsTableCreateCompanionBuilder =
     MaintenanceRequestsCompanion Function({
       Value<SyncStatus> syncStatus,
       Value<DateTime> lastModifiedLocal,
       required String id,
       required String apartmentId,
+      Value<String?> technicianId,
       required String reportedBy,
       required String issueDescription,
       Value<String> status,
@@ -11034,6 +17211,7 @@ typedef $$MaintenanceRequestsTableUpdateCompanionBuilder =
       Value<DateTime> lastModifiedLocal,
       Value<String> id,
       Value<String> apartmentId,
+      Value<String?> technicianId,
       Value<String> reportedBy,
       Value<String> issueDescription,
       Value<String> status,
@@ -11073,6 +17251,28 @@ final class $$MaintenanceRequestsTableReferences
       $_db.apartments,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_apartmentIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $TechniciansTable _technicianIdTable(_$AppDatabase db) =>
+      db.technicians.createAlias(
+        $_aliasNameGenerator(
+          db.maintenanceRequests.technicianId,
+          db.technicians.id,
+        ),
+      );
+
+  $$TechniciansTableProcessedTableManager? get technicianId {
+    final $_column = $_itemColumn<String>('technician_id');
+    if ($_column == null) return null;
+    final manager = $$TechniciansTableTableManager(
+      $_db,
+      $_db.technicians,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_technicianIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -11154,6 +17354,29 @@ class $$MaintenanceRequestsTableFilterComposer
           }) => $$ApartmentsTableFilterComposer(
             $db: $db,
             $table: $db.apartments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$TechniciansTableFilterComposer get technicianId {
+    final $$TechniciansTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.technicianId,
+      referencedTable: $db.technicians,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TechniciansTableFilterComposer(
+            $db: $db,
+            $table: $db.technicians,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -11245,6 +17468,29 @@ class $$MaintenanceRequestsTableOrderingComposer
     );
     return composer;
   }
+
+  $$TechniciansTableOrderingComposer get technicianId {
+    final $$TechniciansTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.technicianId,
+      referencedTable: $db.technicians,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TechniciansTableOrderingComposer(
+            $db: $db,
+            $table: $db.technicians,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$MaintenanceRequestsTableAnnotationComposer
@@ -11319,6 +17565,29 @@ class $$MaintenanceRequestsTableAnnotationComposer
     );
     return composer;
   }
+
+  $$TechniciansTableAnnotationComposer get technicianId {
+    final $$TechniciansTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.technicianId,
+      referencedTable: $db.technicians,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TechniciansTableAnnotationComposer(
+            $db: $db,
+            $table: $db.technicians,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$MaintenanceRequestsTableTableManager
@@ -11334,7 +17603,7 @@ class $$MaintenanceRequestsTableTableManager
           $$MaintenanceRequestsTableUpdateCompanionBuilder,
           (MaintenanceRequest, $$MaintenanceRequestsTableReferences),
           MaintenanceRequest,
-          PrefetchHooks Function({bool apartmentId})
+          PrefetchHooks Function({bool apartmentId, bool technicianId})
         > {
   $$MaintenanceRequestsTableTableManager(
     _$AppDatabase db,
@@ -11361,6 +17630,7 @@ class $$MaintenanceRequestsTableTableManager
                 Value<DateTime> lastModifiedLocal = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<String> apartmentId = const Value.absent(),
+                Value<String?> technicianId = const Value.absent(),
                 Value<String> reportedBy = const Value.absent(),
                 Value<String> issueDescription = const Value.absent(),
                 Value<String> status = const Value.absent(),
@@ -11374,6 +17644,7 @@ class $$MaintenanceRequestsTableTableManager
                 lastModifiedLocal: lastModifiedLocal,
                 id: id,
                 apartmentId: apartmentId,
+                technicianId: technicianId,
                 reportedBy: reportedBy,
                 issueDescription: issueDescription,
                 status: status,
@@ -11389,6 +17660,7 @@ class $$MaintenanceRequestsTableTableManager
                 Value<DateTime> lastModifiedLocal = const Value.absent(),
                 required String id,
                 required String apartmentId,
+                Value<String?> technicianId = const Value.absent(),
                 required String reportedBy,
                 required String issueDescription,
                 Value<String> status = const Value.absent(),
@@ -11402,6 +17674,7 @@ class $$MaintenanceRequestsTableTableManager
                 lastModifiedLocal: lastModifiedLocal,
                 id: id,
                 apartmentId: apartmentId,
+                technicianId: technicianId,
                 reportedBy: reportedBy,
                 issueDescription: issueDescription,
                 status: status,
@@ -11419,7 +17692,7 @@ class $$MaintenanceRequestsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({apartmentId = false}) {
+          prefetchHooksCallback: ({apartmentId = false, technicianId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -11454,6 +17727,21 @@ class $$MaintenanceRequestsTableTableManager
                               )
                               as T;
                     }
+                    if (technicianId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.technicianId,
+                                referencedTable:
+                                    $$MaintenanceRequestsTableReferences
+                                        ._technicianIdTable(db),
+                                referencedColumn:
+                                    $$MaintenanceRequestsTableReferences
+                                        ._technicianIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
 
                     return state;
                   },
@@ -11478,7 +17766,7 @@ typedef $$MaintenanceRequestsTableProcessedTableManager =
       $$MaintenanceRequestsTableUpdateCompanionBuilder,
       (MaintenanceRequest, $$MaintenanceRequestsTableReferences),
       MaintenanceRequest,
-      PrefetchHooks Function({bool apartmentId})
+      PrefetchHooks Function({bool apartmentId, bool technicianId})
     >;
 
 class $AppDatabaseManager {
@@ -11500,6 +17788,14 @@ class $AppDatabaseManager {
       $$MeterReadingsTableTableManager(_db, _db.meterReadings);
   $$ExpensesTableTableManager get expenses =>
       $$ExpensesTableTableManager(_db, _db.expenses);
+  $$TechniciansTableTableManager get technicians =>
+      $$TechniciansTableTableManager(_db, _db.technicians);
+  $$CleaningSuppliesTableTableManager get cleaningSupplies =>
+      $$CleaningSuppliesTableTableManager(_db, _db.cleaningSupplies);
+  $$CleaningTransactionsTableTableManager get cleaningTransactions =>
+      $$CleaningTransactionsTableTableManager(_db, _db.cleaningTransactions);
+  $$ApartmentInspectionsTableTableManager get apartmentInspections =>
+      $$ApartmentInspectionsTableTableManager(_db, _db.apartmentInspections);
   $$MaintenanceRequestsTableTableManager get maintenanceRequests =>
       $$MaintenanceRequestsTableTableManager(_db, _db.maintenanceRequests);
 }

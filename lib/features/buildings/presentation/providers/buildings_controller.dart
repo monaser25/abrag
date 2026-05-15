@@ -38,4 +38,37 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
       state = AsyncError(e, st);
     }
   }
+
+  Future<void> updateBuilding(String id, String name, String address, int totalApartments) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.buildings)..where((t) => t.id.equals(id))).write(
+        BuildingsCompanion(
+          name: Value(name),
+          address: Value(address),
+          totalApartments: Value(totalApartments),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> updateRentSettings(String buildingId, double annualRent, String installmentsDates) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.buildings)..where((t) => t.id.equals(buildingId))).write(
+        BuildingsCompanion(
+          annualRentEgp: Value(annualRent),
+          rentInstallmentsDates: Value(installmentsDates),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
 }

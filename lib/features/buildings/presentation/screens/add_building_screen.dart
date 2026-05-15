@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/buildings_controller.dart';
 
+import '../../../../core/database/database.dart';
+
 class AddBuildingScreen extends ConsumerStatefulWidget {
-  const AddBuildingScreen({super.key});
+  final Building? building;
+
+  const AddBuildingScreen({super.key, this.building});
 
   @override
   ConsumerState<AddBuildingScreen> createState() => _AddBuildingScreenState();
@@ -12,9 +16,17 @@ class AddBuildingScreen extends ConsumerStatefulWidget {
 
 class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _totalApartmentsController = TextEditingController(text: '15');
+  late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _totalApartmentsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.building?.name ?? '');
+    _addressController = TextEditingController(text: widget.building?.address ?? '');
+    _totalApartmentsController = TextEditingController(text: widget.building?.totalApartments.toString() ?? '15');
+  }
 
   @override
   void dispose() {
@@ -26,11 +38,20 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      ref.read(buildingsControllerProvider.notifier).addBuilding(
-        _nameController.text.trim(),
-        _addressController.text.trim(),
-        int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
-      );
+      if (widget.building == null) {
+        ref.read(buildingsControllerProvider.notifier).addBuilding(
+          _nameController.text.trim(),
+          _addressController.text.trim(),
+          int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
+        );
+      } else {
+        ref.read(buildingsControllerProvider.notifier).updateBuilding(
+          widget.building!.id,
+          _nameController.text.trim(),
+          _addressController.text.trim(),
+          int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
+        );
+      }
     }
   }
 
@@ -51,7 +72,7 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إضافة مبنى')),
+      appBar: AppBar(title: Text(widget.building == null ? 'إضافة مبنى' : 'تعديل بيانات المبنى')),
       body: Form(
         key: _formKey,
         child: ListView(

@@ -22,6 +22,8 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
     required DateTime date,
     String? description,
     int? installmentNumber,
+    double discountEgp = 0,
+    String? discountReason,
   }) async {
     state = const AsyncLoading();
     try {
@@ -37,8 +39,44 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           expenseDate: date,
           description: Value(description),
           installmentNumber: Value(installmentNumber),
+          discountEgp: Value(discountEgp),
+          discountReason: Value(discountReason),
           syncStatus: const Value(SyncStatus.pendingInsert),
           createdAt: DateTime.now(),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> updateExpense({
+    required String id,
+    String? buildingId,
+    String? apartmentId,
+    required String expenseType,
+    required double amount,
+    required DateTime date,
+    String? description,
+    int? installmentNumber,
+    double discountEgp = 0,
+    String? discountReason,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.expenses)..where((t) => t.id.equals(id))).write(
+        ExpensesCompanion(
+          buildingId: Value(buildingId),
+          apartmentId: Value(apartmentId),
+          expenseType: Value(expenseType),
+          amountEgp: Value(amount),
+          expenseDate: Value(date),
+          description: Value(description),
+          installmentNumber: Value(installmentNumber),
+          discountEgp: Value(discountEgp),
+          discountReason: Value(discountReason),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
       );
       state = const AsyncData(null);

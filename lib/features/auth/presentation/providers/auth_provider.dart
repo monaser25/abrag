@@ -20,6 +20,7 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       await _authRepository.signInWithEmailPassword(email, password);
+      
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

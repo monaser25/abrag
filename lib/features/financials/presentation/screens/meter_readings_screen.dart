@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/meter_readings_provider.dart';
 
@@ -107,7 +108,7 @@ class MeterReadingsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to add reading screen
+          context.go('/meter_readings/add');
         },
         child: const Icon(Icons.add),
       ),

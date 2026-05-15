@@ -21,6 +21,8 @@ CREATE TABLE public.buildings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     address TEXT,
+    annual_rent_egp NUMERIC(10,2) NOT NULL DEFAULT 0,
+    rent_installments_dates TEXT,
     total_apartments INT NOT NULL DEFAULT 15,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -30,8 +32,9 @@ CREATE TABLE public.apartments (
     building_id UUID NOT NULL REFERENCES public.buildings(id) ON DELETE CASCADE,
     apartment_number TEXT NOT NULL,
     floor_number INT,
-    cleaning_status cleaning_status NOT NULL DEFAULT 'clean',
-    broker_visibility BOOLEAN NOT NULL DEFAULT FALSE, -- Admin controls if brokers can see it
+    cleaning_status TEXT NOT NULL DEFAULT 'clean',
+    broker_visibility BOOLEAN NOT NULL DEFAULT FALSE,
+    inventory TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -47,12 +50,19 @@ CREATE TABLE public.summer_bookings (
     status booking_status NOT NULL DEFAULT 'pending',
     total_price_egp NUMERIC(10,2) NOT NULL,
     amount_paid_egp NUMERIC(10,2) NOT NULL DEFAULT 0,
+    payment_method TEXT NOT NULL DEFAULT 'cash',
     broker_id UUID REFERENCES public.user_profiles(id), -- Only if role is 'broker'
+    broker_name TEXT,
+    broker_commission_type TEXT NOT NULL DEFAULT 'none',
     broker_commission_percentage NUMERIC(5,2) NOT NULL DEFAULT 10.00,
+    broker_commission_fixed_egp NUMERIC(10,2) NOT NULL DEFAULT 0,
     broker_commission_amount_egp NUMERIC(10,2) GENERATED ALWAYS AS (total_price_egp * (broker_commission_percentage / 100)) STORED,
     early_checkout_date DATE,
     overstay_days INT DEFAULT 0,
     overstay_fee_egp NUMERIC(10,2) DEFAULT 0,
+    national_id TEXT,
+    id_front_image TEXT,
+    id_back_image TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

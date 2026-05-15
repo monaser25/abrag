@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -7,21 +8,33 @@ final searchQueryProvider = StateProvider<String>((ref) => '');
 final searchResultsProvider = StreamProvider.autoDispose<List<dynamic>>((ref) {
   final query = ref.watch(searchQueryProvider).toLowerCase();
   final db = ref.watch(databaseProvider);
-  
+
   if (query.isEmpty) return Stream.value([]);
 
-  // This is a simplified search across tables. 
+  // This is a simplified search across tables.
   // In a real app, use drift's text search or custom async mapping.
   return Stream.periodic(const Duration(milliseconds: 500)).asyncMap((_) async {
     final results = [];
 
     // Search Summer Bookings
     final bookings = await db.select(db.summerBookings).get();
-    results.addAll(bookings.where((b) => b.guestName.toLowerCase().contains(query) || (b.guestPhone?.contains(query) ?? false)));
+    results.addAll(
+      bookings.where(
+        (b) =>
+            b.guestName.toLowerCase().contains(query) ||
+            (b.guestPhone?.contains(query) ?? false),
+      ),
+    );
 
     // Search Winter Contracts
     final contracts = await db.select(db.winterContracts).get();
-    results.addAll(contracts.where((c) => c.studentName.toLowerCase().contains(query) || (c.parentPhone?.contains(query) ?? false)));
+    results.addAll(
+      contracts.where(
+        (c) =>
+            c.studentName.toLowerCase().contains(query) ||
+            (c.parentPhone?.contains(query) ?? false),
+      ),
+    );
 
     return results;
   });
@@ -38,6 +51,10 @@ class GlobalSearchScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
         title: TextField(
           autofocus: true,
           style: const TextStyle(color: Colors.white),
@@ -73,14 +90,21 @@ class GlobalSearchScreen extends ConsumerWidget {
                         subtitle: 'حجز صيفي',
                         icon: Icons.calendar_month,
                         color: theme.colorScheme.primary,
+                        onTap: () => context.go(
+                          '/summer_bookings/guest/${Uri.encodeComponent(result.guestName)}',
+                        ),
                       );
-                    } else if (result.runtimeType.toString() == 'WinterContract') {
+                    } else if (result.runtimeType.toString() ==
+                        'WinterContract') {
                       return _buildResultCard(
                         context,
                         title: result.studentName,
                         subtitle: 'عقد شتوي',
                         icon: Icons.school,
                         color: theme.colorScheme.secondary,
+                        onTap: () => context.go(
+                          '/winter_contracts/details/${result.id}',
+                        ),
                       );
                     }
                     return const SizedBox.shrink();
@@ -93,7 +117,14 @@ class GlobalSearchScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildResultCard(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color}) {
+  Widget _buildResultCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -104,9 +135,7 @@ class GlobalSearchScreen extends ConsumerWidget {
         title: Text(title),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          // Navigate to details based on type
-        },
+        onTap: onTap,
       ),
     );
   }

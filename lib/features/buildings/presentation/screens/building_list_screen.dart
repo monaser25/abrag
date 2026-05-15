@@ -29,7 +29,19 @@ class BuildingListScreen extends ConsumerWidget {
                 child: ListTile(
                   title: Text(building.name),
                   subtitle: Text(building.address ?? ''),
-                  trailing: Text('${building.totalApartments} ${l10n.apartments}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${building.totalApartments} ${l10n.apartments}'),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () {
+                          context.go('/buildings/edit', extra: building);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

@@ -23,9 +23,16 @@ import '../../features/apartments/presentation/screens/add_apartment_screen.dart
 import '../../features/apartments/presentation/screens/apartment_profile_screen.dart';
 import '../../features/financials/presentation/screens/expenses_list_screen.dart';
 import '../../features/financials/presentation/screens/add_expense_screen.dart';
-import '../../features/financials/presentation/screens/meter_readings_screen.dart';
+import '../../features/financials/presentation/screens/add_building_rent_screen.dart';
+import '../../features/operations/presentation/screens/add_maintenance_screen.dart';
 import '../../features/financials/presentation/screens/building_rent_screen.dart';
 import '../../features/operations/presentation/screens/maintenance_requests_screen.dart';
+import '../../features/operations/presentation/screens/technicians_screen.dart';
+import '../../features/operations/presentation/screens/technician_details_screen.dart';
+import '../../features/operations/presentation/screens/cleaning_supplies_screen.dart';
+import '../../features/operations/presentation/screens/apartment_inspections_screen.dart';
+import '../../features/operations/presentation/screens/add_inspection_screen.dart';
+import '../../core/database/database.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/reports/presentation/screens/statement_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
@@ -52,12 +59,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: routerNotifier,
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
-      final isLoginRoute = state.matchedLocation == '/login';
-      final isSplashRoute = state.matchedLocation == '/splash';
-      final isOnboardingRoute = state.matchedLocation == '/onboarding';
-      final isForgotPasswordRoute = state.matchedLocation == '/forgot_password';
+      final isLoginRoute = state.uri.path == '/login';
+      final isSplashRoute = state.uri.path == '/splash';
+      final isOnboardingRoute = state.uri.path == '/onboarding';
+      final isForgotPasswordRoute = state.uri.path == '/forgot_password';
 
-      if (isSplashRoute || isOnboardingRoute || isForgotPasswordRoute) return null;
+      if (isSplashRoute || isOnboardingRoute || isForgotPasswordRoute)
+        return null;
 
       if (!isLoggedIn && !isLoginRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/';
@@ -81,10 +89,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/search',
         builder: (context, state) => const GlobalSearchScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/',
         builder: (context, state) => const RootScreen(),
@@ -95,11 +100,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'details/:id',
-                builder: (context, state) => BrokerDetailsScreen(brokerId: state.pathParameters['id']!),
+                builder: (context, state) =>
+                    BrokerDetailsScreen(brokerId: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: 'visibility',
-                builder: (context, state) => const BrokerVisibilityControlScreen(),
+                builder: (context, state) =>
+                    const BrokerVisibilityControlScreen(),
               ),
             ],
           ),
@@ -110,6 +117,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'add',
                 builder: (context, state) => const AddBuildingScreen(),
+              ),
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) => AddBuildingScreen(
+                  building: state.extra as Building?,
+                ),
               ),
             ],
           ),
@@ -123,7 +136,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'profile/:id',
-                builder: (context, state) => ApartmentProfileScreen(apartmentId: state.pathParameters['id']!),
+                builder: (context, state) => ApartmentProfileScreen(
+                  apartmentId: state.pathParameters['id']!,
+                ),
               ),
             ],
           ),
@@ -141,23 +156,36 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'details/:id',
-                builder: (context, state) => BookingDetailsScreen(bookingId: state.pathParameters['id']!),
+                builder: (context, state) => BookingDetailsScreen(
+                  bookingId: state.pathParameters['id']!,
+                ),
               ),
               GoRoute(
                 path: 'early_checkout/:id',
-                builder: (context, state) => EarlyCheckoutScreen(bookingId: state.pathParameters['id']!),
+                builder: (context, state) =>
+                    EarlyCheckoutScreen(bookingId: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: 'overstay/:id',
-                builder: (context, state) => OverstayExtensionScreen(bookingId: state.pathParameters['id']!),
+                builder: (context, state) => OverstayExtensionScreen(
+                  bookingId: state.pathParameters['id']!,
+                ),
               ),
               GoRoute(
                 path: 'guest/:name',
-                builder: (context, state) => GuestProfileScreen(guestName: state.pathParameters['name']!),
+                builder: (context, state) => GuestProfileScreen(
+                  guestName: state.pathParameters['name']!,
+                ),
               ),
               GoRoute(
                 path: 'add',
                 builder: (context, state) => const AddSummerBookingScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                builder: (context, state) => AddSummerBookingScreen(
+                  bookingId: state.pathParameters['id'],
+                ),
               ),
             ],
           ),
@@ -167,42 +195,106 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'details/:id',
-                builder: (context, state) => StudentDetailsScreen(contractId: state.pathParameters['id']!),
+                builder: (context, state) => StudentDetailsScreen(
+                  contractId: state.pathParameters['id']!,
+                ),
               ),
               GoRoute(
                 path: 'payments/:id',
-                builder: (context, state) => WinterPaymentHistoryScreen(contractId: state.pathParameters['id']!),
+                builder: (context, state) => WinterPaymentHistoryScreen(
+                  contractId: state.pathParameters['id']!,
+                ),
               ),
-              GoRoute(
-                path: 'add',
-                builder: (context, state) => const AddWinterContractScreen(),
-              ),
-            ],
-          ),
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) => const AddWinterContractScreen(),
+                ),
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) => AddWinterContractScreen(
+                    contract: state.extra as WinterContract?,
+                  ),
+                ),
+              ],
+            ),
           GoRoute(
             path: 'expenses',
             builder: (context, state) => const ExpensesListScreen(),
             routes: [
-              GoRoute(
-                path: 'add',
-                builder: (context, state) => const AddExpenseScreen(),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: 'meter_readings',
-            builder: (context, state) => const MeterReadingsScreen(),
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) => const AddExpenseScreen(),
+                ),
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) => AddExpenseScreen(
+                    expense: state.extra as Expense?,
+                  ),
+                ),
+              ],
           ),
           GoRoute(
             path: 'building_rent',
             builder: (context, state) => const BuildingRentScreen(),
-          ),
-          GoRoute(
-            path: 'maintenance',
+            routes: [
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) => const AddBuildingRentScreen(),
+                ),
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) => AddBuildingRentScreen(
+                    expense: state.extra as Expense?,
+                  ),
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'maintenance',
             builder: (context, state) => const MaintenanceRequestsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) => const AddMaintenanceScreen(),
+                ),
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) {
+                    return AddMaintenanceScreen(
+                      request: state.extra as MaintenanceRequest?,
+                    );
+                  },
+                ),
+              ],
           ),
-          GoRoute(
-            path: 'reports',
+            GoRoute(
+              path: 'technicians',
+              builder: (context, state) => const TechniciansScreen(),
+              routes: [
+                GoRoute(
+                  path: 'details/:id',
+                  builder: (context, state) => TechnicianDetailsScreen(
+                    technicianId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'cleaning_supplies',
+              builder: (context, state) => const CleaningSuppliesScreen(),
+            ),
+            GoRoute(
+              path: 'inspections',
+              builder: (context, state) => const ApartmentInspectionsScreen(),
+              routes: [
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) => const AddInspectionScreen(),
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'reports',
             builder: (context, state) => const ReportsScreen(),
             routes: [
               GoRoute(
