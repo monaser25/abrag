@@ -35,6 +35,7 @@ import '../../features/operations/presentation/screens/add_inspection_screen.dar
 import '../../core/database/database.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/reports/presentation/screens/statement_screen.dart';
+import '../../features/reports/presentation/screens/system_log_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/admin_profile_screen.dart';
 import '../../features/settings/presentation/screens/users_permissions_screen.dart';
@@ -50,6 +51,7 @@ import '../../features/web_views/presentation/screens/root_screen.dart';
 import '../../features/users/presentation/screens/brokers_list_screen.dart';
 import '../../features/users/presentation/screens/broker_details_screen.dart';
 import '../../features/users/presentation/screens/broker_visibility_control_screen.dart';
+import '../../features/users/presentation/screens/customers_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final routerNotifier = RouterNotifier();
@@ -94,6 +96,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (context, state) => const RootScreen(),
         routes: [
+          GoRoute(
+            path: 'customers',
+            builder: (context, state) => const CustomersScreen(),
+          ),
           GoRoute(
             path: 'brokers',
             builder: (context, state) => const BrokersListScreen(),
@@ -283,25 +289,34 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: 'cleaning_supplies',
               builder: (context, state) => const CleaningSuppliesScreen(),
             ),
-            GoRoute(
+              GoRoute(
               path: 'inspections',
               builder: (context, state) => const ApartmentInspectionsScreen(),
               routes: [
                 GoRoute(
                   path: 'add',
-                  builder: (context, state) => const AddInspectionScreen(),
+                  builder: (context, state) => AddInspectionScreen(
+                    apartmentId: state.uri.queryParameters['apartmentId'],
+                    checkoutBookingId: state.uri.queryParameters['checkoutBookingId'],
+                    earlyCheckoutBookingId: state.uri.queryParameters['earlyCheckoutBookingId'],
+                    newCheckoutDate: state.uri.queryParameters['newCheckoutDate'],
+                  ),
                 ),
               ],
             ),
             GoRoute(
               path: 'reports',
             builder: (context, state) => const ReportsScreen(),
-            routes: [
-              GoRoute(
-                path: 'statement',
-                builder: (context, state) => const StatementScreen(),
-              ),
-            ],
+              routes: [
+                GoRoute(
+                  path: 'statement',
+                  builder: (context, state) => const StatementScreen(),
+                ),
+                GoRoute(
+                  path: 'log',
+                  builder: (context, state) => const SystemLogScreen(),
+                ),
+              ],
           ),
           GoRoute(
             path: 'settings',

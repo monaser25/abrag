@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class BookingListScreen extends ConsumerStatefulWidget {
   const BookingListScreen({super.key});
@@ -242,7 +243,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '${dailyRate.toStringAsFixed(2)} ج.م',
+                                    '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -264,7 +265,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '${netAmount.toStringAsFixed(2)} ج.م',
+                                    '${netAmount.toDouble().toCurrencyFormat()} ج.م',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -293,7 +294,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '${commissionAmount.toStringAsFixed(2)} ج.م',
+                                    '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -318,7 +319,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${booking.overstayFeeEgp.toStringAsFixed(2)} ج.م',
+                                      '${booking.overstayFeeEgp.toDouble().toCurrencyFormat()} ج.م',
                                       style: TextStyle(
                                         color: Theme.of(
                                           context,
@@ -346,7 +347,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${remainingAmount.toStringAsFixed(2)} ج.م',
+                                      '${remainingAmount.toDouble().toCurrencyFormat()} ج.م',
                                       style: TextStyle(
                                         color: Theme.of(
                                           context,

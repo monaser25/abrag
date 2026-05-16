@@ -29,6 +29,7 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
     double ownerRepairCostEgp = 0,
     required String inspectorName,
     String? notes,
+    bool createMaintenanceRequest = false,
   }) async {
     state = const AsyncLoading();
     try {
@@ -60,8 +61,21 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
           ),
         );
 
-        // If the owner paid for repairs, log an expense automatically
-        if (ownerRepairCostEgp > 0) {
+        // If createMaintenanceRequest is true, log a maintenance request
+        if (createMaintenanceRequest && hasDamages) {
+          await _db.into(_db.maintenanceRequests).insert(
+            MaintenanceRequestsCompanion.insert(
+              id: const Uuid().v4(),
+              apartmentId: apartmentId,
+              reportedBy: inspectorName,
+              issueDescription: damagesDescription ?? 'تلفيات تم رصدها أثناء الفحص',
+              syncStatus: const Value(SyncStatus.pendingInsert),
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
+        } else if (ownerRepairCostEgp > 0) {
+          // If the owner paid for repairs immediately, log an expense automatically
           await _db.into(_db.expenses).insert(
             ExpensesCompanion.insert(
               id: const Uuid().v4(),
@@ -75,12 +89,34 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
             ),
           );
         }
-        
-        // Note: If the tenant paid a fine (tenantFineEgp), this usually goes into income.
-        // In the current schema, we don't have a specific income table other than rents,
-        // but it's recorded in the inspection. You might want to add an Income table later.
       });
 
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> updateCleaningStatus(String inspectionId, String apartmentId, bool isClean) async {
+    state = const AsyncLoading();
+    try {
+      await _db.transaction(() async {
+        await (_db.update(_db.apartments)..where((t) => t.id.equals(apartmentId))).write(
+          ApartmentsCompanion(
+            cleaningStatus: Value(isClean ? 'clean' : 'needs_cleaning'),
+            updatedAt: Value(DateTime.now()),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+          ),
+        );
+        
+        await (_db.update(_db.apartmentInspections)..where((t) => t.id.equals(inspectionId))).write(
+          ApartmentInspectionsCompanion(
+            isClean: Value(isClean),
+            updatedAt: Value(DateTime.now()),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+          ),
+        );
+      });
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

@@ -7,6 +7,8 @@ import '../providers/bookings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
+
 class BookingDetailsScreen extends ConsumerWidget {
   final String bookingId;
 
@@ -150,44 +152,62 @@ class BookingDetailsScreen extends ConsumerWidget {
                   _buildDetailRow(
                     context,
                     'السعر اليومي',
-                    '${dailyRate.toStringAsFixed(2)} ج.م',
+                    '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                   ),
                   if (!isFullyPaid)
                     _buildDetailRow(
                       context,
                       'فلوس الحجز',
-                      '${baseBookingTotal.toStringAsFixed(2)} ج.م',
+                      '${baseBookingTotal.toDouble().toCurrencyFormat()} ج.م',
                       isHighlight: true,
                     ),
                   _buildDetailRow(
                     context,
                     'فلوس السمسار',
-                    '${commissionAmount.toStringAsFixed(2)} ج.م',
+                    '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
                   ),
                   _buildDetailRow(
                     context,
-                    'الفلوس الفعلية اللي أخدتها',
-                    '${actualReceived.toStringAsFixed(2)} ج.م',
+                    'الفلوس الصافية اللي دخلتلك',
+                    '${actualReceived.toDouble().toCurrencyFormat()} ج.م',
+                    valueColor: Colors.green,
+                  ),
+                  if (!isFullyPaid)
+                    _buildDetailRow(
+                      context,
+                      'فلوس الحجز',
+                      '${baseBookingTotal.toDouble().toCurrencyFormat()} ج.م',
+                      isHighlight: true,
+                    ),
+                  _buildDetailRow(
+                    context,
+                    'فلوس السمسار',
+                    '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
+                  ),
+                  _buildDetailRow(
+                    context,
+                    'الفلوس الصافية اللي دخلتلك',
+                    '${actualReceived.toDouble().toCurrencyFormat()} ج.م',
                     valueColor: Colors.green,
                   ),
                   _buildDetailRow(
                     context,
                     'المدفوع',
-                    '${booking.amountPaidEgp} ج.م',
+                    '${booking.amountPaidEgp.toCurrencyFormat()} ج.م',
                     isHighlight: true,
                   ),
                   if (remainingAmount > 0)
                     _buildDetailRow(
                       context,
                       'المتبقي',
-                      '$remainingAmount ج.م',
+                      '${remainingAmount.toCurrencyFormat()} ج.م',
                       valueColor: Theme.of(context).colorScheme.error,
                     ),
                   if (booking.overstayDays > 0 || booking.overstayFeeEgp > 0)
                     _buildDetailRow(
                       context,
                       'تمديد ${booking.overstayDays} يوم',
-                      '${booking.overstayFeeEgp.toStringAsFixed(2)} ج.م',
+                      '${booking.overstayFeeEgp.toDouble().toCurrencyFormat()} ج.م',
                       valueColor: Theme.of(context).colorScheme.primary,
                     ),
                   _buildDetailRow(
@@ -294,13 +314,13 @@ class BookingDetailsScreen extends ConsumerWidget {
                       context,
                       'قيمة العمولة',
                       booking.brokerCommissionType == 'fixed'
-                          ? '${booking.brokerCommissionFixedEgp} ج.م'
+                          ? '${booking.brokerCommissionFixedEgp.toCurrencyFormat()} ج.م'
                           : '${booking.brokerCommissionPercentage} %',
                     ),
                     _buildDetailRow(
                       context,
                       'فلوس السمسار اللي أخدها',
-                      '${commissionAmount.toStringAsFixed(2)} ج.م',
+                      '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
                       valueColor: Theme.of(context).colorScheme.primary,
                     ),
                   ],
@@ -309,121 +329,65 @@ class BookingDetailsScreen extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        context.go(
-                          '/summer_bookings/early_checkout/$bookingId',
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.error,
+              if (booking.status != 'checked_out') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          context.go(
+                            '/summer_bookings/early_checkout/$bookingId',
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
+                        child: const Text('تسجيل خروج مبكر'),
                       ),
-                      child: const Text('تسجيل خروج مبكر'),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        context.go('/summer_bookings/overstay/$bookingId');
-                      },
-                      child: const Text('تمديد الحجز'),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          context.go('/summer_bookings/overstay/$bookingId');
+                        },
+                        child: const Text('تمديد الحجز'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showCheckoutDialog(context, ref, booking);
-                      },
-                      child: const Text('تسجيل خروج'),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.go('/inspections/add?apartmentId=${booking.apartmentId}&checkoutBookingId=${booking.id}');
+                        },
+                        child: const Text('تسجيل خروج'),
+                      ),
                     ),
+                  ],
+                ),
+              ] else ...[
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.go('/inspections/add?apartmentId=${booking.apartmentId}');
+                  },
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text('فحص واستلام الشقة'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
-                ],
-              ),
+                ),
+              ],
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
-    );
-  }
-
-  void _showCheckoutDialog(
-    BuildContext context,
-    WidgetRef ref,
-    dynamic booking,
-  ) {
-    String cleaningStatus = 'clean';
-    bool inventoryChecked = false;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('إجراءات تسجيل الخروج'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('حالة الشقة:'),
-                  RadioListTile(
-                    title: const Text('نظيفة'),
-                    value: 'clean',
-                    groupValue: cleaningStatus,
-                    onChanged: (val) =>
-                        setState(() => cleaningStatus = val.toString()),
-                  ),
-                  RadioListTile(
-                    title: const Text('تحتاج نظافة'),
-                    value: 'needs_cleaning',
-                    groupValue: cleaningStatus,
-                    onChanged: (val) =>
-                        setState(() => cleaningStatus = val.toString()),
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: const Text('تم جرد محتويات الشقة'),
-                    value: inventoryChecked,
-                    onChanged: (val) => setState(() => inventoryChecked = val),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('إلغاء'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // We don't have a direct function to update apartment cleaning status in BookingsController
-                    // We should do it via apartmentsController or just direct DB update for now.
-                    ref
-                        .read(bookingsControllerProvider.notifier)
-                        .checkoutBooking(
-                          booking.id,
-                          cleaningStatus: cleaningStatus,
-                          apartmentId: booking.apartmentId,
-                        );
-                    context.pop();
-                    context.go('/summer_bookings');
-                  },
-                  child: const Text('تأكيد وتسجيل الخروج'),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 

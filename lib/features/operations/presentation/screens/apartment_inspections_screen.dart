@@ -63,9 +63,24 @@ class ApartmentInspectionsScreen extends ConsumerWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text('حالة النظافة:', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                                  Text(
-                                    inspection.isClean ? 'نظيفة' : 'تحتاج نظافة',
-                                    style: TextStyle(color: inspection.isClean ? Colors.green : Colors.orange, fontWeight: FontWeight.bold),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        inspection.isClean ? 'نظيفة' : 'تحتاج نظافة',
+                                        style: TextStyle(color: inspection.isClean ? Colors.green : Colors.orange, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      TextButton(
+                                        onPressed: () {
+                                          ref.read(apartmentInspectionsControllerProvider.notifier)
+                                              .updateCleaningStatus(inspection.id, inspection.apartmentId, !inspection.isClean);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: inspection.isClean ? Colors.orange : Colors.green,
+                                        ),
+                                        child: Text(inspection.isClean ? 'إلغاء: تحتاج إعادة نظافة' : 'تحديث: تم التنظيف'),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

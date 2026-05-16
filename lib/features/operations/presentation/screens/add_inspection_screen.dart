@@ -3,11 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/apartment_inspections_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../bookings/presentation/providers/bookings_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
 
 class AddInspectionScreen extends ConsumerStatefulWidget {
   final String? apartmentId;
-  const AddInspectionScreen({super.key, this.apartmentId});
+  final String? checkoutBookingId;
+  final String? earlyCheckoutBookingId;
+  final String? newCheckoutDate;
+
+  const AddInspectionScreen({
+    super.key,
+    this.apartmentId,
+    this.checkoutBookingId,
+    this.earlyCheckoutBookingId,
+    this.newCheckoutDate,
+  });
 
   @override
   ConsumerState<AddInspectionScreen> createState() => _AddInspectionScreenState();
@@ -20,7 +31,10 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
   
   bool _isClean = true;
   bool _hasDamages = false;
+  bool _createMaintenanceRequest = false;
   
+  final Map<String, bool> _inventoryChecks = {};
+
   final _damagesDescriptionController = TextEditingController();
   final _tenantFineController = TextEditingController(text: '0');
   final _ownerCostController = TextEditingController(text: '0');
@@ -64,9 +78,10 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
         hasDamages: _hasDamages,
         damagesDescription: _hasDamages ? _damagesDescriptionController.text.trim() : null,
         tenantFineEgp: _hasDamages ? (double.tryParse(_tenantFineController.text.replaceAll(',', '')) ?? 0) : 0,
-        ownerRepairCostEgp: _hasDamages ? (double.tryParse(_ownerCostController.text.replaceAll(',', '')) ?? 0) : 0,
+        ownerRepairCostEgp: (_hasDamages && !_createMaintenanceRequest) ? (double.tryParse(_ownerCostController.text.replaceAll(',', '')) ?? 0) : 0,
         inspectorName: _inspectorNameController.text.trim(),
         notes: _notesController.text.trim(),
+        createMaintenanceRequest: _createMaintenanceRequest,
       );
     } else if (_selectedApartmentId == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('برجاء اختيار الشقة')));
@@ -82,7 +97,17 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
       apartmentInspectionsControllerProvider,
       (_, state) {
         state.whenOrNull(
-          data: (_) => context.pop(),
+          data: (_) {
+            if (widget.checkoutBookingId != null) {
+              ref.read(bookingsControllerProvider.notifier).checkoutBooking(widget.checkoutBookingId!);
+            } else if (widget.earlyCheckoutBookingId != null && widget.newCheckoutDate != null) {
+              ref.read(bookingsControllerProvider.notifier).earlyCheckoutBooking(
+                id: widget.earlyCheckoutBookingId!,
+                newCheckoutDate: DateTime.parse(widget.newCheckoutDate!),
+              );
+            }
+            context.pop();
+          },
           error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(error.toString())),
           ),
@@ -103,13 +128,61 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                   decoration: const InputDecoration(labelText: 'الشقة المُراد فحصها'),
                   value: _selectedApartmentId,
                   items: apartments.map((a) => DropdownMenuItem(value: a.id, child: Text('شقة ${a.apartmentNumber}'))).toList(),
-                  onChanged: (v) => setState(() => _selectedApartmentId = v),
+                  onChanged: (v) {
+                    setState(() {
+                      _selectedApartmentId = v;
+                    });
+                  },
                   validator: (v) => v == null ? 'مطلوب' : null,
                 );
               },
               loading: () => const CircularProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
+            const SizedBox(height: 16),
+            if (_selectedApartmentId != null)
+              apartmentsAsync.maybeWhen(
+                data: (apartments) {
+                  final apt = apartments.firstWhere((a) => a.id == _selectedApartmentId);
+                  if (apt.inventory != null && apt.inventory!.isNotEmpty) {
+                    final items = apt.inventory!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                    // Initialize checks if not set
+                    for (var item in items) {
+                      _inventoryChecks.putIfAbsent(item, () => false);
+                    }
+                    
+                    return Card(
+                      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('قائمة الفحص (الجرد):', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                            const SizedBox(height: 8),
+                            ...items.map((item) => CheckboxListTile(
+                              title: Text(item),
+                              value: _inventoryChecks[item],
+                              onChanged: (val) {
+                                setState(() {
+                                  _inventoryChecks[item] = val ?? false;
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            )),
+                            const SizedBox(height: 8),
+                            const Text('يرجى مراجعة هذه المحتويات وتحديد التالف منها بالأسفل.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+                orElse: () => const SizedBox.shrink(),
+              ),
             const SizedBox(height: 16),
             ListTile(
               title: const Text('تاريخ الفحص'),
@@ -156,6 +229,13 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                 validator: (v) => _hasDamages && (v == null || v.isEmpty) ? 'مطلوب' : null,
               ),
               const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('تسجيل التلفيات كطلب صيانة', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('لعدم معرفة تكلفة التصليح حتى يراها العامل'),
+                value: _createMaintenanceRequest,
+                onChanged: (val) => setState(() => _createMaintenanceRequest = val),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -166,18 +246,20 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                       inputFormatters: [CurrencyInputFormatter()],
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _ownerCostController,
-                      decoration: const InputDecoration(
-                        labelText: 'تكلفة تصليح علينا (ج.م)',
-                        helperText: 'ستُسجل كمصروف',
+                  if (!_createMaintenanceRequest) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _ownerCostController,
+                        decoration: const InputDecoration(
+                          labelText: 'تكلفة تصليح علينا (ج.م)',
+                          helperText: 'ستُسجل كمصروف',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [CurrencyInputFormatter()],
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [CurrencyInputFormatter()],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],

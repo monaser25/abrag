@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class EarlyCheckoutScreen extends ConsumerStatefulWidget {
   final String bookingId;
@@ -175,18 +176,18 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                       _CalcLine(
                         label: 'الأيام المتبقية × سعر اليوم',
                         value:
-                            '$remainingDays × ${dailyRate.toStringAsFixed(2)} = ${refundAmount.toStringAsFixed(2)} ج.م',
+                            '$remainingDays × ${dailyRate.toDouble().toCurrencyFormat()} = ${refundAmount.toDouble().toCurrencyFormat()} ج.م',
                       ),
                       if (brokerCommission > 0)
                         _CalcLine(
                           label: 'فلوس السمسار',
-                          value: '- ${brokerCommission.toStringAsFixed(2)} ج.م',
+                          value: '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
                           valueColor: theme.colorScheme.error,
                         ),
                       const Divider(),
                       _CalcLine(
                         label: 'صافي مبلغ الاسترداد',
-                        value: '${visibleNetRefund.toStringAsFixed(2)} ج.م',
+                        value: '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
                         valueColor: theme.colorScheme.primary,
                         isTitle: true,
                       ),
@@ -234,17 +235,12 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                 onPressed: controllerState.isLoading || remainingDays <= 0
                     ? null
                     : () {
-                        ref
-                            .read(bookingsControllerProvider.notifier)
-                            .earlyCheckoutBooking(
-                              id: widget.bookingId,
-                              newCheckoutDate: today,
-                            );
+                        context.go('/inspections/add?apartmentId=${booking.apartmentId}&earlyCheckoutBookingId=${booking.id}&newCheckoutDate=${today.toIso8601String()}');
                       },
-                icon: const Icon(Icons.check_circle),
+                icon: const Icon(Icons.fact_check),
                 label: controllerState.isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('تأكيد الخروج المبكر'),
+                    : const Text('فحص الشقة وتأكيد الخروج'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(16),
                 ),

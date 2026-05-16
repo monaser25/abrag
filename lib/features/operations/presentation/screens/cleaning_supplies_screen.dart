@@ -77,7 +77,7 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
     );
   }
 
-  void _showTransactionDialog(CleaningSupply supply, bool isPurchase) {
+  void _showTransactionDialog(CleaningSupply supply) {
     final quantityController = TextEditingController();
     final costController = TextEditingController();
     final notesController = TextEditingController();
@@ -86,7 +86,7 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isPurchase ? 'شراء كمية جديدة' : 'سحب كمية للاستخدام'),
+        title: const Text('تسجيل عملية شراء جديدة'),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
@@ -103,28 +103,25 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                     if (v == null || v.isEmpty) return 'مطلوب';
                     final qty = double.tryParse(v);
                     if (qty == null || qty <= 0) return 'كمية غير صحيحة';
-                    if (!isPurchase && qty > supply.stockQuantity) return 'الكمية أكبر من المتاح بالمخزن';
                     return null;
                   },
                 ),
-                if (isPurchase) ...[
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: costController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [CurrencyInputFormatter()],
-                    decoration: const InputDecoration(labelText: 'التكلفة الإجمالية (ج.م)'),
-                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8.0),
-                    child: Text('سيتم تسجيل التكلفة تلقائياً في المصروفات', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  )
-                ],
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: costController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [CurrencyInputFormatter()],
+                  decoration: const InputDecoration(labelText: 'التكلفة الإجمالية (ج.م)'),
+                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Text('سيتم تسجيل التكلفة تلقائياً في المصروفات', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: notesController,
-                  decoration: InputDecoration(labelText: isPurchase ? 'ملاحظات (مثل اسم المحل)' : 'ملاحظات (مثل استخدمت لتنظيف شقة 5)'),
+                  decoration: const InputDecoration(labelText: 'ملاحظات (مثل اسم المحل، أو اسم العامل المُستلم)'),
                   maxLines: 2,
                 ),
               ],
@@ -141,18 +138,18 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
               if (!formKey.currentState!.validate()) return;
               ref.read(cleaningSuppliesControllerProvider.notifier).logTransaction(
                 supplyId: supply.id,
-                type: isPurchase ? 'purchase' : 'consumption',
+                type: 'purchase',
                 quantity: double.parse(quantityController.text.trim()),
-                costEgp: isPurchase ? (double.tryParse(costController.text.replaceAll(',', '').trim()) ?? 0.0) : 0.0,
+                costEgp: double.tryParse(costController.text.replaceAll(',', '').trim()) ?? 0.0,
                 notes: notesController.text.trim(),
               );
               Navigator.pop(ctx);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: isPurchase ? Colors.green : Colors.orange,
+              backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
-            child: Text(isPurchase ? 'تأكيد الشراء' : 'تأكيد السحب'),
+            child: const Text('تأكيد الشراء'),
           ),
         ],
       ),
@@ -208,33 +205,13 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('الرصيد المتاح', style: theme.textTheme.labelMedium),
-                              Text('${supply.stockQuantity} ${supply.unit}', style: theme.textTheme.titleLarge?.copyWith(
-                                color: supply.stockQuantity <= 0 ? Colors.red : Colors.green,
-                                fontWeight: FontWeight.bold,
-                              )),
-                            ],
+                          Text('وحدة القياس: ${supply.unit}', style: theme.textTheme.labelMedium),
+                          ElevatedButton.icon(
+                            onPressed: () => _showTransactionDialog(supply),
+                            icon: const Icon(Icons.shopping_cart, size: 16),
+                            label: const Text('تسجيل شراء'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                           ),
-                          Row(
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: supply.stockQuantity <= 0 ? null : () => _showTransactionDialog(supply, false),
-                                icon: const Icon(Icons.remove, size: 16),
-                                label: const Text('سحب'),
-                                style: OutlinedButton.styleFrom(foregroundColor: Colors.orange),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton.icon(
-                                onPressed: () => _showTransactionDialog(supply, true),
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('شراء'),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                              ),
-                            ],
-                          )
                         ],
                       ),
                     ],

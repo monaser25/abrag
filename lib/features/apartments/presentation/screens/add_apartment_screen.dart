@@ -15,12 +15,14 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _numberController = TextEditingController();
   final _floorController = TextEditingController();
+  final _inventoryController = TextEditingController();
   String? _selectedBuildingId;
 
   @override
   void dispose() {
     _numberController.dispose();
     _floorController.dispose();
+    _inventoryController.dispose();
     super.dispose();
   }
 
@@ -30,6 +32,7 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
         _selectedBuildingId!,
         _numberController.text.trim(),
         int.tryParse(_floorController.text.trim()) ?? 1,
+        inventory: _inventoryController.text.trim().isEmpty ? null : _inventoryController.text.trim(),
       );
     }
   }
@@ -83,6 +86,15 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
               controller: _floorController,
               decoration: const InputDecoration(labelText: 'الدور'),
               keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _inventoryController,
+              decoration: const InputDecoration(
+                labelText: 'محتويات الشقة (جرد مبدئي)',
+                hintText: 'مثال: ثلاجة, غسالة, بوتاجاز, ...',
+              ),
+              maxLines: 3,
             ),
             const SizedBox(height: 32),
             ElevatedButton(

@@ -195,6 +195,15 @@ class DashboardScreen extends ConsumerWidget {
             ),
             Card(
               child: ListTile(
+                leading: const Icon(Icons.people, color: Color(0xFFF4A225)),
+                title: const Text('إدارة العملاء'),
+                subtitle: const Text('سجل متكامل للعملاء المصيفين وطلبة الشتوي'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/customers'),
+              ),
+            ),
+            Card(
+              child: ListTile(
                 leading: const Icon(Icons.handshake, color: Color(0xFFF4A225)),
                 title: const Text('إدارة السماسرة'),
                 subtitle: const Text('إضافة سماسرة ومتابعة أرقامهم وعمولاتهم'),
@@ -215,6 +224,14 @@ class DashboardScreen extends ConsumerWidget {
                 title: const Text('التقارير الإجمالية'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => context.go('/reports'),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.history, color: Color(0xFFF4A225)),
+                title: const Text('سجل النظام (الأنشطة)'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => context.go('/reports/log'),
               ),
             ),
           ],

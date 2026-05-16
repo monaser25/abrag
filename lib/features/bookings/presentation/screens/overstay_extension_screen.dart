@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
-import '../providers/bookings_controller.dart';
 import '../providers/bookings_provider.dart';
+import '../providers/bookings_controller.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class OverstayExtensionScreen extends ConsumerStatefulWidget {
   final String bookingId;
@@ -193,7 +193,7 @@ class _OverstayExtensionScreenState
                         contentPadding: EdgeInsets.zero,
                         title: const Text('تخصيص سعر الليلة'),
                         subtitle: Text(
-                          'السعر التلقائي: ${automaticDailyRate.toStringAsFixed(2)} ج.م',
+                          'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
                         ),
                         value: _useCustomPrice,
                         onChanged: (val) =>
@@ -217,13 +217,13 @@ class _OverstayExtensionScreenState
                         icon: Icons.calculate,
                         label: 'حساب التمديد',
                         value:
-                            '$_extraDays × ${dailyRate.toStringAsFixed(2)} ج.م',
+                            '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                       ),
                       const Divider(),
                       _InfoLine(
                         icon: Icons.payments,
                         label: 'تمديد $_extraDays يوم',
-                        value: '${additionalFee.toStringAsFixed(2)} ج.م',
+                        value: '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
                         valueColor: theme.colorScheme.primary,
                         bold: true,
                       ),

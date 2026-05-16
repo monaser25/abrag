@@ -24,6 +24,7 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
     String buildingId,
     String apartmentNumber,
     int floorNumber,
+    {String? inventory}
   ) async {
     state = const AsyncLoading();
     try {
@@ -36,6 +37,7 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
               buildingId: buildingId,
               apartmentNumber: apartmentNumber,
               floorNumber: Value(floorNumber),
+              inventory: Value(inventory),
               syncStatus: const Value(SyncStatus.pendingInsert),
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
@@ -53,6 +55,22 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
       await (_db.update(_db.apartments)..where((t) => t.id.equals(id))).write(
         ApartmentsCompanion(
           inventory: Value(inventory),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> updateCleaningStatus(String id, String status) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.apartments)..where((t) => t.id.equals(id))).write(
+        ApartmentsCompanion(
+          cleaningStatus: Value(status),
           syncStatus: const Value(SyncStatus.pendingUpdate),
           updatedAt: Value(DateTime.now()),
         ),

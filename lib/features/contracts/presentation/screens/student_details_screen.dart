@@ -208,6 +208,21 @@ class StudentDetailsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
+              if (!contract.isActive) ...[
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.go('/inspections/add?apartmentId=${contract.apartmentId}');
+                  },
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text('فحص واستلام الشقة'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               Center(
                 child: Text(

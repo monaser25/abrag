@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
-import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../providers/bookings_provider.dart';
+import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class GuestProfileScreen extends ConsumerWidget {
   final String guestName;
@@ -25,7 +25,13 @@ class GuestProfileScreen extends ConsumerWidget {
         title: const Text('ملف النزيل'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/summer_bookings/list'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/summer_bookings/list');
+            }
+          },
         ),
       ),
       body: bookingsAsync.when(
@@ -130,7 +136,7 @@ class GuestProfileScreen extends ConsumerWidget {
                   _buildStatCard(
                     context,
                     'المدفوع',
-                    '${totalPaid.toStringAsFixed(2)} ج.م',
+                    '${totalPaid.toDouble().toCurrencyFormat()} ج.م',
                     Icons.payments,
                   ),
                   _buildStatCard(
@@ -208,14 +214,14 @@ class GuestProfileScreen extends ConsumerWidget {
                             icon: Icons.price_change,
                             label: 'السعر اليومي',
                             value:
-                                '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toStringAsFixed(2)} ج.م',
+                                '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toDouble().toCurrencyFormat()} ج.م',
                           ),
                           const Divider(),
                           _InfoLine(
                             icon: Icons.payments,
                             label: 'المدفوع',
                             value:
-                                '${booking.amountPaidEgp.toStringAsFixed(2)} ج.م',
+                                '${booking.amountPaidEgp.toDouble().toCurrencyFormat()} ج.م',
                             valueColor: Colors.green,
                           ),
                         ],

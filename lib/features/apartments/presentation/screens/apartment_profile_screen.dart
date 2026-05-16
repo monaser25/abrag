@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/apartment_profile_provider.dart';
 import '../providers/apartments_controller.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class ApartmentProfileScreen extends ConsumerStatefulWidget {
   final String apartmentId;
@@ -124,7 +125,20 @@ class _ApartmentProfileScreenState
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ref.read(apartmentsControllerProvider.notifier)
+                                 .updateCleaningStatus(widget.apartmentId, isCleaning ? 'clean' : 'needs_cleaning');
+                            },
+                            icon: Icon(isCleaning ? Icons.cleaning_services : Icons.warning_amber),
+                            label: Text(isCleaning ? 'تأكيد إتمام النظافة' : 'تغيير الحالة إلى: تحتاج نظافة'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isCleaning ? Colors.green : Colors.orange,
+                              side: BorderSide(color: isCleaning ? Colors.green : Colors.orange),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -161,38 +175,38 @@ class _ApartmentProfileScreenState
                             data.bookings,
                             data.totalRevenue,
                           ),
-                          child: _buildStatCard(
-                            theme,
-                            'الإيرادات',
-                            '${data.totalRevenue} ج.م',
-                            Icons.account_balance_wallet,
+                            child: _buildStatCard(
+                              theme,
+                              'الإيرادات',
+                              '${data.totalRevenue.toCurrencyFormat()} ج.م',
+                              Icons.account_balance_wallet,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () =>
-                              _showExpensesDialog(context, data.expenses),
-                          child: _buildStatCard(
-                            theme,
-                            'المصروفات',
-                            '${data.totalExpenses} ج.م',
-                            Icons.money_off,
-                            isError: true,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () =>
+                                _showExpensesDialog(context, data.expenses),
+                            child: _buildStatCard(
+                              theme,
+                              'المصروفات',
+                              '${data.totalExpenses.toCurrencyFormat()} ج.م',
+                              Icons.money_off,
+                              isError: true,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                SliverToBoxAdapter(
-                  child: _buildStatCard(
-                    theme,
-                    'صافي الربح',
-                    '${data.totalRevenue - data.totalExpenses} ج.م',
-                    Icons.assessment,
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  SliverToBoxAdapter(
+                    child: _buildStatCard(
+                      theme,
+                      'صافي الربح',
+                      '${(data.totalRevenue - data.totalExpenses).toCurrencyFormat()} ج.م',
+                      Icons.assessment,
                     isPrimary: true,
                   ),
                 ),
@@ -429,7 +443,7 @@ class _ApartmentProfileScreenState
                                   icon: Icons.price_change,
                                   label: 'السعر اليومي',
                                   value:
-                                      '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toStringAsFixed(2)} ج.م',
+                                      '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toDouble().toCurrencyFormat()} ج.م',
                                 ),
                                 if (booking.brokerName != null &&
                                     booking.brokerName!.isNotEmpty) ...[
@@ -445,7 +459,7 @@ class _ApartmentProfileScreenState
                                   icon: Icons.payments,
                                   label: 'المدفوع',
                                   value:
-                                      '${booking.amountPaidEgp.toStringAsFixed(2)} ج.م',
+                                      '${booking.amountPaidEgp.toDouble().toCurrencyFormat()} ج.م',
                                   valueColor: Colors.green,
                                 ),
                               ],
@@ -491,7 +505,7 @@ class _ApartmentProfileScreenState
             return Column(
               children: [
                 AppBar(
-                  title: Text('إجمالي الإيرادات: $totalRevenue ج.م'),
+                  title: Text('إجمالي الإيرادات: ${totalRevenue.toCurrencyFormat()} ج.م'),
                   automaticallyImplyLeading: false,
                   actions: [
                     IconButton(
@@ -515,9 +529,9 @@ class _ApartmentProfileScreenState
                             final name = isBooking
                                 ? booking.guestName
                                 : booking.studentName;
-                            final price = isBooking
+                            final price = (isBooking
                                 ? booking.totalPriceEgp
-                                : booking.monthlyRentEgp;
+                                : booking.monthlyRentEgp) as double;
                             final start = isBooking
                                 ? booking.checkInDate
                                 : booking.startDate;
@@ -530,7 +544,7 @@ class _ApartmentProfileScreenState
                               title: Text(name),
                               subtitle: Text(formatter.format(start)),
                               trailing: Text(
-                                '$price ج.م',
+                                '${price.toCurrencyFormat()} ج.م',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
@@ -595,11 +609,18 @@ class _ApartmentProfileScreenState
                                 color: Colors.red,
                               ),
                               title: Text(_translateExpenseType(expense.expenseType)),
-                              subtitle: Text(
-                                expense.description ?? 'بدون تفاصيل',
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    expense.expenseDate.toLocal().toString().split(' ')[0],
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                  Text(expense.description ?? 'بدون تفاصيل'),
+                                ],
                               ),
                               trailing: Text(
-                                '${expense.amountEgp} ج.م',
+                                '${(expense.amountEgp as double).toCurrencyFormat()} ج.م',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
