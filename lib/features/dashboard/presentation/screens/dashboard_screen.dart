@@ -7,6 +7,7 @@ import '../../../settings/presentation/providers/permissions_provider.dart';
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../users/presentation/providers/users_provider.dart';
+import '../../../settings/presentation/providers/notifications_provider.dart';
 import '../providers/sync_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -26,6 +27,7 @@ class DashboardScreen extends ConsumerWidget {
     final isWinter =
         activeSeasonKey.startsWith('winter') ||
         (settingsAsync.value?['active_season'] ?? 'winter') == 'winter';
+    final notificationsAsync = ref.watch(appNotificationsProvider);
     final role = ref.watch(currentUserRoleProvider).value;
     final isSuperAdmin = role == 'admin';
     final userId = ref.watch(authStateProvider).value?.session?.user.id;
@@ -58,7 +60,13 @@ class DashboardScreen extends ConsumerWidget {
         title: Text(l10n.dashboardTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none, size: 22),
+            icon: Badge(
+              isLabelVisible: notificationsAsync.value?.isNotEmpty ?? false,
+              label: Text(
+                '${notificationsAsync.value?.length ?? 0}',
+              ),
+              child: const Icon(Icons.notifications_none, size: 22),
+            ),
             onPressed: () {
               context.push('/settings/notifications');
             },
