@@ -166,10 +166,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           final vfRev = walletBalances['vodafone_cash'] ?? 0;
           final instaRev = walletBalances['instapay'] ?? 0;
           final companyVault = walletBalances['company_vault'] ?? 0;
-          final totalMoney = walletBalances.values.fold<double>(
-            0,
-            (sum, value) => sum + value,
-          );
 
           final filteredProfit = filteredRevenue - filteredExpenses;
 
@@ -177,6 +173,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             padding: const EdgeInsets.all(16),
             child: CustomScrollView(
               slivers: [
+                SliverToBoxAdapter(child: _buildSeasonQuickFilter(context)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 SliverToBoxAdapter(
                   child: _buildFinancialOverview(
                     context,
@@ -187,7 +185,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     vodafoneCash: vfRev,
                     instapay: instaRev,
                     companyVault: companyVault,
-                    totalMoney: totalMoney,
                     activeFilters: activeFilters,
                   ),
                 ),
@@ -242,6 +239,38 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       personQuery: _personQuery,
       startDate: _startDate,
       endDate: _endDate,
+    );
+  }
+
+  Widget _buildSeasonQuickFilter(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'عرض حسب الموسم',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'all', label: Text('كل المواسم')),
+                ButtonSegment(value: 'summer', label: Text('الصيف')),
+                ButtonSegment(value: 'winter', label: Text('الشتاء')),
+              ],
+              selected: {_filter},
+              onSelectionChanged: (values) {
+                setState(() => _filter = values.first);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -372,7 +401,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     required double vodafoneCash,
     required double instapay,
     required double companyVault,
-    required double totalMoney,
     required ReportFilterState activeFilters,
   }) {
     final theme = Theme.of(context);
@@ -463,17 +491,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                _buildMiniStat(
-                    theme,
-                    'إجمالي الفلوس',
-                    _privateValue('${totalMoney.toCurrencyFormat()} ج.م'),
-                    onTap: () => context.push('/financial_transfers'),
-                  ),
-                _buildMiniStat(
+                Expanded(
+                  child: _buildMiniStat(
                     theme,
                     'نقدية حالية',
                     _privateValue('${cash.toCurrencyFormat()} ج.م'),
@@ -486,7 +507,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                     ),
                   ),
-                _buildMiniStat(
+                ),
+                Container(
+                  width: 1,
+                  height: 42,
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                ),
+                Expanded(
+                  child: _buildMiniStat(
                     theme,
                     'فودافون كاش',
                     _privateValue('${vodafoneCash.toCurrencyFormat()} ج.م'),
@@ -499,7 +527,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                     ),
                   ),
-                _buildMiniStat(
+                ),
+                Container(
+                  width: 1,
+                  height: 42,
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                ),
+                Expanded(
+                  child: _buildMiniStat(
                     theme,
                     'إنستاباي',
                     _privateValue('${instapay.toCurrencyFormat()} ج.م'),
@@ -512,13 +547,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                     ),
                   ),
-                _buildMiniStat(
-                  theme,
-                  'نقدية في خزنة الشركة',
-                  _privateValue('${companyVault.toCurrencyFormat()} ج.م'),
-                  onTap: () => context.push('/financial_transfers'),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            _MoneyTile(
+              title: 'خزنة الشركة',
+              value: _privateValue('${companyVault.toCurrencyFormat()} ج.م'),
+              icon: Icons.account_balance,
+              color: Colors.blueGrey,
+              onTap: () => context.push('/financial_transfers'),
             ),
           ],
         ),

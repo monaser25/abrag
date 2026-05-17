@@ -22,7 +22,12 @@ class AuditLogService {
     Map<String, dynamic>? oldValues,
     Map<String, dynamic>? newValues,
   }) async {
-    final user = Supabase.instance.client.auth.currentUser;
+    User? user;
+    try {
+      user = Supabase.instance.client.auth.currentUser;
+    } catch (_) {
+      user = null;
+    }
     final actorName = await _actorName(user);
     await _db
         .into(_db.auditLogs)

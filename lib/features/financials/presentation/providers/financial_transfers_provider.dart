@@ -235,6 +235,39 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  Future<void> deleteTransfer(String id) async {
+    state = const AsyncLoading();
+    try {
+      final old = await (_db.select(
+        _db.financialTransfers,
+      )..where((t) => t.id.equals(id))).getSingle();
+
+      await (_db.delete(
+        _db.financialTransfers,
+      )..where((t) => t.id.equals(id))).go();
+
+      await _auditLog.log(
+        action: old.transferType == 'cash_deposit'
+            ? 'delete_cash_deposit'
+            : 'delete_transfer',
+        entityType: 'financial_transfer',
+        entityId: id,
+        title: old.transferType == 'cash_deposit'
+            ? 'حذف توريد نقدية'
+            : 'حذف تحويل داخلي',
+        description: old.transferType == 'cash_deposit'
+            ? 'تم حذف توريد ${old.amountEgp} ج.م لخزنة الشركة'
+            : 'تم حذف تحويل ${old.amountEgp} ج.م من ${treasuryAccounts[old.fromAccount] ?? old.fromAccount} إلى ${treasuryAccounts[old.toAccount] ?? old.toAccount}',
+        route: '/financial_transfers',
+        oldValues: old.toJson(),
+      );
+
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
   Future<Map<String, double>> _calculateBalances({
     required String season,
     String? excludingTransferId,

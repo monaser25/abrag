@@ -97,6 +97,25 @@ void main() {
     expect(controller.state.toString(), contains('AsyncError'));
   });
 
+  test('deletes a transfer and records removal', () async {
+    final controller = FinancialTransfersController(db);
+    await seedCashRevenue(1000);
+
+    await controller.addTransfer(
+      fromAccount: 'cash',
+      toAccount: 'instapay',
+      amount: 300,
+      date: DateTime(2026, 5, 17),
+    );
+    final transfer = (await db.select(db.financialTransfers).get()).single;
+
+    await controller.deleteTransfer(transfer.id);
+
+    expect(await db.select(db.financialTransfers).get(), isEmpty);
+    final logs = await db.select(db.auditLogs).get();
+    expect(logs.any((log) => log.action == 'delete_transfer'), isTrue);
+  });
+
   test('stores expense payment method', () async {
     final controller = ExpensesController(db);
 

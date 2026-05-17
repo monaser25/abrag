@@ -262,6 +262,34 @@ class _FinancialTransfersScreenState
     }
   }
 
+  Future<void> _confirmDelete(FinancialTransfer transfer) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف عملية التحويل؟'),
+        content: Text(
+          'سيتم حذف عملية بقيمة ${transfer.amountEgp.toCurrencyFormat()} ج.م من السجل، وسيتم تحديث أرصدة الخزنة تلقائيًا.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      ref
+          .read(financialTransfersControllerProvider.notifier)
+          .deleteTransfer(transfer.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final balancesAsync = ref.watch(accountBalancesProvider);
@@ -283,59 +311,103 @@ class _FinancialTransfersScreenState
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('الخزنة والتحويلات')),
+      appBar: AppBar(
+        title: const Text('خزنة الشركة والتحويلات'),
+        actions: [
+          IconButton(
+            tooltip: 'عملية جديدة',
+            onPressed: () => _showTransferSheet(),
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'all', label: Text('الكل')),
-              ButtonSegment(value: 'summer', label: Text('الصيف')),
-              ButtonSegment(value: 'winter', label: Text('الشتاء')),
-            ],
-            selected: {ref.watch(selectedFinancialSeasonProvider)},
-            onSelectionChanged: (values) => ref
-                .read(selectedFinancialSeasonProvider.notifier)
-                .state = values.first,
-          ),
-          const SizedBox(height: 16),
           balancesAsync.when(
             data: (balances) {
               final total = balances.values.fold<double>(0, (sum, v) => sum + v);
-              final entries = [
-                const MapEntry('total', 'إجمالي الفلوس'),
-                ...treasuryAccounts.entries,
-              ];
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth < 520
-                      ? constraints.maxWidth
-                      : (constraints.maxWidth - 8) / 2;
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: entries.map((entry) {
-                      final balance = entry.key == 'total'
-                          ? total
-                          : balances[entry.key] ?? 0;
-                      return SizedBox(
-                        width: width,
-                        child: _BalanceCard(
-                          title: entry.value,
-                          value: '${balance.toCurrencyFormat()} ج.م',
-                          isTotal: entry.key == 'total',
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _TreasuryHeroCard(
+                    total: total,
+                    companyVault: balances['company_vault'] ?? 0,
+                    season: _seasonLabel(ref.watch(selectedFinancialSeasonProvider)),
+                  ),
+                  const SizedBox(height: 12),
+                  _SeasonSelector(
+                    value: ref.watch(selectedFinancialSeasonProvider),
+                    onChanged: (value) => ref
+                        .read(selectedFinancialSeasonProvider.notifier)
+                        .state = value,
+                  ),
+                  const SizedBox(height: 12),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth < 680
+                          ? constraints.maxWidth
+                          : (constraints.maxWidth - 16) / 3;
+                      final cards = [
+                        _BalanceCard(
+                          title: 'نقدية حاليًا',
+                          value: '${(balances['cash'] ?? 0).toCurrencyFormat()} ج.م',
+                          icon: Icons.money,
+                          color: Colors.green,
                         ),
+                        _BalanceCard(
+                          title: 'فودافون كاش',
+                          value: '${(balances['vodafone_cash'] ?? 0).toCurrencyFormat()} ج.م',
+                          icon: Icons.phone_android,
+                          color: Colors.redAccent,
+                        ),
+                        _BalanceCard(
+                          title: 'إنستا باي',
+                          value: '${(balances['instapay'] ?? 0).toCurrencyFormat()} ج.م',
+                          icon: Icons.bolt,
+                          color: Colors.blueAccent,
+                        ),
+                        _BalanceCard(
+                          title: 'خزنة الشركة',
+                          value: '${(balances['company_vault'] ?? 0).toCurrencyFormat()} ج.م',
+                          icon: Icons.account_balance,
+                          color: theme.colorScheme.primary,
+                          isWide: true,
+                        ),
+                      ];
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: cards.map((card) {
+                          return SizedBox(
+                            width: card.isWide ? constraints.maxWidth : width,
+                            child: card,
+                          );
+                        }).toList(),
                       );
-                    }).toList(),
-                  );
-                },
+                    },
+                  ),
+                ],
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Text('حدث خطأ: $error'),
           ),
-          const SizedBox(height: 16),
-          Text('سجل التحويلات', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Icon(Icons.history, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'سجل التحويلات والتوريد',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           transfersAsync.when(
             data: (transfers) {
@@ -350,20 +422,42 @@ class _FinancialTransfersScreenState
               return Column(
                 children: transfers.map((transfer) {
                   return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.swap_horiz)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      leading: CircleAvatar(
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+                        child: Icon(
+                          transfer.transferType == 'cash_deposit'
+                              ? Icons.account_balance
+                              : Icons.swap_horiz,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                       title: Text(
                         transfer.transferType == 'cash_deposit'
                             ? 'توريد نقدية إلى خزنة الشركة'
                             : '${paymentAccounts[transfer.fromAccount] ?? transfer.fromAccount} ← ${paymentAccounts[transfer.toAccount] ?? transfer.toAccount}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         '${transfer.amountEgp.toCurrencyFormat()} ج.م • ${_seasonLabel(transfer.season)}\n${dateFormat.format(transfer.transferDate)}${transfer.notes == null ? '' : '\n${transfer.notes}'}',
                       ),
-                      trailing: IconButton(
-                        tooltip: 'تعديل',
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _showTransferSheet(transfer: transfer),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showTransferSheet(transfer: transfer);
+                          } else if (value == 'delete') {
+                            _confirmDelete(transfer);
+                          }
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: 'edit', child: Text('تعديل')),
+                          PopupMenuItem(value: 'delete', child: Text('حذف')),
+                        ],
                       ),
                       onTap: () => _showTransferSheet(transfer: transfer),
                     ),
@@ -388,12 +482,16 @@ class _FinancialTransfersScreenState
 class _BalanceCard extends StatelessWidget {
   final String title;
   final String value;
-  final bool isTotal;
+  final IconData icon;
+  final Color color;
+  final bool isWide;
 
   const _BalanceCard({
     required this.title,
     required this.value,
-    this.isTotal = false,
+    required this.icon,
+    required this.color,
+    this.isWide = false,
   });
 
   @override
@@ -402,28 +500,173 @@ class _BalanceCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Icon(
-              isTotal ? Icons.account_balance_wallet : Icons.payments,
-              color: isTotal ? theme.colorScheme.primary : Colors.green,
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.14),
+              child: Icon(icon, color: color),
             ),
-            const SizedBox(height: 10),
-            Text(title, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                value,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      value,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TreasuryHeroCard extends StatelessWidget {
+  final double total;
+  final double companyVault;
+  final String season;
+
+  const _TreasuryHeroCard({
+    required this.total,
+    required this.companyVault,
+    required this.season,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.22),
+            theme.colorScheme.surfaceContainerHighest,
+          ],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                child: Icon(
+                  Icons.account_balance_wallet,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'الخزنة حسب $season',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _HeroValue(
+                  label: 'إجمالي المتاح',
+                  value: '${total.toCurrencyFormat()} ج.م',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _HeroValue(
+                  label: 'خزنة الشركة',
+                  value: '${companyVault.toCurrencyFormat()} ج.م',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroValue extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _HeroValue({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              value,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeasonSelector extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _SeasonSelector({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'all', label: Text('كل المواسم')),
+            ButtonSegment(value: 'summer', label: Text('الصيف')),
+            ButtonSegment(value: 'winter', label: Text('الشتاء')),
+          ],
+          selected: {value},
+          onSelectionChanged: (values) => onChanged(values.first),
         ),
       ),
     );
