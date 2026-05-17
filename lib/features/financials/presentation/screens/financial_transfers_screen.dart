@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/season_utils.dart';
@@ -24,6 +25,7 @@ class _FinancialTransfersScreenState
   String _toAccount = 'instapay';
   String _transferType = 'internal';
   String _season = 'all';
+  bool _didApplyActiveSeason = false;
 
   @override
   void dispose() {
@@ -47,7 +49,7 @@ class _FinancialTransfersScreenState
       _fromAccount = transfer.fromAccount;
       _toAccount = transfer.toAccount;
       _transferType = transfer.transferType;
-      _season = transfer.season;
+      _season = normalizeStoredSeason(transfer.season, transfer.transferDate);
     }
 
     showModalBottomSheet<void>(
@@ -118,7 +120,7 @@ class _FinancialTransfersScreenState
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'الموسم'),
                           initialValue: _season,
-                          items: seasonOptionsAround()
+                          items: seasonOptionsAround(includeGeneric: false)
                               .map(
                                 (option) => DropdownMenuItem(
                                   value: option.key,
@@ -289,8 +291,18 @@ class _FinancialTransfersScreenState
   Widget build(BuildContext context) {
     final balancesAsync = ref.watch(accountBalancesProvider);
     final transfersAsync = ref.watch(financialTransfersProvider);
+    final settingsAsync = ref.watch(appSettingsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
     final theme = Theme.of(context);
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm', 'ar');
+
+    if (!_didApplyActiveSeason && settingsAsync.hasValue) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _didApplyActiveSeason) return;
+        ref.read(selectedFinancialSeasonProvider.notifier).state = activeSeason;
+        _didApplyActiveSeason = true;
+      });
+    }
 
     ref.listen<AsyncValue<void>>(financialTransfersControllerProvider, (_, state) {
       state.whenOrNull(

@@ -79,7 +79,7 @@ class BrokerDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brokersAsync = ref.watch(brokersProvider);
-    final bookingsAsync = ref.watch(summerBookingsProvider);
+    final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final theme = Theme.of(context);
 
     return Scaffold(

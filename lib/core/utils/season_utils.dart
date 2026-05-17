@@ -5,9 +5,13 @@ class SeasonOption {
   const SeasonOption({required this.key, required this.label});
 }
 
+const int firstBusinessSeasonYear = 2026;
+
 bool isSummerMonth(int month) => month >= 5 && month <= 9;
 
 String seasonKeyForDate(DateTime date) {
+  final firstSeasonStart = DateTime(firstBusinessSeasonYear, 5, 1);
+  if (date.isBefore(firstSeasonStart)) return 'summer_$firstBusinessSeasonYear';
   if (isSummerMonth(date.month)) return 'summer_${date.year}';
   if (date.month >= 10) return 'winter_${date.year}_${date.year + 1}';
   return 'winter_${date.year - 1}_${date.year}';
@@ -51,6 +55,7 @@ List<SeasonOption> seasonOptionsAround({
   bool includeGeneric = true,
 }) {
   final currentYear = (now ?? DateTime.now()).year;
+  final lastYear = currentYear + futureYears;
   final options = <SeasonOption>[];
   if (includeGeneric) {
     options.addAll(const [
@@ -59,14 +64,14 @@ List<SeasonOption> seasonOptionsAround({
       SeasonOption(key: 'winter', label: 'كل مواسم الشتاء'),
     ]);
   }
-  for (var year = currentYear + futureYears; year >= currentYear - pastYears; year--) {
-    options.add(SeasonOption(key: 'summer_$year', label: 'صيف $year'));
+  for (var year = lastYear; year >= firstBusinessSeasonYear; year--) {
     options.add(
       SeasonOption(
-        key: 'winter_${year - 1}_$year',
-        label: 'شتاء ${year - 1}/$year',
+        key: 'winter_${year}_${year + 1}',
+        label: 'شتاء $year/${year + 1}',
       ),
     );
+    options.add(SeasonOption(key: 'summer_$year', label: 'صيف $year'));
   }
   final seen = <String>{};
   return options.where((option) => seen.add(option.key)).toList();

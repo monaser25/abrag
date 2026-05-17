@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/utils/season_utils.dart';
@@ -20,7 +21,8 @@ class ReportsScreen extends ConsumerStatefulWidget {
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   final _personController = TextEditingController();
   bool _hideNumbers = false;
-  String _filter = 'all'; // all, summer, winter
+  String _filter = currentSeasonKey();
+  bool _didApplyActiveSeason = false;
   String? _selectedBuildingId;
   String? _selectedApartmentId;
   String _expenseType = 'all';
@@ -35,7 +37,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   void initState() {
     super.initState();
-    _applyFilters(widget.initialFilters ?? const ReportFilterState());
+    _applyFilters(
+      widget.initialFilters ?? ReportFilterState(season: currentSeasonKey()),
+    );
     _hideNumbers =
         ref.read(sharedPreferencesProvider).getBool('reports_hide_numbers') ??
         false;
@@ -45,7 +49,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   void didUpdateWidget(covariant ReportsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialFilters != widget.initialFilters) {
-      _applyFilters(widget.initialFilters ?? const ReportFilterState());
+      _applyFilters(
+        widget.initialFilters ?? ReportFilterState(season: currentSeasonKey()),
+      );
     }
   }
 
@@ -98,6 +104,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final reportAsync = ref.watch(financialReportProvider);
+    final settingsAsync = ref.watch(appSettingsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
+
+    if (widget.initialFilters == null &&
+        !_didApplyActiveSeason &&
+        settingsAsync.hasValue) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _didApplyActiveSeason) return;
+        setState(() {
+          _filter = activeSeason;
+          _didApplyActiveSeason = true;
+        });
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -847,7 +867,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     var transfers = report.financialTransfers;
     if (filters.season != 'all') {
       transfers = transfers
-          .where((t) => seasonMatchesKey(t.season, filters.season))
+          .where(
+            (t) => seasonMatchesKey(
+              normalizeStoredSeason(t.season, t.transferDate),
+              filters.season,
+            ),
+          )
           .toList();
     }
     if (filters.startDate != null && filters.endDate != null) {

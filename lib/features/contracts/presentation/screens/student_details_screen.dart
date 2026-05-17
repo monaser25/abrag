@@ -15,7 +15,7 @@ class StudentDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contractsAsync = ref.watch(winterContractsProvider);
+    final contractsAsync = ref.watch(allWinterContractsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final theme = Theme.of(context);
 

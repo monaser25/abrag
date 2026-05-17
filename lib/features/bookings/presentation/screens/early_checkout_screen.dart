@@ -45,7 +45,7 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bookingsAsync = ref.watch(summerBookingsProvider);
+    final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final controllerState = ref.watch(bookingsControllerProvider);
     final theme = Theme.of(context);
 

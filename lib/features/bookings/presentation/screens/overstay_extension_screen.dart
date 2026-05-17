@@ -56,7 +56,7 @@ class _OverstayExtensionScreenState
         pickedTime.minute,
       );
       final existingCheckout = ref
-          .read(summerBookingsProvider)
+          .read(allSummerBookingsProvider)
           .value
           ?.where((b) => b.id == widget.bookingId)
           .firstOrNull
@@ -72,7 +72,7 @@ class _OverstayExtensionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final bookingsAsync = ref.watch(summerBookingsProvider);
+    final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final controllerState = ref.watch(bookingsControllerProvider);
     final theme = Theme.of(context);
     final formatter = DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar');

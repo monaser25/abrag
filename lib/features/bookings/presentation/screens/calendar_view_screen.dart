@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../providers/bookings_provider.dart';
 
@@ -58,6 +60,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
     final theme = Theme.of(context);
     final monthFormatter = DateFormat('MMMM yyyy', 'ar');
 
@@ -85,6 +88,14 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Card(
+                child: ListTile(
+                  leading: Icon(Icons.event_repeat, color: theme.colorScheme.primary),
+                  title: const Text('الموسم المعروض'),
+                  subtitle: Text(seasonLabel(activeSeason)),
+                ),
+              ),
+              const SizedBox(height: 12),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),

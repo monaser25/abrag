@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -14,6 +16,7 @@ class SummerBookingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -78,7 +81,15 @@ class SummerBookingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'تابع الإشغال، مواعيد الخروج، والحجوزات القادمة من مكان واحد.',
+                      'الموسم المعروض: ${seasonLabel(activeSeason)}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'تابع الإشغال، مواعيد الخروج، والحجوزات القادمة لهذا الموسم فقط.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

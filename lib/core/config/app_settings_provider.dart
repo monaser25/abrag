@@ -5,6 +5,7 @@ import '../../features/dashboard/presentation/providers/database_provider.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import '../services/audit_log_service.dart';
+import '../utils/season_utils.dart';
 
 const kSettingsBuildingId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 const kSettingsBuildingName = '__ABRAG_SETTINGS__';
@@ -22,6 +23,13 @@ final appSettingsProvider = StreamProvider<Map<String, dynamic>>((ref) {
           return {};
         }
       });
+});
+
+final activeSeasonKeyProvider = Provider<String>((ref) {
+  final settings = ref.watch(appSettingsProvider).valueOrNull ?? const {};
+  final stored = settings['active_season_key'] as String?;
+  if (stored != null && stored.isNotEmpty) return stored;
+  return currentSeasonKey();
 });
 
 final appSettingsControllerProvider = Provider(

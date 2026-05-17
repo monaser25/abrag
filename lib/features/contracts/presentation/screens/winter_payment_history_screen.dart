@@ -149,7 +149,7 @@ class _WinterPaymentHistoryScreenState
     final paymentsAsync = ref.watch(
       contractPaymentsProvider(widget.contractId),
     );
-    final contractsAsync = ref.watch(winterContractsProvider);
+    final contractsAsync = ref.watch(allWinterContractsProvider);
     final theme = Theme.of(context);
 
     return Scaffold(

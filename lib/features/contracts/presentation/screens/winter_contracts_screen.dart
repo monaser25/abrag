@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/contracts_provider.dart';
 import '../models/winter_payment_status.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../../core/database/database.dart';
 
 class WinterContractsScreen extends ConsumerStatefulWidget {
@@ -18,15 +20,6 @@ class WinterContractsScreen extends ConsumerStatefulWidget {
 
 class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
   String _filter = 'all'; // all, active, expired, empty
-  int? _selectedSeasonYear;
-
-  int _getSeasonYear(DateTime date) {
-    return date.month >= 7 ? date.year : date.year - 1;
-  }
-
-  int _currentSeasonYear() {
-    return _getSeasonYear(DateTime.now());
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +27,7 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
     final contractsAsync = ref.watch(winterContractsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final paymentsAsync = ref.watch(allWinterPaymentsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -44,21 +38,7 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
             data: (apartments) {
               return paymentsAsync.when(
                 data: (payments) {
-                  // 1. Get all available seasons
-                  final availableSeasons = <int>{_currentSeasonYear()};
-                  for (final c in contracts) {
-                    availableSeasons.add(_getSeasonYear(c.startDate));
-                  }
-                  final sortedSeasons = availableSeasons.toList()
-                    ..sort((a, b) => b.compareTo(a));
-
-                  final currentSeason =
-                      _selectedSeasonYear ?? _currentSeasonYear();
-
-                  // 2. Filter contracts by season
-                  final seasonContracts = contracts.where((c) {
-                    return _getSeasonYear(c.startDate) == currentSeason;
-                  }).toList();
+                  final seasonContracts = contracts;
 
                   final activeContracts = seasonContracts
                       .where((c) => c.isActive)
@@ -118,31 +98,13 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
                                     color: theme.colorScheme.primary,
                                   ),
                                   const SizedBox(width: 8),
-                                  DropdownButton<int>(
-                                    value: currentSeason,
-                                    items: sortedSeasons.map((year) {
-                                      return DropdownMenuItem(
-                                        value: year,
-                                        child: Text(
-                                          'موسم الشتاء $year-${year + 1}',
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                color:
-                                                    theme.colorScheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                  Text(
+                                    seasonLabel(activeSeason),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      if (val != null) {
-                                        setState(
-                                          () => _selectedSeasonYear = val,
-                                        );
-                                      }
-                                    },
-                                    underline: const SizedBox.shrink(),
-                                    iconEnabledColor: theme.colorScheme.primary,
                                   ),
                                 ],
                               ),

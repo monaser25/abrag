@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -23,6 +25,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final l10n = AppLocalizations.of(context)!;
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,6 +34,15 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       body: Column(
         children: [
           // Filter Row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: ListTile(
+              dense: true,
+              leading: const Icon(Icons.event_repeat),
+              title: const Text('الموسم المعروض'),
+              subtitle: Text(seasonLabel(activeSeason)),
+            ),
+          ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(16.0),

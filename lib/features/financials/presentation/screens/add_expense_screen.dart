@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../providers/expenses_controller.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -29,7 +31,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   String? _selectedApartmentId;
   String _selectedExpenseType = 'cleaning';
   String _selectedPaymentMethod = 'cash';
-  String _selectedSeason = 'all';
+  String _selectedSeason = currentSeasonKey();
+  bool _didApplyActiveSeason = false;
 
   @override
   void initState() {
@@ -41,7 +44,12 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     _selectedApartmentId = widget.expense?.apartmentId;
     _selectedExpenseType = widget.expense?.expenseType ?? 'cleaning';
     _selectedPaymentMethod = widget.expense?.paymentMethod ?? 'cash';
-    _selectedSeason = widget.expense?.season ?? 'all';
+    _selectedSeason = widget.expense == null
+        ? currentSeasonKey()
+        : normalizeStoredSeason(
+            widget.expense!.season,
+            widget.expense!.expenseDate,
+          );
   }
 
   final List<Map<String, String>> _expenseTypes = [
@@ -114,6 +122,18 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     final controllerState = ref.watch(expensesControllerProvider);
     final buildingsAsync = ref.watch(buildingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
+    final settingsAsync = ref.watch(appSettingsProvider);
+    final activeSeason = ref.watch(activeSeasonKeyProvider);
+
+    if (widget.expense == null && !_didApplyActiveSeason && settingsAsync.hasValue) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _didApplyActiveSeason) return;
+        setState(() {
+          _selectedSeason = activeSeason;
+          _didApplyActiveSeason = true;
+        });
+      });
+    }
 
     ref.listen<AsyncValue<void>>(expensesControllerProvider, (_, state) {
       state.whenOrNull(
@@ -227,11 +247,14 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'الموسم'),
               initialValue: _selectedSeason,
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('عام / كل المواسم')),
-                DropdownMenuItem(value: 'summer', child: Text('الصيف')),
-                DropdownMenuItem(value: 'winter', child: Text('الشتاء')),
-              ],
+              items: seasonOptionsAround(includeGeneric: false)
+                  .map(
+                    (option) => DropdownMenuItem(
+                      value: option.key,
+                      child: Text(option.label),
+                    ),
+                  )
+                  .toList(),
               onChanged: (v) => setState(
                 () => _selectedSeason = v ?? _selectedSeason,
               ),

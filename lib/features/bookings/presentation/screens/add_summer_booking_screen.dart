@@ -387,7 +387,7 @@ class _AddSummerBookingScreenState
     final buildingsAsync = ref.watch(buildingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final brokersAsync = ref.watch(brokersProvider);
-    final bookingsAsync = ref.watch(summerBookingsProvider);
+    final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final theme = Theme.of(context);
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {

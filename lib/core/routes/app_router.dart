@@ -347,7 +347,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => ReportsScreen(
               initialFilters: state.extra is ReportFilterState
                   ? state.extra as ReportFilterState
-                  : const ReportFilterState(),
+                  : null,
             ),
             routes: [
               GoRoute(

@@ -32,7 +32,7 @@ final financialTransfersProvider = StreamProvider<List<FinancialTransfer>>((ref)
   return query.watch();
 });
 
-final selectedFinancialSeasonProvider = StateProvider<String>((ref) => 'all');
+final selectedFinancialSeasonProvider = StateProvider<String>((ref) => currentSeasonKey());
 
 final accountBalancesProvider = StreamProvider<Map<String, double>>((ref) {
   final db = ref.watch(databaseProvider);
@@ -142,7 +142,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
     required double amount,
     required DateTime date,
     String transferType = 'internal',
-    String season = 'all',
+    String? season,
     String? notes,
   }) async {
     state = const AsyncLoading();
@@ -153,7 +153,8 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
       if (amount <= 0) {
         throw Exception('المبلغ لازم يكون أكبر من صفر');
       }
-      final balances = await buildTreasuryBalances(_db, season);
+      final effectiveSeason = season ?? currentSeasonKey();
+      final balances = await buildTreasuryBalances(_db, effectiveSeason);
       final available = balances[fromAccount] ?? 0;
       if (available + 0.001 < amount) {
         throw Exception(
@@ -167,7 +168,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
           fromAccount: fromAccount,
           toAccount: toAccount,
           transferType: Value(transferType),
-          season: Value(season),
+          season: Value(effectiveSeason),
           amountEgp: amount,
           transferDate: date,
           notes: Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
@@ -190,7 +191,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
           'fromAccount': fromAccount,
           'toAccount': toAccount,
           'transferType': transferType,
-          'season': season,
+          'season': effectiveSeason,
           'amount': amount,
           'notes': notes,
         },
@@ -208,7 +209,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
     required double amount,
     required DateTime date,
     required String transferType,
-    required String season,
+    String? season,
     String? notes,
   }) async {
     state = const AsyncLoading();
@@ -222,9 +223,10 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
       final old = await (_db.select(
         _db.financialTransfers,
       )..where((t) => t.id.equals(id))).getSingle();
+      final effectiveSeason = season ?? currentSeasonKey();
       final balances = await buildTreasuryBalances(
         _db,
-        season,
+        effectiveSeason,
         excludingTransferId: id,
       );
       final available = balances[fromAccount] ?? 0;
@@ -239,7 +241,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
           fromAccount: Value(fromAccount),
           toAccount: Value(toAccount),
           transferType: Value(transferType),
-          season: Value(season),
+          season: Value(effectiveSeason),
           amountEgp: Value(amount),
           transferDate: Value(date),
           notes: Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
@@ -264,7 +266,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
           'fromAccount': fromAccount,
           'toAccount': toAccount,
           'transferType': transferType,
-          'season': season,
+          'season': effectiveSeason,
           'amount': amount,
           'notes': notes,
         },

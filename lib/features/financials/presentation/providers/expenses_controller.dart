@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final expensesControllerProvider = StateNotifierProvider<ExpensesController, AsyncValue<void>>((ref) {
@@ -24,7 +25,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
     required String expenseType,
     required double amount,
     String paymentMethod = 'cash',
-    String season = 'all',
+    String? season,
     required DateTime date,
     String? description,
     int? installmentNumber,
@@ -43,7 +44,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           expenseType: expenseType,
           amountEgp: amount,
           paymentMethod: Value(paymentMethod),
-          season: Value(season),
+          season: Value(season ?? currentSeasonKey()),
           expenseDate: date,
           description: Value(description),
           installmentNumber: Value(installmentNumber),
@@ -64,7 +65,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           'expenseType': expenseType,
           'amount': amount,
           'paymentMethod': paymentMethod,
-          'season': season,
+          'season': season ?? currentSeasonKey(),
           'date': date,
           'description': description,
         },
@@ -82,7 +83,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
     required String expenseType,
     required double amount,
     String paymentMethod = 'cash',
-    String season = 'all',
+    String? season,
     required DateTime date,
     String? description,
     int? installmentNumber,
@@ -98,7 +99,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           expenseType: Value(expenseType),
           amountEgp: Value(amount),
           paymentMethod: Value(paymentMethod),
-          season: Value(season),
+          season: Value(season ?? currentSeasonKey()),
           expenseDate: Value(date),
           description: Value(description),
           installmentNumber: Value(installmentNumber),
@@ -118,7 +119,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           'expenseType': expenseType,
           'amount': amount,
           'paymentMethod': paymentMethod,
-          'season': season,
+          'season': season ?? currentSeasonKey(),
           'date': date,
           'description': description,
         },

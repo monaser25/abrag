@@ -16,7 +16,7 @@ class BookingDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookingsAsync = ref.watch(summerBookingsProvider);
+    final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final brokersAsync = ref.watch(brokersProvider);
 
