@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/utils/season_utils.dart';
 
 class SeasonTransitionScreen extends ConsumerWidget {
   const SeasonTransitionScreen({super.key});
@@ -11,57 +13,102 @@ class SeasonTransitionScreen extends ConsumerWidget {
     final settingsController = ref.watch(appSettingsControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('الانتقال بين المواسم')),
+      appBar: AppBar(title: const Text('إدارة المواسم')),
       body: settingsAsync.when(
         data: (settings) {
-          final isWinter = (settings['active_season'] ?? 'winter') == 'winter';
+          final activeSeason =
+              (settings['active_season_key'] as String?) ?? currentSeasonKey();
+          final options = seasonOptionsAround(pastYears: 5, futureYears: 3)
+              .where((option) => option.key != 'all')
+              .toList();
+          final next = nextSeasonKey(activeSeason);
 
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(
-                  isWinter ? Icons.ac_unit : Icons.wb_sunny,
-                  size: 80,
-                  color: isWinter ? Colors.blue : Colors.orange,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'الموسم النشط حالياً: ${isWinter ? 'الشتاء' : 'الصيف'}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  isWinter
-                      ? 'واجهة التطبيق مهيئة الآن لإدارة عقود الطلبة (الشتوي). عند الانتقال للصيف، سيتم التركيز على الحجوزات اليومية والإيرادات السريعة.'
-                      : 'واجهة التطبيق مهيئة الآن لإدارة الحجوزات اليومية (الصيفي). عند الانتقال للشتاء، سيتم التركيز على الإيجارات الشهرية.',
-                  textAlign: TextAlign.center,
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final newSettings = Map<String, dynamic>.from(settings);
-                    newSettings['active_season'] = isWinter
-                        ? 'summer'
-                        : 'winter';
-                    await settingsController.updateSettings(newSettings);
-                  },
-                  icon: Icon(isWinter ? Icons.wb_sunny : Icons.ac_unit),
-                  label: Text(
-                    isWinter
-                        ? 'التبديل إلى موسم الصيف'
-                        : 'التبديل إلى موسم الشتاء',
+          Future<void> activateSeason(String key) async {
+            final newSettings = Map<String, dynamic>.from(settings);
+            newSettings['active_season_key'] = key;
+            newSettings['active_season'] = key.startsWith('summer')
+                ? 'summer'
+                : key.startsWith('winter')
+                ? 'winter'
+                : 'all';
+            await settingsController.updateSettings(newSettings);
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            child: Icon(
+                              activeSeason.startsWith('summer')
+                                  ? Icons.wb_sunny
+                                  : Icons.ac_unit,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'الموسم النشط: ${seasonLabel(activeSeason)}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'الموسم النشط هو اللي يظهر افتراضيًا في الفلاتر عشان الشغل اليومي ما يتلخبطش. المواسم القديمة لا تُحذف، وتفضل موجودة في التقارير وكشف الحساب وسجل النشاط.',
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: () => activateSeason(next),
+                        icon: const Icon(Icons.add),
+                        label: Text('بدء ${seasonLabel(next)}'),
+                      ),
+                    ],
                   ),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                    backgroundColor: isWinter ? Colors.orange : Colors.blue,
-                    foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'كل المواسم',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              ...options.map(
+                (option) => Card(
+                  child: ListTile(
+                    leading: Icon(
+                      option.key.startsWith('summer')
+                          ? Icons.wb_sunny
+                          : Icons.ac_unit,
+                      color: option.key == activeSeason
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    title: Text(option.label),
+                    subtitle: option.key == activeSeason
+                        ? const Text('نشط حاليًا')
+                        : const Text('مؤرشف / متاح في التقارير'),
+                    trailing: option.key == activeSeason
+                        ? const Icon(Icons.check_circle)
+                        : TextButton(
+                            onPressed: () => activateSeason(option.key),
+                            child: const Text('تفعيل'),
+                          ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

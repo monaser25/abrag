@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -5,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 const paymentAccounts = <String, String>{
@@ -34,55 +37,91 @@ final selectedFinancialSeasonProvider = StateProvider<String>((ref) => 'all');
 final accountBalancesProvider = StreamProvider<Map<String, double>>((ref) {
   final db = ref.watch(databaseProvider);
   final selectedSeason = ref.watch(selectedFinancialSeasonProvider);
-  final seasonFilter = selectedSeason == 'all'
-      ? ''
-      : "AND season = '$selectedSeason'";
-  final hideSummer = selectedSeason == 'winter' ? 'AND 1 = 0' : '';
-  final hideWinter = selectedSeason == 'summer' ? 'AND 1 = 0' : '';
-  return db.customSelect('''
-    SELECT account, SUM(amount) AS balance
-    FROM (
-      SELECT payment_method AS account, amount_paid_egp AS amount
-      FROM summer_bookings
-      WHERE status != 'cancelled' $hideSummer
-      UNION ALL
-      SELECT payment_method AS account, amount_egp AS amount
-      FROM winter_payments
-      WHERE 1 = 1 $hideWinter
-      UNION ALL
-      SELECT payment_method AS account, -amount_egp AS amount
-      FROM expenses
-      WHERE 1 = 1 $seasonFilter
-      UNION ALL
-      SELECT from_account AS account, -amount_egp AS amount
-      FROM financial_transfers
-      WHERE 1 = 1 $seasonFilter
-      UNION ALL
-      SELECT to_account AS account, amount_egp AS amount
-      FROM financial_transfers
-      WHERE transfer_type = 'internal' $seasonFilter
-      UNION ALL
-      SELECT 'company_vault' AS account, amount_egp AS amount
-      FROM financial_transfers
-      WHERE transfer_type = 'cash_deposit' $seasonFilter
-    ) money_movements
-    GROUP BY account
-  ''', readsFrom: {
-    db.summerBookings,
-    db.winterPayments,
-    db.expenses,
-    db.financialTransfers,
-  }).watch().map((rows) {
-    final balances = {for (final key in treasuryAccounts.keys) key: 0.0};
-    for (final row in rows) {
-      final account = row.read<String>('account');
-      if (balances.containsKey(account)) {
-        balances[account] = row.read<double?>('balance') ?? 0;
-      }
+  late final StreamController<Map<String, double>> controller;
+  final subscriptions = <StreamSubscription<dynamic>>[];
+  Timer? debounce;
+
+  Future<void> emit() async {
+    try {
+      final balances = await buildTreasuryBalances(db, selectedSeason);
+      if (!controller.isClosed) controller.add(balances);
+    } catch (error, stackTrace) {
+      if (!controller.isClosed) controller.addError(error, stackTrace);
     }
-    return balances;
-  });
+  }
+
+  void scheduleEmit() {
+    debounce?.cancel();
+    debounce = Timer(const Duration(milliseconds: 80), emit);
+  }
+
+  controller = StreamController<Map<String, double>>(
+    onListen: () {
+      subscriptions.add(db.select(db.summerBookings).watch().listen((_) => scheduleEmit()));
+      subscriptions.add(db.select(db.winterPayments).watch().listen((_) => scheduleEmit()));
+      subscriptions.add(db.select(db.expenses).watch().listen((_) => scheduleEmit()));
+      subscriptions.add(db.select(db.financialTransfers).watch().listen((_) => scheduleEmit()));
+      scheduleEmit();
+    },
+    onCancel: () async {
+      debounce?.cancel();
+      for (final subscription in subscriptions) {
+        await subscription.cancel();
+      }
+    },
+  );
+
+  return controller.stream;
 });
+
+Future<Map<String, double>> buildTreasuryBalances(
+  AppDatabase db,
+  String season, {
+  String? excludingTransferId,
+}) async {
+  final balances = {for (final key in treasuryAccounts.keys) key: 0.0};
+
+  void add(String account, double amount) {
+    if (balances.containsKey(account)) {
+      balances[account] = (balances[account] ?? 0) + amount;
+    }
+  }
+
+  final bookings = await db.select(db.summerBookings).get();
+  for (final booking in bookings) {
+    if (booking.status == 'cancelled') continue;
+    if (!seasonMatchesDate(booking.checkInDate, season)) continue;
+    add(booking.paymentMethod, booking.amountPaidEgp);
+  }
+
+  final payments = await db.select(db.winterPayments).get();
+  for (final payment in payments) {
+    if (!seasonMatchesDate(payment.paymentDate, season)) continue;
+    add(payment.paymentMethod, payment.amountEgp);
+  }
+
+  final expenses = await db.select(db.expenses).get();
+  for (final expense in expenses) {
+    final normalizedSeason = normalizeStoredSeason(expense.season, expense.expenseDate);
+    if (!seasonMatchesKey(normalizedSeason, season)) continue;
+    add(expense.paymentMethod, -(expense.amountEgp - expense.discountEgp));
+  }
+
+  final transfers = await db.select(db.financialTransfers).get();
+  for (final transfer in transfers) {
+    if (transfer.id == excludingTransferId) continue;
+    final normalizedSeason = normalizeStoredSeason(transfer.season, transfer.transferDate);
+    if (!seasonMatchesKey(normalizedSeason, season)) continue;
+    add(transfer.fromAccount, -transfer.amountEgp);
+    if (transfer.transferType == 'internal') {
+      add(transfer.toAccount, transfer.amountEgp);
+    } else if (transfer.transferType == 'cash_deposit') {
+      add('company_vault', transfer.amountEgp);
+    }
+  }
+
+  return balances;
+}
 
 final financialTransfersControllerProvider =
     StateNotifierProvider<FinancialTransfersController, AsyncValue<void>>((ref) {
@@ -114,7 +153,7 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
       if (amount <= 0) {
         throw Exception('المبلغ لازم يكون أكبر من صفر');
       }
-      final balances = await _calculateBalances(season: season);
+      final balances = await buildTreasuryBalances(_db, season);
       final available = balances[fromAccount] ?? 0;
       if (available + 0.001 < amount) {
         throw Exception(
@@ -183,8 +222,9 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
       final old = await (_db.select(
         _db.financialTransfers,
       )..where((t) => t.id.equals(id))).getSingle();
-      final balances = await _calculateBalances(
-        season: season,
+      final balances = await buildTreasuryBalances(
+        _db,
+        season,
         excludingTransferId: id,
       );
       final available = balances[fromAccount] ?? 0;
@@ -266,53 +306,5 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
     } catch (e, st) {
       state = AsyncError(e, st);
     }
-  }
-
-  Future<Map<String, double>> _calculateBalances({
-    required String season,
-    String? excludingTransferId,
-  }) async {
-    final balances = {for (final key in treasuryAccounts.keys) key: 0.0};
-
-    void add(String account, double amount) {
-      if (balances.containsKey(account)) {
-        balances[account] = (balances[account] ?? 0) + amount;
-      }
-    }
-
-    if (season != 'winter') {
-      final bookings = await _db.select(_db.summerBookings).get();
-      for (final booking in bookings) {
-        if (booking.status == 'cancelled') continue;
-        add(booking.paymentMethod, booking.amountPaidEgp);
-      }
-    }
-
-    if (season != 'summer') {
-      final payments = await _db.select(_db.winterPayments).get();
-      for (final payment in payments) {
-        add(payment.paymentMethod, payment.amountEgp);
-      }
-    }
-
-    final expenses = await _db.select(_db.expenses).get();
-    for (final expense in expenses) {
-      if (season != 'all' && expense.season != season) continue;
-      add(expense.paymentMethod, -(expense.amountEgp - expense.discountEgp));
-    }
-
-    final transfers = await _db.select(_db.financialTransfers).get();
-    for (final transfer in transfers) {
-      if (transfer.id == excludingTransferId) continue;
-      if (season != 'all' && transfer.season != season) continue;
-      add(transfer.fromAccount, -transfer.amountEgp);
-      if (transfer.transferType == 'internal') {
-        add(transfer.toAccount, transfer.amountEgp);
-      } else if (transfer.transferType == 'cash_deposit') {
-        add('company_vault', transfer.amountEgp);
-      }
-    }
-
-    return balances;
   }
 }

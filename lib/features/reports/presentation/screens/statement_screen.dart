@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
@@ -322,20 +323,14 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                                 isDense: true,
                               ),
                               initialValue: _season,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('كل المواسم'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'summer',
-                                  child: Text('صيف'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'winter',
-                                  child: Text('شتاء'),
-                                ),
-                              ],
+                              items: seasonOptionsAround()
+                                  .map(
+                                    (option) => DropdownMenuItem(
+                                      value: option.key,
+                                      child: Text(option.label),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (val) =>
                                   setState(() => _season = val ?? 'all'),
                             ),

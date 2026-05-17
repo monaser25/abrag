@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 
@@ -25,7 +26,7 @@ class ReportStatisticsScreen extends ConsumerWidget {
           final rentals = ReportCalculator.filteredRentals(report, filters);
           final apartments = ReportCalculator.apartmentMetrics(rentals);
           final summerApartments = ReportCalculator.apartmentMetrics(
-            rentals.where((rental) => rental.season == 'summer').toList(),
+            rentals.where((rental) => seasonMatchesKey(rental.season, 'summer')).toList(),
           );
           final floors = ReportCalculator.floorMetrics(rentals);
           final topSummerApartment = ReportCalculator.topByCount(

@@ -1,3 +1,4 @@
+import '../../../../core/utils/season_utils.dart';
 import '../providers/reports_provider.dart';
 
 enum ReportDetailKind { apartments, floors, brokers, workers, expenses }
@@ -212,7 +213,7 @@ class ReportCalculator {
     }
     if (filters.season != 'all') {
       transactions = transactions
-          .where((t) => t.season == filters.season)
+          .where((t) => seasonMatchesKey(t.season, filters.season))
           .toList();
     }
     if (filters.expenseType != 'all') {
@@ -255,7 +256,9 @@ class ReportCalculator {
           .toList();
     }
     if (filters.season != 'all') {
-      rentals = rentals.where((r) => r.season == filters.season).toList();
+      rentals = rentals
+          .where((r) => seasonMatchesKey(r.season, filters.season))
+          .toList();
     }
     if (filters.partyType == 'customer') {
       rentals = rentals.where((r) {
@@ -310,7 +313,9 @@ class ReportCalculator {
           .toList();
     }
     if (filters.season != 'all') {
-      records = records.where((r) => r.season == filters.season).toList();
+      records = records
+          .where((r) => seasonMatchesKey(r.season, filters.season))
+          .toList();
     }
     if (filters.expenseType != 'all' && filters.expenseType != 'maintenance') {
       records = [];

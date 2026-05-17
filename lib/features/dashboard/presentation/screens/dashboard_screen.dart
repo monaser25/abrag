@@ -5,6 +5,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../settings/presentation/providers/permissions_provider.dart';
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 import '../providers/sync_provider.dart';
 
@@ -19,7 +20,11 @@ class DashboardScreen extends ConsumerWidget {
     final apartmentsCount = ref.watch(apartmentsCountProvider);
 
     final settingsAsync = ref.watch(appSettingsProvider);
+    final activeSeasonKey =
+        (settingsAsync.value?['active_season_key'] as String?) ??
+        currentSeasonKey();
     final isWinter =
+        activeSeasonKey.startsWith('winter') ||
         (settingsAsync.value?['active_season'] ?? 'winter') == 'winter';
     final role = ref.watch(currentUserRoleProvider).value;
     final isSuperAdmin = role == 'admin';

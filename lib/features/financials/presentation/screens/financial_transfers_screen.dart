@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/database/database.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../providers/financial_transfers_provider.dart';
 
 class FinancialTransfersScreen extends ConsumerStatefulWidget {
@@ -38,7 +39,8 @@ class _FinancialTransfersScreenState
       _fromAccount = 'cash';
       _toAccount = 'instapay';
       _transferType = 'internal';
-      _season = ref.read(selectedFinancialSeasonProvider);
+      final selected = ref.read(selectedFinancialSeasonProvider);
+      _season = selected == 'all' ? currentSeasonKey() : selected;
     } else {
       _amountController.text = transfer.amountEgp.toString();
       _notesController.text = transfer.notes ?? '';
@@ -116,14 +118,14 @@ class _FinancialTransfersScreenState
                         DropdownButtonFormField<String>(
                           decoration: const InputDecoration(labelText: 'الموسم'),
                           initialValue: _season,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'all',
-                              child: Text('عام / كل المواسم'),
-                            ),
-                            DropdownMenuItem(value: 'summer', child: Text('الصيف')),
-                            DropdownMenuItem(value: 'winter', child: Text('الشتاء')),
-                          ],
+                          items: seasonOptionsAround()
+                              .map(
+                                (option) => DropdownMenuItem(
+                                  value: option.key,
+                                  child: Text(option.label),
+                                ),
+                              )
+                              .toList(),
                           onChanged: (value) => setSheetState(
                             () => _season = value ?? _season,
                           ),
@@ -252,14 +254,7 @@ class _FinancialTransfersScreenState
   }
 
   String _seasonLabel(String season) {
-    switch (season) {
-      case 'summer':
-        return 'الصيف';
-      case 'winter':
-        return 'الشتاء';
-      default:
-        return 'كل المواسم';
-    }
+    return seasonLabel(season);
   }
 
   Future<void> _confirmDelete(FinancialTransfer transfer) async {
@@ -659,14 +654,21 @@ class _SeasonSelector extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'all', label: Text('كل المواسم')),
-            ButtonSegment(value: 'summer', label: Text('الصيف')),
-            ButtonSegment(value: 'winter', label: Text('الشتاء')),
-          ],
-          selected: {value},
-          onSelectionChanged: (values) => onChanged(values.first),
+        child: DropdownButtonFormField<String>(
+          decoration: const InputDecoration(
+            labelText: 'فلترة حسب الموسم',
+            prefixIcon: Icon(Icons.event_repeat),
+          ),
+          initialValue: value,
+          items: seasonOptionsAround()
+              .map(
+                (option) => DropdownMenuItem(
+                  value: option.key,
+                  child: Text(option.label),
+                ),
+              )
+              .toList(),
+          onChanged: (next) => onChanged(next ?? 'all'),
         ),
       ),
     );

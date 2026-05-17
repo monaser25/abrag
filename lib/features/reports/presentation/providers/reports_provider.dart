@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class FinancialSummary {
@@ -286,7 +287,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
     workRecords.add(
       WorkRecord(
         date: date,
-        season: _inferSeason(date),
+        season: seasonKeyForDate(date),
         technicianId: request.technicianId!,
         technicianName: technician?.name ?? 'عامل غير معروف',
         specialty: technician?.specialty ?? '',
@@ -329,9 +330,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
         floorNumber: expense.apartmentId == null
             ? null
             : floorByApartmentId[expense.apartmentId],
-        season: expense.season == 'all'
-            ? _inferSeason(expense.expenseDate)
-            : expense.season,
+        season: normalizeStoredSeason(expense.season, expense.expenseDate),
         expenseType: expenseType,
         technicianId: technician.id,
         technicianName: technician.name,
@@ -362,7 +361,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
         buildingName: buildingId == null ? null : buildingNameById[buildingId],
         apartmentNumber: apartmentNumberById[booking.apartmentId],
         floorNumber: apartment?.floorNumber,
-        season: 'summer',
+        season: seasonKeyForDate(booking.checkInDate),
         customerName: booking.guestName,
         brokerId: booking.brokerId,
         brokerName: brokerName,
@@ -374,7 +373,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
     rentals.add(
       RentalRecord(
         date: booking.checkInDate,
-        season: 'summer',
+        season: seasonKeyForDate(booking.checkInDate),
         apartmentId: booking.apartmentId,
         apartmentNumber:
             apartmentNumberById[booking.apartmentId] ?? booking.apartmentId,
@@ -416,7 +415,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
             ? null
             : apartmentNumberById[apartmentId],
         floorNumber: apartment?.floorNumber,
-        season: 'winter',
+        season: seasonKeyForDate(payment.paymentDate),
         customerName: contract?.studentName,
       ),
     );
@@ -428,7 +427,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
     rentals.add(
       RentalRecord(
         date: contract.startDate,
-        season: 'winter',
+        season: seasonKeyForDate(contract.startDate),
         apartmentId: contract.apartmentId,
         apartmentNumber:
             apartmentNumberById[contract.apartmentId] ?? contract.apartmentId,
@@ -489,10 +488,6 @@ String _normalizeExpenseType(String type) {
     'other',
   };
   return knownTypes.contains(type) ? type : 'other';
-}
-
-String _inferSeason(DateTime date) {
-  return date.month >= 5 && date.month <= 9 ? 'summer' : 'winter';
 }
 
 double _bookingCommission(SummerBooking booking) {

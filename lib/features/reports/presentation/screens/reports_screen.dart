@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -257,16 +258,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'all', label: Text('كل المواسم')),
-                ButtonSegment(value: 'summer', label: Text('الصيف')),
-                ButtonSegment(value: 'winter', label: Text('الشتاء')),
-              ],
-              selected: {_filter},
-              onSelectionChanged: (values) {
-                setState(() => _filter = values.first);
-              },
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'الموسم المعروض',
+                prefixIcon: Icon(Icons.event_repeat),
+              ),
+              initialValue: _filter,
+              items: seasonOptionsAround()
+                  .map(
+                    (option) => DropdownMenuItem(
+                      value: option.key,
+                      child: Text(option.label),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _filter = value ?? 'all'),
             ),
           ],
         ),
@@ -676,7 +682,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           .toList();
     }
     if (_filter != 'all') {
-      transactions = transactions.where((t) => t.season == _filter).toList();
+      transactions = transactions
+          .where((t) => seasonMatchesKey(t.season, _filter))
+          .toList();
     }
     if (_expenseType != 'all') {
       transactions = transactions
@@ -752,7 +760,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           .toList();
     }
     if (_filter != 'all') {
-      rentals = rentals.where((r) => r.season == _filter).toList();
+      rentals = rentals
+          .where((r) => seasonMatchesKey(r.season, _filter))
+          .toList();
     }
     if (_partyType == 'customer') {
       rentals = rentals.where((r) {
@@ -802,7 +812,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           .toList();
     }
     if (_filter != 'all') {
-      records = records.where((r) => r.season == _filter).toList();
+      records = records.where((r) => seasonMatchesKey(r.season, _filter)).toList();
     }
     if (_expenseType != 'all' && _expenseType != 'maintenance') {
       records = [];
@@ -836,7 +846,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   ) {
     var transfers = report.financialTransfers;
     if (filters.season != 'all') {
-      transfers = transfers.where((t) => t.season == filters.season).toList();
+      transfers = transfers
+          .where((t) => seasonMatchesKey(t.season, filters.season))
+          .toList();
     }
     if (filters.startDate != null && filters.endDate != null) {
       final start = DateTime(

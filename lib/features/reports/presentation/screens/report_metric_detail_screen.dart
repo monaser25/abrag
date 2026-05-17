@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
@@ -493,7 +494,7 @@ class _RentalsSection extends StatelessWidget {
       children: rentals.map((rental) {
         return ListTile(
           title: Text(
-            '${rental.season == 'summer' ? 'صيف' : 'شتاء'} - ${rental.customerName}',
+            '${seasonLabel(rental.season)} - ${rental.customerName}',
           ),
           subtitle: Text(
             '${rental.buildingName ?? ''} شقة ${rental.apartmentNumber} - ${rental.date.toLocal().toString().split(' ')[0]}',

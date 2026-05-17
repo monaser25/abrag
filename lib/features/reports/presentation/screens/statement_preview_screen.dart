@@ -4,6 +4,7 @@ import 'package:printing/printing.dart';
 
 import '../../../../core/services/audit_log_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
@@ -123,8 +124,7 @@ class StatementPreviewScreen extends ConsumerWidget {
     if (filters.paymentMethod != 'all') {
       labels.add(_paymentMethodLabel(filters.paymentMethod));
     }
-    if (filters.season == 'summer') labels.add('موسم الصيف');
-    if (filters.season == 'winter') labels.add('موسم الشتاء');
+    if (filters.season != 'all') labels.add(seasonLabel(filters.season));
     if (filters.expenseType != 'all') {
       labels.add(expenseTypeLabel(filters.expenseType));
     }
