@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final cleaningSuppliesProvider = StreamProvider<List<CleaningSupply>>((ref) {
@@ -16,21 +17,34 @@ final cleaningSuppliesControllerProvider = StateNotifierProvider<CleaningSupplie
 
 class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
+  late final AuditLogService _auditLog;
 
-  CleaningSuppliesController(this._db) : super(const AsyncData(null));
+  CleaningSuppliesController(this._db) : super(const AsyncData(null)) {
+    _auditLog = AuditLogService(_db);
+  }
 
   Future<void> addSupply(String name, String unit) async {
     state = const AsyncLoading();
     try {
+      final id = const Uuid().v4();
       await _db.into(_db.cleaningSupplies).insert(
         CleaningSuppliesCompanion.insert(
-          id: const Uuid().v4(),
+          id: id,
           name: name,
           unit: Value(unit),
           syncStatus: const Value(SyncStatus.pendingInsert),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),
+      );
+      await _auditLog.log(
+        action: 'create',
+        entityType: 'cleaning_supply',
+        entityId: id,
+        title: 'إضافة أداة نظافة',
+        description: 'تم إضافة $name',
+        route: '/cleaning_supplies',
+        newValues: {'name': name, 'unit': unit},
       );
       state = const AsyncData(null);
     } catch (e, st) {
@@ -49,6 +63,15 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
           syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
       );
+      await _auditLog.log(
+        action: 'update',
+        entityType: 'cleaning_supply',
+        entityId: id,
+        title: 'تعديل أداة نظافة',
+        description: 'تم تعديل $name',
+        route: '/cleaning_supplies',
+        newValues: {'name': name, 'unit': unit},
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -64,11 +87,13 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     try {
+      late final String transactionId;
       await _db.transaction(() async {
         // Add transaction
+        transactionId = const Uuid().v4();
         await _db.into(_db.cleaningTransactions).insert(
           CleaningTransactionsCompanion.insert(
-            id: const Uuid().v4(),
+            id: transactionId,
             supplyId: supplyId,
             transactionType: type,
             quantity: quantity,
@@ -107,6 +132,21 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
           );
         }
       });
+      await _auditLog.log(
+        action: type,
+        entityType: 'cleaning_transaction',
+        entityId: transactionId,
+        title: type == 'purchase' ? 'شراء أدوات نظافة' : 'استهلاك أدوات نظافة',
+        description: 'كمية $quantity بتكلفة $costEgp ج.م',
+        route: '/cleaning_supplies',
+        newValues: {
+          'supplyId': supplyId,
+          'type': type,
+          'quantity': quantity,
+          'costEgp': costEgp,
+          'notes': notes,
+        },
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

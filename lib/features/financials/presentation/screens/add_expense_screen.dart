@@ -29,6 +29,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   String? _selectedApartmentId;
   String _selectedExpenseType = 'cleaning';
   String _selectedPaymentMethod = 'cash';
+  String _selectedSeason = 'all';
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     _selectedApartmentId = widget.expense?.apartmentId;
     _selectedExpenseType = widget.expense?.expenseType ?? 'cleaning';
     _selectedPaymentMethod = widget.expense?.paymentMethod ?? 'cash';
+    _selectedSeason = widget.expense?.season ?? 'all';
   }
 
   final List<Map<String, String>> _expenseTypes = [
@@ -82,6 +84,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               expenseType: _selectedExpenseType,
               amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
               paymentMethod: _selectedPaymentMethod,
+              season: _selectedSeason,
               date: _date!,
               description: _descriptionController.text.trim(),
             );
@@ -93,6 +96,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               expenseType: _selectedExpenseType,
               amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
               paymentMethod: _selectedPaymentMethod,
+              season: _selectedSeason,
               date: _date!,
               description: _descriptionController.text.trim(),
             );
@@ -217,6 +221,19 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                   .toList(),
               onChanged: (v) => setState(
                 () => _selectedPaymentMethod = v ?? _selectedPaymentMethod,
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: 'الموسم'),
+              initialValue: _selectedSeason,
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('عام / كل المواسم')),
+                DropdownMenuItem(value: 'summer', child: Text('الصيف')),
+                DropdownMenuItem(value: 'winter', child: Text('الشتاء')),
+              ],
+              onChanged: (v) => setState(
+                () => _selectedSeason = v ?? _selectedSeason,
               ),
             ),
             const SizedBox(height: 16),

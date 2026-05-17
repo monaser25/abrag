@@ -46,6 +46,17 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
     return paymentAccounts[method] ?? method;
   }
 
+  String _translateSeason(String season) {
+    switch (season) {
+      case 'summer':
+        return 'الصيف';
+      case 'winter':
+        return 'الشتاء';
+      default:
+        return 'عام';
+    }
+  }
+
   Future<void> _selectDateRange(BuildContext context) async {
     final picked = await showDateRangePicker(
       context: context,
@@ -252,6 +263,10 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                                         color: theme.colorScheme.primary,
                                       ),
                                     ),
+                                  ),
+                                  Text(
+                                    'الموسم: ${_translateSeason(expense.season)}',
+                                    style: theme.textTheme.bodySmall,
                                   ),
                                 ],
                               ),

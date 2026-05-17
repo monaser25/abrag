@@ -37,8 +37,7 @@ class SummerBookingsScreen extends ConsumerWidget {
             final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
             final target = DateTime(today.year, today.month, today.day);
             final checkoutDay = DateTime(checkout.year, checkout.month, checkout.day);
-            return !checkoutDay.isBefore(target) &&
-                checkoutDay.isBefore(target.add(const Duration(days: 14)));
+            return !checkoutDay.isBefore(target);
           }).length;
           final upcoming = bookings.where((booking) {
             return booking.checkInDate.isAfter(today) &&

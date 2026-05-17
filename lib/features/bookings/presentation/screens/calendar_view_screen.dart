@@ -202,6 +202,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
               _SelectedDaySummary(
                 stats: selectedStats,
                 selectedDay: _selectedDay,
+                onFilterSelected: (filter) => setState(() => _filter = filter),
               ),
               const SizedBox(height: 12),
               SingleChildScrollView(
@@ -259,6 +260,16 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
       }
     }).toList();
 
+    if (_filter == _CalendarFilter.upcomingCheckouts) {
+      selectedBookings.sort(
+        (a, b) => (a.earlyCheckoutDate ?? a.checkOutDate).compareTo(
+          b.earlyCheckoutDate ?? b.checkOutDate,
+        ),
+      );
+    } else if (_filter == _CalendarFilter.upcoming) {
+      selectedBookings.sort((a, b) => a.checkInDate.compareTo(b.checkInDate));
+    }
+
     if (_filter == _CalendarFilter.available) {
       if (stats.availableApartments.isEmpty) {
         return const _EmptyCalendarState(
@@ -286,6 +297,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
       return const _EmptyCalendarState(message: 'لا توجد حجوزات مطابقة للفلتر');
     }
 
+    final dateFormat = DateFormat('yyyy-MM-dd', 'ar');
+
     return Column(
       children: selectedBookings.map((booking) {
         final apartment = apartments
@@ -294,7 +307,9 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         final apartmentNumber = apartment.isEmpty
             ? booking.apartmentId
             : apartment.first.apartmentNumber;
-        final isCheckout = _isCheckoutOnDay(booking, _selectedDay);
+        final checkoutDate = booking.earlyCheckoutDate ?? booking.checkOutDate;
+        final isCheckout = _filter == _CalendarFilter.upcomingCheckouts ||
+            _isCheckoutOnDay(booking, _selectedDay);
         final isCheckIn = _isCheckInOnDay(booking, _selectedDay);
         return Card(
           child: ListTile(
@@ -319,11 +334,13 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             ),
             title: Text(booking.guestName),
             subtitle: Text(
-              'شقة $apartmentNumber • ${isCheckout
-                  ? "خروج"
-                  : isCheckIn
-                  ? "دخول"
-                  : "إقامة"}',
+              _filter == _CalendarFilter.upcomingCheckouts
+                  ? 'شقة $apartmentNumber • خروج ${dateFormat.format(checkoutDate)}'
+                  : 'شقة $apartmentNumber • ${isCheckout
+                        ? "خروج"
+                        : isCheckIn
+                        ? "دخول"
+                        : "إقامة"}',
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () => context.push('/summer_bookings/details/${booking.id}'),
@@ -363,7 +380,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         .map((booking) => booking.apartmentId)
         .toSet();
     final checkouts = bookings
-        .where((booking) => _isUpcomingCheckout(booking, from: day))
+        .where((booking) => _isUpcomingCheckout(booking, from: DateTime.now()))
         .toList();
     final futureBookings = bookings.where((booking) {
       return booking.checkInDate.isAfter(day) && booking.status != 'cancelled';
@@ -404,9 +421,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     }
     final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
     final start = _dateOnly(from);
-    final end = start.add(const Duration(days: 14));
     final checkoutDay = _dateOnly(checkout);
-    return !checkoutDay.isBefore(start) && checkoutDay.isBefore(end);
+    return !checkoutDay.isBefore(start);
   }
 
   List<SummerBooking> _eventsForDay(
@@ -466,8 +482,13 @@ class _DayStats {
 class _SelectedDaySummary extends StatelessWidget {
   final _DayStats stats;
   final DateTime selectedDay;
+  final ValueChanged<_CalendarFilter> onFilterSelected;
 
-  const _SelectedDaySummary({required this.stats, required this.selectedDay});
+  const _SelectedDaySummary({
+    required this.stats,
+    required this.selectedDay,
+    required this.onFilterSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -497,21 +518,25 @@ class _SelectedDaySummary extends StatelessWidget {
                   label: 'مؤجرة',
                   value: '${stats.occupiedCount}',
                   color: Colors.orange,
+                  onTap: () => onFilterSelected(_CalendarFilter.occupied),
                 ),
                 _TinyStat(
                   label: 'غير مؤجرة',
                   value: '${stats.availableCount}',
                   color: Colors.green,
+                  onTap: () => onFilterSelected(_CalendarFilter.available),
                 ),
                 _TinyStat(
                   label: 'خروجات قادمة',
                   value: '${stats.checkoutCount}',
                   color: Colors.redAccent,
+                  onTap: () => onFilterSelected(_CalendarFilter.upcomingCheckouts),
                 ),
                 _TinyStat(
                   label: 'إجمالي الشقق',
                   value: '${stats.totalApartments}',
                   color: Colors.blueAccent,
+                  onTap: () => onFilterSelected(_CalendarFilter.all),
                 ),
               ],
             ),
@@ -526,28 +551,34 @@ class _TinyStat extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final VoidCallback onTap;
 
   const _TinyStat({
     required this.label,
     required this.value,
     required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 6),
-          Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
-        ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 6),
+            Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+          ],
+        ),
       ),
     );
   }

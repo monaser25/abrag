@@ -170,6 +170,17 @@ class DashboardScreen extends ConsumerWidget {
                     onTap: () => context.go('/building_rent'),
                   ),
                 ),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.account_balance_wallet,
+                      color: Color(0xFFF4A225),
+                    ),
+                    title: const Text('الخزنة والتحويلات'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => context.go('/financial_transfers'),
+                  ),
+                ),
               ],
               if (hasPerm('manage_maintenance')) ...[
                 Card(

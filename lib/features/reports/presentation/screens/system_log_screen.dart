@@ -222,6 +222,15 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
         return 'شقق';
       case 'customer':
         return 'عملاء';
+      case 'user':
+        return 'مستخدمين';
+      case 'meter_reading':
+        return 'قراءات العدادات';
+      case 'settings':
+        return 'الإعدادات';
+      case 'cleaning_supply':
+      case 'cleaning_transaction':
+        return 'النظافة والمخزون';
       default:
         return type;
     }
@@ -247,6 +256,15 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
         return Icons.apartment;
       case 'customer':
         return Icons.people;
+      case 'user':
+        return Icons.manage_accounts;
+      case 'meter_reading':
+        return Icons.electric_meter;
+      case 'settings':
+        return Icons.settings;
+      case 'cleaning_supply':
+      case 'cleaning_transaction':
+        return Icons.cleaning_services;
       default:
         return Icons.history;
     }

@@ -77,6 +77,15 @@ class _FinancialTransfersScreenState
                         if (_transferType == 'cash_deposit') {
                           _fromAccount = 'cash';
                           _toAccount = 'company_vault';
+                        } else {
+                          if (!paymentAccounts.containsKey(_toAccount)) {
+                            _toAccount = 'instapay';
+                          }
+                          if (_fromAccount == _toAccount) {
+                            _toAccount = paymentAccounts.keys.firstWhere(
+                              (account) => account != _fromAccount,
+                            );
+                          }
                         }
                       }),
                     ),

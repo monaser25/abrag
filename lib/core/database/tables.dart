@@ -161,6 +161,7 @@ class Expenses extends Table with SyncableTable {
   TextColumn get expenseType => text()();
   RealColumn get amountEgp => real()();
   TextColumn get paymentMethod => text().withDefault(const Constant('cash'))();
+  TextColumn get season => text().withDefault(const Constant('all'))();
   RealColumn get discountEgp => real().withDefault(const Constant(0))();
   TextColumn get discountReason => text().nullable()();
   DateTimeColumn get expenseDate => dateTime()();

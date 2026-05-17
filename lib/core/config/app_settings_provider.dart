@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import '../../features/dashboard/presentation/providers/database_provider.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
+import '../services/audit_log_service.dart';
 
 const kSettingsBuildingId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 const kSettingsBuildingName = '__ABRAG_SETTINGS__';
@@ -29,7 +30,11 @@ final appSettingsControllerProvider = Provider(
 
 class AppSettingsController {
   final AppDatabase _db;
-  AppSettingsController(this._db);
+  late final AuditLogService _auditLog;
+
+  AppSettingsController(this._db) {
+    _auditLog = AuditLogService(_db);
+  }
 
   Future<void> updateSettings(Map<String, dynamic> newSettings) async {
     final b = await (_db.select(
@@ -59,5 +64,17 @@ class AppSettingsController {
         ),
       );
     }
+    await _auditLog.log(
+      action: 'update',
+      entityType: 'settings',
+      entityId: kSettingsBuildingId,
+      title: 'تعديل الإعدادات',
+      description: 'تم تعديل إعدادات التطبيق',
+      route: '/settings',
+      oldValues: b?.address == null
+          ? null
+          : jsonDecode(b!.address!) as Map<String, dynamic>?,
+      newValues: newSettings,
+    );
   }
 }

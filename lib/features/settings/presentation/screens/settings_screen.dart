@@ -32,6 +32,12 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _buildSettingsCard(
             context,
+            title: 'الخزنة والتحويلات',
+            icon: Icons.account_balance_wallet,
+            route: '/financial_transfers',
+          ),
+          _buildSettingsCard(
+            context,
             title: 'مواعيد الخروج',
             icon: Icons.schedule,
             route: '/settings/checkout_times',

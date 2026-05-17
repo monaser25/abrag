@@ -15,9 +15,13 @@ const paymentAccounts = <String, String>{
 
 final financialTransfersProvider = StreamProvider<List<FinancialTransfer>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.financialTransfers)
-        ..orderBy([(t) => OrderingTerm.desc(t.transferDate)]))
-      .watch();
+  final selectedSeason = ref.watch(selectedFinancialSeasonProvider);
+  final query = db.select(db.financialTransfers)
+    ..orderBy([(t) => OrderingTerm.desc(t.transferDate)]);
+  if (selectedSeason != 'all') {
+    query.where((t) => t.season.equals(selectedSeason));
+  }
+  return query.watch();
 });
 
 final selectedFinancialSeasonProvider = StateProvider<String>((ref) => 'all');
@@ -28,18 +32,22 @@ final accountBalancesProvider = StreamProvider<Map<String, double>>((ref) {
   final seasonFilter = selectedSeason == 'all'
       ? ''
       : "AND season = '$selectedSeason'";
+  final hideSummer = selectedSeason == 'winter' ? 'AND 1 = 0' : '';
+  final hideWinter = selectedSeason == 'summer' ? 'AND 1 = 0' : '';
   return db.customSelect('''
     SELECT account, SUM(amount) AS balance
     FROM (
       SELECT payment_method AS account, amount_paid_egp AS amount
       FROM summer_bookings
-      WHERE status != 'cancelled'
+      WHERE status != 'cancelled' $hideSummer
       UNION ALL
       SELECT payment_method AS account, amount_egp AS amount
       FROM winter_payments
+      WHERE 1 = 1 $hideWinter
       UNION ALL
       SELECT payment_method AS account, -amount_egp AS amount
       FROM expenses
+      WHERE 1 = 1 $seasonFilter
       UNION ALL
       SELECT from_account AS account, -amount_egp AS amount
       FROM financial_transfers

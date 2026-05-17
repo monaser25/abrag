@@ -6430,6 +6430,16 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     requiredDuringInsert: false,
     defaultValue: const Constant('cash'),
   );
+  static const VerificationMeta _seasonMeta = const VerificationMeta('season');
+  @override
+  late final GeneratedColumn<String> season = GeneratedColumn<String>(
+    'season',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('all'),
+  );
   static const VerificationMeta _discountEgpMeta = const VerificationMeta(
     'discountEgp',
   );
@@ -6518,6 +6528,7 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
     expenseType,
     amountEgp,
     paymentMethod,
+    season,
     discountEgp,
     discountReason,
     expenseDate,
@@ -6593,6 +6604,12 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
           data['payment_method']!,
           _paymentMethodMeta,
         ),
+      );
+    }
+    if (data.containsKey('season')) {
+      context.handle(
+        _seasonMeta,
+        season.isAcceptableOrUnknown(data['season']!, _seasonMeta),
       );
     }
     if (data.containsKey('discount_egp')) {
@@ -6699,6 +6716,10 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
         DriftSqlType.string,
         data['${effectivePrefix}payment_method'],
       )!,
+      season: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}season'],
+      )!,
       discountEgp: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}discount_egp'],
@@ -6748,6 +6769,7 @@ class Expense extends DataClass implements Insertable<Expense> {
   final String expenseType;
   final double amountEgp;
   final String paymentMethod;
+  final String season;
   final double discountEgp;
   final String? discountReason;
   final DateTime expenseDate;
@@ -6764,6 +6786,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     required this.expenseType,
     required this.amountEgp,
     required this.paymentMethod,
+    required this.season,
     required this.discountEgp,
     this.discountReason,
     required this.expenseDate,
@@ -6791,6 +6814,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     map['expense_type'] = Variable<String>(expenseType);
     map['amount_egp'] = Variable<double>(amountEgp);
     map['payment_method'] = Variable<String>(paymentMethod);
+    map['season'] = Variable<String>(season);
     map['discount_egp'] = Variable<double>(discountEgp);
     if (!nullToAbsent || discountReason != null) {
       map['discount_reason'] = Variable<String>(discountReason);
@@ -6823,6 +6847,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       expenseType: Value(expenseType),
       amountEgp: Value(amountEgp),
       paymentMethod: Value(paymentMethod),
+      season: Value(season),
       discountEgp: Value(discountEgp),
       discountReason: discountReason == null && nullToAbsent
           ? const Value.absent()
@@ -6859,6 +6884,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       expenseType: serializer.fromJson<String>(json['expenseType']),
       amountEgp: serializer.fromJson<double>(json['amountEgp']),
       paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
+      season: serializer.fromJson<String>(json['season']),
       discountEgp: serializer.fromJson<double>(json['discountEgp']),
       discountReason: serializer.fromJson<String?>(json['discountReason']),
       expenseDate: serializer.fromJson<DateTime>(json['expenseDate']),
@@ -6882,6 +6908,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       'expenseType': serializer.toJson<String>(expenseType),
       'amountEgp': serializer.toJson<double>(amountEgp),
       'paymentMethod': serializer.toJson<String>(paymentMethod),
+      'season': serializer.toJson<String>(season),
       'discountEgp': serializer.toJson<double>(discountEgp),
       'discountReason': serializer.toJson<String?>(discountReason),
       'expenseDate': serializer.toJson<DateTime>(expenseDate),
@@ -6901,6 +6928,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     String? expenseType,
     double? amountEgp,
     String? paymentMethod,
+    String? season,
     double? discountEgp,
     Value<String?> discountReason = const Value.absent(),
     DateTime? expenseDate,
@@ -6917,6 +6945,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     expenseType: expenseType ?? this.expenseType,
     amountEgp: amountEgp ?? this.amountEgp,
     paymentMethod: paymentMethod ?? this.paymentMethod,
+    season: season ?? this.season,
     discountEgp: discountEgp ?? this.discountEgp,
     discountReason: discountReason.present
         ? discountReason.value
@@ -6951,6 +6980,7 @@ class Expense extends DataClass implements Insertable<Expense> {
       paymentMethod: data.paymentMethod.present
           ? data.paymentMethod.value
           : this.paymentMethod,
+      season: data.season.present ? data.season.value : this.season,
       discountEgp: data.discountEgp.present
           ? data.discountEgp.value
           : this.discountEgp,
@@ -6984,6 +7014,7 @@ class Expense extends DataClass implements Insertable<Expense> {
           ..write('expenseType: $expenseType, ')
           ..write('amountEgp: $amountEgp, ')
           ..write('paymentMethod: $paymentMethod, ')
+          ..write('season: $season, ')
           ..write('discountEgp: $discountEgp, ')
           ..write('discountReason: $discountReason, ')
           ..write('expenseDate: $expenseDate, ')
@@ -7005,6 +7036,7 @@ class Expense extends DataClass implements Insertable<Expense> {
     expenseType,
     amountEgp,
     paymentMethod,
+    season,
     discountEgp,
     discountReason,
     expenseDate,
@@ -7025,6 +7057,7 @@ class Expense extends DataClass implements Insertable<Expense> {
           other.expenseType == this.expenseType &&
           other.amountEgp == this.amountEgp &&
           other.paymentMethod == this.paymentMethod &&
+          other.season == this.season &&
           other.discountEgp == this.discountEgp &&
           other.discountReason == this.discountReason &&
           other.expenseDate == this.expenseDate &&
@@ -7043,6 +7076,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   final Value<String> expenseType;
   final Value<double> amountEgp;
   final Value<String> paymentMethod;
+  final Value<String> season;
   final Value<double> discountEgp;
   final Value<String?> discountReason;
   final Value<DateTime> expenseDate;
@@ -7060,6 +7094,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     this.expenseType = const Value.absent(),
     this.amountEgp = const Value.absent(),
     this.paymentMethod = const Value.absent(),
+    this.season = const Value.absent(),
     this.discountEgp = const Value.absent(),
     this.discountReason = const Value.absent(),
     this.expenseDate = const Value.absent(),
@@ -7078,6 +7113,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     required String expenseType,
     required double amountEgp,
     this.paymentMethod = const Value.absent(),
+    this.season = const Value.absent(),
     this.discountEgp = const Value.absent(),
     this.discountReason = const Value.absent(),
     required DateTime expenseDate,
@@ -7100,6 +7136,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Expression<String>? expenseType,
     Expression<double>? amountEgp,
     Expression<String>? paymentMethod,
+    Expression<String>? season,
     Expression<double>? discountEgp,
     Expression<String>? discountReason,
     Expression<DateTime>? expenseDate,
@@ -7118,6 +7155,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       if (expenseType != null) 'expense_type': expenseType,
       if (amountEgp != null) 'amount_egp': amountEgp,
       if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (season != null) 'season': season,
       if (discountEgp != null) 'discount_egp': discountEgp,
       if (discountReason != null) 'discount_reason': discountReason,
       if (expenseDate != null) 'expense_date': expenseDate,
@@ -7138,6 +7176,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     Value<String>? expenseType,
     Value<double>? amountEgp,
     Value<String>? paymentMethod,
+    Value<String>? season,
     Value<double>? discountEgp,
     Value<String?>? discountReason,
     Value<DateTime>? expenseDate,
@@ -7156,6 +7195,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
       expenseType: expenseType ?? this.expenseType,
       amountEgp: amountEgp ?? this.amountEgp,
       paymentMethod: paymentMethod ?? this.paymentMethod,
+      season: season ?? this.season,
       discountEgp: discountEgp ?? this.discountEgp,
       discountReason: discountReason ?? this.discountReason,
       expenseDate: expenseDate ?? this.expenseDate,
@@ -7196,6 +7236,9 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
     if (paymentMethod.present) {
       map['payment_method'] = Variable<String>(paymentMethod.value);
     }
+    if (season.present) {
+      map['season'] = Variable<String>(season.value);
+    }
     if (discountEgp.present) {
       map['discount_egp'] = Variable<double>(discountEgp.value);
     }
@@ -7234,6 +7277,7 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
           ..write('expenseType: $expenseType, ')
           ..write('amountEgp: $amountEgp, ')
           ..write('paymentMethod: $paymentMethod, ')
+          ..write('season: $season, ')
           ..write('discountEgp: $discountEgp, ')
           ..write('discountReason: $discountReason, ')
           ..write('expenseDate: $expenseDate, ')
@@ -16669,6 +16713,7 @@ typedef $$ExpensesTableCreateCompanionBuilder =
       required String expenseType,
       required double amountEgp,
       Value<String> paymentMethod,
+      Value<String> season,
       Value<double> discountEgp,
       Value<String?> discountReason,
       required DateTime expenseDate,
@@ -16688,6 +16733,7 @@ typedef $$ExpensesTableUpdateCompanionBuilder =
       Value<String> expenseType,
       Value<double> amountEgp,
       Value<String> paymentMethod,
+      Value<String> season,
       Value<double> discountEgp,
       Value<String?> discountReason,
       Value<DateTime> expenseDate,
@@ -16778,6 +16824,11 @@ class $$ExpensesTableFilterComposer
 
   ColumnFilters<String> get paymentMethod => $composableBuilder(
     column: $table.paymentMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get season => $composableBuilder(
+    column: $table.season,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16902,6 +16953,11 @@ class $$ExpensesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get season => $composableBuilder(
+    column: $table.season,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get discountEgp => $composableBuilder(
     column: $table.discountEgp,
     builder: (column) => ColumnOrderings(column),
@@ -17020,6 +17076,9 @@ class $$ExpensesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get season =>
+      $composableBuilder(column: $table.season, builder: (column) => column);
+
   GeneratedColumn<double> get discountEgp => $composableBuilder(
     column: $table.discountEgp,
     builder: (column) => column,
@@ -17136,6 +17195,7 @@ class $$ExpensesTableTableManager
                 Value<String> expenseType = const Value.absent(),
                 Value<double> amountEgp = const Value.absent(),
                 Value<String> paymentMethod = const Value.absent(),
+                Value<String> season = const Value.absent(),
                 Value<double> discountEgp = const Value.absent(),
                 Value<String?> discountReason = const Value.absent(),
                 Value<DateTime> expenseDate = const Value.absent(),
@@ -17153,6 +17213,7 @@ class $$ExpensesTableTableManager
                 expenseType: expenseType,
                 amountEgp: amountEgp,
                 paymentMethod: paymentMethod,
+                season: season,
                 discountEgp: discountEgp,
                 discountReason: discountReason,
                 expenseDate: expenseDate,
@@ -17172,6 +17233,7 @@ class $$ExpensesTableTableManager
                 required String expenseType,
                 required double amountEgp,
                 Value<String> paymentMethod = const Value.absent(),
+                Value<String> season = const Value.absent(),
                 Value<double> discountEgp = const Value.absent(),
                 Value<String?> discountReason = const Value.absent(),
                 required DateTime expenseDate,
@@ -17189,6 +17251,7 @@ class $$ExpensesTableTableManager
                 expenseType: expenseType,
                 amountEgp: amountEgp,
                 paymentMethod: paymentMethod,
+                season: season,
                 discountEgp: discountEgp,
                 discountReason: discountReason,
                 expenseDate: expenseDate,
