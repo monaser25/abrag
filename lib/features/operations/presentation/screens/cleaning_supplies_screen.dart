@@ -33,7 +33,7 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: unitController.text,
+                initialValue: unitController.text,
                 decoration: const InputDecoration(labelText: 'وحدة القياس'),
                 items: const [
                   DropdownMenuItem(value: 'لتر', child: Text('لتر')),

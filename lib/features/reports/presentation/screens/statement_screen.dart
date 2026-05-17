@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:printing/printing.dart';
+import 'package:go_router/go_router.dart';
+import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
-import '../../domain/services/pdf_export_service.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
-import '../../../../core/utils/currency_formatter.dart';
 
 class StatementScreen extends ConsumerStatefulWidget {
-  const StatementScreen({super.key});
+  final ReportFilterState initialFilters;
+
+  const StatementScreen({
+    super.key,
+    this.initialFilters = const ReportFilterState(),
+  });
 
   @override
   ConsumerState<StatementScreen> createState() => _StatementScreenState();
@@ -19,13 +23,30 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
   String? _selectedBuildingId;
   String? _selectedApartmentId;
   String _transactionType = 'all'; // all, revenue, expense
+  String _paymentMethod = 'all'; // all, cash, vodafone_cash, instapay
   String _season = 'all'; // all, summer, winter
   String _expenseType = 'all';
   String _partyType = 'all'; // all, customer, broker, technician
   String _selectedPartyKey = 'all';
-  String _personQuery = '';
   DateTime? _startDate;
   DateTime? _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final filters = widget.initialFilters;
+    _selectedBuildingId = filters.buildingId;
+    _selectedApartmentId = filters.apartmentId;
+    _transactionType = filters.transactionType;
+    _paymentMethod = filters.paymentMethod;
+    _season = filters.season;
+    _expenseType = filters.expenseType;
+    _partyType = filters.partyType;
+    _selectedPartyKey = filters.selectedPartyKey;
+    _startDate = filters.startDate;
+    _endDate = filters.endDate;
+    _personController.text = filters.personQuery;
+  }
 
   Future<void> _selectDateRange() async {
     final picked = await showDateRangePicker(
@@ -47,11 +68,11 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
       _selectedBuildingId = null;
       _selectedApartmentId = null;
       _transactionType = 'all';
+      _paymentMethod = 'all';
       _season = 'all';
       _expenseType = 'all';
       _partyType = 'all';
       _selectedPartyKey = 'all';
-      _personQuery = '';
       _startDate = null;
       _endDate = null;
     });
@@ -96,101 +117,20 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
     return options;
   }
 
-  bool _matchesParty(Transaction transaction) {
-    final query = _personQuery.trim();
-
-    bool matchesSelected(String type, String? id, String? name) {
-      if (_selectedPartyKey == 'all') return true;
-      return _selectedPartyKey == '$type:${id ?? name}';
-    }
-
-    bool contains(String? value) {
-      return query.isEmpty || (value?.contains(query) ?? false);
-    }
-
-    if (_partyType == 'customer') {
-      return transaction.customerName != null &&
-          matchesSelected('customer', null, transaction.customerName) &&
-          contains(transaction.customerName);
-    }
-
-    if (_partyType == 'broker') {
-      return transaction.brokerName != null &&
-          matchesSelected(
-            'broker',
-            transaction.brokerId,
-            transaction.brokerName,
-          ) &&
-          contains(transaction.brokerName);
-    }
-
-    if (_partyType == 'technician') {
-      return transaction.technicianName != null &&
-          matchesSelected(
-            'technician',
-            transaction.technicianId,
-            transaction.technicianName,
-          ) &&
-          contains(transaction.technicianName);
-    }
-
-    if (query.isEmpty) return true;
-    return contains(transaction.customerName) ||
-        contains(transaction.brokerName) ||
-        contains(transaction.technicianName);
-  }
-
-  bool _matchesWorkRecord(WorkRecord work) {
-    if (_selectedBuildingId != null && work.buildingId != _selectedBuildingId) {
-      return false;
-    }
-    if (_selectedApartmentId != null &&
-        work.apartmentId != _selectedApartmentId) {
-      return false;
-    }
-    if (_season != 'all' && work.season != _season) {
-      return false;
-    }
-    if (_expenseType != 'all' && _expenseType != 'maintenance') {
-      return false;
-    }
-    if (_selectedPartyKey != 'all' &&
-        _selectedPartyKey != 'technician:${work.technicianId}') {
-      return false;
-    }
-    if (_personQuery.isNotEmpty &&
-        !work.technicianName.contains(_personQuery)) {
-      return false;
-    }
-    if (_startDate != null && _endDate != null) {
-      return work.date.isAfter(_startDate!.subtract(const Duration(days: 1))) &&
-          work.date.isBefore(_endDate!.add(const Duration(days: 1)));
-    }
-    return true;
-  }
-
-  Transaction _workRecordTransaction(WorkRecord work) {
-    return Transaction(
-      date: work.date,
-      description:
-          'شغل عامل: ${work.technicianName} - ${work.description}${work.status == 'resolved' ? ' - مكتمل' : ' - مفتوح'}',
-      amount: work.cost,
-      isRevenue: false,
-      paymentMethod: 'cash',
-      buildingId: work.buildingId,
-      apartmentId: work.apartmentId,
-      buildingName: work.buildingName,
-      apartmentNumber: work.apartmentNumber,
-      floorNumber: work.floorNumber,
-      season: work.season,
-      expenseType: 'maintenance',
-      technicianId: work.technicianId,
-      technicianName: work.technicianName,
+  ReportFilterState _currentFilters(String selectedPartyKey) {
+    return ReportFilterState(
+      buildingId: _selectedBuildingId,
+      apartmentId: _selectedApartmentId,
+      season: _season,
+      expenseType: _expenseType,
+      partyType: _partyType,
+      selectedPartyKey: selectedPartyKey,
+      personQuery: _personController.text.trim(),
+      transactionType: _transactionType,
+      paymentMethod: _paymentMethod,
+      startDate: _startDate,
+      endDate: _endDate,
     );
-  }
-
-  String _selectedPartyLabel(FinancialSummary? report) {
-    return _partyOptions(report)[_selectedPartyKey] ?? 'كل الحسابات';
   }
 
   @override
@@ -215,19 +155,26 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          // Filters Area
           Card(
-            margin: const EdgeInsets.all(8.0),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.38,
-                ),
-                child: SingleChildScrollView(
-                  child: LayoutBuilder(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'اختار فلاتر كشف الحساب',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'بعد اختيار الفلاتر اضغط عرض PDF لمعاينة الكشف ومشاركته أو طباعته.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
                     builder: (context, constraints) {
                       final fieldWidth = constraints.maxWidth < 720
                           ? constraints.maxWidth
@@ -311,9 +258,6 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                           SizedBox(
                             width: fieldWidth,
                             child: DropdownButtonFormField<String>(
-                              key: ValueKey(
-                                'statement-party-account-$_partyType',
-                              ),
                               decoration: const InputDecoration(
                                 labelText: 'النوع',
                                 isDense: true,
@@ -336,6 +280,36 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                               onChanged: (val) => setState(
                                 () => _transactionType = val ?? 'all',
                               ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                labelText: 'طريقة الدفع',
+                                isDense: true,
+                              ),
+                              initialValue: _paymentMethod,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'all',
+                                  child: Text('كل طرق الدفع'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'cash',
+                                  child: Text('نقدي'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'vodafone_cash',
+                                  child: Text('فودافون كاش'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'instapay',
+                                  child: Text('إنستاباي'),
+                                ),
+                              ],
+                              onChanged: (val) =>
+                                  setState(() => _paymentMethod = val ?? 'all'),
                             ),
                           ),
                           SizedBox(
@@ -445,6 +419,7 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                           SizedBox(
                             width: fieldWidth,
                             child: DropdownButtonFormField<String>(
+                              key: ValueKey('statement-party-$_partyType'),
                               decoration: const InputDecoration(
                                 labelText: 'اختر الحساب',
                                 isDense: true,
@@ -474,8 +449,6 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                                 isDense: true,
                                 prefixIcon: Icon(Icons.search),
                               ),
-                              onChanged: (val) =>
-                                  setState(() => _personQuery = val.trim()),
                             ),
                           ),
                           SizedBox(
@@ -485,9 +458,8 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                               icon: const Icon(Icons.date_range, size: 18),
                               label: Text(
                                 _startDate != null
-                                    ? '${_startDate!.month}/${_startDate!.year} - ${_endDate!.month}/${_endDate!.year}'
-                                    : 'الفترة الزمنية',
-                                style: const TextStyle(fontSize: 12),
+                                    ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
+                                    : 'اختيار الفترة الزمنية',
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -496,127 +468,24 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                       );
                     },
                   ),
-                ),
+                ],
               ),
             ),
           ),
-
-          Expanded(
-            child: reportAsync.when(
-              data: (report) {
-                List<Transaction> filtered = _partyType == 'technician'
-                    ? report.workRecords
-                          .where(_matchesWorkRecord)
-                          .map(_workRecordTransaction)
-                          .toList()
-                    : report.transactions;
-
-                if (_partyType != 'technician') {
-                  if (_selectedBuildingId != null) {
-                    filtered = filtered
-                        .where((t) => t.buildingId == _selectedBuildingId)
-                        .toList();
-                  }
-
-                  if (_selectedApartmentId != null) {
-                    filtered = filtered
-                        .where((t) => t.apartmentId == _selectedApartmentId)
-                        .toList();
-                  }
-
-                  if (_transactionType == 'revenue') {
-                    filtered = filtered.where((t) => t.isRevenue).toList();
-                  } else if (_transactionType == 'expense') {
-                    filtered = filtered.where((t) => !t.isRevenue).toList();
-                  }
-
-                  if (_season != 'all') {
-                    filtered = filtered
-                        .where((t) => t.season == _season)
-                        .toList();
-                  }
-
-                  if (_expenseType != 'all') {
-                    filtered = filtered
-                        .where((t) => t.expenseType == _expenseType)
-                        .toList();
-                  }
-
-                  if (_partyType != 'all' ||
-                      _selectedPartyKey != 'all' ||
-                      _personQuery.isNotEmpty) {
-                    filtered = filtered.where(_matchesParty).toList();
-                  }
-
-                  if (_startDate != null && _endDate != null) {
-                    filtered = filtered.where((t) {
-                      return t.date.isAfter(
-                            _startDate!.subtract(const Duration(days: 1)),
-                          ) &&
-                          t.date.isBefore(
-                            _endDate!.add(const Duration(days: 1)),
-                          );
-                    }).toList();
-                  }
-                } else if (_transactionType == 'revenue') {
-                  filtered = [];
-                }
-
-                final totalRev = filtered
-                    .where((t) => t.isRevenue)
-                    .fold(0.0, (s, t) => s + t.amount);
-                final totalExp = filtered
-                    .where((t) => !t.isRevenue)
-                    .fold(0.0, (s, t) => s + t.amount);
-                final profit = totalRev - totalExp;
-
-                return PdfPreview(
-                  build: (format) => PdfExportService.generateStatementPdf(
-                    title: _partyType == 'all'
-                        ? 'كشف حساب'
-                        : 'كشف حساب ${_selectedPartyLabel(report)}',
-                    dateRange: _startDate != null
-                        ? 'من ${_startDate!.toLocal().toString().split(' ')[0]} إلى ${_endDate!.toLocal().toString().split(' ')[0]}'
-                        : 'جميع الأوقات',
-                    totalRevenue: totalRev,
-                    totalExpenses: totalExp,
-                    netProfit: profit,
-                    transactions: filtered
-                        .map(
-                          (t) => {
-                            'date': t.date.toLocal().toString().split(' ')[0],
-                            'description': [
-                              t.description,
-                              if (t.apartmentNumber != null)
-                                'شقة ${t.apartmentNumber}',
-                              if (t.buildingName != null) t.buildingName,
-                              if (t.brokerName != null &&
-                                  t.brokerName!.isNotEmpty)
-                                'سمسار: ${t.brokerName}',
-                              if (t.technicianName != null &&
-                                  t.technicianName!.isNotEmpty)
-                                'عامل: ${t.technicianName}',
-                              if (t.brokerCommission > 0)
-                                'عمولة السمسار: ${t.brokerCommission.toCurrencyFormat()} ج.م',
-                            ].join(' - '),
-                            'amount': t.isRevenue
-                                ? '+ ${t.amount.toCurrencyFormat()}'
-                                : '- ${t.amount.toCurrencyFormat()}',
-                            'isRevenue': t.isRevenue,
-                          },
-                        )
-                        .toList(),
-                  ),
-                  allowPrinting: true,
-                  allowSharing: true,
-                  canChangeOrientation: false,
-                  canChangePageFormat: false,
-                  canDebug: false,
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => context.push(
+              '/reports/statement/preview',
+              extra: _currentFilters(selectedPartyKey),
             ),
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('عرض PDF'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'سيتم إنشاء كشف الحساب حسب الفلاتر المختارة.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),

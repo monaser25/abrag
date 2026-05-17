@@ -19,11 +19,13 @@ part 'database.g.dart';
     WinterPayments,
     MeterReadings,
     Expenses,
+    FinancialTransfers,
     Technicians,
     CleaningSupplies,
     CleaningTransactions,
     ApartmentInspections,
     MaintenanceRequests,
+    AuditLogs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -31,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration {
@@ -43,7 +45,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           try {
             await m.createTable(userProfiles);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 4) {
           try {
@@ -51,7 +55,9 @@ class AppDatabase extends _$AppDatabase {
               winterContracts,
               winterContracts.isElectricityOnStudent,
             );
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 5) {
           try {
@@ -66,17 +72,23 @@ class AppDatabase extends _$AppDatabase {
             );
             await m.addColumn(expenses, expenses.discountEgp);
             await m.addColumn(expenses, expenses.discountReason);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 6) {
           try {
             await m.addColumn(winterPayments, winterPayments.paymentMethod);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 7) {
           try {
             await m.addColumn(winterContracts, winterContracts.roommates);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 8) {
           try {
@@ -91,41 +103,98 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(winterContracts, winterContracts.nationalId);
             await m.addColumn(winterContracts, winterContracts.idFrontImage);
             await m.addColumn(winterContracts, winterContracts.idBackImage);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 9) {
           try {
             await m.addColumn(summerBookings, summerBookings.brokerName);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 10) {
-          try { await m.addColumn(apartments, apartments.inventory); } catch (e) {}
+          try {
+            await m.addColumn(apartments, apartments.inventory);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 11) {
           try {
             await m.addColumn(buildings, buildings.annualRentEgp);
             await m.addColumn(buildings, buildings.rentInstallmentsDates);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 12) {
           try {
             await m.createTable(technicians);
-            await m.addColumn(maintenanceRequests, maintenanceRequests.technicianId);
-          } catch (e) {}
+            await m.addColumn(
+              maintenanceRequests,
+              maintenanceRequests.technicianId,
+            );
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 13) {
           try {
             await m.addColumn(winterContracts, winterContracts.contractType);
-            await m.addColumn(winterContracts, winterContracts.contractFrontImage);
-            await m.addColumn(winterContracts, winterContracts.contractBackImage);
-          } catch (e) {}
+            await m.addColumn(
+              winterContracts,
+              winterContracts.contractFrontImage,
+            );
+            await m.addColumn(
+              winterContracts,
+              winterContracts.contractBackImage,
+            );
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
         if (from < 14) {
           try {
             await m.createTable(cleaningSupplies);
             await m.createTable(cleaningTransactions);
             await m.createTable(apartmentInspections);
-          } catch (e) {}
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
+        }
+        if (from < 15) {
+          try {
+            await m.addColumn(apartments, apartments.landlineNumber);
+            await m.addColumn(apartments, apartments.landlineOwnerName);
+            await m.addColumn(apartments, apartments.landlineNotes);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
+        }
+        if (from < 16) {
+          try {
+            await m.createTable(auditLogs);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
+        }
+        if (from < 17) {
+          try {
+            await m.addColumn(expenses, expenses.paymentMethod);
+            await m.createTable(financialTransfers);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
+        }
+        if (from < 18) {
+          try {
+            await m.addColumn(financialTransfers, financialTransfers.transferType);
+            await m.addColumn(financialTransfers, financialTransfers.season);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
         }
       },
     );

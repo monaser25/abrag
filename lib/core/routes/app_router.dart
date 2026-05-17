@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,16 +18,20 @@ import '../../features/contracts/presentation/screens/winter_contracts_screen.da
 import '../../features/contracts/presentation/screens/add_winter_contract_screen.dart';
 import '../../features/contracts/presentation/screens/student_details_screen.dart';
 import '../../features/contracts/presentation/screens/winter_payment_history_screen.dart';
+import '../../features/operations/presentation/screens/winter_checkout_screen.dart';
 import '../../features/buildings/presentation/screens/building_list_screen.dart';
 import '../../features/buildings/presentation/screens/add_building_screen.dart';
 import '../../features/apartments/presentation/screens/apartments_grid_screen.dart';
 import '../../features/apartments/presentation/screens/add_apartment_screen.dart';
 import '../../features/apartments/presentation/screens/apartment_profile_screen.dart';
+import '../../features/apartments/presentation/screens/bulk_inventory_screen.dart';
+import '../../features/apartments/presentation/screens/landlines_management_screen.dart';
 import '../../features/financials/presentation/screens/expenses_list_screen.dart';
 import '../../features/financials/presentation/screens/add_expense_screen.dart';
 import '../../features/financials/presentation/screens/add_building_rent_screen.dart';
 import '../../features/operations/presentation/screens/add_maintenance_screen.dart';
 import '../../features/financials/presentation/screens/building_rent_screen.dart';
+import '../../features/financials/presentation/screens/financial_transfers_screen.dart';
 import '../../features/operations/presentation/screens/maintenance_requests_screen.dart';
 import '../../features/operations/presentation/screens/technicians_screen.dart';
 import '../../features/operations/presentation/screens/technician_details_screen.dart';
@@ -34,7 +40,14 @@ import '../../features/operations/presentation/screens/apartment_inspections_scr
 import '../../features/operations/presentation/screens/add_inspection_screen.dart';
 import '../../core/database/database.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
+import '../../features/reports/presentation/models/report_view_models.dart';
+import '../../features/reports/presentation/screens/report_detail_screen.dart';
+import '../../features/reports/presentation/screens/report_metric_detail_screen.dart';
+import '../../features/reports/presentation/screens/report_statistics_screen.dart';
+import '../../features/reports/presentation/screens/reports_filter_screen.dart';
+import '../../features/reports/presentation/screens/reports_menu_screen.dart';
 import '../../features/reports/presentation/screens/statement_screen.dart';
+import '../../features/reports/presentation/screens/statement_preview_screen.dart';
 import '../../features/reports/presentation/screens/system_log_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/settings/presentation/screens/admin_profile_screen.dart';
@@ -42,6 +55,8 @@ import '../../features/settings/presentation/screens/users_permissions_screen.da
 import '../../features/settings/presentation/screens/pricing_management_screen.dart';
 import '../../features/settings/presentation/screens/season_transition_screen.dart';
 import '../../features/settings/presentation/screens/notifications_screen.dart';
+import '../../features/settings/presentation/screens/checkout_settings_screen.dart';
+import '../../features/settings/presentation/screens/data_management_screen.dart';
 
 import '../../features/splash/presentation/screens/splash_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -66,8 +81,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnboardingRoute = state.uri.path == '/onboarding';
       final isForgotPasswordRoute = state.uri.path == '/forgot_password';
 
-      if (isSplashRoute || isOnboardingRoute || isForgotPasswordRoute)
+      if (isSplashRoute || isOnboardingRoute || isForgotPasswordRoute) {
         return null;
+      }
 
       if (!isLoggedIn && !isLoginRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/';
@@ -126,9 +142,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'edit',
-                builder: (context, state) => AddBuildingScreen(
-                  building: state.extra as Building?,
-                ),
+                builder: (context, state) =>
+                    AddBuildingScreen(building: state.extra as Building?),
               ),
             ],
           ),
@@ -141,10 +156,23 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const AddApartmentScreen(),
               ),
               GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    AddApartmentScreen(apartment: state.extra as Apartment?),
+              ),
+              GoRoute(
                 path: 'profile/:id',
                 builder: (context, state) => ApartmentProfileScreen(
                   apartmentId: state.pathParameters['id']!,
                 ),
+              ),
+              GoRoute(
+                path: 'bulk_inventory',
+                builder: (context, state) => const BulkInventoryScreen(),
+              ),
+              GoRoute(
+                path: 'landlines',
+                builder: (context, state) => const LandlinesManagementScreen(),
               ),
             ],
           ),
@@ -180,7 +208,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'guest/:name',
                 builder: (context, state) => GuestProfileScreen(
-                  guestName: state.pathParameters['name']!,
+                  guestName: Uri.decodeComponent(state.pathParameters['name']!),
                 ),
               ),
               GoRoute(
@@ -211,112 +239,191 @@ final routerProvider = Provider<GoRouter>((ref) {
                   contractId: state.pathParameters['id']!,
                 ),
               ),
-                GoRoute(
-                  path: 'add',
-                  builder: (context, state) => const AddWinterContractScreen(),
+              GoRoute(
+                path: 'add',
+                builder: (context, state) => const AddWinterContractScreen(),
+              ),
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) => AddWinterContractScreen(
+                  contract: state.extra as WinterContract?,
                 ),
-                GoRoute(
-                  path: 'edit',
-                  builder: (context, state) => AddWinterContractScreen(
-                    contract: state.extra as WinterContract?,
-                  ),
+              ),
+              GoRoute(
+                path: 'checkout/:id',
+                builder: (context, state) => WinterCheckoutScreen(
+                  winterContractId: state.pathParameters['id']!,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           GoRoute(
             path: 'expenses',
             builder: (context, state) => const ExpensesListScreen(),
             routes: [
-                GoRoute(
-                  path: 'add',
-                  builder: (context, state) => const AddExpenseScreen(),
-                ),
-                GoRoute(
-                  path: 'edit',
-                  builder: (context, state) => AddExpenseScreen(
-                    expense: state.extra as Expense?,
-                  ),
-                ),
-              ],
+              GoRoute(
+                path: 'add',
+                builder: (context, state) => const AddExpenseScreen(),
+              ),
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    AddExpenseScreen(expense: state.extra as Expense?),
+              ),
+            ],
           ),
           GoRoute(
             path: 'building_rent',
             builder: (context, state) => const BuildingRentScreen(),
             routes: [
-                GoRoute(
-                  path: 'add',
-                  builder: (context, state) => const AddBuildingRentScreen(),
-                ),
-                GoRoute(
-                  path: 'edit',
-                  builder: (context, state) => AddBuildingRentScreen(
-                    expense: state.extra as Expense?,
-                  ),
-                ),
-              ],
-            ),
-            GoRoute(
-              path: 'maintenance',
-            builder: (context, state) => const MaintenanceRequestsScreen(),
-              routes: [
-                GoRoute(
-                  path: 'add',
-                  builder: (context, state) => const AddMaintenanceScreen(),
-                ),
-                GoRoute(
-                  path: 'edit',
-                  builder: (context, state) {
-                    return AddMaintenanceScreen(
-                      request: state.extra as MaintenanceRequest?,
-                    );
-                  },
-                ),
-              ],
-          ),
-            GoRoute(
-              path: 'technicians',
-              builder: (context, state) => const TechniciansScreen(),
-              routes: [
-                GoRoute(
-                  path: 'details/:id',
-                  builder: (context, state) => TechnicianDetailsScreen(
-                    technicianId: state.pathParameters['id']!,
-                  ),
-                ),
-              ],
-            ),
-            GoRoute(
-              path: 'cleaning_supplies',
-              builder: (context, state) => const CleaningSuppliesScreen(),
-            ),
               GoRoute(
-              path: 'inspections',
-              builder: (context, state) => const ApartmentInspectionsScreen(),
-              routes: [
-                GoRoute(
-                  path: 'add',
-                  builder: (context, state) => AddInspectionScreen(
-                    apartmentId: state.uri.queryParameters['apartmentId'],
-                    checkoutBookingId: state.uri.queryParameters['checkoutBookingId'],
-                    earlyCheckoutBookingId: state.uri.queryParameters['earlyCheckoutBookingId'],
-                    newCheckoutDate: state.uri.queryParameters['newCheckoutDate'],
-                  ),
+                path: 'add',
+                builder: (context, state) => const AddBuildingRentScreen(),
+              ),
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) =>
+                    AddBuildingRentScreen(expense: state.extra as Expense?),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'financial_transfers',
+            builder: (context, state) => const FinancialTransfersScreen(),
+          ),
+          GoRoute(
+            path: 'maintenance',
+            builder: (context, state) => const MaintenanceRequestsScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (context, state) => const AddMaintenanceScreen(),
+              ),
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) {
+                  return AddMaintenanceScreen(
+                    request: state.extra as MaintenanceRequest?,
+                  );
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'technicians',
+            builder: (context, state) => const TechniciansScreen(),
+            routes: [
+              GoRoute(
+                path: 'details/:id',
+                builder: (context, state) => TechnicianDetailsScreen(
+                  technicianId: state.pathParameters['id']!,
                 ),
-              ],
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'cleaning_supplies',
+            builder: (context, state) => const CleaningSuppliesScreen(),
+          ),
+          GoRoute(
+            path: 'inspections',
+            builder: (context, state) => const ApartmentInspectionsScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (context, state) => AddInspectionScreen(
+                  apartmentId: state.uri.queryParameters['apartmentId'],
+                  checkoutBookingId:
+                      state.uri.queryParameters['checkoutBookingId'],
+                  earlyCheckoutBookingId:
+                      state.uri.queryParameters['earlyCheckoutBookingId'],
+                  newCheckoutDate: state.uri.queryParameters['newCheckoutDate'],
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'reports',
+            builder: (context, state) => ReportsScreen(
+              initialFilters: state.extra is ReportFilterState
+                  ? state.extra as ReportFilterState
+                  : const ReportFilterState(),
             ),
-            GoRoute(
-              path: 'reports',
-            builder: (context, state) => const ReportsScreen(),
-              routes: [
-                GoRoute(
-                  path: 'statement',
-                  builder: (context, state) => const StatementScreen(),
+            routes: [
+              GoRoute(
+                path: 'filters',
+                builder: (context, state) => ReportsFilterScreen(
+                  initialFilters: state.extra is ReportFilterState
+                      ? state.extra as ReportFilterState
+                      : const ReportFilterState(),
                 ),
-                GoRoute(
-                  path: 'log',
-                  builder: (context, state) => const SystemLogScreen(),
+              ),
+              GoRoute(
+                path: 'statistics',
+                builder: (context, state) => ReportStatisticsScreen(
+                  filters: state.extra is ReportFilterState
+                      ? state.extra as ReportFilterState
+                      : const ReportFilterState(),
                 ),
-              ],
+              ),
+              GoRoute(
+                path: 'menu',
+                builder: (context, state) => ReportsMenuScreen(
+                  filters: state.extra is ReportFilterState
+                      ? state.extra as ReportFilterState
+                      : const ReportFilterState(),
+                ),
+              ),
+              GoRoute(
+                path: 'statement',
+                builder: (context, state) => StatementScreen(
+                  initialFilters: state.extra is ReportFilterState
+                      ? state.extra as ReportFilterState
+                      : const ReportFilterState(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'preview',
+                    builder: (context, state) => StatementPreviewScreen(
+                      filters: state.extra is ReportFilterState
+                          ? state.extra as ReportFilterState
+                          : const ReportFilterState(),
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'details/:type',
+                builder: (context, state) => ReportDetailScreen(
+                  kind: ReportDetailKindX.fromKey(
+                    state.pathParameters['type'] ?? 'apartments',
+                  ),
+                  filters: state.extra is ReportFilterState
+                      ? state.extra as ReportFilterState
+                      : const ReportFilterState(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'item/:key',
+                    builder: (context, state) => ReportMetricDetailScreen(
+                      kind: ReportDetailKindX.fromKey(
+                        state.pathParameters['type'] ?? 'apartments',
+                      ),
+                      metricKey: _decodeReportMetricKey(
+                        state.pathParameters['key'],
+                      ),
+                      filters: state.extra is ReportFilterState
+                          ? state.extra as ReportFilterState
+                          : const ReportFilterState(),
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'log',
+                builder: (context, state) => const SystemLogScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: 'settings',
@@ -342,6 +449,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'notifications',
                 builder: (context, state) => const NotificationsScreen(),
               ),
+              GoRoute(
+                path: 'checkout_times',
+                builder: (context, state) => const CheckoutSettingsScreen(),
+              ),
+              GoRoute(
+                path: 'data_management',
+                builder: (context, state) => const DataManagementScreen(),
+              ),
             ],
           ),
         ],
@@ -355,5 +470,14 @@ class RouterNotifier extends ChangeNotifier {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       notifyListeners();
     });
+  }
+}
+
+String _decodeReportMetricKey(String? key) {
+  if (key == null || key.isEmpty) return '';
+  try {
+    return utf8.decode(base64Url.decode(key));
+  } catch (_) {
+    return key;
   }
 }

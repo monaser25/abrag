@@ -98,6 +98,42 @@ class BookingDetailsScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (remainingAmount > 0) ...[
+                Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.warning_amber,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                    title: Text(
+                      'العميل عليه باقي فلوس',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'المتبقي ${remainingAmount.toCurrencyFormat()} ج.م. الرجاء تسديدها قبل التسليم.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                    ),
+                    trailing: FilledButton(
+                      onPressed: () => _showPaymentSheet(
+                        context,
+                        ref,
+                        bookingId: booking.id,
+                        currentPaid: booking.amountPaidEgp,
+                        remainingAmount: remainingAmount.toDouble(),
+                        totalAmount: baseBookingTotal.toDouble(),
+                      ),
+                      child: const Text('تسديد'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               _buildSection(
                 context,
                 title: 'معلومات الضيف',
@@ -111,7 +147,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       TextButton(
-                        onPressed: () => context.go(
+                        onPressed: () => context.push(
                           '/summer_bookings/guest/${booking.guestName}',
                         ),
                         child: const Text('الملف الشخصي'),
@@ -153,24 +189,6 @@ class BookingDetailsScreen extends ConsumerWidget {
                     context,
                     'السعر اليومي',
                     '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
-                  ),
-                  if (!isFullyPaid)
-                    _buildDetailRow(
-                      context,
-                      'فلوس الحجز',
-                      '${baseBookingTotal.toDouble().toCurrencyFormat()} ج.م',
-                      isHighlight: true,
-                    ),
-                  _buildDetailRow(
-                    context,
-                    'فلوس السمسار',
-                    '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    'الفلوس الصافية اللي دخلتلك',
-                    '${actualReceived.toDouble().toCurrencyFormat()} ج.م',
-                    valueColor: Colors.green,
                   ),
                   if (!isFullyPaid)
                     _buildDetailRow(
@@ -234,7 +252,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                           (a) => a.id == booking.apartmentId,
                         );
                         return InkWell(
-                          onTap: () => context.go(
+                          onTap: () => context.push(
                             '/apartments/profile/${booking.apartmentId}',
                           ),
                           child: _buildDetailRow(
@@ -280,7 +298,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                                 : (registered.first.fullName ??
                                       registered.first.email));
                         return InkWell(
-                          onTap: () => context.go(
+                          onTap: () => context.push(
                             '/brokers/details/${booking.brokerId}',
                           ),
                           child: _buildDetailRow(
@@ -335,7 +353,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          context.go(
+                          context.push(
                             '/summer_bookings/early_checkout/$bookingId',
                           );
                         },
@@ -352,7 +370,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          context.go('/summer_bookings/overstay/$bookingId');
+                          context.push('/summer_bookings/overstay/$bookingId');
                         },
                         child: const Text('تمديد الحجز'),
                       ),
@@ -361,7 +379,20 @@ class BookingDetailsScreen extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          context.go('/inspections/add?apartmentId=${booking.apartmentId}&checkoutBookingId=${booking.id}');
+                          if (remainingAmount > 0) {
+                            _showUnpaidCheckoutDialog(
+                              context,
+                              ref,
+                              bookingId: booking.id,
+                              currentPaid: booking.amountPaidEgp,
+                              remainingAmount: remainingAmount.toDouble(),
+                              totalAmount: baseBookingTotal.toDouble(),
+                            );
+                            return;
+                          }
+                          context.push(
+                            '/inspections/add?apartmentId=${booking.apartmentId}&checkoutBookingId=${booking.id}',
+                          );
                         },
                         child: const Text('تسجيل خروج'),
                       ),
@@ -371,14 +402,20 @@ class BookingDetailsScreen extends ConsumerWidget {
               ] else ...[
                 ElevatedButton.icon(
                   onPressed: () {
-                    context.go('/inspections/add?apartmentId=${booking.apartmentId}');
+                    context.push(
+                      '/inspections/add?apartmentId=${booking.apartmentId}',
+                    );
                   },
                   icon: const Icon(Icons.fact_check),
                   label: const Text('فحص واستلام الشقة'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ],
@@ -405,6 +442,127 @@ class BookingDetailsScreen extends ConsumerWidget {
     final startDate = DateTime(start.year, start.month, start.day);
     final endDate = DateTime(end.year, end.month, end.day);
     return endDate.difference(startDate).inDays.clamp(1, 10000);
+  }
+
+  void _showUnpaidCheckoutDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    required String bookingId,
+    required double currentPaid,
+    required double remainingAmount,
+    required double totalAmount,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('لا يمكن التسليم قبل التسديد'),
+        content: Text(
+          'العميل عليه ${remainingAmount.toCurrencyFormat()} ج.م. الرجاء تسديد المبلغ قبل تسجيل الخروج.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _showPaymentSheet(
+                context,
+                ref,
+                bookingId: bookingId,
+                currentPaid: currentPaid,
+                remainingAmount: remainingAmount,
+                totalAmount: totalAmount,
+              );
+            },
+            child: const Text('تسديد الآن'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    required String bookingId,
+    required double currentPaid,
+    required double remainingAmount,
+    required double totalAmount,
+  }) {
+    final controller = TextEditingController(
+      text: remainingAmount.toStringAsFixed(0),
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'تسديد باقي الحجز',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            Text('المتبقي: ${remainingAmount.toCurrencyFormat()} ج.م'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'المبلغ اللي هيتسدد الآن',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      controller.text = remainingAmount.toStringAsFixed(0);
+                    },
+                    child: const Text('تسديد الكل'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      final paidNow =
+                          double.tryParse(
+                            controller.text.replaceAll(',', '').trim(),
+                          ) ??
+                          0;
+                      final nextPaid = (currentPaid + paidNow).clamp(
+                        0,
+                        totalAmount,
+                      );
+                      ref
+                          .read(bookingsControllerProvider.notifier)
+                          .updateBookingPayment(
+                            id: bookingId,
+                            newAmountPaidEgp: nextPaid.toDouble(),
+                          );
+                      Navigator.pop(sheetContext);
+                    },
+                    child: const Text('حفظ التسديد'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSection(

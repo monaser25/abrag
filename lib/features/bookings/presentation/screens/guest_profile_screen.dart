@@ -45,6 +45,22 @@ class GuestProfileScreen extends ConsumerWidget {
           }
 
           final latestBooking = guestBookings.first;
+          final latestNationalId = _latestNonEmpty(
+            guestBookings.map((booking) => booking.nationalId),
+          );
+          final birthDate = _birthDateFromEgyptianNationalId(latestNationalId);
+          final age = birthDate == null ? null : _ageInYears(birthDate);
+          final governorate = _governorateFromEgyptianNationalId(
+            latestNationalId,
+          );
+          final now = DateTime.now();
+          final isCurrentlyStaying = guestBookings.any((booking) {
+            final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
+            return booking.status != 'checked_out' &&
+                booking.status != 'cancelled' &&
+                !now.isBefore(booking.checkInDate) &&
+                now.isBefore(checkout);
+          });
           final totalNights = guestBookings.fold<int>(0, (sum, booking) {
             final days = _calendarDays(
               booking.checkInDate,
@@ -98,23 +114,51 @@ class GuestProfileScreen extends ConsumerWidget {
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            if (guestBookings.length > 1) ...[
-                              const SizedBox(height: 8),
-                              Chip(
-                                avatar: Icon(
-                                  Icons.star,
-                                  size: 16,
-                                  color: theme.colorScheme.primary,
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                Chip(
+                                  avatar: Icon(
+                                    Icons.history,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  label: Text('${guestBookings.length} نشاط'),
                                 ),
-                                label: const Text('نزيل متكرر'),
-                              ),
-                            ],
+                                Chip(
+                                  avatar: Icon(
+                                    isCurrentlyStaying
+                                        ? Icons.hotel
+                                        : Icons.logout,
+                                    size: 16,
+                                    color: isCurrentlyStaying
+                                        ? Colors.green
+                                        : Colors.grey,
+                                  ),
+                                  label: Text(
+                                    isCurrentlyStaying
+                                        ? 'ساكن حاليًا'
+                                        : 'غير ساكن حاليًا',
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              _buildPersonalInfoSection(
+                context,
+                nationalId: latestNationalId,
+                birthDate: birthDate,
+                age: age,
+                governorate: governorate,
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -275,6 +319,56 @@ class GuestProfileScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildPersonalInfoSection(
+    BuildContext context, {
+    required String? nationalId,
+    required DateTime? birthDate,
+    required int? age,
+    required String? governorate,
+  }) {
+    final formatter = DateFormat('yyyy-MM-dd', 'ar');
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'بيانات شخصية',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            _InfoLine(
+              icon: Icons.badge,
+              label: 'الرقم القومي',
+              value: (nationalId ?? '').isEmpty ? 'غير مسجل' : nationalId!,
+            ),
+            const SizedBox(height: 6),
+            _InfoLine(
+              icon: Icons.cake,
+              label: 'تاريخ الميلاد',
+              value: birthDate == null
+                  ? 'غير متاح'
+                  : formatter.format(birthDate),
+            ),
+            const SizedBox(height: 6),
+            _InfoLine(
+              icon: Icons.calendar_today,
+              label: 'السن',
+              value: age == null ? 'غير متاح' : '$age سنة',
+            ),
+            const SizedBox(height: 6),
+            _InfoLine(
+              icon: Icons.location_city,
+              label: 'المحافظة',
+              value: governorate ?? 'غير متاحة',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatCard(
     BuildContext context,
     String title,
@@ -330,6 +424,81 @@ class GuestProfileScreen extends ConsumerWidget {
       }
     }
     return null;
+  }
+
+  String? _latestNonEmpty(Iterable<String?> values) {
+    for (final value in values) {
+      if (value != null && value.trim().isNotEmpty) return value.trim();
+    }
+    return null;
+  }
+
+  DateTime? _birthDateFromEgyptianNationalId(String? nationalId) {
+    if (nationalId == null || nationalId.length < 7) return null;
+    final centuryDigit = int.tryParse(nationalId.substring(0, 1));
+    final year = int.tryParse(nationalId.substring(1, 3));
+    final month = int.tryParse(nationalId.substring(3, 5));
+    final day = int.tryParse(nationalId.substring(5, 7));
+    if (centuryDigit == null || year == null || month == null || day == null) {
+      return null;
+    }
+    final century = centuryDigit == 2
+        ? 1900
+        : centuryDigit == 3
+        ? 2000
+        : null;
+    if (century == null) return null;
+    try {
+      return DateTime(century + year, month, day);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int _ageInYears(DateTime birthDate) {
+    final now = DateTime.now();
+    var age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  String? _governorateFromEgyptianNationalId(String? nationalId) {
+    if (nationalId == null || nationalId.length < 9) return null;
+    final code = nationalId.substring(7, 9);
+    const governorates = {
+      '01': 'القاهرة',
+      '02': 'الإسكندرية',
+      '03': 'بورسعيد',
+      '04': 'السويس',
+      '11': 'دمياط',
+      '12': 'الدقهلية',
+      '13': 'الشرقية',
+      '14': 'القليوبية',
+      '15': 'كفر الشيخ',
+      '16': 'الغربية',
+      '17': 'المنوفية',
+      '18': 'البحيرة',
+      '19': 'الإسماعيلية',
+      '21': 'الجيزة',
+      '22': 'بني سويف',
+      '23': 'الفيوم',
+      '24': 'المنيا',
+      '25': 'أسيوط',
+      '26': 'سوهاج',
+      '27': 'قنا',
+      '28': 'أسوان',
+      '29': 'الأقصر',
+      '31': 'البحر الأحمر',
+      '32': 'الوادي الجديد',
+      '33': 'مطروح',
+      '34': 'شمال سيناء',
+      '35': 'جنوب سيناء',
+      '88': 'خارج الجمهورية',
+    };
+    return governorates[code];
   }
 
   String _statusLabel(String status) {

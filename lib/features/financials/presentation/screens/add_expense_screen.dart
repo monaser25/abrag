@@ -9,6 +9,7 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/database/database.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../providers/financial_transfers_provider.dart';
 
 class AddExpenseScreen extends ConsumerStatefulWidget {
   final Expense? expense;
@@ -27,6 +28,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   String? _selectedBuildingId;
   String? _selectedApartmentId;
   String _selectedExpenseType = 'cleaning';
+  String _selectedPaymentMethod = 'cash';
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     _selectedBuildingId = widget.expense?.buildingId;
     _selectedApartmentId = widget.expense?.apartmentId;
     _selectedExpenseType = widget.expense?.expenseType ?? 'cleaning';
+    _selectedPaymentMethod = widget.expense?.paymentMethod ?? 'cash';
   }
 
   final List<Map<String, String>> _expenseTypes = [
@@ -78,6 +81,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               apartmentId: _selectedApartmentId,
               expenseType: _selectedExpenseType,
               amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
+              paymentMethod: _selectedPaymentMethod,
               date: _date!,
               description: _descriptionController.text.trim(),
             );
@@ -88,6 +92,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               apartmentId: _selectedApartmentId,
               expenseType: _selectedExpenseType,
               amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
+              paymentMethod: _selectedPaymentMethod,
               date: _date!,
               description: _descriptionController.text.trim(),
             );
@@ -197,6 +202,22 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                   .toList(),
               onChanged: (v) => setState(() => _selectedExpenseType = v!),
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: 'طريقة دفع المصروف'),
+              initialValue: _selectedPaymentMethod,
+              items: paymentAccounts.entries
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(
+                () => _selectedPaymentMethod = v ?? _selectedPaymentMethod,
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(

@@ -9,10 +9,7 @@ class BrokersListScreen extends ConsumerWidget {
   const BrokersListScreen({super.key});
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     }
@@ -61,7 +58,7 @@ class BrokersListScreen extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 child: InkWell(
                   onTap: () {
-                    context.go('/brokers/details/${broker.id}');
+                    context.push('/brokers/details/${broker.id}');
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -108,14 +105,20 @@ class BrokersListScreen extends ConsumerWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (broker.phoneNumber != null && broker.phoneNumber!.isNotEmpty)
+                            if (broker.phoneNumber != null &&
+                                broker.phoneNumber!.isNotEmpty)
                               IconButton(
-                                icon: const Icon(Icons.call, color: Colors.green),
-                                onPressed: () => _makePhoneCall(broker.phoneNumber!),
+                                icon: const Icon(
+                                  Icons.call,
+                                  color: Colors.green,
+                                ),
+                                onPressed: () =>
+                                    _makePhoneCall(broker.phoneNumber!),
                               ),
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () => _showAddBrokerDialog(context, ref, broker),
+                              onPressed: () =>
+                                  _showAddBrokerDialog(context, ref, broker),
                             ),
                             const Icon(Icons.arrow_forward_ios, size: 16),
                           ],
@@ -141,9 +144,15 @@ class BrokersListScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddBrokerDialog(BuildContext context, WidgetRef ref, [UserProfile? broker]) {
+  void _showAddBrokerDialog(
+    BuildContext context,
+    WidgetRef ref, [
+    UserProfile? broker,
+  ]) {
     final nameController = TextEditingController(text: broker?.fullName ?? '');
-    final phoneController = TextEditingController(text: broker?.phoneNumber ?? '');
+    final phoneController = TextEditingController(
+      text: broker?.phoneNumber ?? '',
+    );
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -179,7 +188,7 @@ class BrokersListScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
-              
+
               if (broker == null) {
                 ref
                     .read(brokersControllerProvider.notifier)

@@ -7,29 +7,24 @@ import 'core/config/env.dart';
 import 'core/config/locale_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
+import 'core/services/notification_service.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/shared_prefs_provider.dart';
 
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Env.init();
-  
-  await Supabase.initialize(
-    url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
-  );
+  await NotificationService.init();
+
+  await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
 
   final sharedPrefs = await SharedPreferences.getInstance();
 
   runApp(
     ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(sharedPrefs),
-      ],
+      overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
       child: const AbragApp(),
     ),
   );
@@ -45,6 +40,7 @@ class AbragApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Abrag',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: router,
       locale: locale,

@@ -7,7 +7,7 @@ import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final buildingsProvider = StreamProvider<List<Building>>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.select(db.buildings).watch();
+  return (db.select(db.buildings)..where((t) => t.id.isNotValue('ffffffff-ffff-ffff-ffff-ffffffffffff'))).watch();
 });
 
 final buildingsControllerProvider = StateNotifierProvider<BuildingsController, AsyncValue<void>>((ref) {

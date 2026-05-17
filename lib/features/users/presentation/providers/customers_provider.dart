@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class CustomerModel {
@@ -6,65 +9,218 @@ class CustomerModel {
   final String name;
   final String? phone;
   final String? nationalId;
-  final String type; // 'summer' or 'winter'
+  final Set<String> types;
   final DateTime date;
+  final List<CustomerActivity> activities;
+  final bool isCurrentlyStaying;
 
   CustomerModel({
     required this.id,
     required this.name,
     this.phone,
     this.nationalId,
-    required this.type,
+    required this.types,
+    required this.date,
+    required this.activities,
+    required this.isCurrentlyStaying,
+  });
+
+  bool get hasSummer => types.contains('summer');
+  bool get hasWinter => types.contains('winter');
+  bool get isMixed => hasSummer && hasWinter;
+  String get type => isMixed
+      ? 'all'
+      : hasSummer
+      ? 'summer'
+      : 'winter';
+}
+
+class CustomerActivity {
+  final String id;
+  final String source; // summer, winter, roommate
+  final String title;
+  final DateTime date;
+  final String route;
+
+  CustomerActivity({
+    required this.id,
+    required this.source,
+    required this.title,
+    required this.date,
+    required this.route,
+  });
+}
+
+class _CustomerAccumulator {
+  String id;
+  String name;
+  String? phone;
+  String? nationalId;
+  DateTime date;
+  final Set<String> types = {};
+  final List<CustomerActivity> activities = [];
+  bool isCurrentlyStaying = false;
+
+  _CustomerAccumulator({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.nationalId,
     required this.date,
   });
+
+  CustomerModel toModel() => CustomerModel(
+    id: id,
+    name: name,
+    phone: phone,
+    nationalId: nationalId,
+    types: types,
+    date: date,
+    activities: activities..sort((a, b) => b.date.compareTo(a.date)),
+    isCurrentlyStaying: isCurrentlyStaying,
+  );
 }
 
 final customersProvider = StreamProvider<List<CustomerModel>>((ref) {
   final db = ref.watch(databaseProvider);
-
-  // Combine summer guests and winter students
   final summerStream = db.select(db.summerBookings).watch();
 
   return summerStream.asyncMap((summerBookings) async {
     final winterContracts = await db.select(db.winterContracts).get();
-    
-    final customers = <CustomerModel>[];
+    final customers = <String, _CustomerAccumulator>{};
 
-    for (var b in summerBookings) {
-      customers.add(CustomerModel(
-        id: b.id,
-        name: b.guestName,
-        phone: b.guestPhone,
-        nationalId: b.nationalId,
+    String keyFor({String? nationalId, String? phone, required String name}) {
+      final cleanNationalId = nationalId?.trim();
+      if (cleanNationalId != null && cleanNationalId.isNotEmpty) {
+        return 'id:$cleanNationalId';
+      }
+      final cleanPhone = phone?.trim();
+      if (cleanPhone != null && cleanPhone.isNotEmpty) {
+        return 'phone:$cleanPhone';
+      }
+      return 'name:${name.trim().toLowerCase()}';
+    }
+
+    void addCustomer({
+      required String rawId,
+      required String name,
+      String? phone,
+      String? nationalId,
+      required String type,
+      required DateTime date,
+      required CustomerActivity activity,
+      bool isCurrentlyStaying = false,
+    }) {
+      final key = keyFor(nationalId: nationalId, phone: phone, name: name);
+      final existing = customers[key];
+      if (existing == null) {
+        customers[key] =
+            _CustomerAccumulator(
+                id: rawId,
+                name: name,
+                phone: phone,
+                nationalId: nationalId,
+                date: date,
+              )
+              ..types.add(type)
+              ..activities.add(activity)
+              ..isCurrentlyStaying = isCurrentlyStaying;
+        return;
+      }
+      existing.types.add(type);
+      existing.activities.add(activity);
+      existing.isCurrentlyStaying =
+          existing.isCurrentlyStaying || isCurrentlyStaying;
+      if ((existing.phone ?? '').isEmpty && (phone ?? '').isNotEmpty) {
+        existing.phone = phone;
+      }
+      if ((existing.nationalId ?? '').isEmpty &&
+          (nationalId ?? '').isNotEmpty) {
+        existing.nationalId = nationalId;
+      }
+      if (date.isAfter(existing.date)) existing.date = date;
+    }
+
+    for (final booking in summerBookings) {
+      final now = DateTime.now();
+      final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
+      final isStaying =
+          booking.status != 'checked_out' &&
+          booking.status != 'cancelled' &&
+          !now.isBefore(booking.checkInDate) &&
+          now.isBefore(checkout);
+      addCustomer(
+        rawId: booking.id,
+        name: booking.guestName,
+        phone: booking.guestPhone,
+        nationalId: booking.nationalId,
         type: 'summer',
-        date: b.checkInDate,
-      ));
+        date: booking.checkInDate,
+        activity: CustomerActivity(
+          id: booking.id,
+          source: 'summer',
+          title: 'حجز صيفي',
+          date: booking.checkInDate,
+          route: '/summer_bookings/details/${booking.id}',
+        ),
+        isCurrentlyStaying: isStaying,
+      );
     }
 
-    for (var c in winterContracts) {
-      customers.add(CustomerModel(
-        id: c.id,
-        name: c.studentName,
-        phone: c.parentPhone,
-        nationalId: c.nationalId,
+    for (final contract in winterContracts) {
+      final now = DateTime.now();
+      final isStaying =
+          contract.isActive &&
+          !now.isBefore(contract.startDate) &&
+          now.isBefore(contract.endDate);
+      addCustomer(
+        rawId: contract.id,
+        name: contract.studentName,
+        phone: contract.parentPhone,
+        nationalId: contract.nationalId,
         type: 'winter',
-        date: c.startDate,
-      ));
-    }
+        date: contract.startDate,
+        activity: CustomerActivity(
+          id: contract.id,
+          source: 'winter',
+          title: contract.contractType == 'family' ? 'عقد عائلي' : 'عقد طالب',
+          date: contract.startDate,
+          route: '/winter_contracts/details/${contract.id}',
+        ),
+        isCurrentlyStaying: isStaying,
+      );
 
-    // Sort by most recent
-    customers.sort((a, b) => b.date.compareTo(a.date));
-
-    // Deduplicate by name and phone if needed, but for now we list all their transactions 
-    // or we group by them. Let's group them to have unique customers based on phone or name.
-    final Map<String, CustomerModel> uniqueCustomers = {};
-    for (var c in customers) {
-      final key = c.phone?.isNotEmpty == true ? c.phone! : c.name;
-      if (!uniqueCustomers.containsKey(key)) {
-        uniqueCustomers[key] = c;
+      final roommatesJson = contract.roommates;
+      if (roommatesJson == null || roommatesJson.trim().isEmpty) continue;
+      try {
+        final roommates = jsonDecode(roommatesJson) as List<dynamic>;
+        for (final roommate in roommates) {
+          if (roommate is! Map) continue;
+          final roommateName = roommate['name']?.toString().trim() ?? '';
+          if (roommateName.isEmpty) continue;
+          addCustomer(
+            rawId: '${contract.id}_$roommateName',
+            name: roommateName,
+            nationalId: roommate['nationalId']?.toString(),
+            type: 'winter',
+            date: contract.startDate,
+            activity: CustomerActivity(
+              id: contract.id,
+              source: 'roommate',
+              title: 'زميل سكن في عقد شتوي',
+              date: contract.startDate,
+              route: '/winter_contracts/details/${contract.id}',
+            ),
+            isCurrentlyStaying: isStaying,
+          );
+        }
+      } catch (_) {
+        // Ignore malformed legacy roommate data.
       }
     }
 
-    return uniqueCustomers.values.toList();
+    final result = customers.values.map((item) => item.toModel()).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return result;
   });
 });

@@ -1,0 +1,99 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/database/database.dart';
+import '../../../dashboard/presentation/providers/database_provider.dart';
+
+final apartmentOccupancyRulesProvider = Provider<ApartmentOccupancyRules>((
+  ref,
+) {
+  return ApartmentOccupancyRules(ref.watch(databaseProvider));
+});
+
+class ApartmentOccupancyRules {
+  final AppDatabase _db;
+
+  ApartmentOccupancyRules(this._db);
+
+  Future<void> ensureApartmentIsFreeForPeriod({
+    required String apartmentId,
+    required DateTime checkInDate,
+    required DateTime checkOutDate,
+    String? excludingSummerBookingId,
+    String? excludingWinterContractId,
+  }) async {
+    final summerBookings =
+        await (_db.select(_db.summerBookings)
+              ..where((t) => t.apartmentId.equals(apartmentId))
+              ..where((t) => t.status.isNotIn(['cancelled', 'checked_out'])))
+            .get();
+    for (final booking in summerBookings) {
+      if (booking.id == excludingSummerBookingId) continue;
+      final existingEnd = booking.earlyCheckoutDate ?? booking.checkOutDate;
+      if (_periodsOverlap(
+        checkInDate,
+        checkOutDate,
+        booking.checkInDate,
+        existingEnd,
+      )) {
+        throw Exception(
+          'الشقة عليها حجز صيفي متعارض باسم ${booking.guestName}. راجع الحجز المستقبلي قبل الحفظ.',
+        );
+      }
+    }
+
+    final winterContracts =
+        await (_db.select(_db.winterContracts)
+              ..where((t) => t.apartmentId.equals(apartmentId))
+              ..where((t) => t.isActive.equals(true)))
+            .get();
+    for (final contract in winterContracts) {
+      if (contract.id == excludingWinterContractId) continue;
+      if (_periodsOverlap(
+        checkInDate,
+        checkOutDate,
+        contract.startDate,
+        contract.endDate,
+      )) {
+        throw Exception(
+          'مينفعش الشقة تكون سكن طالب ومصيف في نفس الوقت. الشقة عليها عقد باسم ${contract.studentName}.',
+        );
+      }
+    }
+  }
+
+  Future<bool> isApartmentOccupiedNow(String apartmentId) async {
+    final now = DateTime.now();
+    final summerBookings =
+        await (_db.select(_db.summerBookings)
+              ..where((t) => t.apartmentId.equals(apartmentId))
+              ..where((t) => t.status.isNotIn(['cancelled', 'checked_out'])))
+            .get();
+    final hasSummer = summerBookings.any((booking) {
+      final end = booking.earlyCheckoutDate ?? booking.checkOutDate;
+      return _periodContains(now, booking.checkInDate, end);
+    });
+    if (hasSummer) return true;
+
+    final winterContracts =
+        await (_db.select(_db.winterContracts)
+              ..where((t) => t.apartmentId.equals(apartmentId))
+              ..where((t) => t.isActive.equals(true)))
+            .get();
+    return winterContracts.any(
+      (contract) => _periodContains(now, contract.startDate, contract.endDate),
+    );
+  }
+
+  bool _periodsOverlap(
+    DateTime startA,
+    DateTime endA,
+    DateTime startB,
+    DateTime endB,
+  ) {
+    return startA.isBefore(endB) && endA.isAfter(startB);
+  }
+
+  bool _periodContains(DateTime target, DateTime start, DateTime end) {
+    return !target.isBefore(start) && target.isBefore(end);
+  }
+}

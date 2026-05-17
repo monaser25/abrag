@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart';
+
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class SystemLogEntry {
@@ -6,123 +8,123 @@ class SystemLogEntry {
   final String title;
   final String description;
   final String type;
+  final String? route;
+  final String actorName;
+  final String action;
+  final String? oldValuesJson;
+  final String? newValuesJson;
 
   SystemLogEntry({
     required this.date,
     required this.title,
     required this.description,
     required this.type,
+    this.route,
+    required this.actorName,
+    required this.action,
+    this.oldValuesJson,
+    this.newValuesJson,
   });
 }
 
 final systemLogsProvider = FutureProvider<List<SystemLogEntry>>((ref) async {
   final db = ref.watch(databaseProvider);
-  final List<SystemLogEntry> logs = [];
+  final auditLogs = await (db.select(
+    db.auditLogs,
+  )..orderBy([(table) => OrderingTerm.desc(table.createdAt)])).get();
 
-  // Fetch recent data from various tables
-  // We'll just fetch all or a limited amount and sort in memory
-  // For production with massive data, a raw SQL UNION query is better, but this works well for standard usage.
+  final logs = auditLogs
+      .map(
+        (log) => SystemLogEntry(
+          date: log.createdAt,
+          title: log.title,
+          description: log.description,
+          type: log.entityType,
+          route: log.route,
+          actorName: log.actorName,
+          action: log.action,
+          oldValuesJson: log.oldValuesJson,
+          newValuesJson: log.newValuesJson,
+        ),
+      )
+      .toList();
 
-  final expenses = await db.select(db.expenses).get();
-  for (var e in expenses) {
-    logs.add(SystemLogEntry(
-      date: e.createdAt,
-      title: 'مصروف جديد',
-      description: 'تم تسجيل مصروف (نوع: ${e.expenseType}) بقيمة ${e.amountEgp} ج.م',
-      type: 'expense',
-    ));
-  }
+  if (logs.isNotEmpty) return logs;
 
+  // Fallback for old data before audit logging existed.
+  final fallback = <SystemLogEntry>[];
   final summerBookings = await db.select(db.summerBookings).get();
-  for (var b in summerBookings) {
-    logs.add(SystemLogEntry(
-      date: b.createdAt,
-      title: 'حجز صيفي جديد',
-      description: 'تم حجز شقة للنزيل ${b.guestName} بقيمة ${b.totalPriceEgp} ج.م',
-      type: 'summer_booking',
-    ));
+  for (final booking in summerBookings) {
+    fallback.add(
+      SystemLogEntry(
+        date: booking.createdAt,
+        title: 'حجز صيفي',
+        description: 'حجز باسم ${booking.guestName}',
+        type: 'summer_booking',
+        route: '/summer_bookings/details/${booking.id}',
+        actorName: 'النظام',
+        action: 'legacy',
+      ),
+    );
   }
-
-  final winterContracts = await db.select(db.winterContracts).get();
-  for (var c in winterContracts) {
-    logs.add(SystemLogEntry(
-      date: c.createdAt,
-      title: 'عقد شتوي جديد',
-      description: 'تم إبرام عقد لـ ${c.studentName} بإيجار شهري ${c.monthlyRentEgp} ج.م',
-      type: 'winter_contract',
-    ));
+  final contracts = await db.select(db.winterContracts).get();
+  for (final contract in contracts) {
+    fallback.add(
+      SystemLogEntry(
+        date: contract.createdAt,
+        title: 'عقد شتوي',
+        description: 'عقد باسم ${contract.studentName}',
+        type: 'winter_contract',
+        route: '/winter_contracts/details/${contract.id}',
+        actorName: 'النظام',
+        action: 'legacy',
+      ),
+    );
   }
-
-  final winterPayments = await db.select(db.winterPayments).get();
-  for (var p in winterPayments) {
-    logs.add(SystemLogEntry(
-      date: p.createdAt,
-      title: 'دفعة عقد شتوي',
-      description: 'تم تحصيل دفعة إيجار بقيمة ${p.amountEgp} ج.م',
-      type: 'payment',
-    ));
+  final expenses = await db.select(db.expenses).get();
+  for (final expense in expenses) {
+    fallback.add(
+      SystemLogEntry(
+        date: expense.createdAt,
+        title: 'مصروف',
+        description: 'مصروف ${expense.expenseType} بقيمة ${expense.amountEgp} ج.م',
+        type: 'expense',
+        route: '/expenses',
+        actorName: 'النظام',
+        action: 'legacy',
+      ),
+    );
   }
-
-  final maintenanceReqs = await db.select(db.maintenanceRequests).get();
-  for (var m in maintenanceReqs) {
-    logs.add(SystemLogEntry(
-      date: m.createdAt,
-      title: 'طلب صيانة',
-      description: 'تم فتح طلب صيانة: ${m.issueDescription}',
-      type: 'maintenance',
-    ));
-    if (m.resolvedAt != null) {
-      logs.add(SystemLogEntry(
-        date: m.resolvedAt!,
-        title: 'إغلاق طلب صيانة',
-        description: 'تم إغلاق طلب الصيانة بتكلفة ${m.costEgp} ج.م',
-        type: 'maintenance_resolved',
-      ));
-    }
+  final transfers = await db.select(db.financialTransfers).get();
+  for (final transfer in transfers) {
+    fallback.add(
+      SystemLogEntry(
+        date: transfer.createdAt,
+        title: transfer.transferType == 'cash_deposit'
+            ? 'توريد نقدية'
+            : 'تحويل داخلي',
+        description: 'عملية مالية بقيمة ${transfer.amountEgp} ج.م',
+        type: 'financial_transfer',
+        route: '/financial_transfers',
+        actorName: 'النظام',
+        action: 'legacy',
+      ),
+    );
   }
-
-  final inspections = await db.select(db.apartmentInspections).get();
-  for (var i in inspections) {
-    logs.add(SystemLogEntry(
-      date: i.createdAt,
-      title: 'فحص شقة',
-      description: 'تم فحص شقة بواسطة ${i.inspectorName}. النظافة: ${i.isClean ? "نظيفة" : "تحتاج نظافة"}',
-      type: 'inspection',
-    ));
-  }
-
-  final cleaningTrans = await db.select(db.cleaningTransactions).get();
-  for (var t in cleaningTrans) {
-    logs.add(SystemLogEntry(
-      date: t.createdAt,
-      title: t.transactionType == 'purchase' ? 'شراء منظفات' : 'سحب منظفات',
-      description: 'الكمية: ${t.quantity}. الملاحظات: ${t.notes ?? ""}',
-      type: 'cleaning',
-    ));
-  }
-
-  final buildings = await db.select(db.buildings).get();
-  for (var b in buildings) {
-    logs.add(SystemLogEntry(
-      date: b.createdAt,
-      title: 'مبنى جديد',
-      description: 'تم إضافة المبنى: ${b.name}',
-      type: 'building',
-    ));
-  }
-
   final apartments = await db.select(db.apartments).get();
-  for (var a in apartments) {
-    logs.add(SystemLogEntry(
-      date: a.createdAt,
-      title: 'شقة جديدة',
-      description: 'تمت إضافة شقة ${a.apartmentNumber}',
-      type: 'apartment',
-    ));
+  for (final apartment in apartments) {
+    fallback.add(
+      SystemLogEntry(
+        date: apartment.createdAt,
+        title: 'شقة',
+        description: 'شقة ${apartment.apartmentNumber}',
+        type: 'apartment',
+        route: '/apartments/profile/${apartment.id}',
+        actorName: 'النظام',
+        action: 'legacy',
+      ),
+    );
   }
-
-  // Sort newest first
-  logs.sort((a, b) => b.date.compareTo(a.date));
-
-  return logs;
+  fallback.sort((a, b) => b.date.compareTo(a.date));
+  return fallback;
 });

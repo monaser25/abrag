@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/config/shared_prefs_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../providers/bookings_provider.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
@@ -46,6 +49,7 @@ class _AddSummerBookingScreenState
   String? _selectedBuildingId;
   String? _selectedBrokerId;
   bool _prefilled = false;
+  static const _draftKey = 'summer_booking_draft_v1';
 
   @override
   void dispose() {
@@ -109,18 +113,97 @@ class _AddSummerBookingScreenState
     if (_checkInDate != null && _daysController.text.isNotEmpty) {
       final days = int.tryParse(_daysController.text);
       if (days != null && days > 0) {
+        final settings = ref.read(appSettingsProvider).value ?? {};
+        final checkoutHour =
+            (settings['summer_checkout_hour'] as num?)?.toInt() ?? 8;
+        final checkoutMinute =
+            (settings['summer_checkout_minute'] as num?)?.toInt() ?? 0;
         setState(() {
           final tempDate = _checkInDate!.add(Duration(days: days));
           _checkOutDate = DateTime(
             tempDate.year,
             tempDate.month,
             tempDate.day,
-            8,
-            0,
-          ); // Default to 8 AM
+            checkoutHour,
+            checkoutMinute,
+          );
         });
       }
     }
+  }
+
+  Future<void> _saveDraft() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final draft = {
+      'guestName': _guestNameController.text,
+      'guestPhone': _guestPhoneController.text,
+      'totalPrice': _totalPriceController.text,
+      'amountPaid': _amountPaidController.text,
+      'days': _daysController.text,
+      'commission': _commissionController.text,
+      'nationalId': _nationalIdController.text,
+      'brokerName': _brokerNameController.text,
+      'checkInDate': _checkInDate?.toIso8601String(),
+      'checkOutDate': _checkOutDate?.toIso8601String(),
+      'paymentMethod': _paymentMethod,
+      'commissionType': _commissionType,
+      'selectedApartmentId': _selectedApartmentId,
+      'selectedBuildingId': _selectedBuildingId,
+      'selectedBrokerId': _selectedBrokerId,
+    };
+    await prefs.setString(_draftKey, jsonEncode(draft));
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('تم حفظ الحجز كمسودة')));
+  }
+
+  Future<void> _loadDraft() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final raw = prefs.getString(_draftKey);
+    if (raw == null || raw.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تحميل مسودة؟'),
+        content: const Text('يوجد حجز محفوظ كمسودة. هل تريد تحميله؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('لا'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('تحميل'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final draft = jsonDecode(raw) as Map<String, dynamic>;
+    setState(() {
+      _guestNameController.text = draft['guestName']?.toString() ?? '';
+      _guestPhoneController.text = draft['guestPhone']?.toString() ?? '';
+      _totalPriceController.text = draft['totalPrice']?.toString() ?? '';
+      _amountPaidController.text = draft['amountPaid']?.toString() ?? '';
+      _daysController.text = draft['days']?.toString() ?? '';
+      _commissionController.text = draft['commission']?.toString() ?? '';
+      _nationalIdController.text = draft['nationalId']?.toString() ?? '';
+      _brokerNameController.text = draft['brokerName']?.toString() ?? '';
+      _checkInDate = DateTime.tryParse(draft['checkInDate']?.toString() ?? '');
+      _checkOutDate = DateTime.tryParse(
+        draft['checkOutDate']?.toString() ?? '',
+      );
+      _paymentMethod = draft['paymentMethod']?.toString() ?? 'cash';
+      _commissionType = draft['commissionType']?.toString() ?? 'none';
+      _selectedApartmentId = draft['selectedApartmentId']?.toString();
+      _selectedBuildingId = draft['selectedBuildingId']?.toString();
+      _selectedBrokerId = draft['selectedBrokerId']?.toString();
+    });
+  }
+
+  Future<void> _clearDraft() async {
+    await ref.read(sharedPreferencesProvider).remove(_draftKey);
   }
 
   Future<void> _selectDate(BuildContext context, bool isCheckIn) async {
@@ -135,11 +218,16 @@ class _AddSummerBookingScreenState
     if (pickedDate != null) {
       if (!context.mounted) return;
 
+      final settings = ref.read(appSettingsProvider).value ?? {};
+      final checkoutHour =
+          (settings['summer_checkout_hour'] as num?)?.toInt() ?? 8;
+      final checkoutMinute =
+          (settings['summer_checkout_minute'] as num?)?.toInt() ?? 0;
       final pickedTime = await showTimePicker(
         context: context,
         initialTime: isCheckIn
             ? TimeOfDay.now()
-            : const TimeOfDay(hour: 8, minute: 0),
+            : TimeOfDay(hour: checkoutHour, minute: checkoutMinute),
       );
 
       if (pickedTime != null) {
@@ -163,14 +251,34 @@ class _AddSummerBookingScreenState
   }
 
   double _calculateNetAmount() {
-    final total = double.tryParse(_totalPriceController.text.replaceAll(',', '')) ?? 0;
-    final commissionVal = double.tryParse(_commissionController.text.replaceAll(',', '')) ?? 0;
+    final total =
+        double.tryParse(_totalPriceController.text.replaceAll(',', '')) ?? 0;
+    final commissionVal =
+        double.tryParse(_commissionController.text.replaceAll(',', '')) ?? 0;
     if (_commissionType == 'fixed') {
       return total - commissionVal;
     } else if (_commissionType == 'percentage') {
       return total - (total * (commissionVal / 100));
     }
     return total;
+  }
+
+  String? _optionalEgyptianPhoneValidator(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return null;
+    if (!RegExp(r'^\d{11}$').hasMatch(text)) {
+      return 'رقم الهاتف لازم يكون 11 رقم';
+    }
+    return null;
+  }
+
+  String? _optionalNationalIdValidator(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return null;
+    if (!RegExp(r'^\d{14}$').hasMatch(text)) {
+      return 'الرقم القومي لازم يكون 14 رقم';
+    }
+    return null;
   }
 
   void _submit() {
@@ -184,8 +292,16 @@ class _AddSummerBookingScreenState
         guestPhone: _guestPhoneController.text.trim(),
         checkInDate: _checkInDate!,
         checkOutDate: _checkOutDate!,
-        totalPriceEgp: double.tryParse(_totalPriceController.text.replaceAll(',', '').trim()) ?? 0,
-        amountPaidEgp: double.tryParse(_amountPaidController.text.replaceAll(',', '').trim()) ?? 0,
+        totalPriceEgp:
+            double.tryParse(
+              _totalPriceController.text.replaceAll(',', '').trim(),
+            ) ??
+            0,
+        amountPaidEgp:
+            double.tryParse(
+              _amountPaidController.text.replaceAll(',', '').trim(),
+            ) ??
+            0,
         paymentMethod: _paymentMethod,
         brokerId: _selectedBrokerId == 'other' ? null : _selectedBrokerId,
         brokerName: _selectedBrokerId == 'other'
@@ -193,10 +309,16 @@ class _AddSummerBookingScreenState
             : null,
         brokerCommissionType: _commissionType,
         brokerCommissionFixedEgp: _commissionType == 'fixed'
-            ? (double.tryParse(_commissionController.text.replaceAll(',', '')) ?? 0.0)
+            ? (double.tryParse(
+                    _commissionController.text.replaceAll(',', ''),
+                  ) ??
+                  0.0)
             : 0.0,
         brokerCommissionPercentage: _commissionType == 'percentage'
-            ? (double.tryParse(_commissionController.text.replaceAll(',', '')) ?? 10.0)
+            ? (double.tryParse(
+                    _commissionController.text.replaceAll(',', ''),
+                  ) ??
+                  10.0)
             : 10.0,
         nationalId: _nationalIdController.text.trim().isEmpty
             ? null
@@ -271,7 +393,10 @@ class _AddSummerBookingScreenState
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
         data: (_) {
-          if (widget.bookingId != null) {
+          _clearDraft();
+          if (context.canPop()) {
+            context.pop();
+          } else if (widget.bookingId != null) {
             context.go('/summer_bookings/details/${widget.bookingId}');
           } else {
             context.go('/summer_bookings/list');
@@ -291,13 +416,27 @@ class _AddSummerBookingScreenState
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            if (widget.bookingId != null) {
+            if (context.canPop()) {
+              context.pop();
+            } else if (widget.bookingId != null) {
               context.go('/summer_bookings/details/${widget.bookingId}');
             } else {
               context.go('/summer_bookings/list');
             }
           },
         ),
+        actions: [
+          IconButton(
+            tooltip: 'تحميل مسودة',
+            onPressed: widget.bookingId == null ? _loadDraft : null,
+            icon: const Icon(Icons.restore_page),
+          ),
+          IconButton(
+            tooltip: 'حفظ كمسودة',
+            onPressed: widget.bookingId == null ? _saveDraft : null,
+            icon: const Icon(Icons.save_as),
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -368,7 +507,7 @@ class _AddSummerBookingScreenState
                 }
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'اختر المبنى'),
-                  value: _selectedBuildingId,
+                  initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
                         (b) =>
@@ -411,7 +550,7 @@ class _AddSummerBookingScreenState
 
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'اختر الشقة'),
-                  value: _selectedApartmentId,
+                  initialValue: _selectedApartmentId,
                   items: filteredApts
                       .map(
                         (a) => DropdownMenuItem(
@@ -438,6 +577,7 @@ class _AddSummerBookingScreenState
               controller: _guestPhoneController,
               decoration: const InputDecoration(labelText: 'رقم الهاتف'),
               keyboardType: TextInputType.phone,
+              validator: _optionalEgyptianPhoneValidator,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -446,6 +586,7 @@ class _AddSummerBookingScreenState
                 labelText: 'الرقم القومي (اختياري)',
               ),
               keyboardType: TextInputType.number,
+              validator: _optionalNationalIdValidator,
             ),
             const SizedBox(height: 16),
             Row(
@@ -590,7 +731,10 @@ class _AddSummerBookingScreenState
                       if (v == null || v.isEmpty) return 'مطلوب';
                       final paid = double.tryParse(v.replaceAll(',', '')) ?? 0;
                       final total =
-                          double.tryParse(_totalPriceController.text.replaceAll(',', '')) ?? 0;
+                          double.tryParse(
+                            _totalPriceController.text.replaceAll(',', ''),
+                          ) ??
+                          0;
                       if (paid > total) {
                         return 'العربون أكبر من الإجمالي';
                       }
@@ -620,7 +764,7 @@ class _AddSummerBookingScreenState
               data: (brokers) {
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'السمسار'),
-                  value: _selectedBrokerId,
+                  initialValue: _selectedBrokerId,
                   items: [
                     const DropdownMenuItem(
                       value: null,
@@ -690,7 +834,9 @@ class _AddSummerBookingScreenState
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                inputFormatters: _commissionType == 'fixed' ? [CurrencyInputFormatter()] : [],
+                inputFormatters: _commissionType == 'fixed'
+                    ? [CurrencyInputFormatter()]
+                    : [],
                 onChanged: (_) => setState(() {}),
                 validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
               ),

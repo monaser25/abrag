@@ -51,7 +51,13 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
-        data: (_) => context.go('/summer_bookings/details/${widget.bookingId}'),
+        data: (_) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/summer_bookings/details/${widget.bookingId}');
+          }
+        },
         error: (error, _) => ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $error'))),
@@ -63,8 +69,13 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
         title: const Text('خروج مبكر'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () =>
-              context.go('/summer_bookings/details/${widget.bookingId}'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/summer_bookings/details/${widget.bookingId}');
+            }
+          },
         ),
       ),
       body: bookingsAsync.when(
@@ -181,13 +192,15 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                       if (brokerCommission > 0)
                         _CalcLine(
                           label: 'فلوس السمسار',
-                          value: '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
+                          value:
+                              '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
                           valueColor: theme.colorScheme.error,
                         ),
                       const Divider(),
                       _CalcLine(
                         label: 'صافي مبلغ الاسترداد',
-                        value: '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
+                        value:
+                            '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
                         valueColor: theme.colorScheme.primary,
                         isTitle: true,
                       ),
@@ -235,7 +248,9 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                 onPressed: controllerState.isLoading || remainingDays <= 0
                     ? null
                     : () {
-                        context.go('/inspections/add?apartmentId=${booking.apartmentId}&earlyCheckoutBookingId=${booking.id}&newCheckoutDate=${today.toIso8601String()}');
+                        context.go(
+                          '/inspections/add?apartmentId=${booking.apartmentId}&earlyCheckoutBookingId=${booking.id}&newCheckoutDate=${today.toIso8601String()}',
+                        );
                       },
                 icon: const Icon(Icons.fact_check),
                 label: controllerState.isLoading

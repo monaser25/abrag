@@ -19,12 +19,18 @@ class ApartmentProfileScreen extends ConsumerStatefulWidget {
 class _ApartmentProfileScreenState
     extends ConsumerState<ApartmentProfileScreen> {
   final _inventoryController = TextEditingController();
+  final _landlineNumberController = TextEditingController();
+  final _landlineOwnerController = TextEditingController();
+  final _landlineNotesController = TextEditingController();
   bool _isEditingInventory = false;
-  List<String> _inventoryItems = [];
+  bool _isEditingLandline = false;
 
   @override
   void dispose() {
     _inventoryController.dispose();
+    _landlineNumberController.dispose();
+    _landlineOwnerController.dispose();
+    _landlineNotesController.dispose();
     super.dispose();
   }
 
@@ -38,7 +44,51 @@ class _ApartmentProfileScreenState
     final formatter = DateFormat('EEEE yyyy-MM-dd', 'ar');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ملف الشقة')),
+      appBar: AppBar(
+        title: const Text('ملف الشقة'),
+        actions: [
+          profileAsync.maybeWhen(
+            data: (data) => PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  context.push('/apartments/edit', extra: data.apartment);
+                } else if (value == 'delete') {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('حذف الشقة؟'),
+                      content: const Text(
+                        'سيتم الحذف فقط لو الشقة ليس عليها حجوزات أو عقود محفوظة.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('إلغاء'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('حذف'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && context.mounted) {
+                    await ref
+                        .read(apartmentsControllerProvider.notifier)
+                        .deleteApartment(widget.apartmentId);
+                    if (context.mounted) context.pop();
+                  }
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'edit', child: Text('تعديل الشقة')),
+                PopupMenuItem(value: 'delete', child: Text('حذف الشقة')),
+              ],
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: profileAsync.when(
         data: (data) {
           final isCleaning = data.apartment.cleaningStatus == 'needs_cleaning';
@@ -125,20 +175,36 @@ class _ApartmentProfileScreenState
                             ],
                           ),
                         ),
-                          const SizedBox(height: 16),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              ref.read(apartmentsControllerProvider.notifier)
-                                 .updateCleaningStatus(widget.apartmentId, isCleaning ? 'clean' : 'needs_cleaning');
-                            },
-                            icon: Icon(isCleaning ? Icons.cleaning_services : Icons.warning_amber),
-                            label: Text(isCleaning ? 'تأكيد إتمام النظافة' : 'تغيير الحالة إلى: تحتاج نظافة'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: isCleaning ? Colors.green : Colors.orange,
-                              side: BorderSide(color: isCleaning ? Colors.green : Colors.orange),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            ref
+                                .read(apartmentsControllerProvider.notifier)
+                                .updateCleaningStatus(
+                                  widget.apartmentId,
+                                  isCleaning ? 'clean' : 'needs_cleaning',
+                                );
+                          },
+                          icon: Icon(
+                            isCleaning
+                                ? Icons.cleaning_services
+                                : Icons.warning_amber,
+                          ),
+                          label: Text(
+                            isCleaning
+                                ? 'تأكيد إتمام النظافة'
+                                : 'تغيير الحالة إلى: تحتاج نظافة',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isCleaning
+                                ? Colors.green
+                                : Colors.orange,
+                            side: BorderSide(
+                              color: isCleaning ? Colors.green : Colors.orange,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                        ),
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -175,38 +241,38 @@ class _ApartmentProfileScreenState
                             data.bookings,
                             data.totalRevenue,
                           ),
-                            child: _buildStatCard(
-                              theme,
-                              'الإيرادات',
-                              '${data.totalRevenue.toCurrencyFormat()} ج.م',
-                              Icons.account_balance_wallet,
-                            ),
+                          child: _buildStatCard(
+                            theme,
+                            'الإيرادات',
+                            '${data.totalRevenue.toCurrencyFormat()} ج.م',
+                            Icons.account_balance_wallet,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () =>
-                                _showExpensesDialog(context, data.expenses),
-                            child: _buildStatCard(
-                              theme,
-                              'المصروفات',
-                              '${data.totalExpenses.toCurrencyFormat()} ج.م',
-                              Icons.money_off,
-                              isError: true,
-                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () =>
+                              _showExpensesDialog(context, data.expenses),
+                          child: _buildStatCard(
+                            theme,
+                            'المصروفات',
+                            '${data.totalExpenses.toCurrencyFormat()} ج.م',
+                            Icons.money_off,
+                            isError: true,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                  SliverToBoxAdapter(
-                    child: _buildStatCard(
-                      theme,
-                      'صافي الربح',
-                      '${(data.totalRevenue - data.totalExpenses).toCurrencyFormat()} ج.م',
-                      Icons.assessment,
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                SliverToBoxAdapter(
+                  child: _buildStatCard(
+                    theme,
+                    'صافي الربح',
+                    '${(data.totalRevenue - data.totalExpenses).toCurrencyFormat()} ج.م',
+                    Icons.assessment,
                     isPrimary: true,
                   ),
                 ),
@@ -243,16 +309,12 @@ class _ApartmentProfileScreenState
                                               )
                                               .updateInventory(
                                                 widget.apartmentId,
-                                                _inventoryItems.join('\n'),
+                                                _inventoryController.text
+                                                    .trim(),
                                               );
                                         } else {
-                                          _inventoryItems =
-                                              (data.apartment.inventory ?? '')
-                                                  .split('\n')
-                                                  .where(
-                                                    (s) => s.trim().isNotEmpty,
-                                                  )
-                                                  .toList();
+                                          _inventoryController.text =
+                                              data.apartment.inventory ?? '';
                                         }
                                         setState(() {
                                           _isEditingInventory =
@@ -266,61 +328,22 @@ class _ApartmentProfileScreenState
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _inventoryController,
-                                        decoration: const InputDecoration(
-                                          hintText: 'إضافة محتوى جديد...',
-                                          isDense: true,
-                                        ),
-                                        onSubmitted: (val) {
-                                          if (val.trim().isNotEmpty) {
-                                            setState(() {
-                                              _inventoryItems.add(val.trim());
-                                              _inventoryController.clear();
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.add_circle),
-                                      color: theme.colorScheme.primary,
-                                      onPressed: () {
-                                        final val = _inventoryController.text;
-                                        if (val.trim().isNotEmpty) {
-                                          setState(() {
-                                            _inventoryItems.add(val.trim());
-                                            _inventoryController.clear();
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ],
+                                const Text(
+                                  'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
-                                ..._inventoryItems.asMap().entries.map(
-                                  (e) => ListTile(
-                                    dense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: const Icon(
-                                      Icons.check_box_outline_blank,
-                                    ),
-                                    title: Text(e.value),
-                                    trailing: IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _inventoryItems.removeAt(e.key);
-                                        });
-                                      },
-                                    ),
+                                TextField(
+                                  controller: _inventoryController,
+                                  decoration: const InputDecoration(
+                                    hintText:
+                                        'الأجهزة الكهربائية:\nثلاجة\nغسالة\n\nالأثاث:\nسرير كبير\nدولاب',
+                                    border: OutlineInputBorder(),
                                   ),
+                                  maxLines: 8,
                                 ),
                               ],
                             )
@@ -331,9 +354,25 @@ class _ApartmentProfileScreenState
                             else
                               ...(data.apartment.inventory!
                                       .split('\n')
-                                      .where((s) => s.trim().isNotEmpty))
-                                  .map(
-                                    (item) => ListTile(
+                                      .map((s) => s.trim())
+                                      .where((s) => s.isNotEmpty))
+                                  .map((item) {
+                                    if (item.endsWith(':')) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 12.0,
+                                          bottom: 4.0,
+                                        ),
+                                        child: Text(
+                                          item,
+                                          style: TextStyle(
+                                            color: theme.colorScheme.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return ListTile(
                                       dense: true,
                                       contentPadding: EdgeInsets.zero,
                                       leading: Icon(
@@ -342,8 +381,8 @@ class _ApartmentProfileScreenState
                                         size: 20,
                                       ),
                                       title: Text(item),
-                                    ),
-                                  ),
+                                    );
+                                  }),
                           ],
                         ],
                       ),
@@ -351,6 +390,134 @@ class _ApartmentProfileScreenState
                   ),
                 ),
 
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'الخط الأرضي',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  _isEditingLandline ? Icons.check : Icons.edit,
+                                ),
+                                color: theme.colorScheme.primary,
+                                onPressed: apartmentsControllerState.isLoading
+                                    ? null
+                                    : () {
+                                        if (_isEditingLandline) {
+                                          ref
+                                              .read(
+                                                apartmentsControllerProvider
+                                                    .notifier,
+                                              )
+                                              .updateLandline(
+                                                id: widget.apartmentId,
+                                                landlineNumber:
+                                                    _landlineNumberController
+                                                        .text,
+                                                ownerName:
+                                                    _landlineOwnerController
+                                                        .text,
+                                                notes: _landlineNotesController
+                                                    .text,
+                                              );
+                                        } else {
+                                          _landlineNumberController.text =
+                                              data.apartment.landlineNumber ??
+                                              '';
+                                          _landlineOwnerController.text =
+                                              data
+                                                  .apartment
+                                                  .landlineOwnerName ??
+                                              '';
+                                          _landlineNotesController.text =
+                                              data.apartment.landlineNotes ??
+                                              '';
+                                        }
+                                        setState(() {
+                                          _isEditingLandline =
+                                              !_isEditingLandline;
+                                        });
+                                      },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (_isEditingLandline) ...[
+                            TextField(
+                              controller: _landlineNumberController,
+                              decoration: const InputDecoration(
+                                labelText: 'رقم الخط الأرضي',
+                                prefixIcon: Icon(Icons.phone),
+                              ),
+                              keyboardType: TextInputType.phone,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _landlineOwnerController,
+                              decoration: const InputDecoration(
+                                labelText: 'اسم صاحب الخط',
+                                prefixIcon: Icon(Icons.person),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _landlineNotesController,
+                              decoration: const InputDecoration(
+                                labelText: 'ملاحظات',
+                                prefixIcon: Icon(Icons.notes),
+                              ),
+                              maxLines: 2,
+                            ),
+                          ] else if ((data.apartment.landlineNumber ?? '')
+                                  .trim()
+                                  .isEmpty &&
+                              (data.apartment.landlineOwnerName ?? '')
+                                  .trim()
+                                  .isEmpty) ...[
+                            Text(
+                              'لا يوجد خط أرضي مسجل للشقة',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ] else ...[
+                            _InfoLine(
+                              icon: Icons.phone,
+                              label: 'رقم الخط',
+                              value: data.apartment.landlineNumber ?? '-',
+                            ),
+                            const SizedBox(height: 6),
+                            _InfoLine(
+                              icon: Icons.person,
+                              label: 'صاحب الخط',
+                              value: data.apartment.landlineOwnerName ?? '-',
+                            ),
+                            if ((data.apartment.landlineNotes ?? '')
+                                .trim()
+                                .isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              _InfoLine(
+                                icon: Icons.notes,
+                                label: 'ملاحظات',
+                                value: data.apartment.landlineNotes!,
+                              ),
+                            ],
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 SliverToBoxAdapter(
                   child: Text(
@@ -377,10 +544,22 @@ class _ApartmentProfileScreenState
                   SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final booking = data.bookings[index];
+                      final now = DateTime.now();
                       final days = _calendarDays(
                         booking.checkInDate,
                         booking.earlyCheckoutDate ?? booking.checkOutDate,
                       );
+                      final effectiveCheckout =
+                          booking.earlyCheckoutDate ?? booking.checkOutDate;
+                      final isCurrentResident =
+                          booking.status != 'checked_out' &&
+                          booking.status != 'cancelled' &&
+                          !now.isBefore(booking.checkInDate) &&
+                          now.isBefore(effectiveCheckout);
+                      final remainingAmount =
+                          ((booking.totalPriceEgp - booking.overstayFeeEgp) -
+                                  booking.amountPaidEgp)
+                              .clamp(0, double.infinity);
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
                         child: InkWell(
@@ -400,20 +579,22 @@ class _ApartmentProfileScreenState
                                       booking.guestName,
                                       style: theme.textTheme.titleMedium,
                                     ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(99),
-                                      ),
-                                      child: Text(
-                                        _statusLabel(booking.status),
-                                        style: theme.textTheme.labelSmall,
-                                      ),
+                                    Wrap(
+                                      spacing: 6,
+                                      children: [
+                                        _SmallBadge(
+                                          label: _statusLabel(booking.status),
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        _SmallBadge(
+                                          label: isCurrentResident
+                                              ? 'ساكن'
+                                              : 'غير ساكن',
+                                          color: isCurrentResident
+                                              ? Colors.green
+                                              : Colors.grey,
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -462,6 +643,16 @@ class _ApartmentProfileScreenState
                                       '${booking.amountPaidEgp.toDouble().toCurrencyFormat()} ج.م',
                                   valueColor: Colors.green,
                                 ),
+                                if (remainingAmount > 0) ...[
+                                  const SizedBox(height: 6),
+                                  _InfoLine(
+                                    icon: Icons.warning_amber,
+                                    label: 'عليه باقي',
+                                    value:
+                                        '${remainingAmount.toDouble().toCurrencyFormat()} ج.م',
+                                    valueColor: theme.colorScheme.error,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -505,7 +696,9 @@ class _ApartmentProfileScreenState
             return Column(
               children: [
                 AppBar(
-                  title: Text('إجمالي الإيرادات: ${totalRevenue.toCurrencyFormat()} ج.م'),
+                  title: Text(
+                    'إجمالي الإيرادات: ${totalRevenue.toCurrencyFormat()} ج.م',
+                  ),
                   automaticallyImplyLeading: false,
                   actions: [
                     IconButton(
@@ -529,9 +722,11 @@ class _ApartmentProfileScreenState
                             final name = isBooking
                                 ? booking.guestName
                                 : booking.studentName;
-                            final price = (isBooking
-                                ? booking.totalPriceEgp
-                                : booking.monthlyRentEgp) as double;
+                            final price =
+                                (isBooking
+                                        ? booking.totalPriceEgp
+                                        : booking.monthlyRentEgp)
+                                    as double;
                             final start = isBooking
                                 ? booking.checkInDate
                                 : booking.startDate;
@@ -608,13 +803,21 @@ class _ApartmentProfileScreenState
                                 Icons.money_off,
                                 color: Colors.red,
                               ),
-                              title: Text(_translateExpenseType(expense.expenseType)),
+                              title: Text(
+                                _translateExpenseType(expense.expenseType),
+                              ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    expense.expenseDate.toLocal().toString().split(' ')[0],
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    expense.expenseDate
+                                        .toLocal()
+                                        .toString()
+                                        .split(' ')[0],
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                   Text(expense.description ?? 'بدون تفاصيل'),
                                 ],
@@ -720,15 +923,23 @@ class _ApartmentProfileScreenState
         return status;
     }
   }
+
   String _translateExpenseType(String type) {
     switch (type) {
-      case 'maintenance': return 'صيانة / إصلاحات';
-      case 'building_rent': return 'إيجار المبنى';
-      case 'water': return 'مياه';
-      case 'electricity': return 'كهرباء';
-      case 'gas': return 'غاز (أنبوبة)';
-      case 'cleaning': return 'نظافة';
-      default: return 'أخرى';
+      case 'maintenance':
+        return 'صيانة / إصلاحات';
+      case 'building_rent':
+        return 'إيجار المبنى';
+      case 'water':
+        return 'مياه';
+      case 'electricity':
+        return 'كهرباء';
+      case 'gas':
+        return 'غاز (أنبوبة)';
+      case 'cleaning':
+        return 'نظافة';
+      default:
+        return 'أخرى';
     }
   }
 }
@@ -772,6 +983,28 @@ class _InfoLine extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SmallBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SmallBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+      ),
     );
   }
 }

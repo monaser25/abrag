@@ -26,35 +26,46 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _buildSettingsCard(
             context,
-            title: 'إدارة التسعير',
-            icon: Icons.price_change,
-            route: '/settings/pricing',
-          ),
-          _buildSettingsCard(
-            context,
             title: 'الانتقال بين المواسم',
             icon: Icons.swap_horiz,
             route: '/settings/season_transition',
           ),
           _buildSettingsCard(
             context,
-            title: 'الإشعارات',
-            icon: Icons.notifications,
-            route: '/settings/notifications',
+            title: 'مواعيد الخروج',
+            icon: Icons.schedule,
+            route: '/settings/checkout_times',
+          ),
+          _buildSettingsCard(
+            context,
+            title: 'إدارة الخطوط الأرضية',
+            icon: Icons.phone,
+            route: '/apartments/landlines',
+          ),
+          _buildSettingsCard(
+            context,
+            title: 'تصدير / استيراد / مسح البيانات',
+            icon: Icons.storage,
+            route: '/settings/data_management',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSettingsCard(BuildContext context, {required String title, required IconData icon, required String route}) {
+  Widget _buildSettingsCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required String route,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
         title: Text(title),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => context.go(route),
+        onTap: () => context.push(route),
       ),
     );
   }

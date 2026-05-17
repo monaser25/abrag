@@ -3,46 +3,27 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
+import '../../../apartments/presentation/providers/apartment_occupancy_rules_provider.dart';
 
 final bookingsControllerProvider =
     StateNotifierProvider<BookingsController, AsyncValue<void>>((ref) {
-      return BookingsController(ref.watch(databaseProvider));
+      return BookingsController(
+        ref.watch(databaseProvider),
+        ref.watch(apartmentOccupancyRulesProvider),
+      );
     });
 
 class BookingsController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
+  final ApartmentOccupancyRules _occupancyRules;
+  late final AuditLogService _auditLog;
 
-  BookingsController(this._db) : super(const AsyncData(null));
-
-  DateTime _effectiveCheckoutDate(SummerBooking booking) {
-    return booking.earlyCheckoutDate ?? booking.checkOutDate;
-  }
-
-  Future<void> _ensureNoApartmentConflict({
-    required String apartmentId,
-    required DateTime checkInDate,
-    required DateTime checkOutDate,
-    String? excludingBookingId,
-  }) async {
-    final query = _db.select(_db.summerBookings)
-      ..where((t) => t.apartmentId.equals(apartmentId))
-      ..where((t) => t.status.isNotIn(['cancelled']));
-
-    if (excludingBookingId != null) {
-      query.where((t) => t.id.equals(excludingBookingId).not());
-    }
-
-    final existingBookings = await query.get();
-    final hasConflict = existingBookings.any((booking) {
-      final existingEnd = _effectiveCheckoutDate(booking);
-      return checkInDate.isBefore(existingEnd) &&
-          checkOutDate.isAfter(booking.checkInDate);
-    });
-
-    if (hasConflict) {
-      throw Exception('هذه الشقة محجوزة بالفعل في هذه الفترة.');
-    }
+  BookingsController(this._db, [ApartmentOccupancyRules? occupancyRules])
+    : _occupancyRules = occupancyRules ?? ApartmentOccupancyRules(_db),
+      super(const AsyncData(null)) {
+    _auditLog = AuditLogService(_db);
   }
 
   Future<void> addBooking({
@@ -68,7 +49,7 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       if (amountPaidEgp > totalPriceEgp) {
         throw Exception('العربون لا يمكن أن يكون أكبر من السعر الإجمالي');
       }
-      await _ensureNoApartmentConflict(
+      await _occupancyRules.ensureApartmentIsFreeForPeriod(
         apartmentId: apartmentId,
         checkInDate: checkInDate,
         checkOutDate: checkOutDate,
@@ -111,6 +92,23 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
               updatedAt: DateTime.now(),
             ),
           );
+      await _auditLog.log(
+        action: 'create',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'إضافة حجز صيفي',
+        description:
+            'تم إضافة حجز صيفي باسم $guestName بقيمة $totalPriceEgp ج.م',
+        route: '/summer_bookings/details/$id',
+        newValues: {
+          'guestName': guestName,
+          'guestPhone': guestPhone,
+          'checkInDate': checkInDate,
+          'checkOutDate': checkOutDate,
+          'totalPriceEgp': totalPriceEgp,
+          'amountPaidEgp': amountPaidEgp,
+        },
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -141,16 +139,19 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       if (amountPaidEgp > totalPriceEgp) {
         throw Exception('العربون لا يمكن أن يكون أكبر من السعر الإجمالي');
       }
-      await _ensureNoApartmentConflict(
+      await _occupancyRules.ensureApartmentIsFreeForPeriod(
         apartmentId: apartmentId,
         checkInDate: checkInDate,
         checkOutDate: checkOutDate,
-        excludingBookingId: id,
+        excludingSummerBookingId: id,
       );
 
       String status = 'pending';
       if (amountPaidEgp > 0) status = 'confirmed';
 
+      final old = await (_db.select(
+        _db.summerBookings,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).write(
@@ -176,6 +177,23 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           updatedAt: Value(DateTime.now()),
         ),
       );
+      await _auditLog.log(
+        action: 'update',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'تعديل حجز صيفي',
+        description: 'تم تعديل بيانات حجز $guestName',
+        route: '/summer_bookings/details/$id',
+        oldValues: old?.toJson(),
+        newValues: {
+          'guestName': guestName,
+          'guestPhone': guestPhone,
+          'checkInDate': checkInDate,
+          'checkOutDate': checkOutDate,
+          'totalPriceEgp': totalPriceEgp,
+          'amountPaidEgp': amountPaidEgp,
+        },
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -198,6 +216,14 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           updatedAt: Value(DateTime.now()),
         ),
       );
+      await _auditLog.log(
+        action: 'checkout',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'تسجيل خروج مصيف',
+        description: 'تم تسجيل خروج حجز صيفي',
+        route: '/summer_bookings/details/$id',
+      );
 
       if (apartmentId != null) {
         await (_db.update(
@@ -211,6 +237,43 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         );
       }
 
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> updateBookingPayment({
+    required String id,
+    required double newAmountPaidEgp,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final booking = await (_db.select(
+        _db.summerBookings,
+      )..where((t) => t.id.equals(id))).getSingle();
+      if (newAmountPaidEgp > booking.totalPriceEgp) {
+        throw Exception('المدفوع لا يمكن أن يكون أكبر من إجمالي الحجز');
+      }
+      await (_db.update(
+        _db.summerBookings,
+      )..where((t) => t.id.equals(id))).write(
+        SummerBookingsCompanion(
+          amountPaidEgp: Value(newAmountPaidEgp),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      await _auditLog.log(
+        action: 'payment',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'تسديد حجز صيفي',
+        description: 'تم تحديث المدفوع إلى $newAmountPaidEgp ج.م',
+        route: '/summer_bookings/details/$id',
+        oldValues: {'amountPaidEgp': booking.amountPaidEgp},
+        newValues: {'amountPaidEgp': newAmountPaidEgp},
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -232,6 +295,14 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           syncStatus: const Value(SyncStatus.pendingUpdate),
           updatedAt: Value(DateTime.now()),
         ),
+      );
+      await _auditLog.log(
+        action: 'early_checkout',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'خروج مبكر',
+        description: 'تم تسجيل خروج مبكر بتاريخ $newCheckoutDate',
+        route: '/summer_bookings/details/$id',
       );
       state = const AsyncData(null);
     } catch (e, st) {
@@ -264,6 +335,15 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           updatedAt: Value(DateTime.now()),
         ),
       );
+      await _auditLog.log(
+        action: 'extend',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'تمديد حجز صيفي',
+        description:
+            'تم تمديد الحجز $overstayDays يوم بقيمة $additionalFeeEgp ج.م',
+        route: '/summer_bookings/details/$id',
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -276,9 +356,20 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       // Offline-first deletion: either physically delete if not synced yet,
       // or mark with a status like 'deleted' / pendingDelete for sync.
       // Assuming Drift physical delete for simplicity here:
+      final booking = await (_db.select(
+        _db.summerBookings,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.delete(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).go();
+      await _auditLog.log(
+        action: 'delete',
+        entityType: 'summer_booking',
+        entityId: id,
+        title: 'حذف حجز صيفي',
+        description: 'تم حذف حجز ${booking?.guestName ?? ''}',
+        oldValues: booking?.toJson(),
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

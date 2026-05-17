@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/shared_prefs_provider.dart';
+import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
-import '../../../buildings/presentation/providers/buildings_controller.dart';
-import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
-  const ReportsScreen({super.key});
+  final ReportFilterState? initialFilters;
+
+  const ReportsScreen({super.key, this.initialFilters});
 
   @override
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
@@ -15,28 +17,57 @@ class ReportsScreen extends ConsumerStatefulWidget {
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   final _personController = TextEditingController();
+  bool _hideNumbers = false;
   String _filter = 'all'; // all, summer, winter
   String? _selectedBuildingId;
   String? _selectedApartmentId;
   String _expenseType = 'all';
   String _partyType = 'all';
   String _selectedPartyKey = 'all';
+  String _transactionType = 'all';
+  String _paymentMethod = 'all';
   String _personQuery = '';
   DateTime? _startDate;
   DateTime? _endDate;
 
-  Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      setState(() {
-        _startDate = picked.start;
-        _endDate = picked.end;
-      });
+  @override
+  void initState() {
+    super.initState();
+    _applyFilters(widget.initialFilters ?? const ReportFilterState());
+    _hideNumbers =
+        ref.read(sharedPreferencesProvider).getBool('reports_hide_numbers') ??
+        false;
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialFilters != widget.initialFilters) {
+      _applyFilters(widget.initialFilters ?? const ReportFilterState());
     }
+  }
+
+  void _applyFilters(ReportFilterState filters) {
+    _filter = filters.season;
+    _selectedBuildingId = filters.buildingId;
+    _selectedApartmentId = filters.apartmentId;
+    _expenseType = filters.expenseType;
+    _partyType = filters.partyType;
+    _selectedPartyKey = filters.selectedPartyKey;
+    _transactionType = filters.transactionType;
+    _paymentMethod = filters.paymentMethod;
+    _personQuery = filters.personQuery;
+    _startDate = filters.startDate;
+    _endDate = filters.endDate;
+    _personController.text = filters.personQuery;
+  }
+
+  Future<void> _toggleHideNumbers() async {
+    final nextValue = !_hideNumbers;
+    setState(() => _hideNumbers = nextValue);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool('reports_hide_numbers', nextValue);
   }
 
   void _clearFilters() {
@@ -48,6 +79,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       _expenseType = 'all';
       _partyType = 'all';
       _selectedPartyKey = 'all';
+      _transactionType = 'all';
+      _paymentMethod = 'all';
       _personQuery = '';
       _startDate = null;
       _endDate = null;
@@ -63,9 +96,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final reportAsync = ref.watch(financialReportProvider);
-    final buildingsAsync = ref.watch(buildingsProvider);
-    final apartmentsAsync = ref.watch(apartmentsProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -79,7 +109,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: () {
-              context.go('/reports/statement');
+              context.push('/reports/statement', extra: _currentFilters());
             },
           ),
         ],
@@ -114,23 +144,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               .fold(0.0, (sum, t) => sum + t.amount);
 
           final apartmentMetrics = _apartmentMetrics(filteredRentals);
-          final summerApartmentMetrics = _apartmentMetrics(
-            filteredRentals.where((r) => r.season == 'summer').toList(),
-          );
           final floorMetrics = _floorMetrics(filteredRentals);
           final brokerMetrics = _brokerMetrics(filteredRentals);
           final workerMetrics = _workerMetrics(filteredWorkRecords);
           final expenseMetrics = _expenseMetrics(filteredTransactions);
 
-          final topSummerApartment = _topByCount(summerApartmentMetrics);
-          final topRentalValueApartment = _topByRentalValue(apartmentMetrics);
-          final lowRentalValueApartment = _lowByRentalValue(apartmentMetrics);
-          final topFloor = _topByRentalValue(floorMetrics);
-          final lowFloor = _lowByRentalValue(floorMetrics);
           final partyOptions = _partyOptions(report);
           final selectedPartyKey = partyOptions.containsKey(_selectedPartyKey)
               ? _selectedPartyKey
               : 'all';
+          final activeFilters = ReportFilterState(
+            buildingId: _selectedBuildingId,
+            apartmentId: _selectedApartmentId,
+            season: _filter,
+            expenseType: _expenseType,
+            partyType: _partyType,
+            selectedPartyKey: selectedPartyKey,
+            transactionType: _transactionType,
+            paymentMethod: _paymentMethod,
+            personQuery: _personQuery,
+            startDate: _startDate,
+            endDate: _endDate,
+          );
 
           final filteredProfit = filteredRevenue - filteredExpenses;
 
@@ -139,515 +174,39 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final fieldWidth = constraints.maxWidth < 720
-                                ? constraints.maxWidth
-                                : (constraints.maxWidth - 24) / 3;
-
-                            return Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: buildingsAsync.when(
-                                    data: (buildings) =>
-                                        DropdownButtonFormField<String>(
-                                          decoration: const InputDecoration(
-                                            labelText: 'اختر المبنى',
-                                          ),
-                                          initialValue: _selectedBuildingId,
-                                          items: [
-                                            const DropdownMenuItem(
-                                              value: null,
-                                              child: Text('جميع المباني'),
-                                            ),
-                                            ...buildings.map(
-                                              (b) => DropdownMenuItem(
-                                                value: b.id,
-                                                child: Text(b.name),
-                                              ),
-                                            ),
-                                          ],
-                                          onChanged: (v) => setState(() {
-                                            _selectedBuildingId = v;
-                                            _selectedApartmentId = null;
-                                          }),
-                                        ),
-                                    loading: () =>
-                                        const LinearProgressIndicator(),
-                                    error: (e, st) => const SizedBox.shrink(),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: apartmentsAsync.when(
-                                    data: (apartments) {
-                                      var apts = apartments;
-                                      if (_selectedBuildingId != null) {
-                                        apts = apts
-                                            .where(
-                                              (a) =>
-                                                  a.buildingId ==
-                                                  _selectedBuildingId,
-                                            )
-                                            .toList();
-                                      }
-                                      return DropdownButtonFormField<String>(
-                                        decoration: const InputDecoration(
-                                          labelText: 'اختر الشقة',
-                                        ),
-                                        initialValue: _selectedApartmentId,
-                                        items: [
-                                          const DropdownMenuItem(
-                                            value: null,
-                                            child: Text('جميع الشقق'),
-                                          ),
-                                          ...apts.map(
-                                            (a) => DropdownMenuItem(
-                                              value: a.id,
-                                              child: Text(
-                                                'شقة ${a.apartmentNumber}',
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                        onChanged: (v) => setState(
-                                          () => _selectedApartmentId = v,
-                                        ),
-                                      );
-                                    },
-                                    loading: () =>
-                                        const LinearProgressIndicator(),
-                                    error: (e, st) => const SizedBox.shrink(),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'الموسم',
-                                    ),
-                                    initialValue: _filter,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'all',
-                                        child: Text('كل المواسم'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'summer',
-                                        child: Text('صيف'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'winter',
-                                        child: Text('شتاء'),
-                                      ),
-                                    ],
-                                    onChanged: (v) =>
-                                        setState(() => _filter = v ?? 'all'),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'نوع المصروف',
-                                    ),
-                                    initialValue: _expenseType,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'all',
-                                        child: Text('كل المصروفات'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'maintenance',
-                                        child: Text('صيانة / إصلاحات'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'building_rent',
-                                        child: Text('إيجار المبنى'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'water',
-                                        child: Text('مياه'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'electricity',
-                                        child: Text('كهرباء'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'gas',
-                                        child: Text('غاز'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'cleaning',
-                                        child: Text('نظافة'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'other',
-                                        child: Text('أخرى'),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _expenseType = v ?? 'all',
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'نوع الحساب',
-                                    ),
-                                    initialValue: _partyType,
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'all',
-                                        child: Text('كل الحسابات'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'customer',
-                                        child: Text('عميل'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'broker',
-                                        child: Text('سمسار'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'technician',
-                                        child: Text('عامل'),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(() {
-                                      _partyType = v ?? 'all';
-                                      _selectedPartyKey = 'all';
-                                    }),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: DropdownButtonFormField<String>(
-                                    key: ValueKey('party-account-$_partyType'),
-                                    decoration: const InputDecoration(
-                                      labelText: 'اختر الحساب',
-                                    ),
-                                    initialValue: selectedPartyKey,
-                                    items: partyOptions.entries
-                                        .map(
-                                          (entry) => DropdownMenuItem(
-                                            value: entry.key,
-                                            child: Text(entry.value),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: _partyType == 'all'
-                                        ? null
-                                        : (v) => setState(
-                                            () =>
-                                                _selectedPartyKey = v ?? 'all',
-                                          ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: TextField(
-                                    controller: _personController,
-                                    decoration: const InputDecoration(
-                                      labelText:
-                                          'بحث في العملاء/السماسرة/العمال',
-                                      prefixIcon: Icon(Icons.search),
-                                    ),
-                                    onChanged: (v) =>
-                                        setState(() => _personQuery = v.trim()),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: fieldWidth,
-                                  child: OutlinedButton.icon(
-                                    onPressed: _selectDateRange,
-                                    icon: const Icon(Icons.date_range),
-                                    label: Text(
-                                      _startDate != null
-                                          ? '${_startDate!.month}/${_startDate!.year} - ${_endDate!.month}/${_endDate!.year}'
-                                          : 'الفترة',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context,
-                          title: 'إجمالي الإيرادات',
-                          value: '$filteredRevenue',
-                          icon: Icons.trending_up,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context,
-                          title: 'إجمالي المصروفات',
-                          value: '$filteredExpenses',
-                          icon: Icons.trending_down,
-                          color: theme.colorScheme.error,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                SliverToBoxAdapter(
-                  child: _buildSummaryCard(
+                  child: _buildFinancialOverview(
                     context,
-                    title: 'صافي الربح',
-                    value: '$filteredProfit',
-                    icon: Icons.account_balance_wallet,
-                    color: theme.colorScheme.primary,
-                    isLarge: true,
+                    revenue: filteredRevenue,
+                    expenses: filteredExpenses,
+                    profit: filteredProfit,
+                    cash: cashRev,
+                    vodafoneCash: vfRev,
+                    instapay: instaRev,
+                    activeFilters: activeFilters,
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 SliverToBoxAdapter(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context,
-                          title: 'أكثر شقة سكنت صيفاً',
-                          value: topSummerApartment == null
-                              ? '0'
-                              : '${topSummerApartment.count} حجز - ${topSummerApartment.label}',
-                          icon: Icons.beach_access,
-                          color: Colors.orange,
-                          showCurrency: false,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context,
-                          title: 'أعلى شقة إيراداً',
-                          value: topRentalValueApartment == null
-                              ? '0'
-                              : '${topRentalValueApartment.rentalValue.toCurrencyFormat()} - ${topRentalValueApartment.label}',
-                          icon: Icons.apartment,
-                          color: Colors.blue,
-                          showCurrency: false,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                SliverToBoxAdapter(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context,
-                          title: 'أقل شقة إيراداً',
-                          value: lowRentalValueApartment == null
-                              ? '0'
-                              : '${lowRentalValueApartment.rentalValue.toCurrencyFormat()} - ${lowRentalValueApartment.label}',
-                          icon: Icons.trending_down,
-                          color: theme.colorScheme.error,
-                          showCurrency: false,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context,
-                          title: 'أعلى دور إيراداً',
-                          value: topFloor == null
-                              ? '0'
-                              : '${topFloor.rentalValue.toCurrencyFormat()} - ${topFloor.label}',
-                          icon: Icons.layers,
-                          color: Colors.teal,
-                          showCurrency: false,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                SliverToBoxAdapter(
-                  child: _buildSummaryCard(
+                  child: _buildShortcutGrid(
                     context,
-                    title: 'أقل دور إيراداً',
-                    value: lowFloor == null
-                        ? '0'
-                        : '${lowFloor.rentalValue.toCurrencyFormat()} - ${lowFloor.label}',
-                    icon: Icons.layers_clear,
-                    color: Colors.brown,
-                    showCurrency: false,
+                    activeFilters,
+                    selectedPartyKey,
+                    apartmentMetrics.length,
+                    floorMetrics.length,
+                    brokerMetrics.length,
+                    workerMetrics.length,
+                    expenseMetrics.length,
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 SliverToBoxAdapter(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'تفصيل الإيرادات',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildMiniStat(theme, 'نقدي', '$cashRev'),
-                              Container(
-                                width: 1,
-                                height: 40,
-                                color: theme.colorScheme.outlineVariant
-                                    .withValues(alpha: 0.3),
-                              ),
-                              _buildMiniStat(theme, 'فودافون كاش', '$vfRev'),
-                              Container(
-                                width: 1,
-                                height: 40,
-                                color: theme.colorScheme.outlineVariant
-                                    .withValues(alpha: 0.3),
-                              ),
-                              _buildMiniStat(theme, 'إنستاباي', '$instaRev'),
-                            ],
-                          ),
-                        ],
-                      ),
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push(
+                      '/reports/statement',
+                      extra: activeFilters,
                     ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildMetricsSection(
-                    title: 'تفاصيل الشقق',
-                    emptyText: 'لا توجد حجوزات مطابقة للفلاتر',
-                    metrics: apartmentMetrics,
-                    icon: Icons.apartment,
-                    trailingMode: _MetricTrailingMode.rental,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildMetricsSection(
-                    title: 'تفاصيل الأدوار',
-                    emptyText: 'لا توجد أدوار مطابقة للفلاتر',
-                    metrics: floorMetrics,
-                    icon: Icons.layers,
-                    trailingMode: _MetricTrailingMode.rental,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildMetricsSection(
-                    title: 'حسابات السماسرة',
-                    emptyText: 'لا توجد حجوزات بسماسرة مطابقة للفلاتر',
-                    metrics: brokerMetrics,
-                    icon: Icons.handshake,
-                    trailingMode: _MetricTrailingMode.commission,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildMetricsSection(
-                    title: 'حسابات العمال',
-                    emptyText: 'لا توجد أعمال صيانة مطابقة للفلاتر',
-                    metrics: workerMetrics,
-                    icon: Icons.engineering,
-                    trailingMode: _MetricTrailingMode.cost,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildMetricsSection(
-                    title: 'المصروفات حسب النوع',
-                    emptyText: 'لا توجد مصروفات مطابقة للفلاتر',
-                    metrics: expenseMetrics,
-                    icon: Icons.receipt_long,
-                    trailingMode: _MetricTrailingMode.cost,
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'أحدث العمليات',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ),
-                ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final t = filteredTransactions[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: t.isRevenue
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : theme.colorScheme.error.withValues(
-                                    alpha: 0.1,
-                                  ),
-                            child: Icon(
-                              t.isRevenue
-                                  ? Icons.arrow_downward
-                                  : Icons.arrow_upward,
-                              color: t.isRevenue
-                                  ? Colors.green
-                                  : theme.colorScheme.error,
-                            ),
-                          ),
-                          title: Text(t.description),
-                          subtitle: Text(
-                            t.date.toLocal().toString().split(' ')[0],
-                          ),
-                          trailing: Text(
-                            '${t.isRevenue ? "+" : "-"} ${t.amount} ج.م',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: t.isRevenue
-                                  ? Colors.green
-                                  : theme.colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: filteredTransactions.length > 5
-                        ? 5
-                        : filteredTransactions.length,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: OutlinedButton(
-                      onPressed: () {
-                        context.go('/reports/statement');
-                      },
-                      child: const Text('عرض كشف الحساب الكامل'),
-                    ),
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('إنشاء كشف حساب PDF'),
                   ),
                 ),
               ],
@@ -660,77 +219,363 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildMiniStat(ThemeData theme, String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: theme.colorScheme.primary,
-          ),
-        ),
-      ],
+  void _openStatement(BuildContext context, ReportFilterState filters) {
+    context.push('/reports/statement', extra: filters);
+  }
+
+  ReportFilterState _currentFilters({String? selectedPartyKey}) {
+    return ReportFilterState(
+      buildingId: _selectedBuildingId,
+      apartmentId: _selectedApartmentId,
+      season: _filter,
+      expenseType: _expenseType,
+      partyType: _partyType,
+      selectedPartyKey: selectedPartyKey ?? _selectedPartyKey,
+      transactionType: _transactionType,
+      paymentMethod: _paymentMethod,
+      personQuery: _personQuery,
+      startDate: _startDate,
+      endDate: _endDate,
     );
   }
 
-  Widget _buildSummaryCard(
-    BuildContext context, {
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    bool isLarge = false,
-    bool showCurrency = true,
+  Widget _buildMiniStat(
+    ThemeData theme,
+    String label,
+    String value, {
+    VoidCallback? onTap,
   }) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: isLarge ? 4 : 1,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: EdgeInsets.all(isLarge ? 16 : 12),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(icon, color: color, size: isLarge ? 24 : 16),
-              ],
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
               child: Text(
-                showCurrency ? '$value ج.م' : value,
-                style: isLarge
-                    ? theme.textTheme.headlineMedium?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                      )
-                    : theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  ReportFilterState _statementFilters(
+    ReportFilterState base, {
+    String transactionType = 'all',
+    String paymentMethod = 'all',
+  }) {
+    return base.copyWith(
+      transactionType: transactionType,
+      paymentMethod: paymentMethod,
+    );
+  }
+
+  Widget _buildTapHint(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.touch_app,
+            size: 14,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'اضغط للتفاصيل',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _privateValue(String value) => _hideNumbers ? '••••' : value;
+
+  Widget _buildShortcutGrid(
+    BuildContext context,
+    ReportFilterState activeFilters,
+    String selectedPartyKey,
+    int apartmentsCount,
+    int floorsCount,
+    int brokersCount,
+    int workersCount,
+    int expensesCount,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = constraints.maxWidth < 720
+            ? constraints.maxWidth
+            : (constraints.maxWidth - 16) / 3;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            SizedBox(
+              width: itemWidth,
+              child: _buildFiltersCard(context, selectedPartyKey),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: _buildStatisticsSummary(context, activeFilters),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: _buildReportsMenu(
+                context,
+                activeFilters,
+                apartmentsCount,
+                floorsCount,
+                brokersCount,
+                workersCount,
+                expensesCount,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFinancialOverview(
+    BuildContext context, {
+    required double revenue,
+    required double expenses,
+    required double profit,
+    required double cash,
+    required double vodafoneCash,
+    required double instapay,
+    required ReportFilterState activeFilters,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'الملخص المالي',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: _hideNumbers ? 'إظهار الأرقام' : 'إخفاء الأرقام',
+                  onPressed: _toggleHideNumbers,
+                  icon: Icon(
+                    _hideNumbers ? Icons.visibility : Icons.visibility_off,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _MoneyTile(
+                    title: 'الإيرادات',
+                    value: _privateValue('${revenue.toCurrencyFormat()} ج.م'),
+                    icon: Icons.trending_up,
+                    color: Colors.green,
+                    onTap: () => _openStatement(
+                      context,
+                      _statementFilters(
+                        activeFilters,
+                        transactionType: 'revenue',
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _MoneyTile(
+                    title: 'المصروفات',
+                    value: _privateValue('${expenses.toCurrencyFormat()} ج.م'),
+                    icon: Icons.trending_down,
+                    color: theme.colorScheme.error,
+                    onTap: () => _openStatement(
+                      context,
+                      _statementFilters(
+                        activeFilters,
+                        transactionType: 'expense',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _MoneyTile(
+              title: 'صافي الربح',
+              value: _privateValue('${profit.toCurrencyFormat()} ج.م'),
+              icon: Icons.account_balance_wallet,
+              color: theme.colorScheme.primary,
+              onTap: () => _openStatement(context, activeFilters),
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: _buildTapHint(theme),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'تفاصيل الإيرادات',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMiniStat(
+                    theme,
+                    'نقدي',
+                    _privateValue('${cash.toCurrencyFormat()} ج.م'),
+                    onTap: () => _openStatement(
+                      context,
+                      _statementFilters(
+                        activeFilters,
+                        transactionType: 'revenue',
+                        paymentMethod: 'cash',
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.3,
+                  ),
+                ),
+                Expanded(
+                  child: _buildMiniStat(
+                    theme,
+                    'فودافون كاش',
+                    _privateValue('${vodafoneCash.toCurrencyFormat()} ج.م'),
+                    onTap: () => _openStatement(
+                      context,
+                      _statementFilters(
+                        activeFilters,
+                        transactionType: 'revenue',
+                        paymentMethod: 'vodafone_cash',
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.3,
+                  ),
+                ),
+                Expanded(
+                  child: _buildMiniStat(
+                    theme,
+                    'إنستاباي',
+                    _privateValue('${instapay.toCurrencyFormat()} ج.م'),
+                    onTap: () => _openStatement(
+                      context,
+                      _statementFilters(
+                        activeFilters,
+                        transactionType: 'revenue',
+                        paymentMethod: 'instapay',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiltersCard(BuildContext context, String selectedPartyKey) {
+    return _DashboardShortcutCard(
+      icon: Icons.tune,
+      title: 'فلاتر وتحكم',
+      description:
+          'افتح صفحة الفلاتر الكاملة لاختيار الشقة، الموسم، الحساب أو الفترة.',
+      onTap: () => context.push(
+        '/reports/filters',
+        extra: ReportFilterState(
+          buildingId: _selectedBuildingId,
+          apartmentId: _selectedApartmentId,
+          season: _filter,
+          expenseType: _expenseType,
+          partyType: _partyType,
+          selectedPartyKey: selectedPartyKey,
+          transactionType: _transactionType,
+          paymentMethod: _paymentMethod,
+          personQuery: _personQuery,
+          startDate: _startDate,
+          endDate: _endDate,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatisticsSummary(
+    BuildContext context,
+    ReportFilterState activeFilters,
+  ) {
+    return _DashboardShortcutCard(
+      icon: Icons.insights,
+      title: 'ملخص الإحصائيات',
+      description: 'افتح مؤشرات أعلى/أقل شقة ودور وإحصائيات الموسم والإيرادات.',
+      onTap: () => context.push('/reports/statistics', extra: activeFilters),
+    );
+  }
+
+  Widget _buildReportsMenu(
+    BuildContext context,
+    ReportFilterState filters,
+    int apartmentsCount,
+    int floorsCount,
+    int brokersCount,
+    int workersCount,
+    int expensesCount,
+  ) {
+    final count =
+        apartmentsCount +
+        floorsCount +
+        brokersCount +
+        workersCount +
+        expensesCount;
+    return _DashboardShortcutCard(
+      icon: Icons.dashboard_customize,
+      title: 'التقارير التفصيلية',
+      description:
+          'افتح قائمة التقارير التفصيلية وكشف الحساب. ($count عنصر متاح)',
+      onTap: () => context.push('/reports/menu', extra: filters),
     );
   }
 
@@ -772,6 +617,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     if (_selectedApartmentId != null) {
       transactions = transactions
           .where((t) => t.apartmentId == _selectedApartmentId)
+          .toList();
+    }
+    if (_transactionType == 'revenue') {
+      transactions = transactions.where((t) => t.isRevenue).toList();
+    } else if (_transactionType == 'expense') {
+      transactions = transactions.where((t) => !t.isRevenue).toList();
+    }
+    if (_paymentMethod != 'all') {
+      transactions = transactions
+          .where((t) => t.paymentMethod == _paymentMethod)
           .toList();
     }
     if (_filter != 'all') {
@@ -1042,95 +897,111 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return list;
   }
 
-  _ReportMetric? _topByCount(List<_ReportMetric> metrics) {
-    if (metrics.isEmpty) return null;
-    final list = [...metrics]..sort((a, b) => b.count.compareTo(a.count));
-    return list.first;
-  }
-
-  _ReportMetric? _topByRentalValue(List<_ReportMetric> metrics) {
-    if (metrics.isEmpty) return null;
-    return _sortByRentalValue([...metrics]).first;
-  }
-
-  _ReportMetric? _lowByRentalValue(List<_ReportMetric> metrics) {
-    final positiveMetrics = metrics.where((m) => m.rentalValue > 0).toList();
-    if (positiveMetrics.isEmpty) return null;
-    positiveMetrics.sort((a, b) => a.rentalValue.compareTo(b.rentalValue));
-    return positiveMetrics.first;
-  }
-
   List<_ReportMetric> _sortByRentalValue(List<_ReportMetric> metrics) {
     metrics.sort((a, b) => b.rentalValue.compareTo(a.rentalValue));
     return metrics;
   }
+}
 
-  Widget _buildMetricsSection({
-    required String title,
-    required String emptyText,
-    required List<_ReportMetric> metrics,
-    required IconData icon,
-    required _MetricTrailingMode trailingMode,
-  }) {
+class _DashboardShortcutCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  const _DashboardShortcutCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: ExpansionTile(
-        leading: Icon(icon),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+          child: Icon(icon, color: theme.colorScheme.primary),
+        ),
         title: Text(title),
-        subtitle: Text(metrics.isEmpty ? emptyText : '${metrics.length} عنصر'),
-        children: metrics.isEmpty
-            ? [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(emptyText),
-                ),
-              ]
-            : metrics.map((metric) {
-                return ListTile(
-                  title: Text(metric.label),
-                  subtitle: Text(_metricSubtitle(metric, trailingMode)),
-                  trailing: Text(
-                    _metricTrailingText(metric, trailingMode),
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                );
-              }).toList(),
+        subtitle: Text(description),
+        trailing: const Icon(Icons.chevron_left),
+        onTap: onTap,
+        textColor: theme.colorScheme.onSurface,
       ),
     );
   }
-
-  String _metricTrailingText(
-    _ReportMetric metric,
-    _MetricTrailingMode trailingMode,
-  ) {
-    switch (trailingMode) {
-      case _MetricTrailingMode.cost:
-        return '${metric.cost.toCurrencyFormat()} ج.م';
-      case _MetricTrailingMode.commission:
-        return '${metric.commission.toCurrencyFormat()} ج.م';
-      case _MetricTrailingMode.rental:
-        return '${metric.rentalValue.toCurrencyFormat()} ج.م';
-    }
-  }
-
-  String _metricSubtitle(
-    _ReportMetric metric,
-    _MetricTrailingMode trailingMode,
-  ) {
-    switch (trailingMode) {
-      case _MetricTrailingMode.cost:
-        return 'عدد: ${metric.count} | تكلفة: ${metric.cost.toCurrencyFormat()} ج.م';
-      case _MetricTrailingMode.commission:
-        return 'حجوزات: ${metric.count} | إيراد: ${metric.rentalValue.toCurrencyFormat()} ج.م | عمولة: ${metric.commission.toCurrencyFormat()} ج.م';
-      case _MetricTrailingMode.rental:
-        return 'حجوزات: ${metric.count} | مدفوع: ${metric.paidRevenue.toCurrencyFormat()} ج.م | قيمة إيجارية: ${metric.rentalValue.toCurrencyFormat()} ج.م';
-    }
-  }
 }
 
-enum _MetricTrailingMode { rental, cost, commission }
+class _MoneyTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _MoneyTile({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderRadius = BorderRadius.circular(16);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: borderRadius,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: borderRadius,
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.12),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      value,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _ReportMetric {
   final String label;

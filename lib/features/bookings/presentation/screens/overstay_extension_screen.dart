@@ -79,7 +79,13 @@ class _OverstayExtensionScreenState
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
-        data: (_) => context.go('/summer_bookings/details/${widget.bookingId}'),
+        data: (_) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/summer_bookings/details/${widget.bookingId}');
+          }
+        },
         error: (error, _) => ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $error'))),
@@ -91,8 +97,13 @@ class _OverstayExtensionScreenState
         title: const Text('تمديد الحجز'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () =>
-              context.go('/summer_bookings/details/${widget.bookingId}'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/summer_bookings/details/${widget.bookingId}');
+            }
+          },
         ),
       ),
       body: bookingsAsync.when(
@@ -223,7 +234,8 @@ class _OverstayExtensionScreenState
                       _InfoLine(
                         icon: Icons.payments,
                         label: 'تمديد $_extraDays يوم',
-                        value: '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
+                        value:
+                            '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
                         valueColor: theme.colorScheme.primary,
                         bold: true,
                       ),

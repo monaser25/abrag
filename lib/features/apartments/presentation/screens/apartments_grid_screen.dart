@@ -17,6 +17,13 @@ class ApartmentsGridScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.apartments),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.playlist_add_check),
+            tooltip: 'تعميم الجرد',
+            onPressed: () => context.push('/apartments/bulk_inventory'),
+          ),
+        ],
       ),
       body: apartmentsAsync.when(
         data: (apartments) {
@@ -35,11 +42,14 @@ class ApartmentsGridScreen extends ConsumerWidget {
               final apt = apartments[index];
               return Consumer(
                 builder: (context, ref, child) {
-                  final profileAsync = ref.watch(apartmentProfileProvider(apt.id));
-                  
+                  final profileAsync = ref.watch(
+                    apartmentProfileProvider(apt.id),
+                  );
+
                   return profileAsync.when(
                     data: (data) {
-                      final isCleaning = data.apartment.cleaningStatus == 'needs_cleaning';
+                      final isCleaning =
+                          data.apartment.cleaningStatus == 'needs_cleaning';
                       final isOccupied = data.isOccupied;
 
                       Color statusColor = Colors.green;
@@ -53,13 +63,16 @@ class ApartmentsGridScreen extends ConsumerWidget {
                       }
 
                       return InkWell(
-                        onTap: () => context.go('/apartments/profile/${apt.id}'),
+                        onTap: () =>
+                            context.push('/apartments/profile/${apt.id}'),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.3),
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: statusColor.withValues(alpha: 0.05),
@@ -97,14 +110,19 @@ class ApartmentsGridScreen extends ConsumerWidget {
                                   children: [
                                     Text(
                                       apt.apartmentNumber,
-                                      style: theme.textTheme.headlineMedium?.copyWith(
-                                        color: isOccupied ? theme.colorScheme.onSurface.withValues(alpha: 0.6) : theme.colorScheme.onSurface,
-                                      ),
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                            color: isOccupied
+                                                ? theme.colorScheme.onSurface
+                                                      .withValues(alpha: 0.6)
+                                                : theme.colorScheme.onSurface,
+                                          ),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
                                       statusText,
-                                      style: theme.textTheme.labelSmall?.copyWith(color: statusColor),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(color: statusColor),
                                     ),
                                   ],
                                 ),
@@ -114,8 +132,11 @@ class ApartmentsGridScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    loading: () => const Card(child: Center(child: CircularProgressIndicator())),
-                    error: (err, stack) => const Card(child: Center(child: Icon(Icons.error))),
+                    loading: () => const Card(
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (err, stack) =>
+                        const Card(child: Center(child: Icon(Icons.error))),
                   );
                 },
               );

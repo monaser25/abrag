@@ -3,21 +3,32 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
-final apartmentInspectionsProvider = StreamProvider<List<ApartmentInspection>>((ref) {
+final apartmentInspectionsProvider = StreamProvider<List<ApartmentInspection>>((
+  ref,
+) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.apartmentInspections)..orderBy([(t) => OrderingTerm.desc(t.inspectionDate)])).watch();
+  return (db.select(
+    db.apartmentInspections,
+  )..orderBy([(t) => OrderingTerm.desc(t.inspectionDate)])).watch();
 });
 
-final apartmentInspectionsControllerProvider = StateNotifierProvider<ApartmentInspectionsController, AsyncValue<void>>((ref) {
-  return ApartmentInspectionsController(ref.watch(databaseProvider));
-});
+final apartmentInspectionsControllerProvider =
+    StateNotifierProvider<ApartmentInspectionsController, AsyncValue<void>>((
+      ref,
+    ) {
+      return ApartmentInspectionsController(ref.watch(databaseProvider));
+    });
 
 class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
+  late final AuditLogService _auditLog;
 
-  ApartmentInspectionsController(this._db) : super(const AsyncData(null));
+  ApartmentInspectionsController(this._db) : super(const AsyncData(null)) {
+    _auditLog = AuditLogService(_db);
+  }
 
   Future<void> addInspection({
     required String apartmentId,
@@ -34,26 +45,31 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       await _db.transaction(() async {
-        await _db.into(_db.apartmentInspections).insert(
-          ApartmentInspectionsCompanion.insert(
-            id: const Uuid().v4(),
-            apartmentId: apartmentId,
-            inspectionDate: inspectionDate,
-            isClean: Value(isClean),
-            hasDamages: Value(hasDamages),
-            damagesDescription: Value(damagesDescription),
-            tenantFineEgp: Value(tenantFineEgp),
-            ownerRepairCostEgp: Value(ownerRepairCostEgp),
-            inspectorName: inspectorName,
-            notes: Value(notes),
-            syncStatus: const Value(SyncStatus.pendingInsert),
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        );
+        final inspectionId = const Uuid().v4();
+        await _db
+            .into(_db.apartmentInspections)
+            .insert(
+              ApartmentInspectionsCompanion.insert(
+                id: inspectionId,
+                apartmentId: apartmentId,
+                inspectionDate: inspectionDate,
+                isClean: Value(isClean),
+                hasDamages: Value(hasDamages),
+                damagesDescription: Value(damagesDescription),
+                tenantFineEgp: Value(tenantFineEgp),
+                ownerRepairCostEgp: Value(ownerRepairCostEgp),
+                inspectorName: inspectorName,
+                notes: Value(notes),
+                syncStatus: const Value(SyncStatus.pendingInsert),
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ),
+            );
 
         // Update apartment cleaning status
-        await (_db.update(_db.apartments)..where((t) => t.id.equals(apartmentId))).write(
+        await (_db.update(
+          _db.apartments,
+        )..where((t) => t.id.equals(apartmentId))).write(
           ApartmentsCompanion(
             cleaningStatus: Value(isClean ? 'clean' : 'needs_cleaning'),
             updatedAt: Value(DateTime.now()),
@@ -63,33 +79,55 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
 
         // If createMaintenanceRequest is true, log a maintenance request
         if (createMaintenanceRequest && hasDamages) {
-          await _db.into(_db.maintenanceRequests).insert(
-            MaintenanceRequestsCompanion.insert(
-              id: const Uuid().v4(),
-              apartmentId: apartmentId,
-              reportedBy: inspectorName,
-              issueDescription: damagesDescription ?? 'تلفيات تم رصدها أثناء الفحص',
-              syncStatus: const Value(SyncStatus.pendingInsert),
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-          );
+          await _db
+              .into(_db.maintenanceRequests)
+              .insert(
+                MaintenanceRequestsCompanion.insert(
+                  id: const Uuid().v4(),
+                  apartmentId: apartmentId,
+                  reportedBy: inspectorName,
+                  issueDescription:
+                      damagesDescription ?? 'تلفيات تم رصدها أثناء الفحص',
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ),
+              );
         } else if (ownerRepairCostEgp > 0) {
           // If the owner paid for repairs immediately, log an expense automatically
-          await _db.into(_db.expenses).insert(
-            ExpensesCompanion.insert(
-              id: const Uuid().v4(),
-              apartmentId: Value(apartmentId),
-              expenseType: 'maintenance',
-              amountEgp: ownerRepairCostEgp,
-              expenseDate: inspectionDate,
-              description: Value('إصلاح تلفيات بعد فحص الشقة: $damagesDescription'),
-              syncStatus: const Value(SyncStatus.pendingInsert),
-              createdAt: DateTime.now(),
-            ),
-          );
+          await _db
+              .into(_db.expenses)
+              .insert(
+                ExpensesCompanion.insert(
+                  id: const Uuid().v4(),
+                  apartmentId: Value(apartmentId),
+                  expenseType: 'maintenance',
+                  amountEgp: ownerRepairCostEgp,
+                  expenseDate: inspectionDate,
+                  description: Value(
+                    'إصلاح تلفيات بعد فحص الشقة: $damagesDescription',
+                  ),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: DateTime.now(),
+                ),
+              );
         }
       });
+      await _auditLog.log(
+        action: 'create',
+        entityType: 'inspection',
+        title: 'تسجيل فحص شقة',
+        description:
+            'تم تسجيل فحص شقة. النظافة: ${isClean ? "نظيفة" : "تحتاج نظافة"}${hasDamages ? " - يوجد تلفيات" : ""}',
+        route: '/inspections',
+        newValues: {
+          'apartmentId': apartmentId,
+          'isClean': isClean,
+          'hasDamages': hasDamages,
+          'damagesDescription': damagesDescription,
+          'tenantFineEgp': tenantFineEgp,
+        },
+      );
 
       state = const AsyncData(null);
     } catch (e, st) {
@@ -97,19 +135,27 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> updateCleaningStatus(String inspectionId, String apartmentId, bool isClean) async {
+  Future<void> updateCleaningStatus(
+    String inspectionId,
+    String apartmentId,
+    bool isClean,
+  ) async {
     state = const AsyncLoading();
     try {
       await _db.transaction(() async {
-        await (_db.update(_db.apartments)..where((t) => t.id.equals(apartmentId))).write(
+        await (_db.update(
+          _db.apartments,
+        )..where((t) => t.id.equals(apartmentId))).write(
           ApartmentsCompanion(
             cleaningStatus: Value(isClean ? 'clean' : 'needs_cleaning'),
             updatedAt: Value(DateTime.now()),
             syncStatus: const Value(SyncStatus.pendingUpdate),
           ),
         );
-        
-        await (_db.update(_db.apartmentInspections)..where((t) => t.id.equals(inspectionId))).write(
+
+        await (_db.update(
+          _db.apartmentInspections,
+        )..where((t) => t.id.equals(inspectionId))).write(
           ApartmentInspectionsCompanion(
             isClean: Value(isClean),
             updatedAt: Value(DateTime.now()),
@@ -117,6 +163,16 @@ class ApartmentInspectionsController extends StateNotifier<AsyncValue<void>> {
           ),
         );
       });
+      await _auditLog.log(
+        action: 'update_cleaning',
+        entityType: 'inspection',
+        entityId: inspectionId,
+        title: 'تعديل نظافة بعد الفحص',
+        description:
+            'تم تعديل حالة النظافة إلى ${isClean ? "نظيفة" : "تحتاج نظافة"}',
+        route: '/inspections',
+        newValues: {'isClean': isClean, 'apartmentId': apartmentId},
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

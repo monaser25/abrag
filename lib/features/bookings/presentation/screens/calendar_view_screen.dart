@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../providers/bookings_provider.dart';
-import '../../../apartments/presentation/providers/apartments_controller.dart';
+
 import '../../../../core/database/database.dart';
+import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../providers/bookings_provider.dart';
+
+enum _CalendarFilter { all, occupied, upcomingCheckouts, upcoming, available }
 
 class CalendarViewScreen extends ConsumerStatefulWidget {
   const CalendarViewScreen({super.key});
@@ -14,155 +19,552 @@ class CalendarViewScreen extends ConsumerStatefulWidget {
 
 class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+  DateTime _selectedDay = DateTime.now();
+  late _CalendarFilter _filter;
+  bool _didReadInitialFilter = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _filter = _CalendarFilter.all;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didReadInitialFilter) {
+      _filter = _filterFromQuery();
+      _didReadInitialFilter = true;
+    }
+  }
+
+  _CalendarFilter _filterFromQuery() {
+    final filter = GoRouterState.of(context).uri.queryParameters['filter'];
+    switch (filter) {
+      case 'occupied':
+        return _CalendarFilter.occupied;
+      case 'available':
+        return _CalendarFilter.available;
+      case 'upcomingCheckouts':
+        return _CalendarFilter.upcomingCheckouts;
+      case 'upcoming':
+        return _CalendarFilter.upcoming;
+      default:
+        return _CalendarFilter.all;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final theme = Theme.of(context);
+    final monthFormatter = DateFormat('MMMM yyyy', 'ar');
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('أجندة الحجوزات'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegendItem(theme.colorScheme.primary, 'يوم مختار'),
-                const SizedBox(width: 16),
-                _buildLegendItem(theme.colorScheme.secondary, 'يوجد حجوزات'),
-                const SizedBox(width: 16),
-                _buildLegendItem(theme.colorScheme.primary.withValues(alpha: 0.3), 'اليوم'),
-              ],
-            ),
-          ),
-          TableCalendar<SummerBooking>(
-            firstDay: DateTime.now().subtract(const Duration(days: 365)),
-            lastDay: DateTime.now().add(const Duration(days: 365)),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
+        actions: [
+          IconButton(
+            tooltip: 'اليوم',
+            onPressed: () {
               setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
+                _focusedDay = DateTime.now();
+                _selectedDay = DateTime.now();
               });
             },
-            eventLoader: (day) {
-              return bookingsAsync.maybeWhen(
-                data: (bookings) {
-                  return bookings.where((b) {
-                    final start = DateTime(b.checkInDate.year, b.checkInDate.month, b.checkInDate.day);
-                    final end = DateTime(b.checkOutDate.year, b.checkOutDate.month, b.checkOutDate.day);
-                    final target = DateTime(day.year, day.month, day.day);
-                    return target.isAfter(start.subtract(const Duration(days: 1))) && 
-                           target.isBefore(end.add(const Duration(days: 1)));
-                  }).toList();
-                },
-                orElse: () => [],
-              );
-            },
-            calendarStyle: CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-                border: Border.all(color: theme.colorScheme.primary, width: 2),
+            icon: const Icon(Icons.today),
+          ),
+        ],
+      ),
+      body: bookingsAsync.when(
+        data: (bookings) {
+          final apartments = apartmentsAsync.value ?? [];
+          final selectedStats = _buildStats(bookings, apartments, _selectedDay);
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => setState(() {
+                              _focusedDay = DateTime(
+                                _focusedDay.year,
+                                _focusedDay.month - 1,
+                              );
+                            }),
+                            icon: const Icon(Icons.chevron_right),
+                          ),
+                          Expanded(
+                            child: Text(
+                              monthFormatter.format(_focusedDay),
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(() {
+                              _focusedDay = DateTime(
+                                _focusedDay.year,
+                                _focusedDay.month + 1,
+                              );
+                            }),
+                            icon: const Icon(Icons.chevron_left),
+                          ),
+                        ],
+                      ),
+                      TableCalendar<SummerBooking>(
+                        firstDay: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
+                        lastDay: DateTime.now().add(
+                          const Duration(days: 365 * 2),
+                        ),
+                        focusedDay: _focusedDay,
+                        selectedDayPredicate: (day) =>
+                            isSameDay(_selectedDay, day),
+                        onPageChanged: (focusedDay) {
+                          _focusedDay = focusedDay;
+                        },
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        eventLoader: (day) => _eventsForDay(bookings, day),
+                        locale: 'ar',
+                        headerVisible: false,
+                        daysOfWeekHeight: 32,
+                        rowHeight: 58,
+                        calendarStyle: CalendarStyle(
+                          outsideDaysVisible: false,
+                          todayDecoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.18,
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          selectedDecoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          markerDecoration: const BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                          markersMaxCount: 3,
+                        ),
+                        calendarBuilders: CalendarBuilders(
+                          markerBuilder: (context, day, events) {
+                            if (events.isEmpty) return null;
+                            final hasCheckout = events.any(
+                              (booking) => _isCheckoutOnDay(booking, day),
+                            );
+                            final hasCheckIn = events.any(
+                              (booking) => _isCheckInOnDay(booking, day),
+                            );
+                            return Positioned(
+                              bottom: 4,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (hasCheckIn &&
+                                      _filter !=
+                                          _CalendarFilter.upcomingCheckouts)
+                                    _dot(Colors.green),
+                                  if (events.isNotEmpty &&
+                                      _filter == _CalendarFilter.all)
+                                    _dot(Colors.orange),
+                                  if (hasCheckout) _dot(Colors.redAccent),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              selectedDecoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                shape: BoxShape.circle,
+              const SizedBox(height: 12),
+              _SelectedDaySummary(
+                stats: selectedStats,
+                selectedDay: _selectedDay,
               ),
-              markerDecoration: BoxDecoration(
-                color: theme.colorScheme.secondary,
-                shape: BoxShape.circle,
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _filterChip('الكل', _CalendarFilter.all),
+                    _filterChip('مؤجرة اليوم', _CalendarFilter.occupied),
+                    _filterChip(
+                      'خروجات قادمة',
+                      _CalendarFilter.upcomingCheckouts,
+                    ),
+                    _filterChip('حجز مستقبلي', _CalendarFilter.upcoming),
+                    _filterChip('الشقق المتاحة', _CalendarFilter.available),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildSelectedDayContent(
+                context,
+                bookings,
+                apartments,
+                selectedStats,
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('حدث خطأ: $err')),
+      ),
+    );
+  }
+
+  Widget _buildSelectedDayContent(
+    BuildContext context,
+    List<SummerBooking> bookings,
+    List<Apartment> apartments,
+    _DayStats stats,
+  ) {
+    final selectedBookings = bookings.where((booking) {
+      switch (_filter) {
+        case _CalendarFilter.upcomingCheckouts:
+          return _isUpcomingCheckout(booking, from: DateTime.now());
+        case _CalendarFilter.occupied:
+          return _isBookingActiveOnDay(booking, _selectedDay);
+        case _CalendarFilter.upcoming:
+          return _isCheckInOnDay(booking, _selectedDay) ||
+              booking.checkInDate.isAfter(_selectedDay);
+        case _CalendarFilter.available:
+          return false;
+        case _CalendarFilter.all:
+          return _isBookingActiveOnDay(booking, _selectedDay) ||
+              _isCheckoutOnDay(booking, _selectedDay) ||
+              _isCheckInOnDay(booking, _selectedDay);
+      }
+    }).toList();
+
+    if (_filter == _CalendarFilter.available) {
+      if (stats.availableApartments.isEmpty) {
+        return const _EmptyCalendarState(
+          message: 'لا توجد شقق متاحة في اليوم ده',
+        );
+      }
+      return Column(
+        children: stats.availableApartments
+            .map(
+              (apartment) => Card(
+                child: ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.meeting_room)),
+                  title: Text('شقة ${apartment.apartmentNumber}'),
+                  subtitle: Text('الدور: ${apartment.floorNumber ?? '-'}'),
+                  trailing: const Icon(Icons.add_circle_outline),
+                  onTap: () => context.push('/summer_bookings/add'),
+                ),
+              ),
+            )
+            .toList(),
+      );
+    }
+
+    if (selectedBookings.isEmpty) {
+      return const _EmptyCalendarState(message: 'لا توجد حجوزات مطابقة للفلتر');
+    }
+
+    return Column(
+      children: selectedBookings.map((booking) {
+        final apartment = apartments
+            .where((a) => a.id == booking.apartmentId)
+            .toList();
+        final apartmentNumber = apartment.isEmpty
+            ? booking.apartmentId
+            : apartment.first.apartmentNumber;
+        final isCheckout = _isCheckoutOnDay(booking, _selectedDay);
+        final isCheckIn = _isCheckInOnDay(booking, _selectedDay);
+        return Card(
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: isCheckout
+                  ? Colors.redAccent.withValues(alpha: 0.16)
+                  : isCheckIn
+                  ? Colors.green.withValues(alpha: 0.16)
+                  : Colors.orange.withValues(alpha: 0.16),
+              child: Icon(
+                isCheckout
+                    ? Icons.logout
+                    : isCheckIn
+                    ? Icons.login
+                    : Icons.hotel,
+                color: isCheckout
+                    ? Colors.redAccent
+                    : isCheckIn
+                    ? Colors.green
+                    : Colors.orange,
               ),
             ),
-            headerStyle: const HeaderStyle(
-              formatButtonVisible: false,
-              titleCentered: true,
+            title: Text(booking.guestName),
+            subtitle: Text(
+              'شقة $apartmentNumber • ${isCheckout
+                  ? "خروج"
+                  : isCheckIn
+                  ? "دخول"
+                  : "إقامة"}',
             ),
-            locale: 'ar',
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => context.push('/summer_bookings/details/${booking.id}'),
           ),
-          const Divider(),
-          Expanded(
-            child: _selectedDay == null 
-                ? const Center(child: Text('اختر يوماً لعرض الحجوزات'))
-                : _buildBookingsListForDay(bookingsAsync, apartmentsAsync),
-          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _filterChip(String label, _CalendarFilter value) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: _filter == value,
+        onSelected: (_) => setState(() => _filter = value),
+      ),
+    );
+  }
+
+  Widget _dot(Color color) => Container(
+    width: 6,
+    height: 6,
+    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  );
+
+  _DayStats _buildStats(
+    List<SummerBooking> bookings,
+    List<Apartment> apartments,
+    DateTime day,
+  ) {
+    final activeBookings = bookings.where((booking) {
+      return _isBookingActiveOnDay(booking, day);
+    }).toList();
+    final occupiedIds = activeBookings
+        .map((booking) => booking.apartmentId)
+        .toSet();
+    final checkouts = bookings
+        .where((booking) => _isUpcomingCheckout(booking, from: day))
+        .toList();
+    final futureBookings = bookings.where((booking) {
+      return booking.checkInDate.isAfter(day) && booking.status != 'cancelled';
+    }).toList();
+    final availableApartments = apartments
+        .where((apartment) => !occupiedIds.contains(apartment.id))
+        .toList();
+
+    return _DayStats(
+      occupiedCount: occupiedIds.length,
+      availableCount: availableApartments.length,
+      checkoutCount: checkouts.length,
+      futureCount: futureBookings.length,
+      totalApartments: apartments.length,
+      availableApartments: availableApartments,
+    );
+  }
+
+  bool _isBookingActiveOnDay(SummerBooking booking, DateTime day) {
+    if (booking.status == 'checked_out' || booking.status == 'cancelled') {
+      return false;
+    }
+    final target = _dateOnly(day);
+    final start = _dateOnly(booking.checkInDate);
+    final endDate = booking.earlyCheckoutDate ?? booking.checkOutDate;
+    final end = _dateOnly(endDate);
+    return !target.isBefore(start) && !target.isAfter(end);
+  }
+
+  bool _isCheckoutOnDay(SummerBooking booking, DateTime day) {
+    final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
+    return _isSameDate(checkout, day) && booking.status != 'cancelled';
+  }
+
+  bool _isUpcomingCheckout(SummerBooking booking, {required DateTime from}) {
+    if (booking.status == 'checked_out' || booking.status == 'cancelled') {
+      return false;
+    }
+    final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
+    final start = _dateOnly(from);
+    final end = start.add(const Duration(days: 14));
+    final checkoutDay = _dateOnly(checkout);
+    return !checkoutDay.isBefore(start) && checkoutDay.isBefore(end);
+  }
+
+  List<SummerBooking> _eventsForDay(
+    List<SummerBooking> bookings,
+    DateTime day,
+  ) {
+    return bookings.where((booking) {
+      switch (_filter) {
+        case _CalendarFilter.upcomingCheckouts:
+          return _isCheckoutOnDay(booking, day) &&
+              !_dateOnly(day).isBefore(_dateOnly(DateTime.now()));
+        case _CalendarFilter.upcoming:
+          return _isCheckInOnDay(booking, day) ||
+              booking.checkInDate.isAfter(day);
+        case _CalendarFilter.available:
+          return false;
+        case _CalendarFilter.occupied:
+          return _isBookingActiveOnDay(booking, day);
+        case _CalendarFilter.all:
+          return _isBookingActiveOnDay(booking, day) ||
+              _isCheckoutOnDay(booking, day) ||
+              _isCheckInOnDay(booking, day);
+      }
+    }).toList();
+  }
+
+  bool _isCheckInOnDay(SummerBooking booking, DateTime day) {
+    return _isSameDate(booking.checkInDate, day) &&
+        booking.status != 'cancelled';
+  }
+
+  DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
+  bool _isSameDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+class _DayStats {
+  final int occupiedCount;
+  final int availableCount;
+  final int checkoutCount;
+  final int futureCount;
+  final int totalApartments;
+  final List<Apartment> availableApartments;
+
+  const _DayStats({
+    required this.occupiedCount,
+    required this.availableCount,
+    required this.checkoutCount,
+    required this.futureCount,
+    required this.totalApartments,
+    required this.availableApartments,
+  });
+}
+
+class _SelectedDaySummary extends StatelessWidget {
+  final _DayStats stats;
+  final DateTime selectedDay;
+
+  const _SelectedDaySummary({required this.stats, required this.selectedDay});
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = DateFormat('EEEE، d MMMM', 'ar');
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              formatter.format(selectedDay),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            GridView.count(
+              crossAxisCount: 2,
+              childAspectRatio: 2.6,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              children: [
+                _TinyStat(
+                  label: 'مؤجرة',
+                  value: '${stats.occupiedCount}',
+                  color: Colors.orange,
+                ),
+                _TinyStat(
+                  label: 'غير مؤجرة',
+                  value: '${stats.availableCount}',
+                  color: Colors.green,
+                ),
+                _TinyStat(
+                  label: 'خروجات قادمة',
+                  value: '${stats.checkoutCount}',
+                  color: Colors.redAccent,
+                ),
+                _TinyStat(
+                  label: 'إجمالي الشقق',
+                  value: '${stats.totalApartments}',
+                  color: Colors.blueAccent,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TinyStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _TinyStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(width: 6),
+          Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
         ],
       ),
     );
   }
+}
 
-  Widget _buildLegendItem(Color color, String text) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
+class _EmptyCalendarState extends StatelessWidget {
+  final String message;
 
-  Widget _buildBookingsListForDay(AsyncValue<List<SummerBooking>> bookingsAsync, AsyncValue<List<Apartment>> apartmentsAsync) {
-    return bookingsAsync.when(
-      data: (bookings) {
-        final dayBookings = bookings.where((b) {
-          final start = DateTime(b.checkInDate.year, b.checkInDate.month, b.checkInDate.day);
-          final end = DateTime(b.checkOutDate.year, b.checkOutDate.month, b.checkOutDate.day);
-          final target = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
-          return target.isAfter(start.subtract(const Duration(days: 1))) && 
-                 target.isBefore(end.add(const Duration(days: 1)));
-        }).toList();
+  const _EmptyCalendarState({required this.message});
 
-        if (dayBookings.isEmpty) {
-          return const Center(child: Text('لا توجد حجوزات في هذا اليوم'));
-        }
-
-        return ListView.builder(
-          itemCount: dayBookings.length,
-          itemBuilder: (context, index) {
-            final booking = dayBookings[index];
-            final aptNumber = apartmentsAsync.maybeWhen(
-              data: (apts) {
-                try {
-                  return apts.firstWhere((a) => a.id == booking.apartmentId).apartmentNumber;
-                } catch (_) {
-                  return 'غير معروف';
-                }
-              },
-              orElse: () => '...',
-            );
-
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                title: Text(booking.guestName),
-                subtitle: Text('رقم الشقة: $aptNumber'),
-                trailing: Text(
-                  booking.status == 'checked_out' ? 'منتهية' : 'جارية',
-                  style: TextStyle(
-                    color: booking.status == 'checked_out' ? Colors.grey : Colors.green,
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error: $err')),
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(child: Text(message)),
+      ),
     );
   }
 }

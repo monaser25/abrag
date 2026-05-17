@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final expensesControllerProvider = StateNotifierProvider<ExpensesController, AsyncValue<void>>((ref) {
@@ -11,14 +12,18 @@ final expensesControllerProvider = StateNotifierProvider<ExpensesController, Asy
 
 class ExpensesController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
+  late final AuditLogService _auditLog;
 
-  ExpensesController(this._db) : super(const AsyncData(null));
+  ExpensesController(this._db) : super(const AsyncData(null)) {
+    _auditLog = AuditLogService(_db);
+  }
 
   Future<void> addExpense({
     String? buildingId,
     String? apartmentId,
     required String expenseType,
     required double amount,
+    String paymentMethod = 'cash',
     required DateTime date,
     String? description,
     int? installmentNumber,
@@ -36,6 +41,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           apartmentId: Value(apartmentId),
           expenseType: expenseType,
           amountEgp: amount,
+          paymentMethod: Value(paymentMethod),
           expenseDate: date,
           description: Value(description),
           installmentNumber: Value(installmentNumber),
@@ -44,6 +50,21 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           syncStatus: const Value(SyncStatus.pendingInsert),
           createdAt: DateTime.now(),
         ),
+      );
+      await _auditLog.log(
+        action: 'create',
+        entityType: 'expense',
+        entityId: id,
+        title: 'إضافة مصروف',
+        description: 'تم إضافة مصروف بقيمة $amount ج.م',
+        route: '/expenses',
+        newValues: {
+          'expenseType': expenseType,
+          'amount': amount,
+          'paymentMethod': paymentMethod,
+          'date': date,
+          'description': description,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {
@@ -57,6 +78,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
     String? apartmentId,
     required String expenseType,
     required double amount,
+    String paymentMethod = 'cash',
     required DateTime date,
     String? description,
     int? installmentNumber,
@@ -71,6 +93,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           apartmentId: Value(apartmentId),
           expenseType: Value(expenseType),
           amountEgp: Value(amount),
+          paymentMethod: Value(paymentMethod),
           expenseDate: Value(date),
           description: Value(description),
           installmentNumber: Value(installmentNumber),
@@ -78,6 +101,21 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
           discountReason: Value(discountReason),
           syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
+      );
+      await _auditLog.log(
+        action: 'update',
+        entityType: 'expense',
+        entityId: id,
+        title: 'تعديل مصروف',
+        description: 'تم تعديل مصروف بقيمة $amount ج.م',
+        route: '/expenses',
+        newValues: {
+          'expenseType': expenseType,
+          'amount': amount,
+          'paymentMethod': paymentMethod,
+          'date': date,
+          'description': description,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {

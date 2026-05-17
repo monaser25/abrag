@@ -394,8 +394,9 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
     transactions.add(
       Transaction(
         date: payment.paymentDate,
-        description:
-            'دفعة شتوية${contract == null ? '' : ': ${contract.studentName}'}',
+        description: payment.paymentMethod == 'deposit_deduction'
+            ? 'مصادرة تأمين${contract == null ? '' : ': ${contract.studentName}'}'
+            : 'دفعة شتوية${contract == null ? '' : ': ${contract.studentName}'}',
         amount: payment.amountEgp,
         isRevenue: true,
         paymentMethod: payment.paymentMethod,

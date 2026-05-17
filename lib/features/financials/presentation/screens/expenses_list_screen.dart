@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/expenses_provider.dart';
+import '../providers/financial_transfers_provider.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 
@@ -39,6 +40,10 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
       case 'cleaning': return 'نظافة';
       default: return 'أخرى';
     }
+  }
+
+  String _translatePaymentMethod(String method) {
+    return paymentAccounts[method] ?? method;
   }
 
   Future<void> _selectDateRange(BuildContext context) async {
@@ -95,7 +100,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                       labelText: 'نوع المصروف',
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                    value: _selectedType,
+                    initialValue: _selectedType,
                     items: [
                       const DropdownMenuItem(value: null, child: Text('الكل')),
                       ..._types.map((t) => DropdownMenuItem(
@@ -192,7 +197,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                       labelText: 'ترتيب حسب',
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                    value: _selectedSort,
+                    initialValue: _selectedSort,
                     items: const [
                       DropdownMenuItem(value: 'date_desc', child: Text('الأحدث أولاً')),
                       DropdownMenuItem(value: 'date_asc', child: Text('الأقدم أولاً')),
@@ -239,6 +244,15 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                                         ),
                                       ),
                                     ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      'طريقة الدفع: ${_translatePaymentMethod(expense.paymentMethod)}',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                               trailing: Row(

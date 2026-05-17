@@ -117,7 +117,7 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                 }
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'اختر المبنى'),
-                  value: _selectedBuildingId,
+                  initialValue: _selectedBuildingId,
                   items: buildings.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))).toList(),
                   onChanged: widget.request != null ? null : (v) {
                     setState(() {
@@ -139,7 +139,7 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                 
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'الشقة'),
-                  value: _selectedApartmentId,
+                  initialValue: _selectedApartmentId,
                   items: filteredApts.map((a) => DropdownMenuItem(value: a.id, child: Text('شقة ${a.apartmentNumber}'))).toList(),
                   onChanged: widget.request != null ? null : (v) => setState(() => _selectedApartmentId = v),
                   validator: (v) => v == null ? 'مطلوب' : null,
@@ -163,7 +163,7 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
 
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'الفني / العامل (اختياري)'),
-                  value: _selectedTechnicianId,
+                  initialValue: _selectedTechnicianId,
                   items: [
                     const DropdownMenuItem(value: null, child: Text('بدون فني')),
                     ...activeTechs.map((t) => DropdownMenuItem(value: t.id, child: Text('${t.name} (${t.specialty})'))),

@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../core/utils/currency_formatter.dart';
+
 class PdfExportService {
   static Future<Uint8List> generateStatementPdf({
     required String title,
@@ -118,7 +120,7 @@ class PdfExportService {
                             ),
                           ),
                           pw.Text(
-                            '$totalRevenue ج.م',
+                            '${totalRevenue.toCurrencyFormat()} ج.م',
                             style: pw.TextStyle(
                               fontSize: 16,
                               fontWeight: pw.FontWeight.bold,
@@ -144,7 +146,7 @@ class PdfExportService {
                             ),
                           ),
                           pw.Text(
-                            '$totalExpenses ج.م',
+                            '${totalExpenses.toCurrencyFormat()} ج.م',
                             style: pw.TextStyle(
                               fontSize: 16,
                               fontWeight: pw.FontWeight.bold,
@@ -171,7 +173,7 @@ class PdfExportService {
                             ),
                           ),
                           pw.Text(
-                            '$netProfit ج.م',
+                            '${netProfit.toCurrencyFormat()} ج.م',
                             style: pw.TextStyle(
                               fontSize: 16,
                               fontWeight: pw.FontWeight.bold,
@@ -258,6 +260,136 @@ class PdfExportService {
             ],
           );
         },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  static Future<Uint8List> generateMetricsPdf({
+    required String title,
+    required String dateRange,
+    required List<String> headers,
+    required List<List<String>> rows,
+  }) async {
+    final pdf = pw.Document();
+
+    final fontData = await rootBundle.load(
+      'assets/fonts/IBMPlexSansArabic-Regular.ttf',
+    );
+    final ttf = pw.Font.ttf(fontData);
+
+    final fontDataBold = await rootBundle.load(
+      'assets/fonts/IBMPlexSansArabic-Bold.ttf',
+    );
+    final ttfBold = pw.Font.ttf(fontDataBold);
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        textDirection: pw.TextDirection.rtl,
+        theme: pw.ThemeData.withFont(base: ttf, bold: ttfBold).copyWith(
+          defaultTextStyle: pw.TextStyle(
+            font: ttf,
+            fontFallback: [ttf, ttfBold],
+          ),
+        ),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      title,
+                      style: pw.TextStyle(
+                        fontSize: 22,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      dateRange,
+                      style: const pw.TextStyle(
+                        fontSize: 11,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                  ],
+                ),
+                pw.Text(
+                  'أبراج',
+                  style: pw.TextStyle(
+                    fontSize: 20,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromHex('#F4A225'),
+                  ),
+                ),
+              ],
+            ),
+            pw.Divider(color: PdfColors.grey800, thickness: 2),
+            pw.SizedBox(height: 12),
+          ],
+        ),
+        build: (context) => [
+          pw.TableHelper.fromTextArray(
+            border: const pw.TableBorder(
+              top: pw.BorderSide(color: PdfColors.grey500),
+              bottom: pw.BorderSide(color: PdfColors.grey500),
+              left: pw.BorderSide(color: PdfColors.grey300),
+              right: pw.BorderSide(color: PdfColors.grey300),
+              horizontalInside: pw.BorderSide(
+                color: PdfColors.grey300,
+                width: 0.7,
+              ),
+              verticalInside: pw.BorderSide(
+                color: PdfColors.grey200,
+                width: 0.5,
+              ),
+            ),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+            ),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey800),
+            oddRowDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
+            cellPadding: const pw.EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 7,
+            ),
+            cellAlignment: pw.Alignment.centerRight,
+            headers: headers,
+            data: rows,
+          ),
+        ],
+        footer: (context) => pw.Column(
+          children: [
+            pw.Divider(color: PdfColors.grey300),
+            pw.SizedBox(height: 5),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'تم الإنشاء بواسطة تطبيق أبراج',
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.grey600,
+                  ),
+                ),
+                pw.Text(
+                  'الصفحة ${context.pageNumber} من ${context.pagesCount}',
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.grey600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
 
