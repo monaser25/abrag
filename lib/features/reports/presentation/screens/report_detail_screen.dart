@@ -6,6 +6,8 @@ import 'package:printing/printing.dart';
 import 'dart:typed_data';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/services/audit_log_service.dart';
+import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
@@ -70,7 +72,7 @@ class ReportDetailScreen extends ConsumerWidget {
                     child: ElevatedButton.icon(
                       onPressed: metrics.isEmpty
                           ? null
-                          : () => _sharePdf(metrics),
+                          : () => _sharePdf(metrics, ref),
                       icon: const Icon(Icons.share),
                       label: const Text('مشاركة PDF'),
                     ),
@@ -80,7 +82,7 @@ class ReportDetailScreen extends ConsumerWidget {
                     child: OutlinedButton.icon(
                       onPressed: metrics.isEmpty
                           ? null
-                          : () => _printPdf(metrics),
+                          : () => _printPdf(metrics, ref),
                       icon: const Icon(Icons.print),
                       label: const Text('طباعة / حفظ PDF'),
                     ),
@@ -119,13 +121,29 @@ class ReportDetailScreen extends ConsumerWidget {
     return base64Url.encode(utf8.encode(key));
   }
 
-  Future<void> _sharePdf(List<ReportMetric> metrics) async {
+  Future<void> _sharePdf(List<ReportMetric> metrics, WidgetRef ref) async {
     final bytes = await _buildPdf(metrics);
     await Printing.sharePdf(bytes: bytes, filename: '${kind.key}_report.pdf');
+    await AuditLogService(ref.read(databaseProvider)).log(
+      action: 'share_pdf',
+      entityType: 'report',
+      title: 'مشاركة تقرير',
+      description: 'تمت مشاركة تقرير ${kind.title}',
+      route: '/reports',
+      newValues: {'report': kind.key, 'rows': metrics.length},
+    );
   }
 
-  Future<void> _printPdf(List<ReportMetric> metrics) async {
+  Future<void> _printPdf(List<ReportMetric> metrics, WidgetRef ref) async {
     await Printing.layoutPdf(onLayout: (_) => _buildPdf(metrics));
+    await AuditLogService(ref.read(databaseProvider)).log(
+      action: 'print_pdf',
+      entityType: 'report',
+      title: 'طباعة تقرير',
+      description: 'تمت طباعة/حفظ تقرير ${kind.title}',
+      route: '/reports',
+      newValues: {'report': kind.key, 'rows': metrics.length},
+    );
   }
 
   Future<Uint8List> _buildPdf(List<ReportMetric> metrics) {

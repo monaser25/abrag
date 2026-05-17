@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
+import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 
@@ -474,10 +476,24 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () => context.push(
-              '/reports/statement/preview',
-              extra: _currentFilters(selectedPartyKey),
-            ),
+            onPressed: () async {
+              final filters = _currentFilters(selectedPartyKey);
+              await AuditLogService(ref.read(databaseProvider)).log(
+                action: 'preview_pdf',
+                entityType: 'report',
+                title: 'معاينة كشف حساب',
+                description: 'تم فتح معاينة كشف الحساب PDF',
+                route: '/reports/statement',
+                newValues: {
+                  'season': filters.season,
+                  'paymentMethod': filters.paymentMethod,
+                  'transactionType': filters.transactionType,
+                },
+              );
+              if (context.mounted) {
+                context.push('/reports/statement/preview', extra: filters);
+              }
+            },
             icon: const Icon(Icons.picture_as_pdf),
             label: const Text('عرض PDF'),
           ),

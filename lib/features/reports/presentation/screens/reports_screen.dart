@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
+import '../../../../core/database/database.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -133,16 +134,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               .where((t) => !t.isRevenue)
               .fold(0.0, (sum, t) => sum + t.amount);
 
-          double cashRev = filteredTransactions
-              .where((t) => t.isRevenue && t.paymentMethod == 'cash')
-              .fold(0.0, (sum, t) => sum + t.amount);
-          double vfRev = filteredTransactions
-              .where((t) => t.isRevenue && t.paymentMethod == 'vodafone_cash')
-              .fold(0.0, (sum, t) => sum + t.amount);
-          double instaRev = filteredTransactions
-              .where((t) => t.isRevenue && t.paymentMethod == 'instapay')
-              .fold(0.0, (sum, t) => sum + t.amount);
-
           final apartmentMetrics = _apartmentMetrics(filteredRentals);
           final floorMetrics = _floorMetrics(filteredRentals);
           final brokerMetrics = _brokerMetrics(filteredRentals);
@@ -167,6 +158,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             endDate: _endDate,
           );
 
+          final walletBalances = _walletBalances(
+            filteredTransactions,
+            _filteredFinancialTransfers(report, activeFilters),
+          );
+          final cashRev = walletBalances['cash'] ?? 0;
+          final vfRev = walletBalances['vodafone_cash'] ?? 0;
+          final instaRev = walletBalances['instapay'] ?? 0;
+          final companyVault = walletBalances['company_vault'] ?? 0;
+          final totalMoney = walletBalances.values.fold<double>(
+            0,
+            (sum, value) => sum + value,
+          );
+
           final filteredProfit = filteredRevenue - filteredExpenses;
 
           return Padding(
@@ -182,6 +186,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     cash: cashRev,
                     vodafoneCash: vfRev,
                     instapay: instaRev,
+                    companyVault: companyVault,
+                    totalMoney: totalMoney,
                     activeFilters: activeFilters,
                   ),
                 ),
@@ -365,6 +371,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     required double cash,
     required double vodafoneCash,
     required double instapay,
+    required double companyVault,
+    required double totalMoney,
     required ReportFilterState activeFilters,
   }) {
     final theme = Theme.of(context);
@@ -384,6 +392,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     ),
                   ),
                 ),
+                IconButton.filledTonal(
+                  tooltip: 'فتح الخزنة',
+                  onPressed: () => context.push('/financial_transfers'),
+                  icon: const Icon(Icons.account_balance_wallet),
+                ),
+                const SizedBox(width: 8),
                 IconButton.filledTonal(
                   tooltip: _hideNumbers ? 'إظهار الأرقام' : 'إخفاء الأرقام',
                   onPressed: _toggleHideNumbers,
@@ -443,18 +457,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'تفاصيل الإيرادات',
+              'تفاصيل الإيرادات والخزنة الحالية',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
-                  child: _buildMiniStat(
+                _buildMiniStat(
                     theme,
-                    'نقدي',
+                    'إجمالي الفلوس',
+                    _privateValue('${totalMoney.toCurrencyFormat()} ج.م'),
+                    onTap: () => context.push('/financial_transfers'),
+                  ),
+                _buildMiniStat(
+                    theme,
+                    'نقدية حالية',
                     _privateValue('${cash.toCurrencyFormat()} ج.م'),
                     onTap: () => _openStatement(
                       context,
@@ -465,16 +486,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                     ),
                   ),
-                ),
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.3,
-                  ),
-                ),
-                Expanded(
-                  child: _buildMiniStat(
+                _buildMiniStat(
                     theme,
                     'فودافون كاش',
                     _privateValue('${vodafoneCash.toCurrencyFormat()} ج.م'),
@@ -487,16 +499,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                     ),
                   ),
-                ),
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.3,
-                  ),
-                ),
-                Expanded(
-                  child: _buildMiniStat(
+                _buildMiniStat(
                     theme,
                     'إنستاباي',
                     _privateValue('${instapay.toCurrencyFormat()} ج.م'),
@@ -509,6 +512,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                     ),
                   ),
+                _buildMiniStat(
+                  theme,
+                  'نقدية في خزنة الشركة',
+                  _privateValue('${companyVault.toCurrencyFormat()} ج.م'),
+                  onTap: () => context.push('/financial_transfers'),
                 ),
               ],
             ),
@@ -782,6 +790,71 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
 
     return records;
+  }
+
+  List<FinancialTransfer> _filteredFinancialTransfers(
+    FinancialSummary report,
+    ReportFilterState filters,
+  ) {
+    var transfers = report.financialTransfers;
+    if (filters.season != 'all') {
+      transfers = transfers.where((t) => t.season == filters.season).toList();
+    }
+    if (filters.startDate != null && filters.endDate != null) {
+      final start = DateTime(
+        filters.startDate!.year,
+        filters.startDate!.month,
+        filters.startDate!.day,
+      );
+      final end = DateTime(
+        filters.endDate!.year,
+        filters.endDate!.month,
+        filters.endDate!.day,
+        23,
+        59,
+        59,
+      );
+      transfers = transfers.where((t) {
+        return !t.transferDate.isBefore(start) && !t.transferDate.isAfter(end);
+      }).toList();
+    }
+    return transfers;
+  }
+
+  Map<String, double> _walletBalances(
+    List<Transaction> transactions,
+    List<FinancialTransfer> transfers,
+  ) {
+    final balances = <String, double>{
+      'cash': 0,
+      'vodafone_cash': 0,
+      'instapay': 0,
+      'company_vault': 0,
+    };
+
+    void add(String account, double amount) {
+      if (balances.containsKey(account)) {
+        balances[account] = (balances[account] ?? 0) + amount;
+      }
+    }
+
+    for (final transaction in transactions) {
+      add(
+        transaction.paymentMethod,
+        transaction.isRevenue ? transaction.amount : -transaction.amount,
+      );
+    }
+
+    for (final transfer in transfers) {
+      add(transfer.fromAccount, -transfer.amountEgp);
+      if (transfer.transferType == 'internal') {
+        add(transfer.toAccount, transfer.amountEgp);
+      } else if (transfer.transferType == 'cash_deposit') {
+        add('company_vault', transfer.amountEgp);
+      }
+    }
+
+    return balances;
   }
 
   bool _inDateRange(DateTime date) {

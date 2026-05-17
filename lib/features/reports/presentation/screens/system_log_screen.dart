@@ -214,6 +214,8 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
         return 'مصروفات';
       case 'financial_transfer':
         return 'الخزنة والتحويلات';
+      case 'report':
+        return 'التقارير والطباعة';
       case 'maintenance':
         return 'صيانة';
       case 'inspection':
@@ -248,6 +250,8 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
         return Icons.money_off;
       case 'financial_transfer':
         return Icons.account_balance_wallet;
+      case 'report':
+        return Icons.picture_as_pdf;
       case 'maintenance':
         return Icons.build;
       case 'inspection':

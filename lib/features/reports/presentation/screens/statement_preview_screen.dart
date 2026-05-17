@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../core/services/audit_log_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
@@ -81,6 +83,26 @@ class StatementPreviewScreen extends ConsumerWidget {
             canChangeOrientation: false,
             canChangePageFormat: false,
             canDebug: false,
+            onPrinted: (_) {
+              AuditLogService(ref.read(databaseProvider)).log(
+                action: 'print_pdf',
+                entityType: 'report',
+                title: 'طباعة كشف حساب',
+                description: 'تمت طباعة/حفظ كشف الحساب PDF',
+                route: '/reports/statement',
+                newValues: {'filters': _filtersLabel(report)},
+              );
+            },
+            onShared: (_) {
+              AuditLogService(ref.read(databaseProvider)).log(
+                action: 'share_pdf',
+                entityType: 'report',
+                title: 'مشاركة كشف حساب',
+                description: 'تمت مشاركة كشف الحساب PDF',
+                route: '/reports/statement',
+                newValues: {'filters': _filtersLabel(report)},
+              );
+            },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

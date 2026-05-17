@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/services/audit_log_service.dart';
+import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
@@ -101,7 +103,7 @@ class ReportMetricDetailScreen extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () =>
-                          _sharePdf(title, rentals, transactions, works),
+                          _sharePdf(title, rentals, transactions, works, ref),
                       icon: const Icon(Icons.share),
                       label: const Text('مشاركة PDF'),
                     ),
@@ -110,7 +112,7 @@ class ReportMetricDetailScreen extends ConsumerWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () =>
-                          _printPdf(title, rentals, transactions, works),
+                          _printPdf(title, rentals, transactions, works, ref),
                       icon: const Icon(Icons.print),
                       label: const Text('طباعة / حفظ'),
                     ),
@@ -250,9 +252,18 @@ class ReportMetricDetailScreen extends ConsumerWidget {
     List<RentalRecord> rentals,
     List<Transaction> transactions,
     List<WorkRecord> works,
+    WidgetRef ref,
   ) async {
     final bytes = await _buildPdf(title, rentals, transactions, works);
     await Printing.sharePdf(bytes: bytes, filename: '${kind.key}_details.pdf');
+    await AuditLogService(ref.read(databaseProvider)).log(
+      action: 'share_pdf',
+      entityType: 'report',
+      title: 'مشاركة تفاصيل تقرير',
+      description: 'تمت مشاركة تفاصيل $title',
+      route: '/reports',
+      newValues: {'report': kind.key, 'item': title},
+    );
   }
 
   Future<void> _printPdf(
@@ -260,9 +271,18 @@ class ReportMetricDetailScreen extends ConsumerWidget {
     List<RentalRecord> rentals,
     List<Transaction> transactions,
     List<WorkRecord> works,
+    WidgetRef ref,
   ) async {
     await Printing.layoutPdf(
       onLayout: (_) => _buildPdf(title, rentals, transactions, works),
+    );
+    await AuditLogService(ref.read(databaseProvider)).log(
+      action: 'print_pdf',
+      entityType: 'report',
+      title: 'طباعة تفاصيل تقرير',
+      description: 'تمت طباعة/حفظ تفاصيل $title',
+      route: '/reports',
+      newValues: {'report': kind.key, 'item': title},
     );
   }
 

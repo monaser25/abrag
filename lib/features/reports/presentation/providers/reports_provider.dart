@@ -12,6 +12,7 @@ class FinancialSummary {
   final List<Transaction> transactions;
   final List<RentalRecord> rentals;
   final List<WorkRecord> workRecords;
+  final List<FinancialTransfer> financialTransfers;
 
   FinancialSummary({
     required this.totalRevenue,
@@ -20,8 +21,10 @@ class FinancialSummary {
     required this.transactions,
     List<RentalRecord>? rentals,
     List<WorkRecord>? workRecords,
+    List<FinancialTransfer>? financialTransfers,
   }) : rentals = rentals ?? const [],
-       workRecords = workRecords ?? const [];
+       workRecords = workRecords ?? const [],
+       financialTransfers = financialTransfers ?? const [];
 }
 
 class Transaction {
@@ -185,6 +188,9 @@ final financialReportProvider = StreamProvider<FinancialSummary>((ref) {
       subscriptions.add(
         db.select(db.userProfiles).watch().listen((_) => scheduleEmit()),
       );
+      subscriptions.add(
+        db.select(db.financialTransfers).watch().listen((_) => scheduleEmit()),
+      );
       scheduleEmit();
     },
     onCancel: () async {
@@ -208,6 +214,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
   final technicians = await db.select(db.technicians).get();
   final maintenanceRequests = await db.select(db.maintenanceRequests).get();
   final users = await db.select(db.userProfiles).get();
+  final financialTransfers = await db.select(db.financialTransfers).get();
 
   final buildingNameById = {for (final b in buildings) b.id: b.name};
   final apartmentById = {for (final a in apartments) a.id: a};
@@ -312,7 +319,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
             'مصروف: ${expenseTypeLabel(expenseType)}${expense.description != null && expense.description!.isNotEmpty ? ' - ${expense.description}' : ''}',
         amount: actualAmount,
         isRevenue: false,
-        paymentMethod: 'cash',
+        paymentMethod: expense.paymentMethod,
         buildingId: buildingId,
         apartmentId: expense.apartmentId,
         buildingName: buildingId == null ? null : buildingNameById[buildingId],
@@ -322,7 +329,9 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
         floorNumber: expense.apartmentId == null
             ? null
             : floorByApartmentId[expense.apartmentId],
-        season: _inferSeason(expense.expenseDate),
+        season: expense.season == 'all'
+            ? _inferSeason(expense.expenseDate)
+            : expense.season,
         expenseType: expenseType,
         technicianId: technician.id,
         technicianName: technician.name,
@@ -446,6 +455,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
     transactions: transactions,
     rentals: rentals,
     workRecords: workRecords,
+    financialTransfers: financialTransfers,
   );
 }
 
