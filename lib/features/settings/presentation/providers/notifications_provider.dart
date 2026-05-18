@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../contracts/presentation/providers/contracts_provider.dart';
 import '../../../contracts/presentation/models/winter_payment_status.dart';
@@ -11,6 +12,7 @@ import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../providers/permissions_provider.dart';
 
 class AppNotification {
@@ -114,6 +116,14 @@ final notificationsMutedProvider =
       );
     });
 
+final recentActivityLogsProvider = StreamProvider((ref) {
+  final db = ref.watch(databaseProvider);
+  return (db.select(db.auditLogs)
+        ..orderBy([(table) => OrderingTerm.desc(table.createdAt)])
+        ..limit(30))
+      .watch();
+});
+
 final appNotificationsProvider = Provider<AsyncValue<List<AppNotification>>>((
   ref,
 ) {
@@ -142,6 +152,7 @@ final appNotificationsProvider = Provider<AsyncValue<List<AppNotification>>>((
   final maintenanceAsync = ref.watch(maintenanceProvider);
   final inspectionsAsync = ref.watch(apartmentInspectionsProvider);
   final apartmentsAsync = ref.watch(apartmentsProvider);
+  final activityLogsAsync = ref.watch(recentActivityLogsProvider);
 
   if (contractsAsync is AsyncLoading ||
       bookingsAsync is AsyncLoading ||
@@ -153,6 +164,26 @@ final appNotificationsProvider = Provider<AsyncValue<List<AppNotification>>>((
   try {
     final notifications = <AppNotification>[];
     final now = DateTime.now();
+
+    // 0. Activity notifications from other users.
+    if (hasPerm('view_notifications')) {
+      final activityLogs = activityLogsAsync.asData?.value ?? [];
+      final cutoff = now.subtract(const Duration(days: 7));
+      for (final log in activityLogs) {
+        if (log.actorUserId == userId) continue;
+        if (log.createdAt.isBefore(cutoff)) continue;
+        notifications.add(
+          AppNotification(
+            id: 'activity_${log.id}',
+            title: 'تحديث من ${log.actorName}',
+            body: '${log.title}: ${log.description}',
+            date: log.createdAt,
+            type: 'system',
+            route: log.route,
+          ),
+        );
+      }
+    }
 
     // 1. Summer Bookings Checkouts
     if (hasPerm('manage_bookings') || hasPerm('checkout_winter')) {

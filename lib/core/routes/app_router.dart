@@ -67,6 +67,8 @@ import '../../features/users/presentation/screens/brokers_list_screen.dart';
 import '../../features/users/presentation/screens/broker_details_screen.dart';
 import '../../features/users/presentation/screens/broker_visibility_control_screen.dart';
 import '../../features/users/presentation/screens/customers_screen.dart';
+import '../../features/users/presentation/providers/users_provider.dart';
+import '../config/shared_prefs_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final routerNotifier = RouterNotifier();
@@ -76,13 +78,23 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: routerNotifier,
     redirect: (context, state) {
       final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
+      final onboardingCompleted = ref.read(onboardingCompletedProvider);
       final isLoginRoute = state.uri.path == '/login';
       final isSplashRoute = state.uri.path == '/splash';
       final isOnboardingRoute = state.uri.path == '/onboarding';
       final isForgotPasswordRoute = state.uri.path == '/forgot_password';
 
-      if (isSplashRoute || isOnboardingRoute || isForgotPasswordRoute) {
+      if (isSplashRoute) {
         return null;
+      }
+
+      if (isForgotPasswordRoute) {
+        return null;
+      }
+
+      if (!onboardingCompleted && !isOnboardingRoute) return '/onboarding';
+      if (onboardingCompleted && isOnboardingRoute) {
+        return isLoggedIn ? '/' : '/login';
       }
 
       if (!isLoggedIn && !isLoginRoute) return '/login';
@@ -106,6 +118,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/search',
         builder: (context, state) => const GlobalSearchScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
@@ -208,7 +224,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'guest/:name',
                 builder: (context, state) => GuestProfileScreen(
-                  guestName: Uri.decodeComponent(state.pathParameters['name']!),
+                  guestName: _safeDecodePathParameter(
+                    state.pathParameters['name']!,
+                  ),
                 ),
               ),
               GoRoute(
@@ -427,35 +445,43 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'settings',
-            builder: (context, state) => const SettingsScreen(),
+            builder: (context, state) =>
+                const _AdminOnlyRoute(child: SettingsScreen()),
             routes: [
               GoRoute(
                 path: 'profile',
-                builder: (context, state) => const AdminProfileScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: AdminProfileScreen()),
               ),
               GoRoute(
                 path: 'users',
-                builder: (context, state) => const UsersPermissionsScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: UsersPermissionsScreen()),
               ),
               GoRoute(
                 path: 'pricing',
-                builder: (context, state) => const PricingManagementScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: PricingManagementScreen()),
               ),
               GoRoute(
                 path: 'season_transition',
-                builder: (context, state) => const SeasonTransitionScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: SeasonTransitionScreen()),
               ),
               GoRoute(
                 path: 'notifications',
-                builder: (context, state) => const NotificationsScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: NotificationsScreen()),
               ),
               GoRoute(
                 path: 'checkout_times',
-                builder: (context, state) => const CheckoutSettingsScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: CheckoutSettingsScreen()),
               ),
               GoRoute(
                 path: 'data_management',
-                builder: (context, state) => const DataManagementScreen(),
+                builder: (context, state) =>
+                    const _AdminOnlyRoute(child: DataManagementScreen()),
               ),
             ],
           ),
@@ -479,5 +505,39 @@ String _decodeReportMetricKey(String? key) {
     return utf8.decode(base64Url.decode(key));
   } catch (_) {
     return key;
+  }
+}
+
+String _safeDecodePathParameter(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  } on ArgumentError {
+    return value;
+  }
+}
+
+class _AdminOnlyRoute extends ConsumerWidget {
+  final Widget child;
+
+  const _AdminOnlyRoute({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roleAsync = ref.watch(currentUserRoleProvider);
+
+    if (roleAsync.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (roleAsync.valueOrNull != 'admin') {
+      return Scaffold(
+        appBar: AppBar(title: const Text('غير مصرح')),
+        body: const Center(child: Text('غير مصرح لك بفتح الإعدادات')),
+      );
+    }
+
+    return child;
   }
 }

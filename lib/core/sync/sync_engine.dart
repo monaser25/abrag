@@ -363,7 +363,6 @@ class SyncEngine {
           'broker_commission_type': item.brokerCommissionType,
           'broker_commission_percentage': item.brokerCommissionPercentage,
           'broker_commission_fixed_egp': item.brokerCommissionFixedEgp,
-          'broker_commission_amount_egp': item.brokerCommissionAmountEgp,
           'early_checkout_date': item.earlyCheckoutDate
               ?.toUtc()
               .toIso8601String(),

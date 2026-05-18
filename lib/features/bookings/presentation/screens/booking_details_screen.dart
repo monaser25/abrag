@@ -148,7 +148,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                       ),
                       TextButton(
                         onPressed: () => context.push(
-                          '/summer_bookings/guest/${booking.guestName}',
+                          '/summer_bookings/guest/${Uri.encodeComponent(booking.guestName)}',
                         ),
                         child: const Text('الملف الشخصي'),
                       ),
@@ -391,7 +391,13 @@ class BookingDetailsScreen extends ConsumerWidget {
                             return;
                           }
                           context.push(
-                            '/inspections/add?apartmentId=${booking.apartmentId}&checkoutBookingId=${booking.id}',
+                            Uri(
+                              path: '/inspections/add',
+                              queryParameters: {
+                                'apartmentId': booking.apartmentId,
+                                'checkoutBookingId': booking.id,
+                              },
+                            ).toString(),
                           );
                         },
                         child: const Text('تسجيل خروج'),
@@ -403,7 +409,10 @@ class BookingDetailsScreen extends ConsumerWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     context.push(
-                      '/inspections/add?apartmentId=${booking.apartmentId}',
+                      Uri(
+                        path: '/inspections/add',
+                        queryParameters: {'apartmentId': booking.apartmentId},
+                      ).toString(),
                     );
                   },
                   icon: const Icon(Icons.fact_check),

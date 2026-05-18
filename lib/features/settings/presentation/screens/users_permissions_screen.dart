@@ -268,6 +268,47 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
     throw Exception(message);
   }
 
+  Future<void> _updateAuthUser({
+    required String userId,
+    required String email,
+    required String fullName,
+    required String role,
+    String? password,
+  }) async {
+    final body = <String, dynamic>{
+      'userId': userId,
+      'email': email,
+      'fullName': fullName,
+      'role': role,
+    };
+
+    if (password != null && password.isNotEmpty) {
+      body['password'] = password;
+    }
+
+    final response = await Supabase.instance.client.functions
+        .invoke('update-app-user', body: body)
+        .catchError((Object error) {
+          final message = error.toString();
+          if (message.contains('404') || message.contains('NOT_FOUND')) {
+            throw Exception(
+              'تعديل البريد الإلكتروني أو كلمة المرور يحتاج نشر دالة update-app-user في Supabase أولاً.',
+            );
+          }
+          throw error;
+        });
+
+    final data = response.data;
+    if (data is Map && data['error'] != null) {
+      throw Exception(data['error']);
+    }
+    if (data is! Map || data['ok'] != true) {
+      throw Exception(
+        'تعذر تعديل المستخدم. تأكد من نشر دالة update-app-user في Supabase.',
+      );
+    }
+  }
+
   Future<void> _deleteUser(UserProfile user) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -318,6 +359,189 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _editUser(
+    UserProfile user,
+    String? currentTemplate,
+    List<String> availableTemplates,
+  ) async {
+    final nameController = TextEditingController(text: user.fullName ?? '');
+    final emailController = TextEditingController(text: user.email);
+    final passwordController = TextEditingController();
+    String? newTemplate = currentTemplate;
+
+    try {
+      await showDialog(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, dialogSetState) => AlertDialog(
+            title: const Text('تعديل المستخدم والصلاحية'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.65,
+                ),
+                child: SingleChildScrollView(
+                  child: mat.Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(labelText: 'الاسم'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'البريد الإلكتروني',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        decoration: const InputDecoration(
+                          labelText: 'كلمة مرور جديدة',
+                          helperText: 'اتركها فارغة لو مش عايز تغيرها',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: newTemplate,
+                        decoration: const InputDecoration(
+                          labelText: 'نموذج الصلاحيات',
+                        ),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text(
+                              'بدون صلاحيات مخصصة (مراقب)',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          ...availableTemplates.map(
+                            (template) => DropdownMenuItem<String>(
+                              value: template,
+                              child: Text(
+                                template,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            dialogSetState(() => newTemplate = value),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final fullName = nameController.text.trim();
+                  final email = emailController.text.trim().toLowerCase();
+                  final password = passwordController.text;
+                  final emailRegex = RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  );
+
+                  if (fullName.isEmpty) {
+                    showErrorDialog(context, 'الاسم مطلوب.');
+                    return;
+                  }
+                  if (email.isEmpty || !emailRegex.hasMatch(email)) {
+                    showErrorDialog(context, 'البريد الإلكتروني غير صحيح.');
+                    return;
+                  }
+                  if (password.isNotEmpty && password.length < 6) {
+                    showErrorDialog(
+                      context,
+                      'كلمة المرور يجب ألا تقل عن 6 حروف.',
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(ctx);
+                  setState(() => _isLoading = true);
+
+                  try {
+                    final currentEmail = user.email.trim().toLowerCase();
+                    final currentFullName = user.fullName?.trim() ?? '';
+                    final emailChanged = email != currentEmail;
+                    final nameChanged = fullName != currentFullName;
+                    final passwordChanged = password.isNotEmpty;
+
+                    if (emailChanged || passwordChanged) {
+                      await _updateAuthUser(
+                        userId: user.id,
+                        email: email,
+                        fullName: fullName,
+                        role: user.role,
+                        password: password.isEmpty ? null : password,
+                      );
+                    }
+
+                    final db = ref.read(databaseProvider);
+                    if (emailChanged || nameChanged) {
+                      await (db.update(
+                        db.userProfiles,
+                      )..where((t) => t.id.equals(user.id))).write(
+                        UserProfilesCompanion(
+                          email: Value(email),
+                          fullName: Value(fullName),
+                          updatedAt: Value(DateTime.now()),
+                          syncStatus: Value(
+                            emailChanged
+                                ? SyncStatus.synced
+                                : SyncStatus.pendingUpdate,
+                          ),
+                        ),
+                      );
+                    }
+
+                    await ref
+                        .read(rolesConfigControllerProvider)
+                        .assignUserRole(user.id, newTemplate);
+                    ref.invalidate(allUsersProvider);
+
+                    if (mounted) {
+                      showErrorDialog(
+                        context,
+                        'تم تعديل بيانات المستخدم بنجاح.',
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      showErrorDialog(context, 'تعذر تعديل المستخدم:\n$e');
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isLoading = false);
+                  }
+                },
+                child: const Text('حفظ'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      nameController.dispose();
+      emailController.dispose();
+      passwordController.dispose();
     }
   }
 
@@ -393,125 +617,14 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                                     spacing: 4,
                                     children: [
                                       IconButton(
+                                        tooltip: 'تعديل المستخدم',
                                         icon: const Icon(Icons.settings),
-                                        onPressed: () async {
-                                          // Change assigned template
-                                          String? newTemplate = customRole;
-                                          final nameController =
-                                              TextEditingController(
-                                                text: user.fullName,
-                                              );
-                                          final templates = rolesConfig
-                                              .roleTemplates
-                                              .keys
-                                              .toList();
-                                          await showDialog(
-                                            context: context,
-                                            builder: (ctx) => StatefulBuilder(
-                                              builder: (ctx, setState) => AlertDialog(
-                                                title: const Text(
-                                                  'تعديل المستخدم والصلاحية',
-                                                ),
-                                                content: mat.Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    TextField(
-                                                      controller:
-                                                          nameController,
-                                                      decoration:
-                                                          const InputDecoration(
-                                                            labelText: 'الاسم',
-                                                          ),
-                                                    ),
-                                                    const SizedBox(height: 16),
-                                                    DropdownButtonFormField<
-                                                      String
-                                                    >(
-                                                      initialValue: newTemplate,
-                                                      items: [
-                                                        const DropdownMenuItem<
-                                                          String
-                                                        >(
-                                                          value: null,
-                                                          child: Text(
-                                                            'بدون صلاحيات مخصصة (مراقب)',
-                                                          ),
-                                                        ),
-                                                        ...templates.map(
-                                                          (t) =>
-                                                              DropdownMenuItem(
-                                                                value: t,
-                                                                child: Text(t),
-                                                              ),
-                                                        ),
-                                                      ],
-                                                      onChanged: (v) =>
-                                                          setState(
-                                                            () =>
-                                                                newTemplate = v,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(ctx),
-                                                    child: const Text('إلغاء'),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () async {
-                                                      // Update Name in DB
-                                                      if (nameController.text
-                                                          .trim()
-                                                          .isNotEmpty) {
-                                                        final db = ref.read(
-                                                          databaseProvider,
-                                                        );
-                                                        await (db.update(
-                                                              db.userProfiles,
-                                                            )..where(
-                                                              (t) =>
-                                                                  t.id.equals(
-                                                                    user.id,
-                                                                  ),
-                                                            ))
-                                                            .write(
-                                                              UserProfilesCompanion(
-                                                                fullName: Value(
-                                                                  nameController
-                                                                      .text
-                                                                      .trim(),
-                                                                ),
-                                                                syncStatus:
-                                                                    const Value(
-                                                                      SyncStatus
-                                                                          .pendingUpdate,
-                                                                    ),
-                                                              ),
-                                                            );
-                                                      }
-                                                      // Update Role
-                                                      ref
-                                                          .read(
-                                                            rolesConfigControllerProvider,
-                                                          )
-                                                          .assignUserRole(
-                                                            user.id,
-                                                            newTemplate,
-                                                          );
-                                                      if (ctx.mounted) {
-                                                        Navigator.pop(ctx);
-                                                      }
-                                                    },
-                                                    child: const Text('حفظ'),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                        onPressed: () => _editUser(
+                                          user,
+                                          customRole,
+                                          rolesConfig.roleTemplates.keys
+                                              .toList(),
+                                        ),
                                       ),
                                       IconButton(
                                         icon: const Icon(

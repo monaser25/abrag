@@ -4,10 +4,11 @@
 
 ## المطلوب مرة واحدة
 
-من Supabase CLI أو Dashboard Functions انشر الدالتين:
+من Supabase CLI أو Dashboard Functions انشر الدوال:
 
 ```bash
 supabase functions deploy create-app-user
+supabase functions deploy update-app-user
 supabase functions deploy delete-app-user
 ```
 
@@ -25,5 +26,6 @@ Supabase Dashboard → Project Settings → API → service_role key
 ## بعد النشر
 
 - إنشاء المستخدم من شاشة المستخدمين سيعمل كحساب Login فعلي.
+- تعديل البريد الإلكتروني أو كلمة المرور أو الاسم يتم من خلال دالة `update-app-user`.
 - الحساب الجديد لن يحتاج تأكيد إيميل لأن الدالة تنشئه `email_confirm: true`.
 - حذف المستخدم سيحذف من Auth ومن جدول `user_profiles`.

@@ -59,28 +59,30 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.dashboardTitle),
         actions: [
-          IconButton(
-            icon: Badge(
-              isLabelVisible: notificationsAsync.value?.isNotEmpty ?? false,
-              label: Text('${notificationsAsync.value?.length ?? 0}'),
-              child: const Icon(Icons.notifications_none, size: 22),
+          if (hasPerm('view_notifications'))
+            IconButton(
+              icon: Badge(
+                isLabelVisible: notificationsAsync.value?.isNotEmpty ?? false,
+                label: Text('${notificationsAsync.value?.length ?? 0}'),
+                child: const Icon(Icons.notifications_none, size: 22),
+              ),
+              onPressed: () {
+                context.push('/notifications');
+              },
             ),
-            onPressed: () {
-              context.push('/settings/notifications');
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               context.push('/search');
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              context.push('/settings');
-            },
-          ),
+          if (isSuperAdmin)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                context.push('/settings');
+              },
+            ),
           // IconButton(
           //   icon: const Icon(Icons.admin_panel_settings),
           //   tooltip: 'ترقية الحساب لمدير',

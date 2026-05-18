@@ -134,6 +134,10 @@ class NotificationsScreen extends ConsumerWidget {
                   icon = Icons.inventory;
                   color = Colors.purple;
                   break;
+                case 'system':
+                  icon = Icons.campaign;
+                  color = Colors.lightBlue;
+                  break;
                 default:
                   icon = Icons.notifications;
                   color = theme.colorScheme.primary;

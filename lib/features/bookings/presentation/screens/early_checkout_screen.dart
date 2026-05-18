@@ -249,7 +249,14 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                     ? null
                     : () {
                         context.go(
-                          '/inspections/add?apartmentId=${booking.apartmentId}&earlyCheckoutBookingId=${booking.id}&newCheckoutDate=${today.toIso8601String()}',
+                          Uri(
+                            path: '/inspections/add',
+                            queryParameters: {
+                              'apartmentId': booking.apartmentId,
+                              'earlyCheckoutBookingId': booking.id,
+                              'newCheckoutDate': today.toIso8601String(),
+                            },
+                          ).toString(),
                         );
                       },
                 icon: const Icon(Icons.fact_check),
