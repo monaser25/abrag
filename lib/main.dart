@@ -18,7 +18,13 @@ void main() async {
   await Env.init();
   await NotificationService.init();
 
-  await Supabase.initialize(url: Env.supabaseUrl, anonKey: Env.supabaseAnonKey);
+  await Supabase.initialize(
+    url: Env.supabaseUrl,
+    anonKey: Env.supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.implicit,
+    ),
+  );
 
   final sharedPrefs = await SharedPreferences.getInstance();
 

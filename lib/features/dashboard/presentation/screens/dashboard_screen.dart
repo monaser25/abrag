@@ -62,9 +62,7 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: Badge(
               isLabelVisible: notificationsAsync.value?.isNotEmpty ?? false,
-              label: Text(
-                '${notificationsAsync.value?.length ?? 0}',
-              ),
+              label: Text('${notificationsAsync.value?.length ?? 0}'),
               child: const Icon(Icons.notifications_none, size: 22),
             ),
             onPressed: () {
@@ -83,6 +81,32 @@ class DashboardScreen extends ConsumerWidget {
               context.push('/settings');
             },
           ),
+          // IconButton(
+          //   icon: const Icon(Icons.admin_panel_settings),
+          //   tooltip: 'ترقية الحساب لمدير',
+          //   onPressed: () async {
+          //     try {
+          //       await Supabase.instance.client.functions.invoke(
+          //         'make-me-admin',
+          //       );
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           const SnackBar(
+          //             content: Text(
+          //               'أنت الآن مدير! اعمل إعادة تشغيل (Sync) للتطبيق.',
+          //             ),
+          //           ),
+          //         );
+          //       }
+          //     } catch (e) {
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(
+          //           context,
+          //         ).showSnackBar(SnackBar(content: Text('Error: $e')));
+          //       }
+          //     }
+          //   },
+          // ),
           IconButton(
             icon: syncState.isLoading
                 ? const SizedBox(

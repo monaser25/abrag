@@ -13,7 +13,8 @@ class AddBuildingRentScreen extends ConsumerStatefulWidget {
   const AddBuildingRentScreen({super.key, this.expense});
 
   @override
-  ConsumerState<AddBuildingRentScreen> createState() => _AddBuildingRentScreenState();
+  ConsumerState<AddBuildingRentScreen> createState() =>
+      _AddBuildingRentScreenState();
 }
 
 class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
@@ -21,7 +22,7 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
   late final TextEditingController _amountController;
   late final TextEditingController _discountController;
   late final TextEditingController _discountReasonController;
-  
+
   DateTime? _date;
   String? _selectedBuildingId;
   int _installmentNumber = 1;
@@ -30,9 +31,15 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
   @override
   void initState() {
     super.initState();
-    _amountController = TextEditingController(text: widget.expense?.amountEgp.toString() ?? '');
-    _discountController = TextEditingController(text: widget.expense?.discountEgp.toString() ?? '0');
-    _discountReasonController = TextEditingController(text: widget.expense?.discountReason ?? '');
+    _amountController = TextEditingController(
+      text: widget.expense?.amountEgp.toString() ?? '',
+    );
+    _discountController = TextEditingController(
+      text: widget.expense?.discountEgp.toString() ?? '0',
+    );
+    _discountReasonController = TextEditingController(
+      text: widget.expense?.discountReason ?? '',
+    );
     _date = widget.expense?.expenseDate ?? DateTime.now();
     _selectedBuildingId = widget.expense?.buildingId;
     _installmentNumber = widget.expense?.installmentNumber ?? 1;
@@ -64,28 +71,54 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
   void _submit() {
     if (_formKey.currentState!.validate() && _date != null) {
       if (widget.expense == null) {
-        ref.read(expensesControllerProvider.notifier).addExpense(
-          buildingId: _selectedBuildingId,
-          expenseType: 'building_rent',
-          amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
-          date: _date!,
-          description: 'القسط $_installmentNumber لإيجار المبنى',
-          installmentNumber: _installmentNumber,
-          discountEgp: _hasDiscount ? (double.tryParse(_discountController.text.replaceAll(',', '').trim()) ?? 0) : 0,
-          discountReason: _hasDiscount ? _discountReasonController.text.trim() : null,
-        );
+        ref
+            .read(expensesControllerProvider.notifier)
+            .addExpense(
+              buildingId: _selectedBuildingId,
+              expenseType: 'building_rent',
+              amount:
+                  double.tryParse(
+                    _amountController.text.replaceAll(',', '').trim(),
+                  ) ??
+                  0,
+              date: _date!,
+              description: 'القسط $_installmentNumber لإيجار المبنى',
+              installmentNumber: _installmentNumber,
+              discountEgp: _hasDiscount
+                  ? (double.tryParse(
+                          _discountController.text.replaceAll(',', '').trim(),
+                        ) ??
+                        0)
+                  : 0,
+              discountReason: _hasDiscount
+                  ? _discountReasonController.text.trim()
+                  : null,
+            );
       } else {
-        ref.read(expensesControllerProvider.notifier).updateExpense(
-          id: widget.expense!.id,
-          buildingId: _selectedBuildingId,
-          expenseType: 'building_rent',
-          amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
-          date: _date!,
-          description: 'القسط $_installmentNumber لإيجار المبنى',
-          installmentNumber: _installmentNumber,
-          discountEgp: _hasDiscount ? (double.tryParse(_discountController.text.replaceAll(',', '').trim()) ?? 0) : 0,
-          discountReason: _hasDiscount ? _discountReasonController.text.trim() : null,
-        );
+        ref
+            .read(expensesControllerProvider.notifier)
+            .updateExpense(
+              id: widget.expense!.id,
+              buildingId: _selectedBuildingId,
+              expenseType: 'building_rent',
+              amount:
+                  double.tryParse(
+                    _amountController.text.replaceAll(',', '').trim(),
+                  ) ??
+                  0,
+              date: _date!,
+              description: 'القسط $_installmentNumber لإيجار المبنى',
+              installmentNumber: _installmentNumber,
+              discountEgp: _hasDiscount
+                  ? (double.tryParse(
+                          _discountController.text.replaceAll(',', '').trim(),
+                        ) ??
+                        0)
+                  : 0,
+              discountReason: _hasDiscount
+                  ? _discountReasonController.text.trim()
+                  : null,
+            );
       }
     } else if (_date == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,17 +133,14 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
     final controllerState = ref.watch(expensesControllerProvider);
     final buildingsAsync = ref.watch(buildingsProvider);
 
-    ref.listen<AsyncValue<void>>(
-      expensesControllerProvider,
-      (_, state) {
-        state.whenOrNull(
-          data: (_) => context.pop(),
-          error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          ),
-        );
-      },
-    );
+    ref.listen<AsyncValue<void>>(expensesControllerProvider, (_, state) {
+      state.whenOrNull(
+        data: (_) => context.pop(),
+        error: (error, _) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString()))),
+      );
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('تسجيل قسط إيجار')),
@@ -131,7 +161,14 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
                 return DropdownButtonFormField<String>(
                   decoration: InputDecoration(labelText: l10n.buildings),
                   initialValue: _selectedBuildingId,
-                  items: buildings.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))).toList(),
+                  items: buildings
+                      .map(
+                        (b) => DropdownMenuItem(
+                          value: b.id,
+                          child: Text(b.name, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) {
                     setState(() {
                       _selectedBuildingId = v;
@@ -158,10 +195,12 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
             TextFormField(
               controller: _amountController,
               decoration: InputDecoration(labelText: l10n.amount),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [CurrencyInputFormatter()],
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-              onChanged: (_) => setState((){}),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
             SwitchListTile(
@@ -174,31 +213,47 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _discountController,
-                decoration: const InputDecoration(labelText: 'قيمة الخصم (ج.م)'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'قيمة الخصم (ج.م)',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [CurrencyInputFormatter()],
-                validator: (v) => _hasDiscount && (v == null || v.isEmpty) ? 'مطلوب' : null,
-                onChanged: (_) => setState((){}),
+                validator: (v) =>
+                    _hasDiscount && (v == null || v.isEmpty) ? 'مطلوب' : null,
+                onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _discountReasonController,
                 decoration: const InputDecoration(labelText: 'سبب الخصم'),
-                validator: (v) => _hasDiscount && (v == null || v.isEmpty) ? 'مطلوب' : null,
+                validator: (v) =>
+                    _hasDiscount && (v == null || v.isEmpty) ? 'مطلوب' : null,
               ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
-                    Text('الصافي المدفوع', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'الصافي المدفوع',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     Text(
                       '${((double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0) - (double.tryParse(_discountController.text.replaceAll(',', '')) ?? 0)).toCurrencyFormat()} ج.م',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -222,7 +277,10 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
             ElevatedButton(
               onPressed: controllerState.isLoading ? null : _submit,
               child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('حفظ القسط'),
             ),
           ],

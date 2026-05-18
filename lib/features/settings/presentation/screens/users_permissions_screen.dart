@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Column;
+import 'package:flutter/material.dart' as mat;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drift/drift.dart';
-import '../../../../core/config/env.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/utils/error_dialog.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../providers/permissions_provider.dart';
 
@@ -172,9 +173,22 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                     final password = passwordController.text;
                     final name = nameController.text.trim();
 
-                    if (email.isEmpty ||
-                        password.isEmpty ||
-                        selectedTemplate == null) {
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
+                    if (email.isEmpty || !emailRegex.hasMatch(email)) {
+                      showErrorDialog(context, 'البريد الإلكتروني غير صحيح.');
+                      return;
+                    }
+                    if (password.length < 6) {
+                      showErrorDialog(
+                        context,
+                        'كلمة المرور يجب ألا تقل عن 6 حروف.',
+                      );
+                      return;
+                    }
+                    if (selectedTemplate == null) {
+                      showErrorDialog(context, 'الرجاء اختيار نموذج صلاحيات.');
                       return;
                     }
 
@@ -182,53 +196,40 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
 
                     this.setState(() => _isLoading = true);
                     try {
-                      // Use a secondary client to avoid logging out the admin
-                      final secondaryClient = SupabaseClient(
-                        Env.supabaseUrl,
-                        Env.supabaseAnonKey,
-                      );
-                      final response = await secondaryClient.auth.signUp(
+                      final userId = await _createAuthUser(
                         email: email,
                         password: password,
+                        fullName: name,
                       );
-                      final user = response.user;
-                      if (user != null) {
-                        // Insert into DB as staff
-                        final db = ref.read(databaseProvider);
-                        await db
-                            .into(db.userProfiles)
-                            .insert(
-                              UserProfilesCompanion.insert(
-                                id: user.id,
-                                email: email,
-                                fullName: Value(name),
-                                role: const Value('staff'),
-                                createdAt: DateTime.now(),
-                                updatedAt: DateTime.now(),
-                                syncStatus: const Value(
-                                  SyncStatus.pendingInsert,
-                                ),
-                              ),
-                              mode: InsertMode.insertOrReplace,
-                            );
-                        // Assign custom role
-                        await ref
-                            .read(rolesConfigControllerProvider)
-                            .assignUserRole(user.id, selectedTemplate);
 
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تم إنشاء المستخدم بنجاح!'),
+                      final db = ref.read(databaseProvider);
+                      await db
+                          .into(db.userProfiles)
+                          .insertOnConflictUpdate(
+                            UserProfilesCompanion.insert(
+                              id: userId,
+                              email: email,
+                              fullName: Value(name),
+                              role: const Value('staff'),
+                              createdAt: DateTime.now(),
+                              updatedAt: DateTime.now(),
+                              syncStatus: const Value(SyncStatus.synced),
                             ),
                           );
-                        }
+                      await ref
+                          .read(rolesConfigControllerProvider)
+                          .assignUserRole(userId, selectedTemplate);
+                      ref.invalidate(allUsersProvider);
+
+                      if (mounted) {
+                        showErrorDialog(
+                          this.context,
+                          'تم إنشاء حساب الدخول وحفظ الصلاحيات بنجاح.',
+                        );
                       }
                     } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+                      if (mounted) {
+                        showErrorDialog(this.context, 'خطأ:\n$e');
                       }
                     } finally {
                       if (mounted) this.setState(() => _isLoading = false);
@@ -242,6 +243,82 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
         );
       },
     );
+  }
+
+  Future<String> _createAuthUser({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    final response = await Supabase.instance.client.functions.invoke(
+      'create-app-user',
+      body: {
+        'email': email,
+        'password': password,
+        'fullName': fullName,
+        'role': 'staff',
+      },
+    );
+
+    final data = response.data;
+    if (data is Map && data['id'] != null) return data['id'].toString();
+    final message = data is Map && data['error'] != null
+        ? data['error'].toString()
+        : 'تعذر إنشاء المستخدم. تأكد من نشر دالة create-app-user في Supabase.';
+    throw Exception(message);
+  }
+
+  Future<void> _deleteUser(UserProfile user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('حذف المستخدم'),
+        content: Text(
+          'هل تريد حذف ${user.fullName?.isNotEmpty == true ? user.fullName : user.email}؟ سيتم حذف حساب الدخول والصلاحيات.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'delete-app-user',
+        body: {'userId': user.id},
+      );
+      final data = response.data;
+      if (data is Map && data['error'] != null) {
+        throw Exception(data['error']);
+      }
+
+      final db = ref.read(databaseProvider);
+      await (db.delete(
+        db.userProfiles,
+      )..where((t) => t.id.equals(user.id))).go();
+      await ref
+          .read(rolesConfigControllerProvider)
+          .assignUserRole(user.id, null);
+
+      if (mounted) {
+        showErrorDialog(context, 'تم حذف المستخدم بنجاح.');
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorDialog(context, 'تعذر حذف المستخدم:\n$e');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -312,70 +389,138 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                             subtitle: Text(roleLabel),
                             trailing: isSuperAdmin
                                 ? null
-                                : IconButton(
-                                    icon: const Icon(Icons.settings),
-                                    onPressed: () async {
-                                      // Change assigned template
-                                      String? newTemplate = customRole;
-                                      final templates = rolesConfig
-                                          .roleTemplates
-                                          .keys
-                                          .toList();
-                                      await showDialog(
-                                        context: context,
-                                        builder: (ctx) => StatefulBuilder(
-                                          builder: (ctx, setState) => AlertDialog(
-                                            title: Text(
-                                              'تعديل صلاحية ${user.fullName}',
-                                            ),
-                                            content:
-                                                DropdownButtonFormField<String>(
-                                                  initialValue: newTemplate,
-                                                  items: [
-                                                    const DropdownMenuItem<
+                                : Wrap(
+                                    spacing: 4,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.settings),
+                                        onPressed: () async {
+                                          // Change assigned template
+                                          String? newTemplate = customRole;
+                                          final nameController =
+                                              TextEditingController(
+                                                text: user.fullName,
+                                              );
+                                          final templates = rolesConfig
+                                              .roleTemplates
+                                              .keys
+                                              .toList();
+                                          await showDialog(
+                                            context: context,
+                                            builder: (ctx) => StatefulBuilder(
+                                              builder: (ctx, setState) => AlertDialog(
+                                                title: const Text(
+                                                  'تعديل المستخدم والصلاحية',
+                                                ),
+                                                content: mat.Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    TextField(
+                                                      controller:
+                                                          nameController,
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            labelText: 'الاسم',
+                                                          ),
+                                                    ),
+                                                    const SizedBox(height: 16),
+                                                    DropdownButtonFormField<
                                                       String
                                                     >(
-                                                      value: null,
-                                                      child: Text(
-                                                        'بدون صلاحيات مخصصة (مراقب)',
-                                                      ),
-                                                    ),
-                                                    ...templates.map(
-                                                      (t) => DropdownMenuItem(
-                                                        value: t,
-                                                        child: Text(t),
-                                                      ),
+                                                      initialValue: newTemplate,
+                                                      items: [
+                                                        const DropdownMenuItem<
+                                                          String
+                                                        >(
+                                                          value: null,
+                                                          child: Text(
+                                                            'بدون صلاحيات مخصصة (مراقب)',
+                                                          ),
+                                                        ),
+                                                        ...templates.map(
+                                                          (t) =>
+                                                              DropdownMenuItem(
+                                                                value: t,
+                                                                child: Text(t),
+                                                              ),
+                                                        ),
+                                                      ],
+                                                      onChanged: (v) =>
+                                                          setState(
+                                                            () =>
+                                                                newTemplate = v,
+                                                          ),
                                                     ),
                                                   ],
-                                                  onChanged: (v) => setState(
-                                                    () => newTemplate = v,
-                                                  ),
                                                 ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(ctx),
-                                                child: const Text('إلغاء'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(ctx),
+                                                    child: const Text('إلغاء'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () async {
+                                                      // Update Name in DB
+                                                      if (nameController.text
+                                                          .trim()
+                                                          .isNotEmpty) {
+                                                        final db = ref.read(
+                                                          databaseProvider,
+                                                        );
+                                                        await (db.update(
+                                                              db.userProfiles,
+                                                            )..where(
+                                                              (t) =>
+                                                                  t.id.equals(
+                                                                    user.id,
+                                                                  ),
+                                                            ))
+                                                            .write(
+                                                              UserProfilesCompanion(
+                                                                fullName: Value(
+                                                                  nameController
+                                                                      .text
+                                                                      .trim(),
+                                                                ),
+                                                                syncStatus:
+                                                                    const Value(
+                                                                      SyncStatus
+                                                                          .pendingUpdate,
+                                                                    ),
+                                                              ),
+                                                            );
+                                                      }
+                                                      // Update Role
+                                                      ref
+                                                          .read(
+                                                            rolesConfigControllerProvider,
+                                                          )
+                                                          .assignUserRole(
+                                                            user.id,
+                                                            newTemplate,
+                                                          );
+                                                      if (ctx.mounted) {
+                                                        Navigator.pop(ctx);
+                                                      }
+                                                    },
+                                                    child: const Text('حفظ'),
+                                                  ),
+                                                ],
                                               ),
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  ref
-                                                      .read(
-                                                        rolesConfigControllerProvider,
-                                                      )
-                                                      .assignUserRole(
-                                                        user.id,
-                                                        newTemplate,
-                                                      );
-                                                  Navigator.pop(ctx);
-                                                },
-                                                child: const Text('حفظ'),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
                                         ),
-                                      );
-                                    },
+                                        onPressed: () => _deleteUser(user),
+                                      ),
+                                    ],
                                   ),
                           ),
                         );

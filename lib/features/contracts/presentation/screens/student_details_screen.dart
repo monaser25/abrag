@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../providers/contracts_provider.dart';
@@ -550,19 +551,36 @@ class StudentDetailsScreen extends ConsumerWidget {
   };
 
   Widget _buildImageCard(BuildContext context, String imagePath, String label) {
+    final normalizedPath = imagePath.trim();
+    final isRemote =
+        normalizedPath.startsWith('http://') ||
+        normalizedPath.startsWith('https://');
+    final localFile = isRemote ? null : File(normalizedPath);
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
+        onTap: () async {
+          if (!isRemote && !(await localFile!.exists())) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'الصورة غير موجودة على هذا الجهاز. اعمل مزامنة من الجهاز الأصلي أو افتح الصورة بعد رفعها للسيرفر.',
+                  ),
+                ),
+              );
+            }
+            return;
+          }
+          if (!context.mounted) return;
           showDialog(
             context: context,
             builder: (context) => Dialog(
               child: Stack(
                 alignment: Alignment.topRight,
                 children: [
-                  InteractiveViewer(
-                    child: Image.file(File(imagePath), fit: BoxFit.contain),
-                  ),
+                  InteractiveViewer(child: _buildImagePreview(normalizedPath)),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.red),
                     onPressed: () => Navigator.pop(context),
@@ -574,23 +592,91 @@ class StudentDetailsScreen extends ConsumerWidget {
         },
         child: Column(
           children: [
-            Image.file(
-              File(imagePath),
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const SizedBox(
-                height: 100,
-                child: Center(
-                  child: Icon(Icons.broken_image, color: Colors.grey),
-                ),
-              ),
-            ),
+            _buildImageThumbnail(normalizedPath),
             Padding(
               padding: const EdgeInsets.all(4.0),
               child: Text(label, style: Theme.of(context).textTheme.bodySmall),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        fit: BoxFit.contain,
+        placeholder: (context, url) => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) =>
+            const _MissingImageBox(message: 'تعذر تحميل الصورة من السيرفر'),
+      );
+    }
+    return Image.file(
+      File(path),
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) =>
+          const _MissingImageBox(message: 'الصورة غير موجودة على هذا الجهاز'),
+    );
+  }
+
+  Widget _buildImageThumbnail(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        height: 100,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const SizedBox(
+          height: 100,
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) =>
+            const _MissingImageBox(height: 100, message: 'تعذر تحميل الصورة'),
+      );
+    }
+    return Image.file(
+      File(path),
+      height: 100,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          const _MissingImageBox(height: 100, message: 'الصورة على جهاز آخر'),
+    );
+  }
+}
+
+class _MissingImageBox extends StatelessWidget {
+  final double? height;
+  final String message;
+
+  const _MissingImageBox({this.height, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off, color: Colors.grey),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
       ),
     );

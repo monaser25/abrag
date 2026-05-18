@@ -31,13 +31,182 @@ class SyncEngine {
       final publicUrl = supabase.storage.from(bucket).getPublicUrl(storagePath);
       return publicUrl;
     } catch (e) {
-      return path;
+      throw Exception('فشل رفع الملف للسيرفر: $e');
     }
   }
 
   Future<void> syncAll() async {
-    await _pushLocalChanges();
-    await _pullRemoteChanges();
+    await _runWithNetworkRetry(() async {
+      await _uploadLocalMediaBeforeSync();
+      await _pushLocalChanges();
+      await _pullRemoteChanges();
+    });
+  }
+
+  Future<void> _runWithNetworkRetry(Future<void> Function() action) async {
+    Object? lastError;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await action();
+        return;
+      } catch (error) {
+        lastError = error;
+        if (!_isTemporaryNetworkError(error) || attempt == 2) rethrow;
+        await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+      }
+    }
+    throw lastError ?? Exception('فشل الاتصال بالسيرفر');
+  }
+
+  bool _isTemporaryNetworkError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('failed host lookup') ||
+        message.contains('socketexception') ||
+        message.contains('connection refused') ||
+        message.contains('connection reset') ||
+        message.contains('network is unreachable') ||
+        message.contains('connection timed out');
+  }
+
+  Future<void> _uploadLocalMediaBeforeSync() async {
+    await _uploadSummerBookingImages();
+    await _uploadWinterContractImages();
+    await _uploadWinterPaymentReceipts();
+    await _uploadExpenseReceipts();
+  }
+
+  bool _isRemotePath(String? path) {
+    if (path == null || path.isEmpty) return true;
+    return path.startsWith('http://') || path.startsWith('https://');
+  }
+
+  Future<void> _uploadSummerBookingImages() async {
+    final bookings = await db.select(db.summerBookings).get();
+    for (final item in bookings) {
+      final idFront = _isRemotePath(item.idFrontImage)
+          ? item.idFrontImage
+          : await _uploadFileIfLocal(
+              item.idFrontImage,
+              'abrag_storage',
+              'summer_bookings',
+            );
+      final idBack = _isRemotePath(item.idBackImage)
+          ? item.idBackImage
+          : await _uploadFileIfLocal(
+              item.idBackImage,
+              'abrag_storage',
+              'summer_bookings',
+            );
+      if (idFront != item.idFrontImage || idBack != item.idBackImage) {
+        await (db.update(
+          db.summerBookings,
+        )..where((t) => t.id.equals(item.id))).write(
+          SummerBookingsCompanion(
+            idFrontImage: Value(idFront),
+            idBackImage: Value(idBack),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadWinterContractImages() async {
+    final contracts = await db.select(db.winterContracts).get();
+    for (final item in contracts) {
+      final idFront = _isRemotePath(item.idFrontImage)
+          ? item.idFrontImage
+          : await _uploadFileIfLocal(
+              item.idFrontImage,
+              'abrag_storage',
+              'winter_contracts',
+            );
+      final idBack = _isRemotePath(item.idBackImage)
+          ? item.idBackImage
+          : await _uploadFileIfLocal(
+              item.idBackImage,
+              'abrag_storage',
+              'winter_contracts',
+            );
+      final contractFront = _isRemotePath(item.contractFrontImage)
+          ? item.contractFrontImage
+          : await _uploadFileIfLocal(
+              item.contractFrontImage,
+              'abrag_storage',
+              'winter_contracts',
+            );
+      final contractBack = _isRemotePath(item.contractBackImage)
+          ? item.contractBackImage
+          : await _uploadFileIfLocal(
+              item.contractBackImage,
+              'abrag_storage',
+              'winter_contracts',
+            );
+      if (idFront != item.idFrontImage ||
+          idBack != item.idBackImage ||
+          contractFront != item.contractFrontImage ||
+          contractBack != item.contractBackImage) {
+        await (db.update(
+          db.winterContracts,
+        )..where((t) => t.id.equals(item.id))).write(
+          WinterContractsCompanion(
+            idFrontImage: Value(idFront),
+            idBackImage: Value(idBack),
+            contractFrontImage: Value(contractFront),
+            contractBackImage: Value(contractBack),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadWinterPaymentReceipts() async {
+    final payments = await db.select(db.winterPayments).get();
+    for (final item in payments) {
+      final receipt = _isRemotePath(item.receiptUrl)
+          ? item.receiptUrl
+          : await _uploadFileIfLocal(
+              item.receiptUrl,
+              'abrag_storage',
+              'winter_payments',
+            );
+      if (receipt != item.receiptUrl) {
+        await (db.update(
+          db.winterPayments,
+        )..where((t) => t.id.equals(item.id))).write(
+          WinterPaymentsCompanion(
+            receiptUrl: Value(receipt),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadExpenseReceipts() async {
+    final expenses = await db.select(db.expenses).get();
+    for (final item in expenses) {
+      final receipt = _isRemotePath(item.receiptUrl)
+          ? item.receiptUrl
+          : await _uploadFileIfLocal(
+              item.receiptUrl,
+              'abrag_storage',
+              'expenses',
+            );
+      if (receipt != item.receiptUrl) {
+        await (db.update(
+          db.expenses,
+        )..where((t) => t.id.equals(item.id))).write(
+          ExpensesCompanion(
+            receiptUrl: Value(receipt),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _pushLocalChanges() async {
@@ -47,6 +216,12 @@ class SyncEngine {
 
     for (final item in pendingUserProfiles) {
       try {
+        if (!_isUuid(item.id)) {
+          await (db.delete(
+            db.userProfiles,
+          )..where((t) => t.id.equals(item.id))).go();
+          continue;
+        }
         final payload = {
           'id': item.id,
           'email': item.email,
@@ -70,7 +245,7 @@ class SyncEngine {
             const UserProfilesCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing user_profiles (push): $e\nItem: $item');
       }
     }
@@ -104,7 +279,7 @@ class SyncEngine {
             const BuildingsCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing buildings (push): $e\nItem: $item');
       }
     }
@@ -143,7 +318,7 @@ class SyncEngine {
             const ApartmentsCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing apartments (push): $e\nItem: $item');
       }
     }
@@ -154,20 +329,20 @@ class SyncEngine {
 
     for (final item in pendingSummerBookings) {
       try {
-        String? uploaded_idFrontImage = item.idFrontImage;
-        if (uploaded_idFrontImage != null &&
-            !uploaded_idFrontImage.startsWith('http')) {
-          uploaded_idFrontImage = await _uploadFileIfLocal(
-            uploaded_idFrontImage,
+        String? uploadedIdfrontimage = item.idFrontImage;
+        if (uploadedIdfrontimage != null &&
+            !uploadedIdfrontimage.startsWith('http')) {
+          uploadedIdfrontimage = await _uploadFileIfLocal(
+            uploadedIdfrontimage,
             'abrag_storage',
             'summer_bookings',
           );
         }
-        String? uploaded_idBackImage = item.idBackImage;
-        if (uploaded_idBackImage != null &&
-            !uploaded_idBackImage.startsWith('http')) {
-          uploaded_idBackImage = await _uploadFileIfLocal(
-            uploaded_idBackImage,
+        String? uploadedIdbackimage = item.idBackImage;
+        if (uploadedIdbackimage != null &&
+            !uploadedIdbackimage.startsWith('http')) {
+          uploadedIdbackimage = await _uploadFileIfLocal(
+            uploadedIdbackimage,
             'abrag_storage',
             'summer_bookings',
           );
@@ -195,8 +370,8 @@ class SyncEngine {
           'overstay_days': item.overstayDays,
           'overstay_fee_egp': item.overstayFeeEgp,
           'national_id': item.nationalId,
-          'id_front_image': uploaded_idFrontImage,
-          'id_back_image': uploaded_idBackImage,
+          'id_front_image': uploadedIdfrontimage,
+          'id_back_image': uploadedIdbackimage,
           'created_at': item.createdAt.toUtc().toIso8601String(),
           'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
@@ -214,7 +389,7 @@ class SyncEngine {
             const SummerBookingsCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing summer_bookings (push): $e\nItem: $item',
         );
@@ -227,38 +402,38 @@ class SyncEngine {
 
     for (final item in pendingWinterContracts) {
       try {
-        String? uploaded_idFrontImage = item.idFrontImage;
-        if (uploaded_idFrontImage != null &&
-            !uploaded_idFrontImage.startsWith('http')) {
-          uploaded_idFrontImage = await _uploadFileIfLocal(
-            uploaded_idFrontImage,
+        String? uploadedIdfrontimage = item.idFrontImage;
+        if (uploadedIdfrontimage != null &&
+            !uploadedIdfrontimage.startsWith('http')) {
+          uploadedIdfrontimage = await _uploadFileIfLocal(
+            uploadedIdfrontimage,
             'abrag_storage',
             'winter_contracts',
           );
         }
-        String? uploaded_idBackImage = item.idBackImage;
-        if (uploaded_idBackImage != null &&
-            !uploaded_idBackImage.startsWith('http')) {
-          uploaded_idBackImage = await _uploadFileIfLocal(
-            uploaded_idBackImage,
+        String? uploadedIdbackimage = item.idBackImage;
+        if (uploadedIdbackimage != null &&
+            !uploadedIdbackimage.startsWith('http')) {
+          uploadedIdbackimage = await _uploadFileIfLocal(
+            uploadedIdbackimage,
             'abrag_storage',
             'winter_contracts',
           );
         }
-        String? uploaded_contractFrontImage = item.contractFrontImage;
-        if (uploaded_contractFrontImage != null &&
-            !uploaded_contractFrontImage.startsWith('http')) {
-          uploaded_contractFrontImage = await _uploadFileIfLocal(
-            uploaded_contractFrontImage,
+        String? uploadedContractfrontimage = item.contractFrontImage;
+        if (uploadedContractfrontimage != null &&
+            !uploadedContractfrontimage.startsWith('http')) {
+          uploadedContractfrontimage = await _uploadFileIfLocal(
+            uploadedContractfrontimage,
             'abrag_storage',
             'winter_contracts',
           );
         }
-        String? uploaded_contractBackImage = item.contractBackImage;
-        if (uploaded_contractBackImage != null &&
-            !uploaded_contractBackImage.startsWith('http')) {
-          uploaded_contractBackImage = await _uploadFileIfLocal(
-            uploaded_contractBackImage,
+        String? uploadedContractbackimage = item.contractBackImage;
+        if (uploadedContractbackimage != null &&
+            !uploadedContractbackimage.startsWith('http')) {
+          uploadedContractbackimage = await _uploadFileIfLocal(
+            uploadedContractbackimage,
             'abrag_storage',
             'winter_contracts',
           );
@@ -282,10 +457,10 @@ class SyncEngine {
           'is_water_on_student': item.isWaterOnStudent,
           'roommates': item.roommates,
           'national_id': item.nationalId,
-          'id_front_image': uploaded_idFrontImage,
-          'id_back_image': uploaded_idBackImage,
-          'contract_front_image': uploaded_contractFrontImage,
-          'contract_back_image': uploaded_contractBackImage,
+          'id_front_image': uploadedIdfrontimage,
+          'id_back_image': uploadedIdbackimage,
+          'contract_front_image': uploadedContractfrontimage,
+          'contract_back_image': uploadedContractbackimage,
           'created_at': item.createdAt.toUtc().toIso8601String(),
           'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
@@ -305,7 +480,7 @@ class SyncEngine {
             ),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing winter_contracts (push): $e\nItem: $item',
         );
@@ -318,11 +493,11 @@ class SyncEngine {
 
     for (final item in pendingWinterPayments) {
       try {
-        String? uploaded_receiptUrl = item.receiptUrl;
-        if (uploaded_receiptUrl != null &&
-            !uploaded_receiptUrl.startsWith('http')) {
-          uploaded_receiptUrl = await _uploadFileIfLocal(
-            uploaded_receiptUrl,
+        String? uploadedReceipturl = item.receiptUrl;
+        if (uploadedReceipturl != null &&
+            !uploadedReceipturl.startsWith('http')) {
+          uploadedReceipturl = await _uploadFileIfLocal(
+            uploadedReceipturl,
             'abrag_storage',
             'winter_payments',
           );
@@ -333,7 +508,7 @@ class SyncEngine {
           'amount_egp': item.amountEgp,
           'payment_date': item.paymentDate.toUtc().toIso8601String(),
           'payment_method': item.paymentMethod,
-          'receipt_url': uploaded_receiptUrl,
+          'receipt_url': uploadedReceipturl,
           'created_at': item.createdAt.toUtc().toIso8601String(),
         };
 
@@ -350,7 +525,7 @@ class SyncEngine {
             const WinterPaymentsCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing winter_payments (push): $e\nItem: $item',
         );
@@ -388,7 +563,7 @@ class SyncEngine {
             const MeterReadingsCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing meter_readings (push): $e\nItem: $item');
       }
     }
@@ -399,11 +574,11 @@ class SyncEngine {
 
     for (final item in pendingExpenses) {
       try {
-        String? uploaded_receiptUrl = item.receiptUrl;
-        if (uploaded_receiptUrl != null &&
-            !uploaded_receiptUrl.startsWith('http')) {
-          uploaded_receiptUrl = await _uploadFileIfLocal(
-            uploaded_receiptUrl,
+        String? uploadedReceipturl = item.receiptUrl;
+        if (uploadedReceipturl != null &&
+            !uploadedReceipturl.startsWith('http')) {
+          uploadedReceipturl = await _uploadFileIfLocal(
+            uploadedReceipturl,
             'abrag_storage',
             'expenses',
           );
@@ -421,7 +596,7 @@ class SyncEngine {
           'expense_date': item.expenseDate.toUtc().toIso8601String(),
           'installment_number': item.installmentNumber,
           'description': item.description,
-          'receipt_url': uploaded_receiptUrl,
+          'receipt_url': uploadedReceipturl,
           'created_at': item.createdAt.toUtc().toIso8601String(),
         };
 
@@ -438,7 +613,7 @@ class SyncEngine {
             const ExpensesCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing expenses (push): $e\nItem: $item');
       }
     }
@@ -476,7 +651,7 @@ class SyncEngine {
             ),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing financial_transfers (push): $e\nItem: $item',
         );
@@ -511,7 +686,7 @@ class SyncEngine {
             const TechniciansCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing technicians (push): $e\nItem: $item');
       }
     }
@@ -546,7 +721,7 @@ class SyncEngine {
             ),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing cleaning_supplies (push): $e\nItem: $item',
         );
@@ -588,7 +763,7 @@ class SyncEngine {
             ),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing cleaning_transactions (push): $e\nItem: $item',
         );
@@ -634,7 +809,7 @@ class SyncEngine {
             ),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing apartment_inspections (push): $e\nItem: $item',
         );
@@ -678,7 +853,7 @@ class SyncEngine {
             ),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception(
           'Error syncing maintenance_requests (push): $e\nItem: $item',
         );
@@ -719,10 +894,16 @@ class SyncEngine {
             const AuditLogsCompanion(syncStatus: Value(SyncStatus.synced)),
           );
         }
-      } catch (e, st) {
+      } catch (e) {
         throw Exception('Error syncing audit_logs (push): $e\nItem: $item');
       }
     }
+  }
+
+  bool _isUuid(String value) {
+    return RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(value);
   }
 
   Future<void> _pullRemoteChanges() async {

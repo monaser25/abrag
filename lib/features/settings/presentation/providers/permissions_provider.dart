@@ -2,14 +2,76 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/app_settings_provider.dart';
 
 const kAppPermissions = {
+  'view_dashboard': 'رؤية لوحة التحكم',
+  'view_search': 'استخدام البحث العام',
+  'view_notifications': 'رؤية التنبيهات',
   'view_customers': 'رؤية العملاء والملفات',
+  'manage_customers': 'تعديل وإدارة بيانات العملاء',
   'view_apartments': 'رؤية الشقق والمحتويات',
+  'manage_apartments': 'إضافة وتعديل الشقق والمباني والجرد',
+  'manage_cleaning_status': 'تعديل حالة النظافة للشقق',
+  'manage_bookings': 'إضافة وإدارة الحجوزات الصيفي',
+  'manage_contracts': 'إضافة وإدارة عقود الشتوي',
+  'view_contract_documents': 'رؤية صور العقود والبطاقات',
   'checkout_winter': 'تسليم واستلام الشقق',
-  'view_reports': 'التقارير المالية والملخصات',
-  'manage_bookings': 'إضافة وإدارة الحجوزات (صيفي وشتوي)',
-  'manage_maintenance': 'العمال والصيانة والفحص',
-  'view_brokers': 'إدارة السماسرة والعمولات',
-  'manage_expenses': 'إضافة المصروفات',
+  'view_reports': 'رؤية التقارير المالية والملخصات',
+  'export_reports': 'تصدير التقارير وملفات PDF',
+  'view_system_log': 'رؤية سجل أنشطة النظام',
+  'view_expenses': 'رؤية المصروفات والمدفوعات',
+  'manage_expenses': 'إضافة وتعديل المصروفات',
+  'manage_building_rent': 'إدارة أقساط إيجار المبنى',
+  'manage_financial_transfers': 'إدارة الخزنة والتحويلات',
+  'view_brokers': 'رؤية السماسرة والعمولات',
+  'manage_brokers': 'إضافة وتعديل السماسرة والتحكم في الرؤية',
+  'view_maintenance': 'رؤية الصيانة والفحص',
+  'manage_maintenance': 'إدارة العمال والصيانة والفحص',
+  'manage_cleaning_supplies': 'إدارة مخزون وأدوات النظافة',
+  'manage_users': 'إدارة المستخدمين والصلاحيات',
+  'manage_settings': 'تعديل إعدادات التطبيق',
+  'manage_data': 'تصدير واستيراد ومسح البيانات',
+};
+
+const kDefaultRoleTemplates = {
+  'موظف استقبال': [
+    'view_dashboard',
+    'view_search',
+    'view_notifications',
+    'view_customers',
+    'manage_customers',
+    'view_apartments',
+    'manage_bookings',
+    'manage_contracts',
+    'view_contract_documents',
+  ],
+  'محاسب': [
+    'view_dashboard',
+    'view_notifications',
+    'view_reports',
+    'export_reports',
+    'view_expenses',
+    'manage_expenses',
+    'manage_building_rent',
+    'manage_financial_transfers',
+  ],
+  'مسؤول صيانة': [
+    'view_dashboard',
+    'view_notifications',
+    'view_apartments',
+    'manage_cleaning_status',
+    'checkout_winter',
+    'view_maintenance',
+    'manage_maintenance',
+    'manage_cleaning_supplies',
+  ],
+  'مراقب قراءة فقط': [
+    'view_dashboard',
+    'view_search',
+    'view_customers',
+    'view_apartments',
+    'view_reports',
+    'view_brokers',
+    'view_maintenance',
+  ],
 };
 
 class RolesConfig {
@@ -41,7 +103,11 @@ class RolesConfig {
 
 final rolesConfigProvider = Provider<RolesConfig>((ref) {
   final settings = ref.watch(appSettingsProvider).value ?? {};
-  return RolesConfig.fromJson(settings);
+  final config = RolesConfig.fromJson(settings);
+  return RolesConfig(
+    roleTemplates: {...kDefaultRoleTemplates, ...config.roleTemplates},
+    userRoles: config.userRoles,
+  );
 });
 
 class RolesConfigController {

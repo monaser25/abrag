@@ -10,18 +10,22 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   return SyncEngine(db, Supabase.instance.client);
 });
 
-final syncControllerProvider = StateNotifierProvider<SyncController, AsyncValue<void>>((ref) {
-  return SyncController(ref.watch(syncEngineProvider));
-});
+final syncControllerProvider =
+    StateNotifierProvider<SyncController, AsyncValue<void>>((ref) {
+      return SyncController(ref.watch(syncEngineProvider), ref);
+    });
+
+final lastSuccessfulSyncProvider = StateProvider<DateTime?>((ref) => null);
 
 class SyncController extends StateNotifier<AsyncValue<void>> {
   final SyncEngine _syncEngine;
+  final Ref _ref;
   RealtimeChannel? _realtimeChannel;
   Timer? _realtimeDebounceTimer;
   Timer? _periodicSyncTimer;
   bool _isSyncing = false;
 
-  SyncController(this._syncEngine) : super(const AsyncData(null)) {
+  SyncController(this._syncEngine, this._ref) : super(const AsyncData(null)) {
     syncData();
     _periodicSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) syncData();
@@ -36,7 +40,8 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
           event: PostgresChangeEvent.all,
           schema: 'public',
           callback: (payload) {
-            if (payload.table == 'audit_logs' && payload.eventType == PostgresChangeEvent.insert) {
+            if (payload.table == 'audit_logs' &&
+                payload.eventType == PostgresChangeEvent.insert) {
               final newRecord = payload.newRecord;
               final actorId = newRecord['actor_user_id'];
               final currentUser = Supabase.instance.client.auth.currentUser;
@@ -44,7 +49,9 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
                 NotificationService.showNotification(
                   id: DateTime.now().millisecond,
                   title: newRecord['title']?.toString() ?? 'إشعار جديد',
-                  body: newRecord['description']?.toString() ?? 'تم إضافة تحديث جديد في النظام',
+                  body:
+                      newRecord['description']?.toString() ??
+                      'تم إضافة تحديث جديد في النظام',
                 );
               }
             }
@@ -74,6 +81,7 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       await _syncEngine.syncAll();
+      _ref.read(lastSuccessfulSyncProvider.notifier).state = DateTime.now();
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

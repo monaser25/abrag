@@ -13,13 +13,17 @@ import '../../../../core/database/tables.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final dataManagementProvider = Provider<DataManagementService>((ref) {
-  return DataManagementService(ref.watch(databaseProvider));
+  return DataManagementService(
+    ref.watch(databaseProvider),
+    Supabase.instance.client,
+  );
 });
 
 class DataManagementService {
   final AppDatabase _db;
+  final SupabaseClient _supabase;
 
-  DataManagementService(this._db);
+  DataManagementService(this._db, this._supabase);
 
   Future<File> exportAllData() async {
     final data = {
@@ -98,19 +102,58 @@ class DataManagementService {
       email: email,
       password: password,
     );
+    await _deleteServerData();
+    await _deleteLocalData();
+  }
+
+  Future<void> _deleteServerData() async {
+    await _supabase.from('audit_logs').delete().neq('id', '');
+    await _supabase.from('maintenance_requests').delete().neq('id', '');
+    await _supabase.from('apartment_inspections').delete().neq('id', '');
+    await _supabase.from('cleaning_transactions').delete().neq('id', '');
+    await _supabase.from('cleaning_supplies').delete().neq('id', '');
+    await _supabase.from('technicians').delete().neq('id', '');
+    await _supabase.from('financial_transfers').delete().neq('id', '');
+    await _supabase.from('expenses').delete().neq('id', '');
+    await _supabase.from('meter_readings').delete().neq('id', '');
+    await _supabase.from('winter_payments').delete().neq('id', '');
+    await _supabase.from('winter_contracts').delete().neq('id', '');
+    await _supabase.from('summer_bookings').delete().neq('id', '');
+    await _supabase.from('apartments').delete().neq('id', '');
+    await _supabase.from('buildings').delete().neq('id', '');
+  }
+
+  Future<void> _deleteLocalData() async {
     await _db.transaction(() async {
+      await _db.delete(_db.auditLogs).go();
       await _db.delete(_db.maintenanceRequests).go();
       await _db.delete(_db.apartmentInspections).go();
       await _db.delete(_db.cleaningTransactions).go();
       await _db.delete(_db.cleaningSupplies).go();
       await _db.delete(_db.technicians).go();
+      await _db.delete(_db.financialTransfers).go();
       await _db.delete(_db.expenses).go();
+      await _db.delete(_db.meterReadings).go();
       await _db.delete(_db.winterPayments).go();
       await _db.delete(_db.winterContracts).go();
       await _db.delete(_db.summerBookings).go();
       await _db.delete(_db.apartments).go();
       await _db.delete(_db.buildings).go();
     });
+  }
+
+  Future<void> cleanupInvalidPendingUsers() async {
+    final invalidUsers =
+        await (_db.select(_db.userProfiles)..where(
+              (t) => t.id.like('pending-user-%') | t.id.like('pending user-%'),
+            ))
+            .get();
+
+    for (final user in invalidUsers) {
+      await (_db.delete(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(user.id))).go();
+    }
   }
 
   Future<void> _importCustomersAsUserProfiles(dynamic customers) async {

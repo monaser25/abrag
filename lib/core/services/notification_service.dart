@@ -25,15 +25,21 @@ class NotificationService {
           requestSoundPermission: true,
         );
 
+    const WindowsInitializationSettings initializationSettingsWindows =
+        WindowsInitializationSettings(
+          appName: 'Abrag',
+          appUserModelId: 'com.abrag.app',
+          guid: '4f4f0864-f552-4cfd-9bbf-d5f3d0407a6d',
+        );
+
     const InitializationSettings initializationSettings =
         InitializationSettings(
           android: initializationSettingsAndroid,
           iOS: initializationSettingsIOS,
+          windows: initializationSettingsWindows,
         );
 
-    await _notificationsPlugin.initialize(
-      settings: initializationSettings,
-    );
+    await _notificationsPlugin.initialize(settings: initializationSettings);
   }
 
   static Future<void> showNotification({
