@@ -8,6 +8,7 @@ import 'core/config/locale_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/push_notification_service.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/shared_prefs_provider.dart';
@@ -17,6 +18,7 @@ void main() async {
 
   await Env.init();
   await NotificationService.init();
+  await PushNotificationService.init();
 
   await Supabase.initialize(
     url: Env.supabaseUrl,

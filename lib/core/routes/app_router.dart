@@ -97,7 +97,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isLoggedIn ? '/' : '/login';
       }
 
-      if (!isLoggedIn && !isLoginRoute) return '/login';
+      if (!isLoggedIn && !isLoginRoute && !isOnboardingRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/';
 
       return null;

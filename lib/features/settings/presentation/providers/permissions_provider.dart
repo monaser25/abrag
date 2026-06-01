@@ -149,6 +149,34 @@ class RolesConfigController {
     await _ref.read(appSettingsControllerProvider).updateSettings(settings);
   }
 
+  Future<void> updateTemplate({
+    required String oldTemplateName,
+    required String newTemplateName,
+    required List<String> permissions,
+  }) async {
+    final current = _ref.read(rolesConfigProvider);
+    final newTemplates = Map<String, List<String>>.from(current.roleTemplates);
+    final newUserRoles = Map<String, String>.from(current.userRoles);
+
+    if (oldTemplateName != newTemplateName) {
+      newTemplates.remove(oldTemplateName);
+      newUserRoles.updateAll(
+        (userId, templateName) =>
+            templateName == oldTemplateName ? newTemplateName : templateName,
+      );
+    }
+
+    newTemplates[newTemplateName] = permissions;
+
+    final newConfig = RolesConfig(
+      roleTemplates: newTemplates,
+      userRoles: newUserRoles,
+    );
+    final settings = _ref.read(appSettingsProvider).value ?? {};
+    settings.addAll(newConfig.toJson());
+    await _ref.read(appSettingsControllerProvider).updateSettings(settings);
+  }
+
   Future<void> assignUserRole(String userId, String? templateName) async {
     final current = _ref.read(rolesConfigProvider);
     final newUserRoles = Map<String, String>.from(current.userRoles);

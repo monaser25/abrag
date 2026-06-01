@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../dashboard/presentation/providers/sync_provider.dart';
+import '../../../../core/services/push_notification_service.dart';
 import 'broker_web_screen.dart';
 import 'cleaner_web_screen.dart';
 import 'viewer_web_screen.dart';
@@ -20,6 +21,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     super.initState();
     // Trigger sync automatically when root screen mounts
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService.registerCurrentDevice();
       ref.read(syncControllerProvider.notifier).syncData();
     });
   }
@@ -58,8 +60,10 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             return const ViewerWebScreen();
         }
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) => Scaffold(body: Center(child: Text('Error loading role: $e'))),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) =>
+          Scaffold(body: Center(child: Text('Error loading role: $e'))),
     );
   }
 }

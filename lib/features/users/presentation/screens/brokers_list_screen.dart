@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/users_provider.dart';
@@ -176,6 +177,17 @@ class BrokersListScreen extends ConsumerWidget {
                 decoration: const InputDecoration(labelText: 'رقم التليفون'),
                 keyboardType: TextInputType.phone,
                 textDirection: TextDirection.ltr,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+                validator: (value) {
+                  final phone = value?.trim() ?? '';
+                  if (phone.isEmpty) return null;
+                  return RegExp(r'^01\d{9}$').hasMatch(phone)
+                      ? null
+                      : 'رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01';
+                },
               ),
             ],
           ),

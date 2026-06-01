@@ -109,6 +109,92 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
     );
   }
 
+  Future<void> _editTemplate(
+    String templateName,
+    List<String> permissions,
+  ) async {
+    final nameController = TextEditingController(text: templateName);
+    final selectedPerms = permissions.toSet();
+
+    try {
+      await showDialog(
+        context: context,
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('تعديل نموذج الصلاحيات'),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'اسم النموذج',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'الصلاحيات المتاحة:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      ...kAppPermissions.entries.map((entry) {
+                        return CheckboxListTile(
+                          title: Text(entry.value),
+                          value: selectedPerms.contains(entry.key),
+                          onChanged: (value) {
+                            setState(() {
+                              if (value == true) {
+                                selectedPerms.add(entry.key);
+                              } else {
+                                selectedPerms.remove(entry.key);
+                              }
+                            });
+                          },
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('إلغاء'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final newName = nameController.text.trim();
+                      if (newName.isEmpty || selectedPerms.isEmpty) {
+                        showErrorDialog(
+                          context,
+                          'اسم النموذج والصلاحيات مطلوبين.',
+                        );
+                        return;
+                      }
+                      await ref
+                          .read(rolesConfigControllerProvider)
+                          .updateTemplate(
+                            oldTemplateName: templateName,
+                            newTemplateName: newName,
+                            permissions: selectedPerms.toList(),
+                          );
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+                    child: const Text('حفظ التعديل'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      nameController.dispose();
+    }
+  }
+
   Future<void> _createUser(List<String> availableTemplates) async {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
@@ -686,6 +772,12 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                             ),
                             OverflowBar(
                               children: [
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      _editTemplate(entry.key, entry.value),
+                                  icon: const Icon(Icons.edit),
+                                  label: const Text('تعديل النموذج'),
+                                ),
                                 TextButton.icon(
                                   onPressed: () async {
                                     final confirm = await showDialog<bool>(

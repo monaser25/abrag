@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/technicians_provider.dart';
@@ -16,44 +17,74 @@ class TechniciansScreen extends ConsumerStatefulWidget {
 class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
   void _showAddEditDialog([dynamic technician]) {
     final nameController = TextEditingController(text: technician?.name ?? '');
-    final specialtyController = TextEditingController(text: technician?.specialty ?? 'سباكة');
-    final phoneController = TextEditingController(text: technician?.phone ?? '');
-    final notesController = TextEditingController(text: technician?.notes ?? '');
+    final specialtyController = TextEditingController(
+      text: technician?.specialty ?? 'سباكة',
+    );
+    final phoneController = TextEditingController(
+      text: technician?.phone ?? '',
+    );
+    final notesController = TextEditingController(
+      text: technician?.notes ?? '',
+    );
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(technician == null ? 'إضافة فني/عامل' : 'تعديل بيانات العامل'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'الاسم'),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: specialtyController.text.isNotEmpty ? specialtyController.text : 'سباكة',
-                decoration: const InputDecoration(labelText: 'التخصص'),
-                items: ['سباكة', 'كهرباء', 'نجارة', 'نقاشة', 'نظافة', 'أخرى']
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => specialtyController.text = v ?? 'أخرى',
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: 'رقم الهاتف'),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: notesController,
-                decoration: const InputDecoration(labelText: 'ملاحظات / تقييم'),
-                maxLines: 2,
-              ),
-            ],
+        title: Text(
+          technician == null ? 'إضافة فني/عامل' : 'تعديل بيانات العامل',
+        ),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'الاسم'),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'مطلوب' : null,
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: specialtyController.text.isNotEmpty
+                      ? specialtyController.text
+                      : 'سباكة',
+                  decoration: const InputDecoration(labelText: 'التخصص'),
+                  items: ['سباكة', 'كهرباء', 'نجارة', 'نقاشة', 'نظافة', 'أخرى']
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (v) => specialtyController.text = v ?? 'أخرى',
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'رقم الهاتف'),
+                  keyboardType: TextInputType.phone,
+                  textDirection: TextDirection.ltr,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(11),
+                  ],
+                  validator: (value) {
+                    final phone = value?.trim() ?? '';
+                    if (phone.isEmpty) return null;
+                    return RegExp(r'^01\d{9}$').hasMatch(phone)
+                        ? null
+                        : 'رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: notesController,
+                  decoration: const InputDecoration(
+                    labelText: 'ملاحظات / تقييم',
+                  ),
+                  maxLines: 2,
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -63,23 +94,27 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (nameController.text.trim().isEmpty) return;
-              
+              if (!formKey.currentState!.validate()) return;
+
               if (technician == null) {
-                ref.read(techniciansControllerProvider.notifier).addTechnician(
-                  name: nameController.text.trim(),
-                  specialty: specialtyController.text,
-                  phone: phoneController.text.trim(),
-                  notes: notesController.text.trim(),
-                );
+                ref
+                    .read(techniciansControllerProvider.notifier)
+                    .addTechnician(
+                      name: nameController.text.trim(),
+                      specialty: specialtyController.text,
+                      phone: phoneController.text.trim(),
+                      notes: notesController.text.trim(),
+                    );
               } else {
-                ref.read(techniciansControllerProvider.notifier).updateTechnician(
-                  technician.id,
-                  name: nameController.text.trim(),
-                  specialty: specialtyController.text,
-                  phone: phoneController.text.trim(),
-                  notes: notesController.text.trim(),
-                );
+                ref
+                    .read(techniciansControllerProvider.notifier)
+                    .updateTechnician(
+                      technician.id,
+                      name: nameController.text.trim(),
+                      specialty: specialtyController.text,
+                      phone: phoneController.text.trim(),
+                      notes: notesController.text.trim(),
+                    );
               }
               Navigator.pop(ctx);
             },
@@ -91,10 +126,7 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     }
@@ -105,13 +137,13 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
     final techniciansAsync = ref.watch(techniciansProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('العمال والفنيين'),
-      ),
+      appBar: AppBar(title: const Text('العمال والفنيين')),
       body: techniciansAsync.when(
         data: (technicians) {
-          final activeTechnicians = technicians.where((t) => t.syncStatus != SyncStatus.pendingDelete).toList();
-          
+          final activeTechnicians = technicians
+              .where((t) => t.syncStatus != SyncStatus.pendingDelete)
+              .toList();
+
           if (activeTechnicians.isEmpty) {
             return const Center(child: Text('لا يوجد فنيين مسجلين'));
           }
@@ -171,12 +203,18 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
 
   IconData _getIconForSpecialty(String specialty) {
     switch (specialty) {
-      case 'سباكة': return Icons.plumbing;
-      case 'كهرباء': return Icons.electrical_services;
-      case 'نجارة': return Icons.handyman;
-      case 'نظافة': return Icons.cleaning_services;
-      case 'نقاشة': return Icons.format_paint;
-      default: return Icons.person;
+      case 'سباكة':
+        return Icons.plumbing;
+      case 'كهرباء':
+        return Icons.electrical_services;
+      case 'نجارة':
+        return Icons.handyman;
+      case 'نظافة':
+        return Icons.cleaning_services;
+      case 'نقاشة':
+        return Icons.format_paint;
+      default:
+        return Icons.person;
     }
   }
 }

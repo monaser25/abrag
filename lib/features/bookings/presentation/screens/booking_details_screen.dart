@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -160,6 +163,36 @@ class BookingDetailsScreen extends ConsumerWidget {
                     'رقم الهاتف',
                     booking.guestPhone ?? 'غير متوفر',
                   ),
+                  if ((booking.nationalId ?? '').isNotEmpty)
+                    _buildDetailRow(
+                      context,
+                      'الرقم القومي',
+                      booking.nationalId!,
+                    ),
+                  if (booking.idFrontImage != null ||
+                      booking.idBackImage != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        if (booking.idFrontImage != null)
+                          Expanded(
+                            child: _buildImageCard(
+                              context,
+                              booking.idFrontImage!,
+                              'بطاقة أمام',
+                            ),
+                          ),
+                        if (booking.idBackImage != null)
+                          Expanded(
+                            child: _buildImageCard(
+                              context,
+                              booking.idBackImage!,
+                              'بطاقة خلف',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 16),
@@ -453,6 +486,89 @@ class BookingDetailsScreen extends ConsumerWidget {
     return endDate.difference(startDate).inDays.clamp(1, 10000);
   }
 
+  Widget _buildImageCard(BuildContext context, String imagePath, String label) {
+    final normalizedPath = imagePath.trim();
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => Dialog(
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  InteractiveViewer(child: _buildImagePreview(normalizedPath)),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        child: Column(
+          children: [
+            _buildImageThumbnail(normalizedPath),
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        fit: BoxFit.contain,
+        placeholder: (context, url) => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) =>
+            const _MissingImageBox(message: 'تعذر تحميل الصورة من السيرفر'),
+      );
+    }
+    return Image.file(
+      File(path),
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) =>
+          const _MissingImageBox(message: 'الصورة غير موجودة على هذا الجهاز'),
+    );
+  }
+
+  Widget _buildImageThumbnail(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        height: 100,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const SizedBox(
+          height: 100,
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) =>
+            const _MissingImageBox(height: 100, message: 'تعذر تحميل الصورة'),
+      );
+    }
+    return Image.file(
+      File(path),
+      height: 100,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          const _MissingImageBox(height: 100, message: 'الصورة على جهاز آخر'),
+    );
+  }
+
   void _showUnpaidCheckoutDialog(
     BuildContext context,
     WidgetRef ref, {
@@ -643,6 +759,37 @@ class BookingDetailsScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MissingImageBox extends StatelessWidget {
+  final double? height;
+  final String message;
+
+  const _MissingImageBox({this.height, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off, color: Colors.grey),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -353,22 +353,30 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
   Future<void> deleteBooking(String id) async {
     state = const AsyncLoading();
     try {
-      // Offline-first deletion: either physically delete if not synced yet,
-      // or mark with a status like 'deleted' / pendingDelete for sync.
-      // Assuming Drift physical delete for simplicity here:
       final booking = await (_db.select(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
-      await (_db.delete(
+      if (booking == null) {
+        state = const AsyncData(null);
+        return;
+      }
+
+      await (_db.update(
         _db.summerBookings,
-      )..where((t) => t.id.equals(id))).go();
+      )..where((t) => t.id.equals(id))).write(
+        SummerBookingsCompanion(
+          status: const Value('deleted'),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
       await _auditLog.log(
         action: 'delete',
         entityType: 'summer_booking',
         entityId: id,
         title: 'حذف حجز صيفي',
-        description: 'تم حذف حجز ${booking?.guestName ?? ''}',
-        oldValues: booking?.toJson(),
+        description: 'تم حذف حجز ${booking.guestName}',
+        oldValues: booking.toJson(),
       );
       state = const AsyncData(null);
     } catch (e, st) {

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import '../database/database.dart';
@@ -143,10 +144,12 @@ class SyncEngine {
               'abrag_storage',
               'winter_contracts',
             );
+      final roommates = await _uploadRoommateImages(item.roommates);
       if (idFront != item.idFrontImage ||
           idBack != item.idBackImage ||
           contractFront != item.contractFrontImage ||
-          contractBack != item.contractBackImage) {
+          contractBack != item.contractBackImage ||
+          roommates != item.roommates) {
         await (db.update(
           db.winterContracts,
         )..where((t) => t.id.equals(item.id))).write(
@@ -155,11 +158,54 @@ class SyncEngine {
             idBackImage: Value(idBack),
             contractFrontImage: Value(contractFront),
             contractBackImage: Value(contractBack),
+            roommates: Value(roommates),
             syncStatus: const Value(SyncStatus.pendingUpdate),
             updatedAt: Value(DateTime.now()),
           ),
         );
       }
+    }
+  }
+
+  Future<String?> _uploadRoommateImages(String? roommatesJson) async {
+    if (roommatesJson == null || roommatesJson.trim().isEmpty) {
+      return roommatesJson;
+    }
+
+    try {
+      final decoded = jsonDecode(roommatesJson);
+      if (decoded is! List) return roommatesJson;
+
+      var changed = false;
+      final updated = <dynamic>[];
+
+      for (final item in decoded) {
+        if (item is! Map) {
+          updated.add(item);
+          continue;
+        }
+
+        final next = Map<String, dynamic>.from(item);
+        for (final key in ['idFrontImage', 'idBackImage']) {
+          final value = next[key]?.toString();
+          if (value == null || value.isEmpty || _isRemotePath(value)) continue;
+
+          final uploaded = await _uploadFileIfLocal(
+            value,
+            'abrag_storage',
+            'winter_contracts',
+          );
+          if (uploaded != value) {
+            next[key] = uploaded;
+            changed = true;
+          }
+        }
+        updated.add(next);
+      }
+
+      return changed ? jsonEncode(updated) : roommatesJson;
+    } catch (_) {
+      return roommatesJson;
     }
   }
 
@@ -887,6 +933,9 @@ class SyncEngine {
           )..where((t) => t.id.equals(item.id))).go();
         } else {
           await supabase.from('audit_logs').upsert(payload);
+          if (item.syncStatus == SyncStatus.pendingInsert) {
+            await _sendPushNotificationForAuditLog(item);
+          }
           await (db.update(
             db.auditLogs,
           )..where((t) => t.id.equals(item.id))).write(
@@ -896,6 +945,22 @@ class SyncEngine {
       } catch (e) {
         throw Exception('Error syncing audit_logs (push): $e\nItem: $item');
       }
+    }
+  }
+
+  Future<void> _sendPushNotificationForAuditLog(AuditLog item) async {
+    try {
+      await supabase.functions.invoke(
+        'send-push-notification',
+        body: {
+          'title': item.title,
+          'body': item.description,
+          'route': item.route,
+          'actorUserId': item.actorUserId,
+        },
+      );
+    } catch (_) {
+      // Push delivery must not block offline-first data sync.
     }
   }
 

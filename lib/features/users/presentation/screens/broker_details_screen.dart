@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/users_provider.dart';
@@ -13,18 +14,21 @@ class BrokerDetailsScreen extends ConsumerWidget {
   const BrokerDetailsScreen({super.key, required this.brokerId});
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     }
   }
 
-  void _showAddBrokerDialog(BuildContext context, WidgetRef ref, UserProfile broker) {
+  void _showAddBrokerDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserProfile broker,
+  ) {
     final nameController = TextEditingController(text: broker.fullName ?? '');
-    final phoneController = TextEditingController(text: broker.phoneNumber ?? '');
+    final phoneController = TextEditingController(
+      text: broker.phoneNumber ?? '',
+    );
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -48,6 +52,17 @@ class BrokerDetailsScreen extends ConsumerWidget {
                 decoration: const InputDecoration(labelText: 'رقم التليفون'),
                 keyboardType: TextInputType.phone,
                 textDirection: TextDirection.ltr,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+                validator: (value) {
+                  final phone = value?.trim() ?? '';
+                  if (phone.isEmpty) return null;
+                  return RegExp(r'^01\d{9}$').hasMatch(phone)
+                      ? null
+                      : 'رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01';
+                },
               ),
             ],
           ),
@@ -174,7 +189,10 @@ class BrokerDetailsScreen extends ConsumerWidget {
                           onPressed: () => _makePhoneCall(broker.phoneNumber!),
                           icon: const Icon(Icons.call),
                           label: Text(broker.phoneNumber!),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       if ((broker.phoneNumber == null ||
                               broker.phoneNumber!.isEmpty) &&

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
@@ -359,7 +360,7 @@ class StudentDetailsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Center(
                 child: Text(
-                  'آخر تعديل: ${contract.updatedAt.toLocal().toString().split('.')[0]}',
+                  'آخر تعديل: ${DateFormat('yyyy-MM-dd hh:mm a', 'ar').format(contract.updatedAt.toLocal())}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -64,27 +65,32 @@ class UserProfileController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final trimmedName = fullName.trim();
-      final updatedRows = await (_db.update(_db.userProfiles)..where((t) => t.id.equals(id))).write(
-        UserProfilesCompanion(
-          fullName: Value(trimmedName),
-          updatedAt: Value(DateTime.now()),
-          syncStatus: const Value(SyncStatus.pendingUpdate),
-        ),
-      );
+      final updatedRows =
+          await (_db.update(
+            _db.userProfiles,
+          )..where((t) => t.id.equals(id))).write(
+            UserProfilesCompanion(
+              fullName: Value(trimmedName),
+              updatedAt: Value(DateTime.now()),
+              syncStatus: const Value(SyncStatus.pendingUpdate),
+            ),
+          );
 
       if (updatedRows == 0) {
         final user = Supabase.instance.client.auth.currentUser;
-        await _db.into(_db.userProfiles).insert(
-          UserProfilesCompanion.insert(
-            id: id,
-            email: user?.email ?? 'user-$id@local.abrag',
-            fullName: Value(trimmedName),
-            role: const Value('admin'),
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-            syncStatus: const Value(SyncStatus.pendingInsert),
-          ),
-        );
+        await _db
+            .into(_db.userProfiles)
+            .insert(
+              UserProfilesCompanion.insert(
+                id: id,
+                email: user?.email ?? 'user-$id@local.abrag',
+                fullName: Value(trimmedName),
+                role: const Value('admin'),
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                syncStatus: const Value(SyncStatus.pendingInsert),
+              ),
+            );
       }
       state = const AsyncData(null);
     } catch (e, st) {
@@ -95,8 +101,11 @@ class UserProfileController extends StateNotifier<AsyncValue<void>> {
 
 class BrokersController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
+  late final AuditLogService _auditLog;
 
-  BrokersController(this._db) : super(const AsyncData(null));
+  BrokersController(this._db) : super(const AsyncData(null)) {
+    _auditLog = AuditLogService(_db);
+  }
 
   Future<void> addBroker({
     required String fullName,
@@ -104,6 +113,7 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     try {
+      final normalizedPhone = _normalizeEgyptianMobile(phoneNumber);
       final id = const Uuid().v4();
       final now = DateTime.now();
       await _db
@@ -113,15 +123,25 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
               id: id,
               email: 'broker-$id@local.abrag',
               fullName: Value(fullName.trim()),
-              phoneNumber: Value(
-                phoneNumber.trim().isEmpty ? null : phoneNumber.trim(),
-              ),
+              phoneNumber: Value(normalizedPhone),
               role: const Value('broker'),
               createdAt: now,
               updatedAt: now,
               syncStatus: const Value(SyncStatus.pendingInsert),
             ),
           );
+      await _auditLog.log(
+        action: 'create',
+        entityType: 'broker',
+        entityId: id,
+        title: 'إضافة سمسار',
+        description: 'تم إضافة سمسار باسم ${fullName.trim()}',
+        route: '/brokers/details/$id',
+        newValues: {
+          'fullName': fullName.trim(),
+          'phoneNumber': normalizedPhone,
+        },
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -135,20 +155,44 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     try {
+      final normalizedPhone = _normalizeEgyptianMobile(phoneNumber);
+      final old = await (_db.select(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       final now = DateTime.now();
       await (_db.update(_db.userProfiles)..where((t) => t.id.equals(id))).write(
         UserProfilesCompanion(
           fullName: Value(fullName.trim()),
-          phoneNumber: Value(
-            phoneNumber.trim().isEmpty ? null : phoneNumber.trim(),
-          ),
+          phoneNumber: Value(normalizedPhone),
           updatedAt: Value(now),
           syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
+      );
+      await _auditLog.log(
+        action: 'update',
+        entityType: 'broker',
+        entityId: id,
+        title: 'تعديل سمسار',
+        description: 'تم تعديل بيانات سمسار ${fullName.trim()}',
+        route: '/brokers/details/$id',
+        oldValues: old?.toJson(),
+        newValues: {
+          'fullName': fullName.trim(),
+          'phoneNumber': normalizedPhone,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
+  }
+
+  String? _normalizeEgyptianMobile(String value) {
+    final phone = value.trim();
+    if (phone.isEmpty) return null;
+    if (!RegExp(r'^01\d{9}$').hasMatch(phone)) {
+      throw Exception('رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01');
+    }
+    return phone;
   }
 }

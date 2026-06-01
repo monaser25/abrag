@@ -30,7 +30,7 @@ mode: memory
 
 ## UI Assets
 
-**App Icon:** ⬜ not provided
+**App Icon:** ✅ provided
 **Feature Graphic:** ⬜ not provided
 **Exported UI Screens:** ⬜ none
 
@@ -65,6 +65,8 @@ mode: memory
 |---|---|---|
 | SUPABASE_URL | ✅ provided | supabase.com → Project Settings → API |
 | SUPABASE_ANON_KEY | ✅ provided | supabase.com → Project Settings → API → anon key |
+| FIREBASE_PROJECT_ID | ✅ provided | Firebase Console → Project Settings |
+| FIREBASE_SERVICE_ACCOUNT_JSON | ✅ provided | Firebase Console → Project Settings → Service accounts |
 
 ---
 

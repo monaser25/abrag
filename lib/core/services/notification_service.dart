@@ -6,17 +6,31 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  static const AndroidNotificationChannel pushChannel =
+      AndroidNotificationChannel(
+        'abrag_push_channel',
+        'Abrag Push Notifications',
+        description: 'Notifications sent from Abrag server updates.',
+        importance: Importance.max,
+      );
+
   static Future<void> init() async {
     tz.initializeTimeZones();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/abrag_mono');
 
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.requestNotificationsPermission();
+
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(pushChannel);
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
