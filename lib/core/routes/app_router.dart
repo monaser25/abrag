@@ -70,6 +70,7 @@ import '../../features/users/presentation/screens/broker_details_screen.dart';
 import '../../features/users/presentation/screens/broker_visibility_control_screen.dart';
 import '../../features/users/presentation/screens/customers_screen.dart';
 import '../../features/users/presentation/providers/users_provider.dart';
+import '../../features/settings/presentation/providers/permissions_provider.dart';
 import '../config/shared_prefs_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -313,14 +314,21 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           // Restores reachability of the meter readings feature: the screen,
           // providers, DB table, and sync support all exist, but no route or
-          // dashboard entry pointed to it (screen was orphaned).
+          // dashboard entry pointed to it (screen was orphaned). Guarded to
+          // match the dashboard entry's gate (admin or manage_expenses).
           GoRoute(
             path: 'meter_readings',
-            builder: (context, state) => const MeterReadingsScreen(),
+            builder: (context, state) => const _PermissionRoute(
+              permission: 'manage_expenses',
+              child: MeterReadingsScreen(),
+            ),
             routes: [
               GoRoute(
                 path: 'add',
-                builder: (context, state) => const AddMeterReadingScreen(),
+                builder: (context, state) => const _PermissionRoute(
+                  permission: 'manage_expenses',
+                  child: AddMeterReadingScreen(),
+                ),
               ),
             ],
           ),
@@ -554,5 +562,42 @@ class _AdminOnlyRoute extends ConsumerWidget {
     }
 
     return child;
+  }
+}
+
+/// Screen-level guard mirroring [_AdminOnlyRoute]: admins pass; other users
+/// pass only if their role template grants [permission] (same resolution as
+/// the dashboard's hasPerm — rolesConfigProvider + current session user id).
+class _PermissionRoute extends ConsumerWidget {
+  final String permission;
+  final Widget child;
+
+  const _PermissionRoute({required this.permission, required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roleAsync = ref.watch(currentUserRoleProvider);
+
+    if (roleAsync.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (roleAsync.valueOrNull == 'admin') return child;
+
+    final userId = Supabase.instance.client.auth.currentSession?.user.id;
+    final rolesConfig = ref.watch(rolesConfigProvider);
+    final customRoleName = userId == null
+        ? null
+        : rolesConfig.userRoles[userId];
+    final perms = customRoleName == null
+        ? const <String>[]
+        : (rolesConfig.roleTemplates[customRoleName] ?? const <String>[]);
+
+    if (perms.contains(permission)) return child;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('غير مصرح')),
+      body: const Center(child: Text('غير مصرح لك بفتح هذه الصفحة')),
+    );
   }
 }
