@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/system_log_provider.dart';
 
 class SystemLogScreen extends ConsumerStatefulWidget {
@@ -21,15 +24,15 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
   @override
   Widget build(BuildContext context) {
     final logsAsync = ref.watch(systemLogsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final formatter = DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('سجل النظام الشامل'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'سجل النظام الشامل',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          AppIconButton(
+            icon: Icons.refresh,
             onPressed: () => ref.invalidate(systemLogsProvider),
           ),
         ],
@@ -54,11 +57,9 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'ابحث في السجل باسم المستخدم أو العملية...',
-                    prefixIcon: Icon(Icons.search),
-                  ),
+                child: AppTextField(
+                  hint: 'ابحث في السجل باسم المستخدم أو العملية...',
+                  prefixIcon: Icons.search,
                   onChanged: (value) => setState(() => _query = value),
                 ),
               ),
@@ -85,51 +86,65 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('لا توجد نتائج'))
+                    ? const EmptyState(
+                        icon: Icons.history,
+                        title: 'لا توجد نتائج',
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final log = filtered[index];
-                          return Card(
+                          return AppCard(
                             margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor:
-                                    theme.colorScheme.primaryContainer,
-                                child: Icon(
-                                  _getIconForType(log.type),
-                                  color: theme.colorScheme.primary,
+                            padding: const EdgeInsets.all(14),
+                            onTap: () => _showLogDetails(context, log),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                IconTile(
+                                  icon: _getIconForType(log.type),
+                                  tint: colors.brand,
                                 ),
-                              ),
-                              title: Text(
-                                log.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Text(log.description),
-                                  const SizedBox(height: 4),
-                                  Text('بواسطة: ${log.actorName}'),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    formatter.format(log.date.toLocal()),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: Colors.grey,
-                                    ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        log.title,
+                                        style: AppTextStyles.title
+                                            .copyWith(color: colors.ink),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        log.description,
+                                        style: AppTextStyles.bodyS
+                                            .copyWith(color: colors.ink2),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'بواسطة: ${log.actorName}',
+                                        style: AppTextStyles.bodyS
+                                            .copyWith(color: colors.ink2),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        formatter.format(log.date.toLocal()),
+                                        style: AppTextStyles.caption
+                                            .copyWith(color: colors.ink3),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              trailing: const Icon(
-                                Icons.info_outline,
-                                size: 18,
-                              ),
-                              onTap: () => _showLogDetails(context, log),
-                              isThreeLine: true,
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 18,
+                                  color: colors.ink3,
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -138,13 +153,19 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text('Error: $err')),
+        loading: () => const LoadingSkeleton(),
+        error: (err, st) => ErrorState(
+          title: 'تعذر تحميل السجل',
+          message: 'Error: $err',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(systemLogsProvider),
+        ),
       ),
     );
   }
 
   void _showLogDetails(BuildContext context, SystemLogEntry log) {
+    final colors = context.colors;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -155,38 +176,56 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
           controller: controller,
           padding: const EdgeInsets.all(16),
           children: [
-            Text(log.title, style: Theme.of(context).textTheme.titleLarge),
+            Text(log.title, style: AppTextStyles.h3.copyWith(color: colors.ink)),
             const SizedBox(height: 8),
-            Text(log.description),
-            const Divider(height: 24),
-            Text('المستخدم: ${log.actorName}'),
-            Text('نوع العملية: ${log.action}'),
-            Text('القسم: ${_labelForType(log.type)}'),
+            Text(
+              log.description,
+              style: AppTextStyles.body.copyWith(color: colors.ink2),
+            ),
+            Divider(height: 24, color: colors.border),
+            Text(
+              'المستخدم: ${log.actorName}',
+              style: AppTextStyles.body.copyWith(color: colors.ink),
+            ),
+            Text(
+              'نوع العملية: ${log.action}',
+              style: AppTextStyles.body.copyWith(color: colors.ink),
+            ),
+            Text(
+              'القسم: ${_labelForType(log.type)}',
+              style: AppTextStyles.body.copyWith(color: colors.ink),
+            ),
             if (log.oldValuesJson != null) ...[
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'قبل التعديل:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: AppTextStyles.title.copyWith(color: colors.ink),
               ),
-              Text(_prettyJson(log.oldValuesJson!)),
+              Text(
+                _prettyJson(log.oldValuesJson!),
+                style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+              ),
             ],
             if (log.newValuesJson != null) ...[
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'بعد التعديل:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: AppTextStyles.title.copyWith(color: colors.ink),
               ),
-              Text(_prettyJson(log.newValuesJson!)),
+              Text(
+                _prettyJson(log.newValuesJson!),
+                style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+              ),
             ],
             const SizedBox(height: 16),
             if (log.route != null)
-              FilledButton.icon(
+              AppButton(
+                label: 'فتح المكان المرتبط',
+                icon: Icons.open_in_new,
                 onPressed: () {
                   Navigator.pop(sheetContext);
                   context.push(log.route!);
                 },
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('فتح المكان المرتبط'),
               ),
           ],
         ),

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
@@ -147,12 +150,14 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
         ? _selectedPartyKey
         : 'all';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('كشف الحساب (تقرير مفصل)'),
+    final colors = context.colors;
+
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'كشف الحساب (تقرير مفصل)',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_alt_off),
+          AppIconButton(
+            icon: Icons.filter_alt_off,
             tooltip: 'مسح الفلاتر',
             onPressed: _clearFilters,
           ),
@@ -161,20 +166,18 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+          AppCard(
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'اختار فلاتر كشف الحساب',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTextStyles.h3.copyWith(color: colors.ink),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'بعد اختيار الفلاتر اضغط عرض PDF لمعاينة الكشف ومشاركته أو طباعته.',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
                   ),
                   const SizedBox(height: 16),
                   LayoutBuilder(
@@ -450,15 +453,14 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                           ),
                           SizedBox(
                             width: fieldWidth,
-                            child: OutlinedButton.icon(
+                            child: AppButton(
+                              label: _startDate != null
+                                  ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
+                                  : 'اختيار الفترة الزمنية',
+                              icon: Icons.date_range,
+                              variant: AppButtonVariant.outline,
+                              expand: true,
                               onPressed: _selectDateRange,
-                              icon: const Icon(Icons.date_range, size: 18),
-                              label: Text(
-                                _startDate != null
-                                    ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
-                                    : 'اختيار الفترة الزمنية',
-                                overflow: TextOverflow.ellipsis,
-                              ),
                             ),
                           ),
                         ],
@@ -467,10 +469,12 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                   ),
                 ],
               ),
-            ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
+          AppButton(
+            label: 'عرض PDF',
+            icon: Icons.picture_as_pdf,
+            expand: true,
             onPressed: () async {
               final filters = _currentFilters(selectedPartyKey);
               await AuditLogService(ref.read(databaseProvider)).log(
@@ -489,14 +493,12 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
                 context.push('/reports/statement/preview', extra: filters);
               }
             },
-            icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('عرض PDF'),
           ),
           const SizedBox(height: 8),
           Text(
             'سيتم إنشاء كشف الحساب حسب الفلاتر المختارة.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
           ),
         ],
       ),

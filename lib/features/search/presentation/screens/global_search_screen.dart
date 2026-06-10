@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -47,95 +49,84 @@ class GlobalSearchScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final searchResults = ref.watch(searchResultsProvider);
     final query = ref.watch(searchQueryProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-        title: TextField(
-          autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'البحث الشامل...',
-            hintStyle: TextStyle(color: Colors.white54),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-          ),
-          onChanged: (value) {
-            ref.read(searchQueryProvider.notifier).state = value;
-          },
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'البحث الشامل',
+        showBack: true,
+        onBack: () => context.go('/'),
       ),
-      body: query.isEmpty
-          ? const Center(child: Text('اكتب للبحث...'))
-          : searchResults.when(
-              data: (results) {
-                if (results.isEmpty) {
-                  return const Center(child: Text('لا توجد نتائج'));
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: results.length,
-                  itemBuilder: (context, index) {
-                    final result = results[index];
-                    // Dynamic rendering based on type
-                    if (result.runtimeType.toString() == 'SummerBooking') {
-                      return _buildResultCard(
-                        context,
-                        title: result.guestName,
-                        subtitle: 'حجز صيفي',
-                        icon: Icons.calendar_month,
-                        color: theme.colorScheme.primary,
-                        onTap: () => context.go(
-                          '/summer_bookings/guest/${Uri.encodeComponent(result.guestName)}',
-                        ),
-                      );
-                    } else if (result.runtimeType.toString() ==
-                        'WinterContract') {
-                      return _buildResultCard(
-                        context,
-                        title: result.studentName,
-                        subtitle: 'عقد شتوي',
-                        icon: Icons.school,
-                        color: theme.colorScheme.secondary,
-                        onTap: () => context.go(
-                          '/winter_contracts/details/${result.id}',
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                );
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: AppTextField(
+              hint: 'البحث الشامل...',
+              prefixIcon: Icons.search,
+              autofocus: true,
+              onChanged: (value) {
+                ref.read(searchQueryProvider.notifier).state = value;
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
-    );
-  }
-
-  Widget _buildResultCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    VoidCallback? onTap,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.2),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
+          ),
+          Expanded(
+            child: query.isEmpty
+                ? const EmptyState(
+                    icon: Icons.search,
+                    title: 'اكتب للبحث...',
+                  )
+                : searchResults.when(
+                    data: (results) {
+                      if (results.isEmpty) {
+                        return const EmptyState(
+                          icon: Icons.search_off,
+                          title: 'لا توجد نتائج',
+                        );
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: results.length,
+                        itemBuilder: (context, index) {
+                          final result = results[index];
+                          // Dynamic rendering based on type
+                          if (result.runtimeType.toString() ==
+                              'SummerBooking') {
+                            return NavRow(
+                              icon: Icons.calendar_month,
+                              title: result.guestName,
+                              sub: 'حجز صيفي',
+                              tint: colors.summer,
+                              onTap: () => context.go(
+                                '/summer_bookings/guest/${Uri.encodeComponent(result.guestName)}',
+                              ),
+                            );
+                          } else if (result.runtimeType.toString() ==
+                              'WinterContract') {
+                            return NavRow(
+                              icon: Icons.school,
+                              title: result.studentName,
+                              sub: 'عقد شتوي',
+                              tint: colors.winter,
+                              onTap: () => context.go(
+                                '/winter_contracts/details/${result.id}',
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      );
+                    },
+                    loading: () => const LoadingSkeleton(),
+                    error: (err, stack) => ErrorState(
+                      title: 'تعذر تحميل النتائج',
+                      message: '$err',
+                      retryLabel: 'إعادة المحاولة',
+                      onRetry: () => ref.invalidate(searchResultsProvider),
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

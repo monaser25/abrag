@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -8,83 +10,77 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
     final roleAsync = ref.watch(currentUserRoleProvider);
 
     if (roleAsync.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (roleAsync.valueOrNull != 'admin') {
-      return const Scaffold(
-        body: Center(child: Text('غير مصرح لك بفتح الإعدادات')),
+      return const AppScaffold(
+        body: SafeArea(child: LoadingSkeleton()),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
+    if (roleAsync.valueOrNull != 'admin') {
+      return const AppScaffold(
+        body: SafeArea(
+          child: EmptyState(
+            icon: Icons.lock_outline,
+            title: 'غير مصرح لك بفتح الإعدادات',
+          ),
+        ),
+      );
+    }
+
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'الإعدادات', subtitle: 'للمدير فقط'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          _buildSettingsCard(
-            context,
+          const SectionTitle(title: 'الحساب'),
+          NavRow(
+            icon: Icons.person_outline,
             title: 'الملف الشخصي',
-            icon: Icons.person,
-            route: '/settings/profile',
+            tint: colors.brand,
+            onTap: () => context.push('/settings/profile'),
           ),
-          _buildSettingsCard(
-            context,
+          NavRow(
+            icon: Icons.security_outlined,
             title: 'المستخدمين والصلاحيات',
-            icon: Icons.security,
-            route: '/settings/users',
+            tint: colors.accent,
+            onTap: () => context.push('/settings/users'),
           ),
-          _buildSettingsCard(
-            context,
-            title: 'الانتقال بين المواسم',
+          const SectionTitle(title: 'التطبيق'),
+          NavRow(
             icon: Icons.swap_horiz,
-            route: '/settings/season_transition',
+            title: 'الانتقال بين المواسم',
+            tint: colors.summer,
+            onTap: () => context.push('/settings/season_transition'),
           ),
-          _buildSettingsCard(
-            context,
+          NavRow(
+            icon: Icons.account_balance_wallet_outlined,
             title: 'الخزنة والتحويلات',
-            icon: Icons.account_balance_wallet,
-            route: '/financial_transfers',
+            tint: colors.ok,
+            onTap: () => context.push('/financial_transfers'),
           ),
-          _buildSettingsCard(
-            context,
+          NavRow(
+            icon: Icons.schedule_outlined,
             title: 'مواعيد الخروج',
-            icon: Icons.schedule,
-            route: '/settings/checkout_times',
+            tint: colors.winter,
+            onTap: () => context.push('/settings/checkout_times'),
           ),
-          _buildSettingsCard(
-            context,
+          NavRow(
+            icon: Icons.phone_outlined,
             title: 'إدارة الخطوط الأرضية',
-            icon: Icons.phone,
-            route: '/apartments/landlines',
+            tint: colors.brand,
+            onTap: () => context.push('/apartments/landlines'),
           ),
-          _buildSettingsCard(
-            context,
+          const SectionTitle(title: 'البيانات'),
+          NavRow(
+            icon: Icons.storage_outlined,
             title: 'تصدير / استيراد / مسح البيانات',
-            icon: Icons.storage,
-            route: '/settings/data_management',
+            tint: colors.ink2,
+            onTap: () => context.push('/settings/data_management'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required String route,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
-        title: Text(title),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => context.push(route),
       ),
     );
   }

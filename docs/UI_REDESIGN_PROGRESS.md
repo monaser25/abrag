@@ -6,8 +6,8 @@
 | 1 — Design system | `ui-redesign/design-system` | ✅ Merged (PR #1, `a4d475a`) | [#1](https://github.com/monaser25/abrag/pull/1) | Tokens, theme, 21-widget kit, golden gallery |
 | 2 — Navigation shell / auth | `ui-redesign/navigation-shell` | ✅ Merged (PR #2, `28e120e`) | [#2](https://github.com/monaser25/abrag/pull/2) | Incl. 3 device-test review fixes |
 | 3 — Dashboard & role homes | `ui-redesign/dashboard` | ✅ Merged (PR #3, `2257bf2`) | [#3](https://github.com/monaser25/abrag/pull/3) | Feature-preservation rule; meter readings restored + guarded (`_PermissionRoute`, manage_expenses) |
-| 4 — Core flows | `ui-redesign/core-flows` | 🔄 In review | (see PR) | 9 screens: bookings hub/list/details/calendar, contracts hub/details/payments, apartments grid/profile; nav targets verified identical per screen; zero provider/route diffs |
-| 5 — Reports & settings | `ui-redesign/reports-settings` | ⏸ Not started | — | |
+| 4 — Core flows | `ui-redesign/core-flows` | ✅ Merged (PR #4, `1cf6e8e`) | [#4](https://github.com/monaser25/abrag/pull/4) | 9 screens: bookings hub/list/details/calendar, contracts hub/details/payments, apartments grid/profile |
+| 5 — Reports & settings | `ui-redesign/reports-settings` | 🔄 In review | (see PR) | 12 screens: reports suite (hub/menu/statistics/detail/metric-detail/filters), statement + preview, system log, global search, notifications, settings root; PDF/audit logic untouched |
 | 6 — Forms & modals | `ui-redesign/forms-modals` | ⏸ Not started | — | |
 | 7 — Missing screens | `ui-redesign/missing-screens` | ⏸ Not started | — | |
 | 8 — Final QA | `ui-redesign/final-qa` | ⏸ Not started | — | |

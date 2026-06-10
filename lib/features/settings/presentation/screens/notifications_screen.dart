@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/notifications_provider.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -11,12 +14,12 @@ class NotificationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsAsync = ref.watch(appNotificationsProvider);
     final isMuted = ref.watch(notificationsMutedProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final formatter = DateFormat('yyyy-MM-dd', 'ar');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('الإشعارات'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'الإشعارات',
         actions: [
           notificationsAsync.maybeWhen(
             data: (notifications) => PopupMenuButton<String>(
@@ -44,10 +47,10 @@ class NotificationsScreen extends ConsumerWidget {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          IconButton(
-            icon: Icon(
-              isMuted ? Icons.notifications_off : Icons.notifications_active,
-            ),
+          AppIconButton(
+            icon: isMuted
+                ? Icons.notifications_off_outlined
+                : Icons.notifications_active_outlined,
             tooltip: isMuted ? 'تفعيل الإشعارات' : 'إيقاف الإشعارات مؤقتاً',
             onPressed: () {
               ref
@@ -70,26 +73,9 @@ class NotificationsScreen extends ConsumerWidget {
       body: notificationsAsync.when(
         data: (notifications) {
           if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 80,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'لا توجد إشعارات أو تنبيهات حالياً',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+            return const EmptyState(
+              icon: Icons.notifications_none,
+              title: 'لا توجد إشعارات أو تنبيهات حالياً',
             );
           }
 
@@ -104,43 +90,43 @@ class NotificationsScreen extends ConsumerWidget {
               switch (notif.type) {
                 case 'rent':
                   icon = Icons.money_off;
-                  color = Colors.red;
+                  color = colors.err;
                   break;
                 case 'checkout':
                   icon = Icons.directions_walk;
-                  color = Colors.orange;
+                  color = colors.warn;
                   break;
                 case 'checkin':
                   icon = Icons.login;
-                  color = Colors.green;
+                  color = colors.ok;
                   break;
                 case 'expiration':
                   icon = Icons.event_busy;
-                  color = Colors.blue;
+                  color = colors.winter;
                   break;
                 case 'maintenance':
                   icon = Icons.build;
-                  color = Colors.deepOrange;
+                  color = colors.summer;
                   break;
                 case 'damage':
                   icon = Icons.warning_amber;
-                  color = Colors.redAccent;
+                  color = colors.err;
                   break;
                 case 'cleaning':
                   icon = Icons.cleaning_services;
-                  color = Colors.teal;
+                  color = colors.ok;
                   break;
                 case 'inventory':
                   icon = Icons.inventory;
-                  color = Colors.purple;
+                  color = colors.accent;
                   break;
                 case 'system':
                   icon = Icons.campaign;
-                  color = Colors.lightBlue;
+                  color = colors.winter;
                   break;
                 default:
                   icon = Icons.notifications;
-                  color = theme.colorScheme.primary;
+                  color = colors.brand;
               }
 
               return Dismissible(
@@ -148,9 +134,13 @@ class NotificationsScreen extends ConsumerWidget {
                 direction: DismissDirection.endToStart,
                 background: Container(
                   alignment: Alignment.centerLeft,
+                  margin: const EdgeInsets.only(bottom: 9),
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  color: theme.colorScheme.error,
-                  child: Icon(Icons.delete, color: theme.colorScheme.onError),
+                  decoration: BoxDecoration(
+                    color: colors.err,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(Icons.delete, color: colors.ink),
                 ),
                 onDismissed: (_) {
                   ref
@@ -160,54 +150,70 @@ class NotificationsScreen extends ConsumerWidget {
                     const SnackBar(content: Text('تم حذف الإشعار')),
                   );
                 },
-                child: Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: color.withValues(alpha: 0.2),
-                      child: Icon(icon, color: color),
-                    ),
-                    title: Text(
-                      notif.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(notif.body),
-                          const SizedBox(height: 4),
-                          Text(
-                            'تاريخ: ${formatter.format(notif.date)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.primary,
+                child: AppCard(
+                  margin: const EdgeInsets.only(bottom: 9),
+                  padding: const EdgeInsets.all(14),
+                  onTap: notif.route == null
+                      ? null
+                      : () => context.push(notif.route!),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      IconTile(icon: icon, tint: color),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    notif.title,
+                                    style: AppTextStyles.title
+                                        .copyWith(color: colors.ink),
+                                  ),
+                                ),
+                                Text(
+                                  formatter.format(notif.date),
+                                  style: AppTextStyles.caption
+                                      .copyWith(color: colors.ink3),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              notif.body,
+                              style: AppTextStyles.bodyS
+                                  .copyWith(color: colors.ink2),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'حذف الإشعار',
-                      onPressed: () {
-                        ref
-                            .read(dismissedNotificationsProvider.notifier)
-                            .dismiss(notif.id);
-                      },
-                    ),
-                    onTap: notif.route == null
-                        ? null
-                        : () => context.push(notif.route!),
-                    isThreeLine: true,
+                      const SizedBox(width: 4),
+                      AppIconButton(
+                        icon: Icons.delete_outline,
+                        tooltip: 'حذف الإشعار',
+                        onPressed: () {
+                          ref
+                              .read(dismissedNotificationsProvider.notifier)
+                              .dismiss(notif.id);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('خطأ: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذر تحميل الإشعارات',
+          message: 'خطأ: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(appNotificationsProvider),
+        ),
       ),
     );
   }
