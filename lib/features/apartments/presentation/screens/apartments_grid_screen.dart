@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/apartments_controller.dart';
 import '../providers/apartment_profile_provider.dart';
 
@@ -12,14 +15,13 @@ class ApartmentsGridScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final apartmentsAsync = ref.watch(apartmentsProvider);
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.apartments),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: l10n.apartments,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.playlist_add_check),
+          AppIconButton(
+            icon: Icons.playlist_add_check,
             tooltip: 'تعميم الجرد',
             onPressed: () => context.push('/apartments/bulk_inventory'),
           ),
@@ -28,14 +30,17 @@ class ApartmentsGridScreen extends ConsumerWidget {
       body: apartmentsAsync.when(
         data: (apartments) {
           if (apartments.isEmpty) {
-            return Center(child: Text(l10n.noData));
+            return EmptyState(
+              icon: Icons.meeting_room_outlined,
+              title: l10n.noData,
+            );
           }
           return GridView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 90),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
             ),
             itemCount: apartments.length,
             itemBuilder: (context, index) {
@@ -45,6 +50,7 @@ class ApartmentsGridScreen extends ConsumerWidget {
                   final profileAsync = ref.watch(
                     apartmentProfileProvider(apt.id),
                   );
+                  final colors = context.colors;
 
                   return profileAsync.when(
                     data: (data) {
@@ -52,105 +58,62 @@ class ApartmentsGridScreen extends ConsumerWidget {
                           data.apartment.cleaningStatus == 'needs_cleaning';
                       final isOccupied = data.isOccupied;
 
-                      Color statusColor = Colors.green;
+                      // Same status semantics as before, token colors.
+                      Color statusColor = colors.ok;
                       String statusText = 'متاحة';
                       if (isCleaning) {
-                        statusColor = Colors.orange;
+                        statusColor = colors.warn;
                         statusText = 'نظافة';
                       } else if (isOccupied) {
-                        statusColor = theme.colorScheme.error;
+                        statusColor = colors.err;
                         statusText = 'مشغولة';
                       }
 
-                      return InkWell(
+                      return ApartmentCell(
+                        number: apt.apartmentNumber,
+                        statusColor: statusColor,
                         onTap: () =>
                             context.push('/apartments/profile/${apt.id}'),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: statusColor.withValues(alpha: 0.3),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: statusColor.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
+                        footer: Text(
+                          statusText,
+                          style: AppTextStyles.caption.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
                           ),
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  width: 12,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: statusColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      apt.apartmentNumber,
-                                      style: theme.textTheme.headlineMedium
-                                          ?.copyWith(
-                                            color: isOccupied
-                                                ? theme.colorScheme.onSurface
-                                                      .withValues(alpha: 0.6)
-                                                : theme.colorScheme.onSurface,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      statusText,
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(color: statusColor),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       );
                     },
-                    loading: () => const Card(
-                      child: Center(child: CircularProgressIndicator()),
+                    loading: () => const SkeletonBox(
+                      height: double.infinity,
+                      radius: 9,
                     ),
-                    error: (err, stack) =>
-                        const Card(child: Center(child: Icon(Icons.error))),
+                    error: (err, stack) => Container(
+                      decoration: BoxDecoration(
+                        color: colors.errSoft,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Icon(Icons.error_outline, color: colors.err),
+                    ),
                   );
                 },
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: '$error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(apartmentsProvider),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab(
         onPressed: () {
           context.go('/apartments/add');
         },
-        child: const Icon(Icons.add),
       ),
     );
   }

@@ -6,7 +6,9 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../providers/bookings_provider.dart';
 
@@ -64,11 +66,12 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     final theme = Theme.of(context);
     final monthFormatter = DateFormat('MMMM yyyy', 'ar');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('أجندة الحجوزات'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'أجندة الحجوزات',
+        subtitle: 'الموسم المعروض: ${seasonLabel(activeSeason)}',
         actions: [
-          IconButton(
+          AppIconButton(
             tooltip: 'اليوم',
             onPressed: () {
               setState(() {
@@ -76,7 +79,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                 _selectedDay = DateTime.now();
               });
             },
-            icon: const Icon(Icons.today),
+            icon: Icons.today,
           ),
         ],
       ),
@@ -86,20 +89,11 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
           final selectedStats = _buildStats(bookings, apartments, _selectedDay);
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 28),
             children: [
-              Card(
-                child: ListTile(
-                  leading: Icon(Icons.event_repeat, color: theme.colorScheme.primary),
-                  title: const Text('الموسم المعروض'),
-                  subtitle: Text(seasonLabel(activeSeason)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
+              AppCard(
+                padding: const EdgeInsets.all(12),
+                child: Column(
                     children: [
                       Row(
                         children: [
@@ -171,8 +165,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                             color: theme.colorScheme.primary,
                             shape: BoxShape.circle,
                           ),
-                          markerDecoration: const BoxDecoration(
-                            color: Colors.orange,
+                          markerDecoration: BoxDecoration(
+                            color: context.colors.summer,
                             shape: BoxShape.circle,
                           ),
                           markersMaxCount: 3,
@@ -194,11 +188,11 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                                   if (hasCheckIn &&
                                       _filter !=
                                           _CalendarFilter.upcomingCheckouts)
-                                    _dot(Colors.green),
+                                    _dot(context.colors.ok),
                                   if (events.isNotEmpty &&
                                       _filter == _CalendarFilter.all)
-                                    _dot(Colors.orange),
-                                  if (hasCheckout) _dot(Colors.redAccent),
+                                    _dot(context.colors.summer),
+                                  if (hasCheckout) _dot(context.colors.err),
                                 ],
                               ),
                             );
@@ -207,7 +201,6 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                       ),
                     ],
                   ),
-                ),
               ),
               const SizedBox(height: 12),
               _SelectedDaySummary(
@@ -241,8 +234,13 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('حدث خطأ: $err')),
+        loading: () => const LoadingSkeleton(),
+        error: (err, stack) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: 'حدث خطأ: $err',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(summerBookingsProvider),
+        ),
       ),
     );
   }
@@ -326,10 +324,10 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: isCheckout
-                  ? Colors.redAccent.withValues(alpha: 0.16)
+                  ? context.colors.errSoft
                   : isCheckIn
-                  ? Colors.green.withValues(alpha: 0.16)
-                  : Colors.orange.withValues(alpha: 0.16),
+                  ? context.colors.okSoft
+                  : context.colors.summerSoft,
               child: Icon(
                 isCheckout
                     ? Icons.logout
@@ -337,10 +335,10 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                     ? Icons.login
                     : Icons.hotel,
                 color: isCheckout
-                    ? Colors.redAccent
+                    ? context.colors.err
                     : isCheckIn
-                    ? Colors.green
-                    : Colors.orange,
+                    ? context.colors.ok
+                    : context.colors.summer,
               ),
             ),
             title: Text(booking.guestName),
@@ -528,25 +526,25 @@ class _SelectedDaySummary extends StatelessWidget {
                 _TinyStat(
                   label: 'مؤجرة',
                   value: '${stats.occupiedCount}',
-                  color: Colors.orange,
+                  color: context.colors.summer,
                   onTap: () => onFilterSelected(_CalendarFilter.occupied),
                 ),
                 _TinyStat(
                   label: 'غير مؤجرة',
                   value: '${stats.availableCount}',
-                  color: Colors.green,
+                  color: context.colors.ok,
                   onTap: () => onFilterSelected(_CalendarFilter.available),
                 ),
                 _TinyStat(
                   label: 'خروجات قادمة',
                   value: '${stats.checkoutCount}',
-                  color: Colors.redAccent,
+                  color: context.colors.err,
                   onTap: () => onFilterSelected(_CalendarFilter.upcomingCheckouts),
                 ),
                 _TinyStat(
                   label: 'إجمالي الشقق',
                   value: '${stats.totalApartments}',
-                  color: Colors.blueAccent,
+                  color: context.colors.brand,
                   onTap: () => onFilterSelected(_CalendarFilter.all),
                 ),
               ],

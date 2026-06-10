@@ -8,7 +8,11 @@ import 'dart:convert';
 import 'dart:io';
 import '../providers/contracts_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class StudentDetailsScreen extends ConsumerWidget {
   final String contractId;
@@ -21,9 +25,9 @@ class StudentDetailsScreen extends ConsumerWidget {
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل الطالب'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'تفاصيل الطالب',
         actions: [
           contractsAsync.maybeWhen(
             data: (contracts) {
@@ -31,8 +35,8 @@ class StudentDetailsScreen extends ConsumerWidget {
                 (c) => c.id == contractId,
                 orElse: () => contracts.first,
               );
-              return IconButton(
-                icon: const Icon(Icons.edit),
+              return AppIconButton(
+                icon: Icons.edit_outlined,
                 onPressed: () {
                   context.go('/winter_contracts/edit', extra: contract);
                 },
@@ -53,21 +57,20 @@ class StudentDetailsScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Profile Header
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+              // Profile Header (prototype winter-soft header card)
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: ClipRRect(
+                  borderRadius: AppRadius.rMd,
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    color: context.colors.winterSoft,
+                    child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
-                        child: Icon(
-                          Icons.person,
-                          size: 32,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      AppAvatar(
+                        name: contract.studentName,
+                        size: 56,
+                        tint: context.colors.winter,
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -136,6 +139,7 @@ class StudentDetailsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -229,49 +233,23 @@ class StudentDetailsScreen extends ConsumerWidget {
                         ..._buildRoommatesList(context, contract.roommates!),
 
                       const Divider(height: 24),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.bolt,
-                            color: theme.colorScheme.secondary,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'الكهرباء: ${contract.isElectricityOnStudent ? 'على الطالب' : 'على المالك'}',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+                      // Utility split (prototype pattern: tenant/owner chips)
+                      _UtilityRow(
+                        icon: Icons.bolt,
+                        label: 'الكهرباء',
+                        onTenant: contract.isElectricityOnStudent,
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.local_fire_department,
-                            color: theme.colorScheme.secondary,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'الغاز: ${contract.isGasOnStudent ? 'على الطالب' : 'على المالك'}',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+                      _UtilityRow(
+                        icon: Icons.local_fire_department,
+                        label: 'الغاز',
+                        onTenant: contract.isGasOnStudent,
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.water_drop,
-                            color: theme.colorScheme.secondary,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'المياه: ${contract.isWaterOnStudent ? 'على الطالب' : 'على المالك'}',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+                      _UtilityRow(
+                        icon: Icons.water_drop,
+                        label: 'المياه',
+                        onTenant: contract.isWaterOnStudent,
                       ),
                       if (contract.contractFrontImage != null ||
                           contract.contractBackImage != null) ...[
@@ -332,29 +310,24 @@ class StudentDetailsScreen extends ConsumerWidget {
               const SizedBox(height: 16),
 
               // Actions
-              ElevatedButton.icon(
+              AppButton(
+                label: 'سجل المدفوعات',
+                icon: Icons.payments_outlined,
+                variant: AppButtonVariant.royal,
+                expand: true,
                 onPressed: () {
                   context.go('/winter_contracts/payments/$contractId');
                 },
-                icon: const Icon(Icons.payments),
-                label: const Text('سجل المدفوعات'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
               ),
               if (contract.isActive) ...[
                 const SizedBox(height: 8),
-                ElevatedButton.icon(
+                AppButton(
+                  label: 'تسليم الشقة وإنهاء العقد',
+                  icon: Icons.fact_check_outlined,
+                  expand: true,
                   onPressed: () {
                     context.go('/winter_contracts/checkout/${contract.id}');
                   },
-                  icon: const Icon(Icons.fact_check),
-                  label: const Text('تسليم الشقة وإنهاء العقد'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    foregroundColor: theme.colorScheme.onPrimaryContainer,
-                  ),
                 ),
               ],
               const SizedBox(height: 24),
@@ -370,8 +343,13 @@ class StudentDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const LoadingSkeleton(),
+        error: (err, stack) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: '$err',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(allWinterContractsProvider),
+        ),
       ),
     );
   }
@@ -382,24 +360,29 @@ class StudentDetailsScreen extends ConsumerWidget {
     String value, {
     bool isHighlight = false,
   }) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
           ),
-          Text(
-            value,
-            style: isHighlight
-                ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  )
-                : Theme.of(context).textTheme.bodyMedium,
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: AppTextStyles.tabular(
+                (isHighlight ? AppTextStyles.title : AppTextStyles.body)
+                    .copyWith(
+                  color: isHighlight ? colors.winter : colors.ink,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -680,6 +663,40 @@ class _MissingImageBox extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Utility split row (prototype `utilSplit`): icon + label + tenant/owner chip.
+class _UtilityRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool onTenant;
+
+  const _UtilityRow({
+    required this.icon,
+    required this.label,
+    required this.onTenant,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: colors.ink2),
+            const SizedBox(width: 8),
+            Text(label, style: AppTextStyles.body.copyWith(color: colors.ink)),
+          ],
+        ),
+        StatusChip(
+          kind: onTenant ? StatusChipKind.winter : StatusChipKind.neutral,
+          label: onTenant ? 'على الطالب' : 'على المالك',
+        ),
+      ],
     );
   }
 }

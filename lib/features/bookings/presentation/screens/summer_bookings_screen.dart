@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 
@@ -17,10 +20,10 @@ class SummerBookingsScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final activeSeason = ref.watch(activeSeasonKeyProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.summerBookings)),
+    return AppScaffold(
+      appBar: AbragAppBar(title: l10n.summerBookings),
       body: bookingsAsync.when(
         data: (bookings) {
           final apartments = apartmentsAsync.value ?? [];
@@ -52,131 +55,126 @@ class SummerBookingsScreen extends ConsumerWidget {
           );
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 28),
             children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withValues(alpha: 0.22),
-                      theme.colorScheme.surfaceContainerHighest,
-                    ],
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.18),
-                  ),
-                ),
+              SeasonHero(
+                season: Season.summer,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'إدارة حجوزات الصيف',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'الموسم المعروض: ${seasonLabel(activeSeason)}',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'إدارة حجوزات الصيف',
+                            style: AppTextStyles.h2
+                                .copyWith(color: colors.ink),
+                          ),
+                        ),
+                        StatusChip(
+                          kind: StatusChipKind.summer,
+                          icon: Icons.wb_sunny_outlined,
+                          label: seasonLabel(activeSeason),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'تابع الإشغال، مواعيد الخروج، والحجوزات القادمة لهذا الموسم فقط.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
                     ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: () =>
-                                context.push('/summer_bookings/add'),
-                            icon: const Icon(Icons.add),
-                            label: const Text('حجز جديد'),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    AppButton(
+                      label: 'حجز جديد',
+                      icon: Icons.add,
+                      expand: true,
+                      onPressed: () => context.push('/summer_bookings/add'),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              GridView.count(
-                crossAxisCount: 2,
-                childAspectRatio: 1.35,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: [
-                  _MetricCard(
-                    title: 'مؤجرة اليوم',
-                    value: '$occupiedToday',
-                    icon: Icons.hotel,
-                    color: Colors.orange,
-                    onTap: () => context.push('/summer_bookings/calendar?filter=occupied'),
-                  ),
-                  _MetricCard(
-                    title: 'متاحة اليوم',
-                    value: '$availableToday',
-                    icon: Icons.meeting_room_outlined,
-                    color: Colors.green,
-                    onTap: () => context.push('/summer_bookings/calendar?filter=available'),
-                  ),
-                  _MetricCard(
-                    title: 'خروجات قادمة',
-                    value: '$upcomingCheckouts',
-                    icon: Icons.logout,
-                    color: Colors.redAccent,
-                    onTap: () => context.push('/summer_bookings/calendar?filter=upcomingCheckouts'),
-                  ),
-                  _MetricCard(
-                    title: 'حجوزات قادمة',
-                    value: '$upcoming',
-                    icon: Icons.event_available,
-                    color: Colors.blueAccent,
-                    onTap: () => context.push('/summer_bookings/calendar?filter=upcoming'),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              AppCard(
+                padding: const EdgeInsets.all(6),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  childAspectRatio: 2.5,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _MetricTile(
+                      label: 'مؤجرة اليوم',
+                      value: '$occupiedToday',
+                      icon: Icons.hotel_outlined,
+                      tint: colors.summer,
+                      onTap: () => context
+                          .push('/summer_bookings/calendar?filter=occupied'),
+                    ),
+                    _MetricTile(
+                      label: 'متاحة اليوم',
+                      value: '$availableToday',
+                      icon: Icons.meeting_room_outlined,
+                      tint: colors.ok,
+                      onTap: () => context
+                          .push('/summer_bookings/calendar?filter=available'),
+                    ),
+                    _MetricTile(
+                      label: 'خروجات قادمة',
+                      value: '$upcomingCheckouts',
+                      icon: Icons.logout,
+                      tint: colors.err,
+                      onTap: () => context.push(
+                          '/summer_bookings/calendar?filter=upcomingCheckouts'),
+                    ),
+                    _MetricTile(
+                      label: 'حجوزات قادمة',
+                      value: '$upcoming',
+                      icon: Icons.event_available_outlined,
+                      tint: colors.brand,
+                      onTap: () => context
+                          .push('/summer_bookings/calendar?filter=upcoming'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              _NavigationCard(
-                title: 'الأجندة الذكية',
-                subtitle:
-                    'عرض شهري مع فلاتر، إحصائيات اليوم، وحركات مواعيد الخروج.',
+              const SectionTitle(title: 'الحجوزات'),
+              NavRow(
                 icon: Icons.calendar_month,
+                title: 'الأجندة الذكية',
+                sub: 'عرض شهري مع فلاتر، إحصائيات اليوم، وحركات مواعيد الخروج.',
+                tint: colors.brand,
                 onTap: () => context.push('/summer_bookings/calendar'),
               ),
-              const SizedBox(height: 12),
-              _NavigationCard(
-                title: 'قائمة الحجوزات',
-                subtitle: 'بحث وفلاتر وكروت تفصيلية لكل الحجزات.',
+              NavRow(
                 icon: Icons.view_agenda_outlined,
+                title: 'قائمة الحجوزات',
+                sub: 'بحث وفلاتر وكروت تفصيلية لكل الحجزات.',
+                tint: colors.accent,
                 onTap: () => context.push('/summer_bookings/list'),
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('حدث خطأ: $error')),
-      ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.all(16),
-        child: FilledButton.icon(
-          onPressed: () => context.push('/summer_bookings/add'),
-          icon: const Icon(Icons.add),
-          label: const Text('حجز جديد'),
+        loading: () => const LoadingSkeleton(),
+        error: (error, _) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: 'حدث خطأ: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(summerBookingsProvider),
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حجز جديد',
+              icon: Icons.add,
+              expand: true,
+              onPressed: () => context.push('/summer_bookings/add'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -197,85 +195,29 @@ class SummerBookingsScreen extends ConsumerWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  final String title;
+/// Tappable metric tile (prototype `MiniMetric` + the existing filter links).
+class _MetricTile extends StatelessWidget {
+  final String label;
   final String value;
   final IconData icon;
-  final Color color;
+  final Color tint;
   final VoidCallback? onTap;
 
-  const _MetricCard({
-    required this.title,
+  const _MetricTile({
+    required this.label,
     required this.value,
     required this.icon,
-    required this.color,
+    required this.tint,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color),
-            const Spacer(),
-            Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              title,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavigationCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _NavigationCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
-          child: Icon(icon, color: theme.colorScheme.primary),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(subtitle),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
+    return Tappable(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: MiniMetric(icon: icon, value: value, label: label, tint: tint),
       ),
     );
   }

@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -20,66 +23,31 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   String _selectedFilter =
       'nearest'; // nearest, in_progress, upcoming, finished
 
+  static const _filterKeys = ['nearest', 'in_progress', 'upcoming', 'finished'];
+  static const _filterLabels = ['الأقرب', 'جارية', 'قادمة', 'منتهية'];
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final activeSeason = ref.watch(activeSeasonKeyProvider);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.summerBookings), // Reusing translation
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: l10n.summerBookings, // Reusing translation
+        subtitle: 'الموسم المعروض: ${seasonLabel(activeSeason)}',
       ),
       body: Column(
         children: [
-          // Filter Row
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: ListTile(
-              dense: true,
-              leading: const Icon(Icons.event_repeat),
-              title: const Text('الموسم المعروض'),
-              subtitle: Text(seasonLabel(activeSeason)),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = 'nearest'),
-                  child: _FilterChip(
-                    label: 'الأقرب',
-                    isSelected: _selectedFilter == 'nearest',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = 'in_progress'),
-                  child: _FilterChip(
-                    label: 'جارية',
-                    isSelected: _selectedFilter == 'in_progress',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = 'upcoming'),
-                  child: _FilterChip(
-                    label: 'قادمة',
-                    isSelected: _selectedFilter == 'upcoming',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = 'finished'),
-                  child: _FilterChip(
-                    label: 'منتهية',
-                    isSelected: _selectedFilter == 'finished',
-                  ),
-                ),
-              ],
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 14),
+            child: SegmentedTabs(
+              labels: _filterLabels,
+              index: _filterKeys.indexOf(_selectedFilter),
+              onChanged: (i) =>
+                  setState(() => _selectedFilter = _filterKeys[i]),
             ),
           ),
 
@@ -116,10 +84,15 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                     });
 
                 if (filteredBookings.isEmpty) {
-                  return Center(child: Text(l10n.noData));
+                  return EmptyState(
+                    icon: Icons.calendar_today_outlined,
+                    title: l10n.noData,
+                    sub: 'غيّر التصفية أو أضف حجزًا جديدًا.',
+                  );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding:
+                      const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 90),
                   itemCount: filteredBookings.length,
                   itemBuilder: (context, index) {
                     final booking = filteredBookings[index];
@@ -140,10 +113,15 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                         baseBookingTotal > 0 &&
                         booking.amountPaidEgp >= booking.totalPriceEgp;
                     final statusColor = isPaidFull
-                        ? Colors.green
+                        ? colors.ok
                         : booking.amountPaidEgp > 0
-                        ? Colors.orange
-                        : Theme.of(context).colorScheme.error;
+                        ? colors.warn
+                        : colors.err;
+                    final statusKind = isPaidFull
+                        ? StatusChipKind.ok
+                        : booking.amountPaidEgp > 0
+                        ? StatusChipKind.warn
+                        : StatusChipKind.err;
                     final commissionAmount =
                         booking.brokerCommissionType == 'fixed'
                         ? booking.brokerCommissionFixedEgp
@@ -162,234 +140,131 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                                 (booking.amountPaidEgp -
                                     booking.overstayFeeEgp))
                             .clamp(0, double.infinity);
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: InkWell(
-                        onTap: () {
-                          // Navigate to details
-                          context.push(
-                            '/summer_bookings/details/${booking.id}',
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    return AppCard(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      onTap: () {
+                        // Navigate to details
+                        context.push(
+                          '/summer_bookings/details/${booking.id}',
+                        );
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      booking.guestName,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleLarge,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(
-                                        alpha: 0.18,
-                                      ),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      isPaidFull
-                                          ? 'مدفوع بالكامل'
-                                          : _statusLabel(booking.status),
-                                      style: TextStyle(
-                                        color: statusColor,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              AppAvatar(
+                                name: booking.guestName,
+                                tint: colors.summer,
                               ),
-                              const SizedBox(height: 8),
-                              _BookingDateSummary(
-                                checkInDate: booking.checkInDate,
-                                checkOutDate:
-                                    booking.earlyCheckoutDate ??
-                                    booking.checkOutDate,
-                                daysCount: daysCount,
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.apartment,
-                                    size: 16,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'رقم الشقة: $apartmentNumber',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Divider(height: 24),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'السعر اليومي',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'الفلوس بعد السمسار',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${netAmount.toDouble().toCurrencyFormat()} ج.م',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: isPaidFull
-                                              ? Colors.green
-                                              : Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'فلوس السمسار اللي أخدها',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (booking.overstayDays > 0 ||
-                                  booking.overstayFeeEgp > 0) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'تمديد ${booking.overstayDays} يوم',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${booking.overstayFeeEgp.toDouble().toCurrencyFormat()} ج.م',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  booking.guestName,
+                                  style: AppTextStyles.title
+                                      .copyWith(color: colors.ink),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                              if (remainingAmount > 0) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'المتبقي',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.error,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${remainingAmount.toDouble().toCurrencyFormat()} ج.م',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.error,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                              ),
+                              StatusChip(
+                                kind: statusKind,
+                                label: isPaidFull
+                                    ? 'مدفوع بالكامل'
+                                    : _statusLabel(booking.status),
+                              ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: 10),
+                          _BookingDateSummary(
+                            checkInDate: booking.checkInDate,
+                            checkOutDate:
+                                booking.earlyCheckoutDate ??
+                                booking.checkOutDate,
+                            daysCount: daysCount,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.apartment,
+                                size: 14,
+                                color: colors.ink3,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'رقم الشقة: $apartmentNumber',
+                                style: AppTextStyles.caption
+                                    .copyWith(color: colors.ink3),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          _MoneyRow(
+                            label: 'السعر اليومي',
+                            value:
+                                '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
+                          ),
+                          const SizedBox(height: 6),
+                          _MoneyRow(
+                            label: 'الفلوس بعد السمسار',
+                            value:
+                                '${netAmount.toDouble().toCurrencyFormat()} ج.م',
+                            emphasize: true,
+                            valueColor:
+                                isPaidFull ? colors.ok : colors.accent,
+                          ),
+                          const SizedBox(height: 6),
+                          _MoneyRow(
+                            label: 'فلوس السمسار اللي أخدها',
+                            value:
+                                '${commissionAmount.toDouble().toCurrencyFormat()} ج.م',
+                          ),
+                          if (booking.overstayDays > 0 ||
+                              booking.overstayFeeEgp > 0) ...[
+                            const SizedBox(height: 6),
+                            _MoneyRow(
+                              label: 'تمديد ${booking.overstayDays} يوم',
+                              value:
+                                  '${booking.overstayFeeEgp.toDouble().toCurrencyFormat()} ج.م',
+                              valueColor: colors.accent,
+                            ),
+                          ],
+                          if (remainingAmount > 0) ...[
+                            const SizedBox(height: 6),
+                            _MoneyRow(
+                              label: 'المتبقي',
+                              value:
+                                  '${remainingAmount.toDouble().toCurrencyFormat()} ج.م',
+                              labelColor: statusColor == colors.ok
+                                  ? colors.ink2
+                                  : colors.err,
+                              valueColor: colors.err,
+                              emphasize: true,
+                            ),
+                          ],
+                        ],
                       ),
                     );
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
+              loading: () => const LoadingSkeleton(),
+              error: (error, stack) => ErrorState(
+                title: 'تعذّر تحميل البيانات',
+                message: '$error',
+                retryLabel: 'إعادة المحاولة',
+                onRetry: () => ref.invalidate(summerBookingsProvider),
+              ),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: AppFab(
         onPressed: () {
           context.go('/summer_bookings/add');
         },
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -418,6 +293,47 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   }
 }
 
+/// Label/value money line with tabular figures.
+class _MoneyRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? labelColor;
+  final Color? valueColor;
+  final bool emphasize;
+
+  const _MoneyRow({
+    required this.label,
+    required this.value,
+    this.labelColor,
+    this.valueColor,
+    this.emphasize = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodyS
+              .copyWith(color: labelColor ?? colors.ink2),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.tabular(
+            (emphasize ? AppTextStyles.title : AppTextStyles.bodyS).copyWith(
+              color: valueColor ?? colors.ink,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _BookingDateSummary extends StatelessWidget {
   final DateTime checkInDate;
   final DateTime checkOutDate;
@@ -431,94 +347,45 @@ class _BookingDateSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mutedColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    final colors = context.colors;
     final formatter = DateFormat('EEEE yyyy-MM-dd', 'ar');
+
+    Widget line(IconData icon, String label, String value, {bool bold = false}) {
+      return Row(
+        children: [
+          Icon(icon, size: 15, color: colors.ink3),
+          const SizedBox(width: 6),
+          Text(label,
+              style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          const Spacer(),
+          Text(
+            value,
+            style: AppTextStyles.tabular(
+              AppTextStyles.bodyS.copyWith(
+                color: colors.ink,
+                fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        color: colors.surface3.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Icon(Icons.login, size: 16, color: mutedColor),
-              const SizedBox(width: 6),
-              Text('الدخول', style: TextStyle(color: mutedColor, fontSize: 12)),
-              const Spacer(),
-              Text(
-                formatter.format(checkInDate),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
+          line(Icons.login, 'الدخول', formatter.format(checkInDate)),
           const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(Icons.logout, size: 16, color: mutedColor),
-              const SizedBox(width: 6),
-              Text('الخروج', style: TextStyle(color: mutedColor, fontSize: 12)),
-              const Spacer(),
-              Text(
-                formatter.format(checkOutDate),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
+          line(Icons.logout, 'الخروج', formatter.format(checkOutDate)),
           const Divider(height: 14),
-          Row(
-            children: [
-              Icon(Icons.nights_stay, size: 16, color: mutedColor),
-              const SizedBox(width: 6),
-              Text(
-                'عدد الأيام',
-                style: TextStyle(color: mutedColor, fontSize: 12),
-              ),
-              const Spacer(),
-              Text(
-                '$daysCount يوم',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+          line(Icons.nights_stay_outlined, 'عدد الأيام', '$daysCount يوم',
+              bold: true),
         ],
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-
-  const _FilterChip({required this.label, required this.isSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Theme.of(context).colorScheme.primaryContainer
-            : Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected
-              ? Theme.of(context).colorScheme.onPrimaryContainer
-              : Theme.of(context).colorScheme.onSurface,
-        ),
       ),
     );
   }
