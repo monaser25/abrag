@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/config/secure_storage_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +20,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _rememberMe = false;
+  bool _showPassword = false;
 
   @override
   void initState() {
@@ -66,6 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginControllerProvider);
     final l10n = AppLocalizations.of(context)!;
+    final colors = context.colors;
 
     ref.listen<AsyncValue<void>>(loginControllerProvider, (_, state) {
       state.whenOrNull(
@@ -80,89 +85,131 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     });
 
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(Icons.apartment, size: 80, color: Color(0xFFF4A225)),
-                const SizedBox(height: 24),
-                Text(
-                  l10n.loginTitle,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+    return AppScaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Column(
+                          children: [
+                            const AbragLogo(size: 84, radius: 26, glow: true),
+                            const SizedBox(height: 14),
+                            Text(
+                              l10n.loginTitle,
+                              style: AppTextStyles.h1
+                                  .copyWith(color: colors.ink),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.loginSubtitle,
+                              style: AppTextStyles.bodyS
+                                  .copyWith(color: colors.ink2),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 26),
+                        AppTextField(
+                          label: l10n.emailLabel,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textDirection: TextDirection.ltr,
+                          prefixIcon: Icons.mail_outline,
+                          validator: (value) =>
+                              value != null && value.isNotEmpty
+                                  ? null
+                                  : l10n.requiredField,
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          label: l10n.passwordLabel,
+                          controller: _passwordController,
+                          obscureText: !_showPassword,
+                          prefixIcon: Icons.lock_outline,
+                          suffix: IconButton(
+                            onPressed: () => setState(
+                                () => _showPassword = !_showPassword),
+                            icon: Icon(
+                              _showPassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                              color: _showPassword
+                                  ? colors.brand
+                                  : colors.ink3,
+                            ),
+                          ),
+                          validator: (value) =>
+                              value != null && value.isNotEmpty
+                                  ? null
+                                  : l10n.requiredField,
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => setState(
+                                  () => _rememberMe = !_rememberMe),
+                              child: Row(
+                                children: [
+                                  Switch(
+                                    value: _rememberMe,
+                                    onChanged: (val) => setState(
+                                        () => _rememberMe = val),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'تذكر بيانات الدخول',
+                                    style: AppTextStyles.bodyS
+                                        .copyWith(color: colors.ink2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => context.go('/forgot_password'),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  'نسيت كلمة المرور؟',
+                                  style: AppTextStyles.bodyS.copyWith(
+                                    color: colors.brand,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        AppButton(
+                          label: l10n.loginButton,
+                          expand: true,
+                          loading: loginState.isLoading,
+                          onPressed: loginState.isLoading ? null : _login,
+                        ),
+                      ],
+                    ),
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.loginSubtitle,
-                  style: const TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: l10n.emailLabel,
-                    prefixIcon: const Icon(Icons.email),
-                  ),
-                  validator: (value) => value != null && value.isNotEmpty
-                      ? null
-                      : l10n.requiredField,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.passwordLabel,
-                    prefixIcon: const Icon(Icons.lock),
-                  ),
-                  validator: (value) => value != null && value.isNotEmpty
-                      ? null
-                      : l10n.requiredField,
-                ),
-                const SizedBox(height: 16),
-                CheckboxListTile(
-                  title: const Text('تذكر بيانات الدخول'),
-                  value: _rememberMe,
-                  onChanged: (val) {
-                    setState(() {
-                      _rememberMe = val ?? false;
-                    });
-                  },
-                  controlAffinity: ListTileControlAffinity.leading,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: loginState.isLoading ? null : _login,
-                  child: loginState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.loginButton),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    context.go('/forgot_password');
-                  },
-                  child: const Text('نسيت كلمة المرور؟'),
-                ),
-              ],
+              ),
             ),
-          ),
+            const SkylineAccent(height: 48, opacity: 0.08),
+          ],
         ),
       ),
     );

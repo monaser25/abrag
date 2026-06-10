@@ -29,6 +29,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.small = false,
     this.expand = false,
+    this.loading = false,
   });
 
   final String label;
@@ -42,10 +43,13 @@ class AppButton extends StatelessWidget {
   /// `.btn-block`: fill available width.
   final bool expand;
 
+  /// Shows a spinner instead of the label and blocks taps.
+  final bool loading;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final enabled = onPressed != null;
+    final enabled = onPressed != null || loading;
 
     final (Color bg, Color fg, BoxBorder? side, List<BoxShadow>? shadow) =
         switch (variant) {
@@ -93,7 +97,7 @@ class AppButton extends StatelessWidget {
     );
 
     return Tappable(
-      onTap: onPressed,
+      onTap: loading ? null : onPressed,
       pressedScale: 0.97,
       child: Opacity(
         opacity: enabled ? 1 : 0.5,
@@ -108,24 +112,35 @@ class AppButton extends StatelessWidget {
             borderRadius: AppRadius.rSm,
             boxShadow: enabled ? shadow : null,
           ),
-          child: Row(
-            mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: small ? 15 : 18, color: fg),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
-                child: Text(
-                  label,
-                  style: textStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: loading
+              ? Center(
+                  child: SizedBox(
+                    width: small ? 16 : 20,
+                    height: small ? 16 : 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: fg,
+                    ),
+                  ),
+                )
+              : Row(
+                  mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: small ? 15 : 18, color: fg),
+                      const SizedBox(width: 8),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: textStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );

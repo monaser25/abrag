@@ -12,6 +12,7 @@ import 'package:abrag/features/auth/presentation/screens/login_screen.dart';
 import 'package:abrag/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:abrag/features/auth/data/auth_repository.dart';
+import 'package:abrag/shared/widgets/widgets.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -46,7 +47,7 @@ void main() {
 
     // Verify presence of email and password fields
     expect(find.byType(TextFormField), findsNWidgets(2));
-    // Verify presence of the login button
-    expect(find.byType(ElevatedButton), findsOneWidget);
+    // Verify presence of the login button (AppButton since the UI redesign)
+    expect(find.byType(AppButton), findsOneWidget);
   });
 }

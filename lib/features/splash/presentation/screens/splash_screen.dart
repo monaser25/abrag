@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -38,32 +41,60 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.domain, size: 100, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 24),
-            Text(
-              'أبراج',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
+    final colors = context.colors;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    return AppScaffold(
+      body: Stack(
+        children: [
+          Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: reduceMotion ? 1 : 0.94, end: 1),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeOutBack,
+              builder: (context, scale, child) =>
+                  Transform.scale(scale: scale, child: child),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const AbragLogo(size: 128, radius: 36, glow: true),
+                  const SizedBox(height: 22),
+                  Text(
+                    'أبراج',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                      color: colors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'إدارة الأملاك الذكية',
+                    style: AppTextStyles.bodyS.copyWith(
+                      color: colors.ink2,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'إدارة الأملاك الذكية',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          ),
+          PositionedDirectional(
+            bottom: 54,
+            start: 0,
+            end: 0,
+            child: Center(
+              child: SpinningIcon(size: 20, color: colors.brand),
             ),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(),
-          ],
-        ),
+          ),
+          const PositionedDirectional(
+            bottom: 0,
+            start: 0,
+            end: 0,
+            child: SkylineAccent(height: 70, opacity: 0.1),
+          ),
+        ],
       ),
     );
   }

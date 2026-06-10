@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -51,39 +55,54 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('نسيت كلمة المرور')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'الرجاء إدخال بريدك الإلكتروني. سنرسل لك رابطاً لإنشاء كلمة مرور جديدة.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 32),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'البريد الإلكتروني',
-                  prefixIcon: Icon(Icons.email),
+    final colors = context.colors;
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'نسيت كلمة المرور'),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: colors.brandSoft,
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.emptyOrb),
+                    ),
+                    child: Icon(Icons.lock_reset,
+                        size: 34, color: colors.brand),
+                  ),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _resetPassword,
-                child: _isLoading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator())
-                    : const Text('إرسال الرابط'),
-              ),
-            ],
+                const SizedBox(height: 20),
+                Text(
+                  'الرجاء إدخال بريدك الإلكتروني. سنرسل لك رابطاً لإنشاء كلمة مرور جديدة.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body.copyWith(color: colors.ink2),
+                ),
+                const SizedBox(height: 28),
+                AppTextField(
+                  label: 'البريد الإلكتروني',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textDirection: TextDirection.ltr,
+                  prefixIcon: Icons.mail_outline,
+                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                ),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: 'إرسال الرابط',
+                  expand: true,
+                  loading: _isLoading,
+                  onPressed: _isLoading ? null : _resetPassword,
+                ),
+              ],
+            ),
           ),
         ),
       ),
