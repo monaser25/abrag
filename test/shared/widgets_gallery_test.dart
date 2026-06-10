@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:abrag/core/theme/app_theme.dart';
 import 'package:abrag/shared/widgets/widgets.dart';
+
+import '../support/test_fonts.dart';
 
 /// Design-system gallery: smoke test (RTL + LTR) and dark-theme goldens.
 ///
@@ -15,30 +14,7 @@ import 'package:abrag/shared/widgets/widgets.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async {
-    // Load the real app font so goldens render Arabic/Latin text faithfully
-    // instead of the test-default Ahem boxes.
-    final loader = FontLoader('IBMPlexSansArabic');
-    for (final file in [
-      'assets/fonts/IBMPlexSansArabic-Regular.ttf',
-      'assets/fonts/IBMPlexSansArabic-Medium.ttf',
-      'assets/fonts/IBMPlexSansArabic-Bold.ttf',
-    ]) {
-      final bytes = File(file).readAsBytesSync();
-      loader.addFont(Future.value(ByteData.view(bytes.buffer)));
-    }
-    await loader.load();
-
-    // Material icon glyphs (otherwise icons render as placeholder boxes).
-    // The file is produced by `flutter test` asset assembly; skip if absent.
-    final iconFont = File('build/unit_test_assets/fonts/MaterialIcons-Regular.otf');
-    if (iconFont.existsSync()) {
-      final bytes = iconFont.readAsBytesSync();
-      final iconLoader = FontLoader('MaterialIcons')
-        ..addFont(Future.value(ByteData.view(bytes.buffer)));
-      await iconLoader.load();
-    }
-  });
+  setUpAll(loadAppFonts);
 
   Widget gallery(TextDirection direction) {
     return MaterialApp(

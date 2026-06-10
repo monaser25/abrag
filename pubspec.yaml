@@ -109,6 +109,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
+    - assets/icons/abrag_icon.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
@@ -145,9 +146,9 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
 flutter_native_splash:
-  color: "#0D1B2A"
+  color: "#080C24"
   image: "assets/icons/abrag_icon.png"
   android_12:
     image: "assets/icons/abrag_icon.png"
-    icon_background_color: "#0D1B2A"
-    color: "#0D1B2A"
+    icon_background_color: "#080C24"
+    color: "#080C24"

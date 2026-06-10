@@ -4,6 +4,9 @@ import '../../../users/presentation/providers/users_provider.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../dashboard/presentation/providers/sync_provider.dart';
 import '../../../../core/services/push_notification_service.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import 'broker_web_screen.dart';
 import 'cleaner_web_screen.dart';
 import 'viewer_web_screen.dart';
@@ -33,18 +36,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     return roleAsync.when(
       data: (role) {
         if (role == null) {
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('جاري إعداد بيئة العمل...'),
-                ],
-              ),
-            ),
-          );
+          return const _RoleLoadingShell(label: 'جاري إعداد بيئة العمل...');
         }
 
         switch (role) {
@@ -60,10 +52,46 @@ class _RootScreenState extends ConsumerState<RootScreen> {
             return const ViewerWebScreen();
         }
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) =>
-          Scaffold(body: Center(child: Text('Error loading role: $e'))),
+      loading: () => const _RoleLoadingShell(),
+      error: (e, st) => AppScaffold(
+        body: ErrorState(
+          title: 'تعذّر تحميل بيانات المستخدم',
+          message: '$e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(currentUserRoleProvider),
+        ),
+      ),
+    );
+  }
+}
+
+/// Branded waiting shell shown while the user role resolves.
+class _RoleLoadingShell extends StatelessWidget {
+  const _RoleLoadingShell({this.label});
+
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AppScaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const AbragLogo(size: 64, glow: true),
+            const SizedBox(height: 24),
+            SpinningIcon(size: 20, color: colors.brand),
+            if (label != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                label!,
+                style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
