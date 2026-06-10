@@ -44,6 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Design prototype reference (UI redesign source — not part of the app)
+/abrag/
+abrag.zip
+
 # Environment variables
 .env
 
