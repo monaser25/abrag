@@ -5,6 +5,9 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/database/database.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class CleanerWebScreen extends ConsumerWidget {
   const CleanerWebScreen({super.key});
@@ -12,14 +15,14 @@ class CleanerWebScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final apartmentsAsync = ref.watch(apartmentsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('مهام التنظيف'),
+    return AppScaffold(
+      appBar: HomeAppBar(
+        title: 'مهام التنظيف',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
+          AppIconButton(
+            icon: Icons.logout,
             onPressed: () {
               ref.read(loginControllerProvider.notifier).logout();
             },
@@ -29,52 +32,117 @@ class CleanerWebScreen extends ConsumerWidget {
       body: apartmentsAsync.when(
         data: (apartments) {
           // Cleaner sees apartments that need cleaning
-          final dirtyApartments = apartments.where((a) => a.cleaningStatus == 'needs_cleaning').toList();
+          final dirtyApartments = apartments
+              .where((a) => a.cleaningStatus == 'needs_cleaning')
+              .toList();
 
           if (dirtyApartments.isEmpty) {
-            return const Center(child: Text('لا توجد مهام تنظيف حالياً'));
+            return const EmptyState(
+              icon: Icons.check_circle_outline,
+              title: 'لا توجد مهام تنظيف حالياً',
+            );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: dirtyApartments.length,
-            itemBuilder: (context, index) {
-              final apt = dirtyApartments[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+          return ListView(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 28),
+            children: [
+              AppCard(
+                margin: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'بحاجة تنظيف',
+                          style: AppTextStyles.caption
+                              .copyWith(color: colors.ink3),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${dirtyApartments.length}',
+                          style: AppTextStyles.tabular(
+                            AppTextStyles.display
+                                .copyWith(color: colors.warn),
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconTile(
+                      icon: Icons.cleaning_services_outlined,
+                      tint: colors.warn,
+                      size: 46,
+                      iconSize: 22,
+                    ),
+                  ],
+                ),
+              ),
+              for (final apt in dirtyApartments)
+                AppCard(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('رقم الشقة', style: theme.textTheme.labelMedium),
-                      const SizedBox(height: 8),
-                      Text(
-                        apt.apartmentNumber,
-                        style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold),
+                      Row(
+                        children: [
+                          IconTile(
+                            icon: Icons.cleaning_services_outlined,
+                            tint: colors.warn,
+                            size: 46,
+                            iconSize: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'شقة ${apt.apartmentNumber}',
+                                style: AppTextStyles.tabular(
+                                  AppTextStyles.h3
+                                      .copyWith(color: colors.ink),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'بحاجة تنظيف',
+                                style: AppTextStyles.caption
+                                    .copyWith(color: colors.ink3),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
+                      const SizedBox(height: 12),
+                      AppButton(
+                        label: 'تم التنظيف',
+                        icon: Icons.check,
+                        variant: AppButtonVariant.royal,
+                        expand: true,
                         onPressed: () {
                           // Mark as clean
-                          ref.read(databaseProvider).update(ref.read(databaseProvider).apartments)
+                          ref
+                              .read(databaseProvider)
+                              .update(ref.read(databaseProvider).apartments)
                             ..where((t) => t.id.equals(apt.id))
-                            ..write(const ApartmentsCompanion(cleaningStatus: drift.Value('clean')));
+                            ..write(const ApartmentsCompanion(
+                                cleaningStatus: drift.Value('clean')));
                         },
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text('تم التنظيف'),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                        ),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
+            ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: '$error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(apartmentsProvider),
+        ),
       ),
     );
   }

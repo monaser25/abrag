@@ -21,6 +21,7 @@ export 'bottom_action_bar.dart';
 export 'detail_row.dart';
 export 'empty_state.dart';
 export 'error_state.dart';
+export 'home_app_bar.dart';
 export 'icon_tile.dart';
 export 'loading_skeleton.dart';
 export 'mini_tiles.dart';

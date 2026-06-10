@@ -4,8 +4,8 @@
 |---|---|---|---|---|
 | 0 — Discovery & planning | — | ✅ Done (2026-06-10) | — | Plan approved by owner 2026-06-10 |
 | 1 — Design system | `ui-redesign/design-system` | ✅ Merged (PR #1, `a4d475a`) | [#1](https://github.com/monaser25/abrag/pull/1) | Tokens, theme, 21-widget kit, golden gallery |
-| 2 — Navigation shell / auth | `ui-redesign/navigation-shell` | 🔄 In review | (see PR) | Splash, onboarding, login, forgot password, RootScreen shells; native splash → #080C24; +AbragLogo/AppScaffold/SpinningIcon; screen goldens |
-| 3 — Dashboard & role homes | `ui-redesign/dashboard` | ⏸ Not started | — | |
+| 2 — Navigation shell / auth | `ui-redesign/navigation-shell` | ✅ Merged (PR #2, `28e120e`) | [#2](https://github.com/monaser25/abrag/pull/2) | Incl. 3 device-test review fixes |
+| 3 — Dashboard & role homes | `ui-redesign/dashboard` | 🔄 In review | (see PR) | Feature-preservation rule applied: all sections/permissions/routes kept; meter readings restored (screen was orphaned — route + dashboard entry added); prototype dummy metrics skipped |
 | 4 — Core flows | `ui-redesign/core-flows` | ⏸ Not started | — | |
 | 5 — Reports & settings | `ui-redesign/reports-settings` | ⏸ Not started | — | |
 | 6 — Forms & modals | `ui-redesign/forms-modals` | ⏸ Not started | — | |

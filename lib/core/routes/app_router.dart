@@ -32,6 +32,8 @@ import '../../features/financials/presentation/screens/add_building_rent_screen.
 import '../../features/operations/presentation/screens/add_maintenance_screen.dart';
 import '../../features/financials/presentation/screens/building_rent_screen.dart';
 import '../../features/financials/presentation/screens/financial_transfers_screen.dart';
+import '../../features/financials/presentation/screens/meter_readings_screen.dart';
+import '../../features/financials/presentation/screens/add_meter_reading_screen.dart';
 import '../../features/operations/presentation/screens/maintenance_requests_screen.dart';
 import '../../features/operations/presentation/screens/technicians_screen.dart';
 import '../../features/operations/presentation/screens/technician_details_screen.dart';
@@ -308,6 +310,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'financial_transfers',
             builder: (context, state) => const FinancialTransfersScreen(),
+          ),
+          // Restores reachability of the meter readings feature: the screen,
+          // providers, DB table, and sync support all exist, but no route or
+          // dashboard entry pointed to it (screen was orphaned).
+          GoRoute(
+            path: 'meter_readings',
+            builder: (context, state) => const MeterReadingsScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (context, state) => const AddMeterReadingScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: 'maintenance',
