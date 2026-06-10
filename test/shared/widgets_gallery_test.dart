@@ -28,6 +28,16 @@ void main() {
       loader.addFont(Future.value(ByteData.view(bytes.buffer)));
     }
     await loader.load();
+
+    // Material icon glyphs (otherwise icons render as placeholder boxes).
+    // The file is produced by `flutter test` asset assembly; skip if absent.
+    final iconFont = File('build/unit_test_assets/fonts/MaterialIcons-Regular.otf');
+    if (iconFont.existsSync()) {
+      final bytes = iconFont.readAsBytesSync();
+      final iconLoader = FontLoader('MaterialIcons')
+        ..addFont(Future.value(ByteData.view(bytes.buffer)));
+      await iconLoader.load();
+    }
   });
 
   Widget gallery(TextDirection direction) {
