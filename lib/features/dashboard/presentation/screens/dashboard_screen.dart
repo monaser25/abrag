@@ -5,9 +5,12 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../settings/presentation/providers/permissions_provider.dart';
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 import '../../../settings/presentation/providers/notifications_provider.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/sync_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -32,6 +35,7 @@ class DashboardScreen extends ConsumerWidget {
     final isSuperAdmin = role == 'admin';
     final userId = ref.watch(authStateProvider).value?.session?.user.id;
     final rolesConfig = ref.watch(rolesConfigProvider);
+    final colors = context.colors;
 
     bool hasPerm(String perm) {
       if (isSuperAdmin) return true;
@@ -55,30 +59,28 @@ class DashboardScreen extends ConsumerWidget {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboardTitle),
+    return AppScaffold(
+      appBar: HomeAppBar(
+        title: l10n.dashboardTitle,
+        subtitle: l10n.dashboardWelcome,
         actions: [
           if (hasPerm('view_notifications'))
-            IconButton(
-              icon: Badge(
-                isLabelVisible: notificationsAsync.value?.isNotEmpty ?? false,
-                label: Text('${notificationsAsync.value?.length ?? 0}'),
-                child: const Icon(Icons.notifications_none, size: 22),
-              ),
+            AppIconButton(
+              icon: Icons.notifications_none,
+              badgeCount: notificationsAsync.value?.length ?? 0,
               onPressed: () {
                 context.push('/notifications');
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.search),
+          AppIconButton(
+            icon: Icons.search,
             onPressed: () {
               context.push('/search');
             },
           ),
           if (isSuperAdmin)
-            IconButton(
-              icon: const Icon(Icons.settings),
+            AppIconButton(
+              icon: Icons.settings_outlined,
               onPressed: () {
                 context.push('/settings');
               },
@@ -109,22 +111,27 @@ class DashboardScreen extends ConsumerWidget {
           //     }
           //   },
           // ),
-          IconButton(
-            icon: syncState.isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync),
-            onPressed: syncState.isLoading
-                ? null
-                : () {
-                    ref.read(syncControllerProvider.notifier).syncData();
-                  },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
+          if (syncState.isLoading)
+            const SizedBox(
+              width: 42,
+              height: 42,
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            AppIconButton(
+              icon: Icons.sync,
+              onPressed: () {
+                ref.read(syncControllerProvider.notifier).syncData();
+              },
+            ),
+          AppIconButton(
+            icon: Icons.logout,
             onPressed: () {
               ref.read(loginControllerProvider.notifier).logout();
             },
@@ -134,266 +141,213 @@ class DashboardScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () => ref.read(syncControllerProvider.notifier).syncData(),
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 28),
           children: [
-            Text(
-              l10n.dashboardWelcome,
-              style: Theme.of(context).textTheme.headlineMedium,
+            SeasonHero(
+              season: isWinter ? Season.winter : Season.summer,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  StatusChip(
+                    kind: isWinter
+                        ? StatusChipKind.winter
+                        : StatusChipKind.summer,
+                    icon: isWinter ? Icons.ac_unit : Icons.wb_sunny_outlined,
+                    label: isWinter ? 'الموسم الشتوي' : 'موسم المصيف',
+                  ),
+                  Row(
+                    children: [
+                      if (syncState.isLoading)
+                        SpinningIcon(size: 13, color: colors.brand)
+                      else
+                        Icon(Icons.check_circle_outline,
+                            size: 13, color: colors.ok),
+                      const SizedBox(width: 5),
+                      Text(
+                        syncState.isLoading ? 'جارٍ المزامنة' : 'تمت المزامنة',
+                        style: AppTextStyles.caption
+                            .copyWith(color: colors.ink3),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
             if (hasPerm('view_apartments')) ...[
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
-                    child: InkWell(
-                      onTap: () => context.go('/buildings'),
-                      child: _StatCard(
-                        title: l10n.buildings,
-                        value: buildingsCount.when(
-                          data: (count) => count.toString(),
-                          loading: () => '...',
-                          error: (err, stack) => '!',
-                        ),
-                        icon: Icons.domain,
+                    child: StatCard(
+                      icon: Icons.domain,
+                      label: l10n.buildings,
+                      value: buildingsCount.when(
+                        data: (count) => count.toString(),
+                        loading: () => '...',
+                        error: (err, stack) => '!',
                       ),
+                      tint: colors.brand,
+                      onTap: () => context.go('/buildings'),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: InkWell(
-                      onTap: () => context.go('/apartments'),
-                      child: _StatCard(
-                        title: l10n.apartments,
-                        value: apartmentsCount.when(
-                          data: (count) => count.toString(),
-                          loading: () => '...',
-                          error: (err, stack) => '!',
-                        ),
-                        icon: Icons.apartment,
+                    child: StatCard(
+                      icon: Icons.apartment,
+                      label: l10n.apartments,
+                      value: apartmentsCount.when(
+                        data: (count) => count.toString(),
+                        loading: () => '...',
+                        error: (err, stack) => '!',
                       ),
+                      tint: colors.accent,
+                      onTap: () => context.go('/apartments'),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
             ],
 
             if (hasPerm('manage_expenses') ||
                 hasPerm('manage_maintenance') ||
                 hasPerm('checkout_winter')) ...[
-              Text(
-                'العمليات والمالية',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
+              const SectionTitle(title: 'العمليات والمالية'),
               if (hasPerm('manage_expenses')) ...[
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.money_off,
-                      color: Color(0xFFF4A225),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 9,
+                  crossAxisSpacing: 9,
+                  childAspectRatio: 2.85,
+                  children: [
+                    MiniNavCard(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: l10n.expenses,
+                      tint: colors.brand,
+                      onTap: () => context.go('/expenses'),
                     ),
-                    title: Text(l10n.expenses),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/expenses'),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.home_work,
-                      color: Color(0xFFF4A225),
+                    MiniNavCard(
+                      icon: Icons.home_work_outlined,
+                      title: l10n.buildingRent,
+                      tint: colors.accent,
+                      onTap: () => context.go('/building_rent'),
                     ),
-                    title: Text(l10n.buildingRent),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/building_rent'),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.account_balance_wallet,
-                      color: Color(0xFFF4A225),
+                    MiniNavCard(
+                      icon: Icons.savings_outlined,
+                      title: 'الخزنة والتحويلات',
+                      tint: colors.ok,
+                      onTap: () => context.go('/financial_transfers'),
                     ),
-                    title: const Text('الخزنة والتحويلات'),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/financial_transfers'),
-                  ),
+                    MiniNavCard(
+                      icon: Icons.speed,
+                      title: l10n.meterReadings,
+                      tint: colors.winter,
+                      onTap: () => context.go('/meter_readings'),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 9),
               ],
               if (hasPerm('manage_maintenance')) ...[
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.build, color: Color(0xFFF4A225)),
-                    title: Text(l10n.maintenance),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/maintenance'),
-                  ),
+                NavRow(
+                  icon: Icons.build_outlined,
+                  title: l10n.maintenance,
+                  tint: colors.summer,
+                  onTap: () => context.go('/maintenance'),
                 ),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.engineering,
-                      color: Color(0xFFF4A225),
-                    ),
-                    title: const Text('العمال والفنيين'),
-                    subtitle: const Text(
-                      'إدارة عمال الصيانة والسباكة والنجارة',
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/technicians'),
-                  ),
+                NavRow(
+                  icon: Icons.engineering_outlined,
+                  title: 'العمال والفنيين',
+                  sub: 'إدارة عمال الصيانة والسباكة والنجارة',
+                  tint: colors.brand,
+                  onTap: () => context.go('/technicians'),
                 ),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.cleaning_services,
-                      color: Color(0xFFF4A225),
-                    ),
-                    title: const Text('أدوات ومواد النظافة'),
-                    subtitle: const Text(
-                      'إدارة المخزون من المنظفات وتسجيل الاستهلاك',
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/cleaning_supplies'),
-                  ),
+                NavRow(
+                  icon: Icons.cleaning_services_outlined,
+                  title: 'أدوات ومواد النظافة',
+                  sub: 'إدارة المخزون من المنظفات وتسجيل الاستهلاك',
+                  tint: colors.ok,
+                  onTap: () => context.go('/cleaning_supplies'),
                 ),
               ],
-              if (hasPerm('checkout_winter')) ...[
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.check_circle_outline,
-                      color: Color(0xFFF4A225),
-                    ),
-                    title: const Text('فحص واستلام الشقق'),
-                    subtitle: const Text(
-                      'تسجيل حالة الشقة، التلفيات، وغرامات المستأجرين',
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/inspections'),
-                  ),
+              if (hasPerm('checkout_winter'))
+                NavRow(
+                  icon: Icons.fact_check_outlined,
+                  title: 'فحص واستلام الشقق',
+                  sub: 'تسجيل حالة الشقة، التلفيات، وغرامات المستأجرين',
+                  tint: colors.winter,
+                  onTap: () => context.go('/inspections'),
                 ),
-              ],
-              const SizedBox(height: 24),
             ],
 
             if (hasPerm('manage_bookings') ||
                 hasPerm('view_customers') ||
                 hasPerm('view_brokers')) ...[
-              Text(
-                'الحجوزات والعقود',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
+              const SectionTitle(title: 'الحجوزات والعقود'),
               if (hasPerm('manage_bookings') && (isSuperAdmin || !isWinter))
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.calendar_month,
-                      color: Color(0xFFF4A225),
-                    ),
-                    title: Text(l10n.summerBookings),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/summer_bookings'),
-                  ),
+                NavRow(
+                  icon: Icons.wb_sunny_outlined,
+                  title: l10n.summerBookings,
+                  tint: colors.summer,
+                  onTap: () => context.go('/summer_bookings'),
                 ),
               if (hasPerm('manage_bookings') && (isSuperAdmin || isWinter))
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.school, color: Color(0xFFF4A225)),
-                    title: Text(l10n.winterContracts),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/winter_contracts'),
-                  ),
+                NavRow(
+                  icon: Icons.ac_unit,
+                  title: l10n.winterContracts,
+                  tint: colors.winter,
+                  onTap: () => context.go('/winter_contracts'),
                 ),
               if (hasPerm('view_customers'))
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.people, color: Color(0xFFF4A225)),
-                    title: const Text('إدارة العملاء'),
-                    subtitle: const Text(
-                      'سجل متكامل للعملاء المصيفين وطلبة الشتوي',
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/customers'),
-                  ),
+                NavRow(
+                  icon: Icons.people_outline,
+                  title: 'إدارة العملاء',
+                  sub: 'سجل متكامل للعملاء المصيفين وطلبة الشتوي',
+                  tint: colors.brand,
+                  onTap: () => context.go('/customers'),
                 ),
               if (hasPerm('view_brokers'))
-                Card(
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.handshake,
-                      color: Color(0xFFF4A225),
-                    ),
-                    title: const Text('إدارة السماسرة'),
-                    subtitle: const Text(
-                      'إضافة سماسرة ومتابعة أرقامهم وعمولاتهم',
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => context.go('/brokers'),
-                  ),
+                NavRow(
+                  icon: Icons.handshake_outlined,
+                  title: 'إدارة السماسرة',
+                  sub: 'إضافة سماسرة ومتابعة أرقامهم وعمولاتهم',
+                  tint: colors.accent,
+                  onTap: () => context.go('/brokers'),
                 ),
-              const SizedBox(height: 24),
             ],
 
             if (hasPerm('view_reports')) ...[
-              Text(
-                'التقارير المالية',
-                style: Theme.of(context).textTheme.titleLarge,
+              const SectionTitle(title: 'التقارير المالية'),
+              NavRow(
+                icon: Icons.analytics_outlined,
+                title: 'التقارير الإجمالية',
+                tint: colors.brand,
+                onTap: () => context.go('/reports'),
               ),
-              const SizedBox(height: 16),
-              Card(
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.analytics,
-                    color: Color(0xFFF4A225),
-                  ),
-                  title: const Text('التقارير الإجمالية'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => context.go('/reports'),
-                ),
-              ),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.history, color: Color(0xFFF4A225)),
-                  title: const Text('سجل النظام (الأنشطة)'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => context.push('/reports/log'),
-                ),
+              NavRow(
+                icon: Icons.history,
+                title: 'سجل النظام (الأنشطة)',
+                tint: colors.accent,
+                onTap: () => context.push('/reports/log'),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Icon(icon, size: 40, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 8),
-            Text(value, style: Theme.of(context).textTheme.displaySmall),
-            const SizedBox(height: 4),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 18),
+            Opacity(
+              opacity: 0.6,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.domain, size: 13, color: colors.ink3),
+                  const SizedBox(width: 6),
+                  Text(
+                    'أبراج · يعمل دون اتصال',
+                    style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
