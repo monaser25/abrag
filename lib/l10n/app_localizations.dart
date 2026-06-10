@@ -134,6 +134,12 @@ abstract class AppLocalizations {
   /// **'دخول'**
   String get loginButton;
 
+  /// No description provided for @backToLogin.
+  ///
+  /// In ar, this message translates to:
+  /// **'العودة إلى تسجيل الدخول'**
+  String get backToLogin;
+
   /// No description provided for @requiredField.
   ///
   /// In ar, this message translates to:

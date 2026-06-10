@@ -43,6 +43,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.setBool('onboarding_completed', true);
+    // onboardingCompletedProvider caches its first read; refresh it so the
+    // router redirect sees the new flag instead of bouncing back here.
+    ref.invalidate(onboardingCompletedProvider);
     if (mounted) context.go('/login');
   }
 

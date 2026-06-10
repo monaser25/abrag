@@ -27,6 +27,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginButton => 'Login';
 
   @override
+  String get backToLogin => 'Back to login';
+
+  @override
   String get requiredField => 'Required';
 
   @override

@@ -6,6 +6,7 @@
   "emailLabel": "Email",
   "passwordLabel": "Password",
   "loginButton": "Login",
+  "backToLogin": "Back to login",
   "requiredField": "Required",
   "loginError": "Login error: {error}",
   "@loginError": {

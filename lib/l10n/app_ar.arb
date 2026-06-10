@@ -6,6 +6,7 @@
   "emailLabel": "البريد الإلكتروني",
   "passwordLabel": "كلمة المرور",
   "loginButton": "دخول",
+  "backToLogin": "العودة إلى تسجيل الدخول",
   "requiredField": "مطلوب",
   "loginError": "خطأ في تسجيل الدخول: {error}",
   "@loginError": {

@@ -27,6 +27,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loginButton => 'دخول';
 
   @override
+  String get backToLogin => 'العودة إلى تسجيل الدخول';
+
+  @override
   String get requiredField => 'مطلوب';
 
   @override

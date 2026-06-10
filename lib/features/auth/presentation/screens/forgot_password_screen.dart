@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -56,6 +57,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     return AppScaffold(
       appBar: const AbragAppBar(title: 'نسيت كلمة المرور'),
       body: Center(
@@ -100,6 +102,32 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   expand: true,
                   loading: _isLoading,
                   onPressed: _isLoading ? null : _resetPassword,
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => context.go('/login'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.arrow_back_ios_new,
+                              size: 14, color: colors.brand),
+                          const SizedBox(width: 6),
+                          Text(
+                            l10n.backToLogin,
+                            style: AppTextStyles.bodyS.copyWith(
+                              color: colors.brand,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

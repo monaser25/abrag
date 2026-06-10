@@ -43,7 +43,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final reduceMotion = MediaQuery.of(context).disableAnimations;
-    return AppScaffold(
+    // Flat bg (no gradient field) so the in-app splash is pixel-identical to
+    // the native launch splash (#080C24) and the handoff is seamless.
+    return Scaffold(
+      backgroundColor: colors.bg,
       body: Stack(
         children: [
           Center(
