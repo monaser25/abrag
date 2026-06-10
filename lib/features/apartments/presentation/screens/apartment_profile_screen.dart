@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/apartment_profile_provider.dart';
 import '../providers/apartments_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class ApartmentProfileScreen extends ConsumerStatefulWidget {
   final String apartmentId;
@@ -43,9 +46,9 @@ class _ApartmentProfileScreenState
     final theme = Theme.of(context);
     final formatter = DateFormat('EEEE yyyy-MM-dd', 'ar');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ملف الشقة'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'ملف الشقة',
         actions: [
           profileAsync.maybeWhen(
             data: (data) => PopupMenuButton<String>(
@@ -93,15 +96,20 @@ class _ApartmentProfileScreenState
         data: (data) {
           final isCleaning = data.apartment.cleaningStatus == 'needs_cleaning';
           final isOccupied = data.isOccupied;
+          final colors = context.colors;
 
-          Color statusColor = Colors.green;
+          // Same status semantics as before, token colors.
+          Color statusColor = colors.ok;
           String statusText = 'متاحة';
+          var statusKind = StatusChipKind.ok;
           if (isCleaning) {
-            statusColor = Colors.orange;
+            statusColor = colors.warn;
             statusText = 'تحتاج نظافة';
+            statusKind = StatusChipKind.warn;
           } else if (isOccupied) {
-            statusColor = theme.colorScheme.error;
+            statusColor = colors.err;
             statusText = 'مؤجرة';
+            statusKind = StatusChipKind.err;
           }
 
           return Padding(
@@ -112,13 +120,14 @@ class _ApartmentProfileScreenState
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.3,
-                        ),
+                      // Prototype status header: surface tinted by the
+                      // apartment's status color.
+                      color: Color.alphaBlend(
+                        statusColor.withValues(alpha: 0.14),
+                        colors.surface,
                       ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Column(
                       children: [
@@ -126,55 +135,20 @@ class _ApartmentProfileScreenState
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: theme.colorScheme.primaryContainer,
-                              width: 3,
-                            ),
-                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(24),
+                            color: statusColor.withValues(alpha: 0.18),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             data.apartment.apartmentNumber,
-                            style: theme.textTheme.headlineLarge?.copyWith(
-                              color: theme.colorScheme.primary,
+                            style: AppTextStyles.tabular(
+                              AppTextStyles.display
+                                  .copyWith(color: statusColor),
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.1),
-                            border: Border.all(
-                              color: statusColor.withValues(alpha: 0.3),
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: statusColor,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                statusText,
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: statusColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        StatusChip(kind: statusKind, label: statusText),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
                           onPressed: () {
@@ -196,11 +170,10 @@ class _ApartmentProfileScreenState
                                 : 'تغيير الحالة إلى: تحتاج نظافة',
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: isCleaning
-                                ? Colors.green
-                                : Colors.orange,
+                            foregroundColor:
+                                isCleaning ? colors.ok : colors.warn,
                             side: BorderSide(
-                              color: isCleaning ? Colors.green : Colors.orange,
+                              color: isCleaning ? colors.ok : colors.warn,
                             ),
                           ),
                         ),
@@ -584,15 +557,15 @@ class _ApartmentProfileScreenState
                                       children: [
                                         _SmallBadge(
                                           label: _statusLabel(booking.status),
-                                          color: theme.colorScheme.primary,
+                                          color: colors.brand,
                                         ),
                                         _SmallBadge(
                                           label: isCurrentResident
                                               ? 'ساكن'
                                               : 'غير ساكن',
                                           color: isCurrentResident
-                                              ? Colors.green
-                                              : Colors.grey,
+                                              ? colors.ok
+                                              : colors.ink3,
                                         ),
                                       ],
                                     ),
@@ -641,7 +614,7 @@ class _ApartmentProfileScreenState
                                   label: 'المدفوع',
                                   value:
                                       '${booking.amountPaidEgp.toDouble().toCurrencyFormat()} ج.م',
-                                  valueColor: Colors.green,
+                                  valueColor: colors.ok,
                                 ),
                                 if (remainingAmount > 0) ...[
                                   const SizedBox(height: 6),
@@ -650,7 +623,7 @@ class _ApartmentProfileScreenState
                                     label: 'عليه باقي',
                                     value:
                                         '${remainingAmount.toDouble().toCurrencyFormat()} ج.م',
-                                    valueColor: theme.colorScheme.error,
+                                    valueColor: colors.err,
                                   ),
                                 ],
                               ],
@@ -665,17 +638,23 @@ class _ApartmentProfileScreenState
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const LoadingSkeleton(),
+        error: (err, stack) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: '$err',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () =>
+              ref.invalidate(apartmentProfileProvider(widget.apartmentId)),
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab(
+        icon: Icons.money_off,
+        label: 'إضافة مصروف',
         onPressed: () {
           // Navigate to add expense
           // Note: In a real app we might pass the apartmentId as a query param.
           context.go('/expenses/add');
         },
-        icon: const Icon(Icons.money_off),
-        label: const Text('إضافة مصروف'),
       ),
     );
   }
@@ -863,17 +842,13 @@ class _ApartmentProfileScreenState
     bool isPrimary = false,
     bool isError = false,
   }) {
-    Color color = theme.colorScheme.onSurfaceVariant;
-    if (isPrimary) color = theme.colorScheme.primary;
-    if (isError) color = theme.colorScheme.error;
+    return Builder(builder: (context) {
+      final colors = context.colors;
+      Color color = colors.ink2;
+      if (isPrimary) color = colors.accent;
+      if (isError) color = colors.err;
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      return AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -882,9 +857,7 @@ class _ApartmentProfileScreenState
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
                 ),
                 Icon(icon, size: 20, color: color),
               ],
@@ -892,15 +865,16 @@ class _ApartmentProfileScreenState
             const SizedBox(height: 8),
             Text(
               value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
+              style: AppTextStyles.tabular(
+                AppTextStyles.h2.copyWith(color: color),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
 
   int _calendarDays(DateTime start, DateTime end) {
@@ -959,27 +933,27 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        Icon(icon, size: 15, color: colors.ink3),
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: TextStyle(color: valueColor, fontWeight: FontWeight.w600),
+            style: AppTextStyles.tabular(
+              AppTextStyles.bodyS.copyWith(
+                color: valueColor ?? colors.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ],

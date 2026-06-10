@@ -10,7 +10,10 @@ import '../providers/bookings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
   final String bookingId;
@@ -23,28 +26,26 @@ class BookingDetailsScreen extends ConsumerWidget {
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final brokersAsync = ref.watch(brokersProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل الحجز'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/summer_bookings/list');
-            }
-          },
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'تفاصيل الحجز',
+        showBack: true,
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/summer_bookings/list');
+          }
+        },
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
+          AppIconButton(
+            icon: Icons.edit_outlined,
             onPressed: () {
               context.go('/summer_bookings/edit/$bookingId');
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete),
+          AppIconButton(
+            icon: Icons.delete_outline,
             onPressed: () {
               showDialog(
                 context: context,
@@ -102,39 +103,50 @@ class BookingDetailsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             children: [
               if (remainingAmount > 0) ...[
-                Card(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.warning_amber,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
+                Builder(builder: (context) {
+                  final colors = context.colors;
+                  return AppCard(
+                    color: Color.alphaBlend(colors.errSoft, colors.surface),
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber, color: colors.err),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'العميل عليه باقي فلوس',
+                                style: AppTextStyles.title
+                                    .copyWith(color: colors.err),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'المتبقي ${remainingAmount.toCurrencyFormat()} ج.م. الرجاء تسديدها قبل التسليم.',
+                                style: AppTextStyles.bodyS
+                                    .copyWith(color: colors.ink2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        AppButton(
+                          label: 'تسديد',
+                          small: true,
+                          onPressed: () => _showPaymentSheet(
+                            context,
+                            ref,
+                            bookingId: booking.id,
+                            currentPaid: booking.amountPaidEgp,
+                            remainingAmount: remainingAmount.toDouble(),
+                            totalAmount: baseBookingTotal.toDouble(),
+                          ),
+                        ),
+                      ],
                     ),
-                    title: Text(
-                      'العميل عليه باقي فلوس',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'المتبقي ${remainingAmount.toCurrencyFormat()} ج.م. الرجاء تسديدها قبل التسليم.',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                      ),
-                    ),
-                    trailing: FilledButton(
-                      onPressed: () => _showPaymentSheet(
-                        context,
-                        ref,
-                        bookingId: booking.id,
-                        currentPaid: booking.amountPaidEgp,
-                        remainingAmount: remainingAmount.toDouble(),
-                        totalAmount: baseBookingTotal.toDouble(),
-                      ),
-                      child: const Text('تسديد'),
-                    ),
-                  ),
-                ),
+                  );
+                }),
                 const SizedBox(height: 16),
               ],
               _buildSection(
@@ -464,8 +476,13 @@ class BookingDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        loading: () => const LoadingSkeleton(),
+        error: (err, stack) => ErrorState(
+          title: 'تعذّر تحميل البيانات',
+          message: '$err',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(allSummerBookingsProvider),
+        ),
       ),
     );
   }
@@ -696,28 +713,24 @@ class BookingDetailsScreen extends ConsumerWidget {
     required IconData icon,
     required List<Widget> children,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            ...children,
-          ],
-        ),
+    final colors = context.colors;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconTile(icon: icon, tint: colors.brand, size: 34, iconSize: 17),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: AppTextStyles.h3.copyWith(color: colors.ink),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          ...children,
+        ],
       ),
     );
   }
@@ -729,6 +742,7 @@ class BookingDetailsScreen extends ConsumerWidget {
     bool isHighlight = false,
     Color? valueColor,
   }) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -738,23 +752,20 @@ class BookingDetailsScreen extends ConsumerWidget {
             flex: 2,
             child: Text(
               label,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
             ),
           ),
           Expanded(
             flex: 3,
             child: Text(
               value,
-              style: isHighlight
-                  ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color:
-                          valueColor ?? Theme.of(context).colorScheme.primary,
-                    )
-                  : Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: valueColor),
+              style: AppTextStyles.tabular(
+                (isHighlight ? AppTextStyles.title : AppTextStyles.body)
+                    .copyWith(
+                  color: valueColor ??
+                      (isHighlight ? colors.accent : colors.ink),
+                ),
+              ),
               textAlign: TextAlign.end,
             ),
           ),

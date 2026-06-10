@@ -4,7 +4,10 @@ import '../models/winter_payment_status.dart';
 import '../providers/contract_payment_controller.dart';
 import '../providers/contracts_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class WinterPaymentHistoryScreen extends ConsumerStatefulWidget {
   final String contractId;
@@ -152,8 +155,8 @@ class _WinterPaymentHistoryScreenState
     final contractsAsync = ref.watch(allWinterContractsProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('سجل المدفوعات')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'سجل المدفوعات'),
       body: Column(
         children: [
           // Header summary
@@ -174,8 +177,12 @@ class _WinterPaymentHistoryScreenState
                   payments,
                 );
                 return Container(
+                  margin: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 0),
                   padding: const EdgeInsets.all(16),
-                  color: theme.colorScheme.surfaceContainerHighest,
+                  decoration: BoxDecoration(
+                    color: context.colors.surface2,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -323,94 +330,91 @@ class _WinterPaymentHistoryScreenState
                 }
 
                 if (payments.isEmpty) {
-                  return const Center(child: Text('لا توجد مدفوعات مسجلة'));
+                  return const EmptyState(
+                    icon: Icons.payments_outlined,
+                    title: 'لا توجد مدفوعات مسجلة',
+                  );
                 }
 
                 // Sort newest first
                 final sortedPayments = List.of(payments)
                   ..sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: sortedPayments.length,
-                  itemBuilder: (context, index) {
-                    final payment = sortedPayments[index];
-                    final lateInfo = contract == null
-                        ? null
-                        : lateInfoForWinterPayment(contract, payments, payment);
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: theme.colorScheme.secondary
-                              .withValues(alpha: 0.2),
-                          child: Icon(
-                            Icons.check,
-                            color: theme.colorScheme.secondary,
-                          ),
-                        ),
-                        title: Text(
-                          '${payment.amountEgp.toCurrencyFormat()} ج.م',
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              payment.paymentDate.toLocal().toString().split(
-                                ' ',
-                              )[0],
-                            ),
-                            if (lateInfo != null) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                lateInfo.label,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: lateInfo.isLate
-                                      ? theme.colorScheme.error
-                                      : Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                final colors = context.colors;
+                return ListView(
+                  padding:
+                      const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 90),
+                  children: [
+                    PaymentTimeline(
+                      entries: [
+                        for (final payment in sortedPayments)
+                          () {
+                            final lateInfo = contract == null
+                                ? null
+                                : lateInfoForWinterPayment(
+                                    contract, payments, payment);
+                            final dateText = payment.paymentDate
+                                .toLocal()
+                                .toString()
+                                .split(' ')[0];
+                            final subtitle = lateInfo == null
+                                ? dateText
+                                : '$dateText\n${lateInfo.label}\nتاريخ الاستحقاق: ${lateInfo.dueDate.toLocal().toString().split(' ')[0]}';
+                            return PaymentTimelineEntry(
+                              title:
+                                  '${payment.amountEgp.toCurrencyFormat()} ج.م',
+                              subtitle: subtitle,
+                              state: TimelineNodeState.paid,
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  StatusChip(
+                                    kind: lateInfo?.isLate == true
+                                        ? StatusChipKind.warn
+                                        : StatusChipKind.ok,
+                                    icon: Icons.check,
+                                    label: 'تم الدفع',
+                                  ),
+                                  AppIconButton(
+                                    icon: Icons.edit_outlined,
+                                    onPressed: () => _showAddPaymentDialog(
+                                        payment: payment),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'تاريخ الاستحقاق: ${lateInfo.dueDate.toLocal().toString().split(' ')[0]}',
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ],
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'تم الدفع',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 20),
-                              onPressed: () =>
-                                  _showAddPaymentDialog(payment: payment),
-                            ),
-                          ],
+                            );
+                          }(),
+                      ],
+                    ),
+                    if (sortedPayments.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '${sortedPayments.length} دفعة مسجلة',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.caption
+                              .copyWith(color: colors.ink3),
                         ),
                       ),
-                    );
-                  },
+                  ],
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+              loading: () => const LoadingSkeleton(),
+              error: (err, stack) => ErrorState(
+                title: 'تعذّر تحميل البيانات',
+                message: '$err',
+                retryLabel: 'إعادة المحاولة',
+                onRetry: () => ref
+                    .invalidate(contractPaymentsProvider(widget.contractId)),
+              ),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AppFab(
+        icon: Icons.add_card,
+        label: 'تسجيل دفعة',
         onPressed: () => _showAddPaymentDialog(),
-        icon: const Icon(Icons.add_card),
-        label: const Text('تسجيل دفعة'),
       ),
     );
   }
@@ -429,25 +433,24 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = isError ? theme.colorScheme.error : theme.colorScheme.primary;
+    final colors = context.colors;
+    final color = isError ? colors.err : colors.winter;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: theme.textTheme.labelSmall),
+          Text(label,
+              style: AppTextStyles.caption.copyWith(color: colors.ink3)),
           Text(
             value,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
+            style: AppTextStyles.tabular(
+              AppTextStyles.label.copyWith(color: color),
             ),
           ),
         ],
