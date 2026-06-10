@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -119,17 +122,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       });
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('التقارير'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'التقارير',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_alt_off),
+          AppIconButton(
+            icon: Icons.filter_alt_off,
             tooltip: 'مسح الفلاتر',
             onPressed: _clearFilters,
           ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
+          AppIconButton(
+            icon: Icons.picture_as_pdf,
             onPressed: () {
               context.push('/reports/statement', extra: _currentFilters());
             },
@@ -224,21 +227,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 SliverToBoxAdapter(
-                  child: OutlinedButton.icon(
+                  child: AppButton(
+                    label: 'إنشاء كشف حساب PDF',
+                    icon: Icons.picture_as_pdf,
+                    variant: AppButtonVariant.outline,
+                    expand: true,
                     onPressed: () => context.push(
                       '/reports/statement',
                       extra: activeFilters,
                     ),
-                    icon: const Icon(Icons.picture_as_pdf),
-                    label: const Text('إنشاء كشف حساب PDF'),
                   ),
                 ),
               ],
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذر تحميل التقارير',
+          message: 'Error: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(financialReportProvider),
+        ),
       ),
     );
   }
@@ -264,18 +274,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   Widget _buildSeasonQuickFilter(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
+    final colors = context.colors;
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'عرض حسب الموسم',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.title.copyWith(color: colors.ink),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
@@ -295,20 +302,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               onChanged: (value) => setState(() => _filter = value ?? 'all'),
             ),
           ],
-        ),
       ),
     );
   }
 
   Widget _buildMiniStat(
-    ThemeData theme,
+    AbragColors colors,
     String label,
     String value, {
     VoidCallback? onTap,
   }) {
-    return InkWell(
+    return Tappable(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Column(
@@ -316,18 +321,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.caption.copyWith(color: colors.ink3),
             ),
             const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.tabular(
+                  AppTextStyles.title.copyWith(color: colors.brand),
                 ),
               ),
             ),
@@ -348,23 +350,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildTapHint(ThemeData theme) {
+  Widget _buildTapHint(AbragColors colors) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.touch_app,
-            size: 14,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(Icons.touch_app, size: 14, color: colors.ink3),
           const SizedBox(width: 4),
           Text(
             'اضغط للتفاصيل',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
           ),
         ],
       ),
@@ -429,11 +425,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     required double companyVault,
     required ReportFilterState activeFilters,
   }) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    final colors = context.colors;
+    return AppCard(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -441,23 +435,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 Expanded(
                   child: Text(
                     'الملخص المالي',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTextStyles.h3.copyWith(color: colors.ink),
                   ),
                 ),
-                IconButton.filledTonal(
+                AppIconButton(
                   tooltip: 'فتح الخزنة',
                   onPressed: () => context.push('/financial_transfers'),
-                  icon: const Icon(Icons.account_balance_wallet),
+                  icon: Icons.account_balance_wallet_outlined,
                 ),
                 const SizedBox(width: 8),
-                IconButton.filledTonal(
+                AppIconButton(
                   tooltip: _hideNumbers ? 'إظهار الأرقام' : 'إخفاء الأرقام',
                   onPressed: _toggleHideNumbers,
-                  icon: Icon(
-                    _hideNumbers ? Icons.visibility : Icons.visibility_off,
-                  ),
+                  icon: _hideNumbers ? Icons.visibility : Icons.visibility_off,
                 ),
               ],
             ),
@@ -469,7 +459,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     title: 'الإيرادات',
                     value: _privateValue('${revenue.toCurrencyFormat()} ج.م'),
                     icon: Icons.trending_up,
-                    color: Colors.green,
+                    color: colors.ok,
                     onTap: () => _openStatement(
                       context,
                       _statementFilters(
@@ -485,7 +475,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     title: 'المصروفات',
                     value: _privateValue('${expenses.toCurrencyFormat()} ج.م'),
                     icon: Icons.trending_down,
-                    color: theme.colorScheme.error,
+                    color: colors.err,
                     onTap: () => _openStatement(
                       context,
                       _statementFilters(
@@ -502,26 +492,24 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               title: 'صافي الربح',
               value: _privateValue('${profit.toCurrencyFormat()} ج.م'),
               icon: Icons.account_balance_wallet,
-              color: theme.colorScheme.primary,
+              color: colors.accent,
               onTap: () => _openStatement(context, activeFilters),
             ),
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: _buildTapHint(theme),
+              child: _buildTapHint(colors),
             ),
             const SizedBox(height: 16),
             Text(
               'تفاصيل الإيرادات والخزنة الحالية',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.title.copyWith(color: colors.ink),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: _buildMiniStat(
-                    theme,
+                    colors,
                     'نقدية حالية',
                     _privateValue('${cash.toCurrencyFormat()} ج.م'),
                     onTap: () => _openStatement(
@@ -534,14 +522,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     ),
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 42,
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                ),
+                Container(width: 1, height: 42, color: colors.border),
                 Expanded(
                   child: _buildMiniStat(
-                    theme,
+                    colors,
                     'فودافون كاش',
                     _privateValue('${vodafoneCash.toCurrencyFormat()} ج.م'),
                     onTap: () => _openStatement(
@@ -554,14 +538,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     ),
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 42,
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                ),
+                Container(width: 1, height: 42, color: colors.border),
                 Expanded(
                   child: _buildMiniStat(
-                    theme,
+                    colors,
                     'إنستاباي',
                     _privateValue('${instapay.toCurrencyFormat()} ج.م'),
                     onTap: () => _openStatement(
@@ -581,11 +561,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               title: 'خزنة الشركة',
               value: _privateValue('${companyVault.toCurrencyFormat()} ج.م'),
               icon: Icons.account_balance,
-              color: Colors.blueGrey,
+              color: colors.winter,
               onTap: () => context.push('/financial_transfers'),
             ),
           ],
-        ),
       ),
     );
   }
@@ -1066,19 +1045,33 @@ class _DashboardShortcutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-          child: Icon(icon, color: theme.colorScheme.primary),
-        ),
-        title: Text(title),
-        subtitle: Text(description),
-        trailing: const Icon(Icons.chevron_left),
-        onTap: onTap,
-        textColor: theme.colorScheme.onSurface,
+    final colors = context.colors;
+    return AppCard(
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IconTile(icon: icon, tint: colors.brand),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.title.copyWith(color: colors.ink),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  description,
+                  style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_left, color: colors.ink3),
+        ],
       ),
     );
   }
@@ -1101,11 +1094,10 @@ class _MoneyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final borderRadius = BorderRadius.circular(16);
-    return InkWell(
+    return Tappable(
       onTap: onTap,
-      borderRadius: borderRadius,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -1115,10 +1107,7 @@ class _MoneyTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: color.withValues(alpha: 0.12),
-              child: Icon(icon, color: color),
-            ),
+            IconTile(icon: icon, tint: color),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -1126,9 +1115,7 @@ class _MoneyTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.label.copyWith(color: colors.ink2),
                   ),
                   const SizedBox(height: 4),
                   FittedBox(
@@ -1136,8 +1123,8 @@ class _MoneyTile extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Text(
                       value,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: AppTextStyles.tabular(
+                        AppTextStyles.h3.copyWith(color: colors.ink),
                       ),
                     ),
                   ),

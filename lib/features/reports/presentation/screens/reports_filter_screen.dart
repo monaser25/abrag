@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -117,13 +118,13 @@ class _ReportsFilterScreenState extends ConsumerState<ReportsFilterScreen> {
         ? _selectedPartyKey
         : 'all';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('فلاتر وتحكم'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'فلاتر وتحكم',
         actions: [
-          IconButton(
+          AppIconButton(
             onPressed: _clear,
-            icon: const Icon(Icons.filter_alt_off),
+            icon: Icons.filter_alt_off,
             tooltip: 'مسح الفلاتر',
           ),
         ],
@@ -131,10 +132,8 @@ class _ReportsFilterScreenState extends ConsumerState<ReportsFilterScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+          AppCard(
+            child: Column(
                 children: [
                   buildingsAsync.when(
                     data: (buildings) => DropdownButtonFormField<String>(
@@ -330,27 +329,27 @@ class _ReportsFilterScreenState extends ConsumerState<ReportsFilterScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton.icon(
+                  AppButton(
+                    label: _startDate == null
+                        ? 'اختيار الفترة'
+                        : '${_startDate!.month}/${_startDate!.year} - ${_endDate!.month}/${_endDate!.year}',
+                    icon: Icons.date_range,
+                    variant: AppButtonVariant.outline,
+                    expand: true,
                     onPressed: _selectDateRange,
-                    icon: const Icon(Icons.date_range),
-                    label: Text(
-                      _startDate == null
-                          ? 'اختيار الفترة'
-                          : '${_startDate!.month}/${_startDate!.year} - ${_endDate!.month}/${_endDate!.year}',
-                    ),
                   ),
                 ],
               ),
-            ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
+          AppButton(
+            label: 'تطبيق الفلاتر وعرض PDF',
+            icon: Icons.picture_as_pdf,
+            expand: true,
             onPressed: () => context.push(
               '/reports/statement/preview',
               extra: _filters.copyWith(selectedPartyKey: selectedPartyKey),
             ),
-            icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('تطبيق الفلاتر وعرض PDF'),
           ),
         ],
       ),

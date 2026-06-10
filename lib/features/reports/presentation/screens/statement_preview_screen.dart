@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import '../../../../core/services/audit_log_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
@@ -22,8 +23,8 @@ class StatementPreviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(financialReportProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('معاينة كشف الحساب PDF')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'معاينة كشف الحساب PDF'),
       body: reportAsync.when(
         data: (report) {
           final filtered = ReportCalculator.filteredTransactions(
@@ -106,8 +107,13 @@ class StatementPreviewScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذر تحميل كشف الحساب',
+          message: 'Error: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(financialReportProvider),
+        ),
       ),
     );
   }

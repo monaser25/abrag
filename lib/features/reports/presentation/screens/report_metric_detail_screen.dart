@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
@@ -28,8 +31,8 @@ class ReportMetricDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(financialReportProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text('تفاصيل ${kind.title}')),
+    return AppScaffold(
+      appBar: AbragAppBar(title: 'تفاصيل ${kind.title}'),
       body: reportAsync.when(
         data: (report) {
           final rentals = _rentals(report);
@@ -102,20 +105,21 @@ class ReportMetricDetailScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
+                    child: AppButton(
+                      label: 'مشاركة PDF',
+                      icon: Icons.share,
                       onPressed: () =>
                           _sharePdf(title, rentals, transactions, works, ref),
-                      icon: const Icon(Icons.share),
-                      label: const Text('مشاركة PDF'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: AppButton(
+                      label: 'طباعة / حفظ',
+                      icon: Icons.print,
+                      variant: AppButtonVariant.outline,
                       onPressed: () =>
                           _printPdf(title, rentals, transactions, works, ref),
-                      icon: const Icon(Icons.print),
-                      label: const Text('طباعة / حفظ'),
                     ),
                   ),
                 ],
@@ -137,8 +141,13 @@ class ReportMetricDetailScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذر تحميل التفاصيل',
+          message: 'Error: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(financialReportProvider),
+        ),
       ),
     );
   }
@@ -330,51 +339,43 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.14,
-                  ),
-                  child: Icon(
-                    Icons.analytics,
-                    color: theme.colorScheme.primary,
-                  ),
+    final colors = context.colors;
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconTile(icon: Icons.analytics, tint: colors.brand),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.h2.copyWith(color: colors.ink),
+                    ),
+                    Text(
+                      subtitle,
+                      style:
+                          AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(subtitle, style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: rows
-                  .map((row) => _DetailPill(label: row.$1, value: row.$2))
-                  .toList(),
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          Divider(height: 24, color: colors.border),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: rows
+                .map((row) => _DetailPill(label: row.$1, value: row.$2))
+                .toList(),
+          ),
+        ],
       ),
     );
   }
@@ -388,29 +389,25 @@ class _DetailPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Container(
       constraints: const BoxConstraints(minWidth: 130),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.35,
-        ),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
-        ),
+        color: colors.surface2,
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: theme.textTheme.labelSmall),
+          Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
           const SizedBox(height: 4),
           Text(
             value,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: AppTextStyles.tabular(
+              AppTextStyles.title.copyWith(color: colors.ink),
             ),
           ),
         ],
@@ -436,46 +433,44 @@ class _AdminNotesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'معلومات إدارية',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+    final colors = context.colors;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'معلومات إدارية',
+            style: AppTextStyles.title.copyWith(color: colors.ink),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _DetailPill(
+                label: 'متوسط القيمة الإيجارية',
+                value: '${averageRental.toCurrencyFormat()} ج.م',
+              ),
+              _DetailPill(
+                label: 'متوسط المدفوع',
+                value: '${averagePaid.toCurrencyFormat()} ج.م',
+              ),
+              _DetailPill(
+                label: 'عمليات مالية مرتبطة',
+                value: '$transactionsCount',
+              ),
+              _DetailPill(label: 'أعمال عمال مرتبطة', value: '$worksCount'),
+            ],
+          ),
+          if (rentalsCount == 0 && transactionsCount == 0 && worksCount == 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                'لا توجد بيانات مرتبطة بالفلاتر الحالية.',
+                style: AppTextStyles.body.copyWith(color: colors.ink2),
               ),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _DetailPill(
-                  label: 'متوسط القيمة الإيجارية',
-                  value: '${averageRental.toCurrencyFormat()} ج.م',
-                ),
-                _DetailPill(
-                  label: 'متوسط المدفوع',
-                  value: '${averagePaid.toCurrencyFormat()} ج.م',
-                ),
-                _DetailPill(
-                  label: 'عمليات مالية مرتبطة',
-                  value: '$transactionsCount',
-                ),
-                _DetailPill(label: 'أعمال عمال مرتبطة', value: '$worksCount'),
-              ],
-            ),
-            if (rentalsCount == 0 && transactionsCount == 0 && worksCount == 0)
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: Text('لا توجد بيانات مرتبطة بالفلاتر الحالية.'),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -513,6 +508,7 @@ class _TransactionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return _SectionCard(
       title: 'العمليات المالية',
       emptyText: 'لا توجد عمليات مالية مرتبطة',
@@ -522,6 +518,11 @@ class _TransactionsSection extends StatelessWidget {
           subtitle: Text(transaction.date.toLocal().toString().split(' ')[0]),
           trailing: Text(
             '${transaction.isRevenue ? '+' : '-'} ${transaction.amount.toCurrencyFormat()} ج.م',
+            style: AppTextStyles.tabular(
+              AppTextStyles.label.copyWith(
+                color: transaction.isRevenue ? colors.ok : colors.err,
+              ),
+            ),
           ),
         );
       }).toList(),
@@ -565,21 +566,36 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: children.isNotEmpty,
-        title: Text(title),
-        subtitle: Text(
-          children.isEmpty ? emptyText : '${children.length} عنصر',
+    final colors = context.colors;
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: ExpansionTile(
+          initiallyExpanded: children.isNotEmpty,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          title: Text(
+            title,
+            style: AppTextStyles.title.copyWith(color: colors.ink),
+          ),
+          subtitle: Text(
+            children.isEmpty ? emptyText : '${children.length} عنصر',
+            style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+          ),
+          children: children.isEmpty
+              ? [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      emptyText,
+                      style: AppTextStyles.body.copyWith(color: colors.ink2),
+                    ),
+                  ),
+                ]
+              : children,
         ),
-        children: children.isEmpty
-            ? [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(emptyText),
-                ),
-              ]
-            : children,
       ),
     );
   }

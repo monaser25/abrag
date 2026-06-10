@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../models/report_view_models.dart';
 import '../providers/reports_provider.dart';
 
@@ -18,9 +21,10 @@ class ReportStatisticsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(financialReportProvider);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('ملخص الإحصائيات')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'ملخص الإحصائيات'),
       body: reportAsync.when(
         data: (report) {
           final rentals = ReportCalculator.filteredRentals(report, filters);
@@ -46,7 +50,7 @@ class ReportStatisticsScreen extends ConsumerWidget {
                     ? 'لا يوجد'
                     : '${topSummerApartment.label} - تم تأجيرها ${topSummerApartment.count} مرات',
                 icon: Icons.beach_access,
-                color: Colors.orange,
+                color: colors.summer,
                 onTap: () => context.push(
                   '/reports/details/${ReportDetailKind.apartments.key}',
                   extra: filters.copyWith(season: 'summer'),
@@ -58,7 +62,7 @@ class ReportStatisticsScreen extends ConsumerWidget {
                     ? 'لا يوجد'
                     : '${topApartment.label} - إجمالي الإيراد ${topApartment.rentalValue.toCurrencyFormat()} ج.م',
                 icon: Icons.apartment,
-                color: Colors.blue,
+                color: colors.brand,
                 onTap: () => context.push(
                   '/reports/details/${ReportDetailKind.apartments.key}',
                   extra: filters,
@@ -70,7 +74,7 @@ class ReportStatisticsScreen extends ConsumerWidget {
                     ? 'لا يوجد'
                     : '${lowApartment.label} - إجمالي الإيراد ${lowApartment.rentalValue.toCurrencyFormat()} ج.م',
                 icon: Icons.trending_down,
-                color: Theme.of(context).colorScheme.error,
+                color: colors.err,
                 onTap: () => context.push(
                   '/reports/details/${ReportDetailKind.apartments.key}',
                   extra: filters,
@@ -82,7 +86,7 @@ class ReportStatisticsScreen extends ConsumerWidget {
                     ? 'لا يوجد'
                     : '${topFloor.label} - إجمالي الإيراد ${topFloor.rentalValue.toCurrencyFormat()} ج.م',
                 icon: Icons.layers,
-                color: Colors.teal,
+                color: colors.winter,
                 onTap: () => context.push(
                   '/reports/details/${ReportDetailKind.floors.key}',
                   extra: filters,
@@ -94,7 +98,7 @@ class ReportStatisticsScreen extends ConsumerWidget {
                     ? 'لا يوجد'
                     : '${lowFloor.label} - إجمالي الإيراد ${lowFloor.rentalValue.toCurrencyFormat()} ج.م',
                 icon: Icons.layers_clear,
-                color: Colors.brown,
+                color: colors.warn,
                 onTap: () => context.push(
                   '/reports/details/${ReportDetailKind.floors.key}',
                   extra: filters,
@@ -103,8 +107,13 @@ class ReportStatisticsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذر تحميل الإحصائيات',
+          message: 'Error: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(financialReportProvider),
+        ),
       ),
     );
   }
@@ -127,49 +136,38 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
+    final colors = context.colors;
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: color.withValues(alpha: 0.12),
-                child: Icon(icon, color: color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(value, style: theme.textTheme.bodyLarge),
-                    const SizedBox(height: 8),
-                    Text(
-                      'اضغط لعرض التقرير التفصيلي',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IconTile(icon: icon, tint: color, size: 48, iconSize: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.title.copyWith(color: colors.ink),
                 ),
-              ),
-              const Icon(Icons.chevron_left),
-            ],
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: AppTextStyles.body.copyWith(color: colors.ink2),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'اضغط لعرض التقرير التفصيلي',
+                  style: AppTextStyles.caption.copyWith(color: colors.brand),
+                ),
+              ],
+            ),
           ),
-        ),
+          Icon(Icons.chevron_left, color: colors.ink3),
+        ],
       ),
     );
   }

@@ -27,6 +27,7 @@ class AppTextField extends StatelessWidget {
     this.onTap,
     this.focusNode,
     this.textDirection,
+    this.autofocus = false,
   });
 
   final String? label;
@@ -46,6 +47,7 @@ class AppTextField extends StatelessWidget {
   final VoidCallback? onTap;
   final FocusNode? focusNode;
   final TextDirection? textDirection;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +66,7 @@ class AppTextField extends StatelessWidget {
       onTap: onTap,
       focusNode: focusNode,
       textDirection: textDirection,
+      autofocus: autofocus,
       style: AppTextStyles.body.copyWith(fontSize: 15, color: colors.ink),
       decoration: InputDecoration(
         hintText: hint,

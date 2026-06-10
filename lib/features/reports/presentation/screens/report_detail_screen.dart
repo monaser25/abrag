@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
 
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../domain/services/pdf_export_service.dart';
 import '../models/report_view_models.dart';
@@ -26,8 +29,8 @@ class ReportDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(financialReportProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(kind.title)),
+    return AppScaffold(
+      appBar: AbragAppBar(title: kind.title),
       body: reportAsync.when(
         data: (report) {
           final metrics = ReportCalculator.metricsFor(kind, report, filters);
@@ -69,33 +72,32 @@ class ReportDetailScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
+                    child: AppButton(
+                      label: 'مشاركة PDF',
+                      icon: Icons.share,
                       onPressed: metrics.isEmpty
                           ? null
                           : () => _sharePdf(metrics, ref),
-                      icon: const Icon(Icons.share),
-                      label: const Text('مشاركة PDF'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: AppButton(
+                      label: 'طباعة / حفظ PDF',
+                      icon: Icons.print,
+                      variant: AppButtonVariant.outline,
                       onPressed: metrics.isEmpty
                           ? null
                           : () => _printPdf(metrics, ref),
-                      icon: const Icon(Icons.print),
-                      label: const Text('طباعة / حفظ PDF'),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               if (metrics.isEmpty)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(kind.emptyText, textAlign: TextAlign.center),
-                  ),
+                EmptyState(
+                  icon: Icons.insert_chart_outlined,
+                  title: kind.emptyText,
                 )
               else
                 ...metrics.map(
@@ -111,8 +113,13 @@ class ReportDetailScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذر تحميل التقرير',
+          message: 'Error: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(financialReportProvider),
+        ),
       ),
     );
   }
@@ -220,80 +227,73 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.14,
-                  ),
-                  child: Icon(_icon, color: theme.colorScheme.primary),
+    final colors = context.colors;
+    return AppCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconTile(icon: _icon, tint: colors.brand),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.h3.copyWith(color: colors.ink),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      dateRange,
+                      style:
+                          AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(dateRange, style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _description,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
               ),
-            ),
-            const Divider(height: 24),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _MiniTotal(label: 'عدد', value: '$totalCount'),
-                if (kind == ReportDetailKind.apartments ||
-                    kind == ReportDetailKind.floors)
-                  _MiniTotal(
-                    label: 'مدفوع',
-                    value: '${totalPaid.toCurrencyFormat()} ج.م',
-                  ),
-                if (kind == ReportDetailKind.apartments ||
-                    kind == ReportDetailKind.floors ||
-                    kind == ReportDetailKind.brokers)
-                  _MiniTotal(
-                    label: 'قيمة إيجارية',
-                    value: '${totalRental.toCurrencyFormat()} ج.م',
-                  ),
-                if (kind == ReportDetailKind.brokers)
-                  _MiniTotal(
-                    label: 'عمولات',
-                    value: '${totalCommission.toCurrencyFormat()} ج.م',
-                  ),
-                if (kind == ReportDetailKind.workers ||
-                    kind == ReportDetailKind.expenses)
-                  _MiniTotal(
-                    label: 'إجمالي',
-                    value: '${totalCost.toCurrencyFormat()} ج.م',
-                  ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _description,
+            style: AppTextStyles.body.copyWith(color: colors.ink2),
+          ),
+          Divider(height: 24, color: colors.border),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _MiniTotal(label: 'عدد', value: '$totalCount'),
+              if (kind == ReportDetailKind.apartments ||
+                  kind == ReportDetailKind.floors)
+                _MiniTotal(
+                  label: 'مدفوع',
+                  value: '${totalPaid.toCurrencyFormat()} ج.م',
+                ),
+              if (kind == ReportDetailKind.apartments ||
+                  kind == ReportDetailKind.floors ||
+                  kind == ReportDetailKind.brokers)
+                _MiniTotal(
+                  label: 'قيمة إيجارية',
+                  value: '${totalRental.toCurrencyFormat()} ج.م',
+                ),
+              if (kind == ReportDetailKind.brokers)
+                _MiniTotal(
+                  label: 'عمولات',
+                  value: '${totalCommission.toCurrencyFormat()} ج.م',
+                ),
+              if (kind == ReportDetailKind.workers ||
+                  kind == ReportDetailKind.expenses)
+                _MiniTotal(
+                  label: 'إجمالي',
+                  value: '${totalCost.toCurrencyFormat()} ج.م',
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -337,21 +337,24 @@ class _MiniTotal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.35,
-        ),
+        color: colors.surface2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: theme.textTheme.labelSmall),
-          Text(value, style: theme.textTheme.titleSmall),
+          Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          Text(
+            value,
+            style: AppTextStyles.tabular(
+              AppTextStyles.title.copyWith(color: colors.ink),
+            ),
+          ),
         ],
       ),
     );
@@ -371,67 +374,52 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
+    final colors = context.colors;
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      metric.label,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    _mainValue,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: Text(
+                  metric.label,
+                  style: AppTextStyles.title.copyWith(color: colors.ink),
+                ),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _chips
-                    .map((chip) => _MetricPill(label: chip.$1, value: chip.$2))
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'اضغط لعرض العمليات والحجوزات المرتبطة',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.chevron_left),
-                ],
+              Text(
+                _mainValue,
+                style: AppTextStyles.tabular(
+                  AppTextStyles.title.copyWith(color: colors.accent),
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _chips
+                .map((chip) => _MetricPill(label: chip.$1, value: chip.$2))
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 16, color: colors.ink3),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'اضغط لعرض العمليات والحجوزات المرتبطة',
+                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                ),
+              ),
+              Icon(Icons.chevron_left, color: colors.ink3),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -486,24 +474,22 @@ class _MetricPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.35,
-        ),
+        color: colors.surface2,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: theme.textTheme.labelSmall),
+          Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
           Text(
             value,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: AppTextStyles.tabular(
+              AppTextStyles.label.copyWith(color: colors.ink),
             ),
           ),
         ],
