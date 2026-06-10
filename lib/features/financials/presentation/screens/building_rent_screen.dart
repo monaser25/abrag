@@ -39,9 +39,19 @@ class BuildingRentScreen extends ConsumerWidget {
                 String formattedDates = 'غير محدد';
                 if (rawDates.isNotEmpty) {
                   try {
-                    final d = rawDates.split(',').map((e) => DateTime.parse(e.trim())).toList();
+                    final d = rawDates
+                        .split(',')
+                        .map((e) => DateTime.parse(e.trim()))
+                        .toList();
                     d.sort();
-                    formattedDates = d.asMap().entries.map((e) => 'القسط ${e.key + 1}: ${e.value.toLocal().toString().split(' ')[0]}').join('\n');
+                    formattedDates = d
+                        .asMap()
+                        .entries
+                        .map(
+                          (e) =>
+                              'القسط ${e.key + 1}: ${e.value.toLocal().toString().split(' ')[0]}',
+                        )
+                        .join('\n');
                   } catch (e) {
                     formattedDates = rawDates; // fallback to old format
                   }
@@ -67,60 +77,40 @@ class BuildingRentScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'الإيجار السنوي:',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            Text(
-                              '${annualRent.toCurrencyFormat()} ج.م',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        _metricRow(
+                          label: 'الإيجار السنوي:',
+                          value: '${annualRent.toCurrencyFormat()} ج.م',
+                          labelStyle: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                          valueStyle: theme.textTheme.titleLarge?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'المدفوع:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            Text(
-                              '${totalPaid.toCurrencyFormat()} ج.م',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        _metricRow(
+                          label: 'المدفوع:',
+                          value: '${totalPaid.toCurrencyFormat()} ج.م',
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                          valueStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'المتبقي:',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            Text(
+                        _metricRow(
+                          label: 'المتبقي:',
+                          value:
                               '${remaining.toDouble().toCurrencyFormat()} ج.م',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.error,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                          labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                          valueStyle: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const Divider(),
                         Text(
@@ -134,6 +124,7 @@ class BuildingRentScreen extends ConsumerWidget {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onPrimaryContainer,
                           ),
+                          softWrap: true,
                         ),
                       ],
                     ),
@@ -156,6 +147,9 @@ class BuildingRentScreen extends ConsumerWidget {
                   itemCount: rents.length,
                   itemBuilder: (context, index) {
                     final rent = rents[index];
+                    final paidAmount =
+                        '${(rent.amountEgp - rent.discountEgp).toCurrencyFormat()} ج.م';
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: Padding(
@@ -163,100 +157,189 @@ class BuildingRentScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final compact = constraints.maxWidth < 360;
+                                final details = Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     CircleAvatar(
-                                          backgroundColor: theme.colorScheme.primary
-                                              .withValues(alpha: 0.1),
-                                          child: Icon(
-                                            Icons.home_work,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'دفعة إيجار المبنى (القسط ${rent.installmentNumber ?? "-"})',
-                                              style: theme.textTheme.titleMedium,
-                                            ),
-                                            Text(
-                                              rent.expenseDate
-                                                  .toLocal()
-                                                  .toString()
-                                                  .split(' ')[0],
-                                              style: theme.textTheme.bodySmall,
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withValues(alpha: 0.1),
+                                      child: Icon(
+                                        Icons.home_work,
+                                        color: theme.colorScheme.primary,
+                                      ),
                                     ),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${(rent.amountEgp - rent.discountEgp).toCurrencyFormat()} ج.م',
-                                          style: theme.textTheme.titleMedium?.copyWith(
-                                            color: theme.colorScheme.primary,
-                                            fontWeight: FontWeight.bold,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'دفعة إيجار المبنى (القسط ${rent.installmentNumber ?? "-"})',
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.titleMedium,
                                           ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, size: 20),
-                                          onPressed: () {
-                                            context.go('/building_rent/edit', extra: rent);
-                                          },
-                                        ),
-                                      ],
+                                          Text(
+                                            rent.expenseDate
+                                                .toLocal()
+                                                .toString()
+                                                .split(' ')[0],
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.bodySmall,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
-                                ),
-                                if (rent.discountEgp > 0) ...[
-                                  const Divider(height: 24),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'خصم: ${rent.discountReason ?? "بدون سبب"}',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
-                                        ),
+                                );
+                                final amountActions = Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        paidAmount,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.end,
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
-                                      Text(
-                                        '${rent.discountEgp.toCurrencyFormat()} ج.م',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
-                                        ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 20),
+                                      onPressed: () {
+                                        context.go(
+                                          '/building_rent/edit',
+                                          extra: rent,
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                );
+
+                                if (compact) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      details,
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        width: constraints.maxWidth,
+                                        child: amountActions,
                                       ),
                                     ],
+                                  );
+                                }
+
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: details),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      width: constraints.maxWidth * 0.42,
+                                      child: amountActions,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            if (rent.discountEgp > 0) ...[
+                              const Divider(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'خصم: ${rent.discountReason ?? "بدون سبب"}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Flexible(
+                                    child: Text(
+                                      '${rent.discountEgp.toCurrencyFormat()} ج.م',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.end,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
                                   ),
                                 ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     );
                   },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: $error')),
-              ),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error')),
             ),
-          ],
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.go('/building_rent/add');
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _metricRow({
+    required String label,
+    required String value,
+    required TextStyle? labelStyle,
+    required TextStyle? valueStyle,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: labelStyle,
+          ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            context.go('/building_rent/add');
-          },
-          child: const Icon(Icons.add),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: valueStyle,
+          ),
         ),
-      );
-    }
+      ],
+    );
+  }
 
   void _showRentSettingsDialog(BuildContext context, WidgetRef ref) {
     final buildingsAsync = ref.read(buildingsProvider);
@@ -266,7 +349,7 @@ class BuildingRentScreen extends ConsumerWidget {
     final rentController = TextEditingController(
       text: building.annualRentEgp.toString(),
     );
-    
+
     // Parse existing dates
     final existingDatesText = building.rentInstallmentsDates ?? '';
     List<DateTime> selectedDates = [];
@@ -315,7 +398,9 @@ class BuildingRentScreen extends ConsumerWidget {
                             context: context,
                             initialDate: DateTime.now(),
                             firstDate: DateTime(2020),
-                            lastDate: DateTime.now().add(const Duration(days: 1000)),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 1000),
+                            ),
                           );
                           if (picked != null) {
                             setState(() {
@@ -342,9 +427,15 @@ class BuildingRentScreen extends ConsumerWidget {
                           final date = selectedDates[index];
                           return ListTile(
                             dense: true,
-                            title: Text('القسط ${index + 1}: ${date.toLocal().toString().split(' ')[0]}'),
+                            title: Text(
+                              'القسط ${index + 1}: ${date.toLocal().toString().split(' ')[0]}',
+                            ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                                size: 20,
+                              ),
                               onPressed: () {
                                 setState(() {
                                   selectedDates.removeAt(index);
@@ -365,12 +456,17 @@ class BuildingRentScreen extends ConsumerWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  final datesString = selectedDates.map((d) => d.toIso8601String()).join(',');
+                  final datesString = selectedDates
+                      .map((d) => d.toIso8601String())
+                      .join(',');
                   ref
                       .read(buildingsControllerProvider.notifier)
                       .updateRentSettings(
                         building.id,
-                        double.tryParse(rentController.text.replaceAll(',', '')) ?? 0.0,
+                        double.tryParse(
+                              rentController.text.replaceAll(',', ''),
+                            ) ??
+                            0.0,
                         datesString,
                       );
                   Navigator.pop(ctx);
@@ -379,7 +475,7 @@ class BuildingRentScreen extends ConsumerWidget {
               ),
             ],
           );
-        }
+        },
       ),
     );
   }
