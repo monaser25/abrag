@@ -10,7 +10,9 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 
 import '../../../../core/database/database.dart';
 
+import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/financial_transfers_provider.dart';
 
 class AddExpenseScreen extends ConsumerStatefulWidget {
@@ -144,8 +146,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.addExpense)),
+    return AppScaffold(
+      appBar: AbragAppBar(title: l10n.addExpense),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -275,8 +277,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectDate(context),
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: context.colors.border),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             const SizedBox(height: 16),
@@ -286,11 +288,11 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               maxLines: 3,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ'),
             ),
           ],
         ),

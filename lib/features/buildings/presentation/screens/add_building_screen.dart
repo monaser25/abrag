@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/buildings_controller.dart';
 
 import '../../../../core/database/database.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class AddBuildingScreen extends ConsumerStatefulWidget {
   final Building? building;
@@ -71,8 +72,10 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
       },
     );
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.building == null ? 'إضافة مبنى' : 'تعديل بيانات المبنى')),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: widget.building == null ? 'إضافة مبنى' : 'تعديل بيانات المبنى',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -95,11 +98,11 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ'),
             ),
           ],
         ),

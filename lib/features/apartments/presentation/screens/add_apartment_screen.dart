@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/apartments_controller.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 
@@ -135,8 +138,12 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.apartment == null ? 'إضافة شقة' : 'تعديل شقة')),
+    final colors = context.colors;
+
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: widget.apartment == null ? 'إضافة شقة' : 'تعديل شقة',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -174,16 +181,13 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
-            Card(
-              margin: EdgeInsets.zero,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
+            AppCard(
+              child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'بيانات الخط الأرضي',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.title.copyWith(color: colors.ink),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -212,35 +216,34 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
                       maxLines: 2,
                     ),
                   ],
-                ),
               ),
             ),
             const SizedBox(height: 16),
-            Card(
-              margin: EdgeInsets.zero,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
+            AppCard(
+              child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'محتويات الشقة (جرد مبدئي)',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style:
+                              AppTextStyles.title.copyWith(color: colors.ink),
                         ),
-                        TextButton.icon(
+                        AppButton(
+                          label: 'حفظ كقالب',
+                          icon: Icons.save,
+                          variant: AppButtonVariant.ghost,
+                          small: true,
                           onPressed: _saveAsGlobalTemplate,
-                          icon: const Icon(Icons.save, size: 18),
-                          label: const Text('حفظ كقالب'),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -253,15 +256,14 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
                       maxLines: 8,
                     ),
                   ],
-                ),
               ),
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ'),
             ),
           ],
         ),

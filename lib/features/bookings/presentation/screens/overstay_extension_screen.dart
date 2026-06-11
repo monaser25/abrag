@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class OverstayExtensionScreen extends ConsumerStatefulWidget {
   final String bookingId;
@@ -74,7 +77,7 @@ class _OverstayExtensionScreenState
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final controllerState = ref.watch(bookingsControllerProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final formatter = DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar');
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
@@ -92,19 +95,17 @@ class _OverstayExtensionScreenState
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تمديد الحجز'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/summer_bookings/details/${widget.bookingId}');
-            }
-          },
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'تمديد الحجز',
+        showBack: true,
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/summer_bookings/details/${widget.bookingId}');
+          }
+        },
       ),
       body: bookingsAsync.when(
         data: (bookings) {
@@ -125,16 +126,18 @@ class _OverstayExtensionScreenState
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              AppCard(
+                child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('النزيل الحالي', style: theme.textTheme.labelMedium),
+                      Text(
+                        'النزيل الحالي',
+                        style:
+                            AppTextStyles.label.copyWith(color: colors.ink2),
+                      ),
                       Text(
                         booking.guestName,
-                        style: theme.textTheme.headlineSmall,
+                        style: AppTextStyles.h2.copyWith(color: colors.ink),
                       ),
                       const SizedBox(height: 12),
                       _InfoLine(
@@ -149,55 +152,59 @@ class _OverstayExtensionScreenState
                         value: formatter.format(newCheckoutDate),
                       ),
                     ],
-                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              Text('عدد أيام التمديد', style: theme.textTheme.titleMedium),
+              Text(
+                'عدد أيام التمديد',
+                style: AppTextStyles.title.copyWith(color: colors.ink),
+              ),
               const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
+              AppCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
+                      AppIconButton(
                         onPressed: () => setState(() {
                           _extraDays++;
                           _customCheckoutDate = null;
                         }),
-                        icon: const Icon(Icons.add),
+                        icon: Icons.add,
                       ),
                       Column(
                         children: [
                           Text(
                             '$_extraDays',
-                            style: theme.textTheme.headlineMedium,
+                            style: AppTextStyles.tabular(
+                              AppTextStyles.h1.copyWith(color: colors.ink),
+                            ),
                           ),
-                          Text('أيام', style: theme.textTheme.labelMedium),
+                          Text(
+                            'أيام',
+                            style: AppTextStyles.label
+                                .copyWith(color: colors.ink2),
+                          ),
                         ],
                       ),
-                      IconButton(
+                      AppIconButton(
                         onPressed: _extraDays > 1
                             ? () => setState(() {
                                 _extraDays--;
                                 _customCheckoutDate = null;
                               })
                             : null,
-                        icon: const Icon(Icons.remove),
+                        icon: Icons.remove,
                       ),
                     ],
-                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              AppCard(
+                child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SwitchListTile(
@@ -230,28 +237,32 @@ class _OverstayExtensionScreenState
                         value:
                             '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                       ),
-                      const Divider(),
+                      Divider(color: colors.border),
                       _InfoLine(
                         icon: Icons.payments,
                         label: 'تمديد $_extraDays يوم',
                         value:
                             '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
-                        valueColor: theme.colorScheme.primary,
+                        valueColor: colors.accent,
                         bold: true,
                       ),
                       const SizedBox(height: 12),
-                      OutlinedButton.icon(
+                      AppButton(
+                        label: 'تغيير تاريخ الخروج الجديد',
+                        icon: Icons.edit_calendar,
+                        variant: AppButtonVariant.outline,
                         onPressed: () =>
                             _selectDateTime(context, newCheckoutDate),
-                        icon: const Icon(Icons.edit_calendar),
-                        label: const Text('تغيير تاريخ الخروج الجديد'),
                       ),
                     ],
-                  ),
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
+              AppButton(
+                label: 'تأكيد التمديد',
+                icon: Icons.check_circle,
+                expand: true,
+                loading: controllerState.isLoading,
                 onPressed: controllerState.isLoading
                     ? null
                     : () {
@@ -264,19 +275,17 @@ class _OverstayExtensionScreenState
                               additionalFeeEgp: additionalFee,
                             );
                       },
-                icon: const Icon(Icons.check_circle),
-                label: controllerState.isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('تأكيد التمديد'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                ),
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذر تحميل بيانات الحجز',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(allSummerBookingsProvider),
+        ),
       ),
     );
   }
@@ -299,22 +308,17 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        Icon(icon, size: 18, color: colors.ink3),
         const SizedBox(width: 8),
         Expanded(
           flex: 2,
           child: Text(
             label,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.body.copyWith(color: colors.ink2),
           ),
         ),
         const SizedBox(width: 8),
@@ -323,10 +327,8 @@ class _InfoLine extends StatelessWidget {
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: TextStyle(
-              color: valueColor,
-              fontWeight: bold ? FontWeight.bold : FontWeight.w600,
-            ),
+            style: (bold ? AppTextStyles.title : AppTextStyles.label)
+                .copyWith(color: valueColor ?? colors.ink),
           ),
         ),
       ],

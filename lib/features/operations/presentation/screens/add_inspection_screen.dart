@@ -5,7 +5,10 @@ import '../providers/apartment_inspections_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../bookings/presentation/providers/bookings_controller.dart';
 import '../../../users/presentation/providers/users_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class AddInspectionScreen extends ConsumerStatefulWidget {
   final String? apartmentId;
@@ -146,8 +149,10 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('تسجيل فحص شقة')),
+    final colors = context.colors;
+
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'تسجيل فحص شقة'),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -203,23 +208,15 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                       }
                     }
 
-                    return Card(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer.withValues(alpha: 0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
+                    return AppCard(
+                      color: colors.brandSoft,
+                      child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'قائمة الفحص (الجرد):',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
+                              style: AppTextStyles.title
+                                  .copyWith(color: colors.brand),
                             ),
                             const SizedBox(height: 8),
                             ...items.map((item) {
@@ -231,12 +228,8 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                                   ),
                                   child: Text(
                                     item,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: AppTextStyles.label
+                                        .copyWith(color: colors.brand),
                                   ),
                                 );
                               }
@@ -255,15 +248,12 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                               );
                             }),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'يرجى مراجعة هذه المحتويات وتحديد التالف منها بالأسفل.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
+                              style: AppTextStyles.caption
+                                  .copyWith(color: colors.ink3),
                             ),
                           ],
-                        ),
                       ),
                     );
                   }
@@ -279,8 +269,8 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
               ),
               trailing: const Icon(Icons.calendar_today),
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: colors.border),
+                borderRadius: BorderRadius.circular(12),
               ),
               onTap: _selectDate,
             ),
@@ -295,7 +285,7 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
             const SizedBox(height: 24),
             Text(
               'حالة النظافة',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTextStyles.title.copyWith(color: colors.ink),
             ),
             const SizedBox(height: 8),
             SegmentedButton<bool>(
@@ -393,11 +383,11 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
               maxLines: 2,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ الفحص',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ الفحص'),
             ),
           ],
         ),

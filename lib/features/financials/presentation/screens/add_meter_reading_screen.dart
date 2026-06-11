@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/abrag_colors.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/meter_readings_controller.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -87,8 +89,8 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('إضافة قراءة عداد')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'إضافة قراءة عداد'),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -172,8 +174,8 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectDate(context),
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: context.colors.border),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             const SizedBox(height: 16),
@@ -225,11 +227,11 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
               },
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ'),
             ),
           ],
         ),

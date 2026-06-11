@@ -12,7 +12,10 @@ import '../../../../core/config/shared_prefs_provider.dart';
 import '../providers/contracts_controller.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 import '../../../../core/database/database.dart';
 
@@ -625,8 +628,10 @@ class _AddWinterContractScreenState
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.addContract)),
+    final colors = context.colors;
+
+    return AppScaffold(
+      appBar: AbragAppBar(title: l10n.addContract),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -769,8 +774,8 @@ class _AddWinterContractScreenState
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectDate(context, true),
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: colors.border),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             const SizedBox(height: 16),
@@ -782,8 +787,8 @@ class _AddWinterContractScreenState
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectDate(context, false),
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: colors.border),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             const SizedBox(height: 16),
@@ -814,16 +819,15 @@ class _AddWinterContractScreenState
                 onChanged: (val) => setState(() => _hasRoommate = val),
               ),
               if (_hasRoommate)
-                Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
+                AppCard(
+                  color: colors.surface2,
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'بيانات الزميل',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style:
+                              AppTextStyles.title.copyWith(color: colors.ink),
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
@@ -895,7 +899,7 @@ class _AddWinterContractScreenState
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: _roommateIdFrontImage != null
-                                      ? Colors.green
+                                      ? colors.ok
                                       : null,
                                 ),
                               ),
@@ -912,7 +916,7 @@ class _AddWinterContractScreenState
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: _roommateIdBackImage != null
-                                      ? Colors.green
+                                      ? colors.ok
                                       : null,
                                 ),
                               ),
@@ -920,7 +924,6 @@ class _AddWinterContractScreenState
                           ],
                         ),
                       ],
-                    ),
                   ),
                 ),
             ],
@@ -938,9 +941,9 @@ class _AddWinterContractScreenState
               info: _nationalIdInfo(_nationalIdController.text),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'صور بطاقة المستأجر الأساسي:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: AppTextStyles.title.copyWith(color: colors.ink),
             ),
             const SizedBox(height: 8),
             Row(
@@ -956,7 +959,7 @@ class _AddWinterContractScreenState
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _idFrontImage != null
-                          ? Colors.green
+                          ? colors.ok
                           : null,
                     ),
                   ),
@@ -971,7 +974,7 @@ class _AddWinterContractScreenState
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _idBackImage != null
-                          ? Colors.green
+                          ? colors.ok
                           : null,
                     ),
                   ),
@@ -979,9 +982,9 @@ class _AddWinterContractScreenState
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'صور العقد:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: AppTextStyles.title.copyWith(color: colors.ink),
             ),
             const SizedBox(height: 8),
             Row(
@@ -997,7 +1000,7 @@ class _AddWinterContractScreenState
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _contractFrontImage != null
-                          ? Colors.green
+                          ? colors.ok
                           : null,
                     ),
                   ),
@@ -1014,7 +1017,7 @@ class _AddWinterContractScreenState
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _contractBackImage != null
-                          ? Colors.green
+                          ? colors.ok
                           : null,
                     ),
                   ),
@@ -1038,11 +1041,11 @@ class _AddWinterContractScreenState
               onChanged: (val) => setState(() => _isWaterOnStudent = val),
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: l10n.save,
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : Text(l10n.save),
             ),
           ],
         ),
@@ -1085,16 +1088,16 @@ class _NationalIdInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (info == null) return const SizedBox.shrink();
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+          color: colors.brandSoft,
           border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 0.25),
+            color: colors.brand.withValues(alpha: 0.25),
           ),
         ),
         child: Wrap(
@@ -1120,17 +1123,18 @@ class _IdChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: theme.textTheme.labelSmall),
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(color: colors.ink3),
+        ),
         Text(
           value,
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.label.copyWith(color: colors.ink),
         ),
       ],
     );

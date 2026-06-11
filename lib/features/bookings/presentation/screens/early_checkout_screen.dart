@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class EarlyCheckoutScreen extends ConsumerStatefulWidget {
   final String bookingId;
@@ -47,7 +50,7 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final controllerState = ref.watch(bookingsControllerProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
@@ -64,19 +67,17 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('خروج مبكر'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/summer_bookings/details/${widget.bookingId}');
-            }
-          },
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'خروج مبكر',
+        showBack: true,
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/summer_bookings/details/${widget.bookingId}');
+          }
+        },
       ),
       body: bookingsAsync.when(
         data: (bookings) {
@@ -109,16 +110,18 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              AppCard(
+                child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('النزيل الحالي', style: theme.textTheme.labelMedium),
+                      Text(
+                        'النزيل الحالي',
+                        style:
+                            AppTextStyles.label.copyWith(color: colors.ink2),
+                      ),
                       Text(
                         booking.guestName,
-                        style: theme.textTheme.headlineSmall,
+                        style: AppTextStyles.h2.copyWith(color: colors.ink),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -126,44 +129,41 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                           Icon(
                             Icons.calendar_month,
                             size: 16,
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: colors.ink3,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'الحجز الأصلي: $originalDays أيام',
-                            style: theme.textTheme.bodyMedium,
+                            style: AppTextStyles.body
+                                .copyWith(color: colors.ink2),
                           ),
                         ],
                       ),
                       Text(
                         'إجمالي المدفوع: ${booking.totalPriceEgp} ج.م',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.primary,
+                        style: AppTextStyles.tabular(
+                          AppTextStyles.title.copyWith(color: colors.accent),
                         ),
                       ),
                     ],
-                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              AppCard(
+                child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'الأيام المستخدمة',
-                            style: theme.textTheme.bodyMedium,
+                            style: AppTextStyles.body
+                                .copyWith(color: colors.ink2),
                           ),
                           Text(
                             '$usedDays',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: AppTextStyles.label
+                                .copyWith(color: colors.ok),
                           ),
                         ],
                       ),
@@ -172,18 +172,17 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                         children: [
                           Text(
                             'الأيام المتبقية',
-                            style: theme.textTheme.bodyMedium,
+                            style: AppTextStyles.body
+                                .copyWith(color: colors.ink2),
                           ),
                           Text(
                             '$remainingDays',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.error,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: AppTextStyles.label
+                                .copyWith(color: colors.err),
                           ),
                         ],
                       ),
-                      const Divider(),
+                      Divider(color: colors.border),
                       _CalcLine(
                         label: 'الأيام المتبقية × سعر اليوم',
                         value:
@@ -194,14 +193,14 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                           label: 'فلوس السمسار',
                           value:
                               '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
-                          valueColor: theme.colorScheme.error,
+                          valueColor: colors.err,
                         ),
-                      const Divider(),
+                      Divider(color: colors.border),
                       _CalcLine(
                         label: 'صافي مبلغ الاسترداد',
                         value:
                             '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
-                        valueColor: theme.colorScheme.primary,
+                        valueColor: colors.accent,
                         isTitle: true,
                       ),
                       const SizedBox(height: 16),
@@ -240,11 +239,14 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                           ),
                         ),
                     ],
-                  ),
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
+              AppButton(
+                label: 'فحص الشقة وتأكيد الخروج',
+                icon: Icons.fact_check,
+                expand: true,
+                loading: controllerState.isLoading,
                 onPressed: controllerState.isLoading || remainingDays <= 0
                     ? null
                     : () {
@@ -259,19 +261,17 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                           ).toString(),
                         );
                       },
-                icon: const Icon(Icons.fact_check),
-                label: controllerState.isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('فحص الشقة وتأكيد الخروج'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                ),
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذر تحميل بيانات الحجز',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(allSummerBookingsProvider),
+        ),
       ),
     );
   }
@@ -292,7 +292,7 @@ class _CalcLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -302,9 +302,8 @@ class _CalcLine extends StatelessWidget {
             flex: 2,
             child: Text(
               label,
-              style: isTitle
-                  ? theme.textTheme.titleMedium
-                  : theme.textTheme.bodyMedium,
+              style: (isTitle ? AppTextStyles.title : AppTextStyles.body)
+                  .copyWith(color: colors.ink2),
             ),
           ),
           const SizedBox(width: 8),
@@ -313,14 +312,10 @@ class _CalcLine extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style:
-                  (isTitle
-                          ? theme.textTheme.titleLarge
-                          : theme.textTheme.bodyMedium)
-                      ?.copyWith(
-                        color: valueColor,
-                        fontWeight: isTitle ? FontWeight.bold : FontWeight.w600,
-                      ),
+              style: AppTextStyles.tabular(
+                (isTitle ? AppTextStyles.h3 : AppTextStyles.label)
+                    .copyWith(color: valueColor ?? colors.ink),
+              ),
             ),
           ),
         ],

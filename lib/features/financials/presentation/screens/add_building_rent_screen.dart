@@ -6,7 +6,10 @@ import '../providers/expenses_controller.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class AddBuildingRentScreen extends ConsumerStatefulWidget {
   final Expense? expense;
@@ -142,8 +145,10 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('تسجيل قسط إيجار')),
+    final colors = context.colors;
+
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'تسجيل قسط إيجار'),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -235,10 +240,8 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: colors.brandSoft,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Wrap(
                   alignment: WrapAlignment.spaceBetween,
@@ -248,15 +251,14 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
                   children: [
                     Text(
                       'الصافي المدفوع',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: AppTextStyles.title.copyWith(color: colors.ink),
                     ),
                     Text(
                       '${((double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0) - (double.tryParse(_discountController.text.replaceAll(',', '')) ?? 0)).toCurrencyFormat()} ج.م',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                      style: AppTextStyles.tabular(
+                        AppTextStyles.title.copyWith(color: colors.accent),
                       ),
                     ),
                   ],
@@ -269,19 +271,16 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectDate(context),
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: colors.border),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ القسط',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('حفظ القسط'),
             ),
           ],
         ),

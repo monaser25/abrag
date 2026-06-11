@@ -9,6 +9,7 @@ import '../providers/technicians_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class AddMaintenanceScreen extends ConsumerStatefulWidget {
   final MaintenanceRequest? request;
@@ -87,8 +88,10 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
       },
     );
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.request == null ? 'إضافة طلب صيانة' : 'تعديل طلب صيانة')),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: widget.request == null ? 'إضافة طلب صيانة' : 'تعديل طلب صيانة',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -198,11 +201,11 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
               ),
             ],
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: 'حفظ الطلب',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ الطلب'),
             ),
           ],
         ),

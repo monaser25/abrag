@@ -8,9 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_controller.dart';
 import '../providers/bookings_provider.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
@@ -388,7 +391,7 @@ class _AddSummerBookingScreenState
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final brokersAsync = ref.watch(brokersProvider);
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
@@ -408,33 +411,29 @@ class _AddSummerBookingScreenState
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.bookingId == null ? 'إضافة حجز صيفي' : 'تعديل الحجز',
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else if (widget.bookingId != null) {
-              context.go('/summer_bookings/details/${widget.bookingId}');
-            } else {
-              context.go('/summer_bookings/list');
-            }
-          },
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: widget.bookingId == null ? 'إضافة حجز صيفي' : 'تعديل الحجز',
+        showBack: true,
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else if (widget.bookingId != null) {
+            context.go('/summer_bookings/details/${widget.bookingId}');
+          } else {
+            context.go('/summer_bookings/list');
+          }
+        },
         actions: [
-          IconButton(
+          AppIconButton(
             tooltip: 'تحميل مسودة',
             onPressed: widget.bookingId == null ? _loadDraft : null,
-            icon: const Icon(Icons.restore_page),
+            icon: Icons.restore_page,
           ),
-          IconButton(
+          AppIconButton(
             tooltip: 'حفظ كمسودة',
             onPressed: widget.bookingId == null ? _saveDraft : null,
-            icon: const Icon(Icons.save_as),
+            icon: Icons.save_as,
           ),
         ],
       ),
@@ -602,7 +601,7 @@ class _AddSummerBookingScreenState
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _idFrontImage != null
-                          ? Colors.green
+                          ? colors.ok
                           : null,
                     ),
                   ),
@@ -617,7 +616,7 @@ class _AddSummerBookingScreenState
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _idBackImage != null
-                          ? Colors.green
+                          ? colors.ok
                           : null,
                     ),
                   ),
@@ -642,8 +641,8 @@ class _AddSummerBookingScreenState
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () => _selectDate(context, true),
                     shape: RoundedRectangleBorder(
-                      side: BorderSide(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: colors.border),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -664,28 +663,15 @@ class _AddSummerBookingScreenState
               const SizedBox(height: 8),
               Text(
                 'تاريخ الخروج: ${DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar').format(_checkOutDate!)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.green,
-                ),
+                style: AppTextStyles.body.copyWith(color: colors.ok),
               ),
               if (_checkInDate!.isAfter(DateTime.now())) ...[
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange),
-                  ),
-                  child: const Text(
-                    'حجز مستقبلي',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: StatusChip(
+                    label: 'حجز مستقبلي',
+                    kind: StatusChipKind.warn,
                   ),
                 ),
               ],
@@ -844,23 +830,20 @@ class _AddSummerBookingScreenState
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  color: colors.accentSoft,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'الصافي بعد العمولة:',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer,
-                      ),
+                      style: AppTextStyles.title.copyWith(color: colors.ink),
                     ),
                     Text(
                       '${_calculateNetAmount().toCurrencyFormat()} ج.م',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                      style: AppTextStyles.tabular(
+                        AppTextStyles.h2.copyWith(color: colors.accent),
                       ),
                     ),
                   ],
@@ -868,13 +851,11 @@ class _AddSummerBookingScreenState
               ),
             ],
             const SizedBox(height: 32),
-            ElevatedButton(
+            AppButton(
+              label: widget.bookingId == null ? 'حفظ الحجز' : 'حفظ التعديل',
+              expand: true,
+              loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : Text(
-                      widget.bookingId == null ? 'حفظ الحجز' : 'حفظ التعديل',
-                    ),
             ),
           ],
         ),

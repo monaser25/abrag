@@ -6,7 +6,10 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../contracts/presentation/providers/contracts_provider.dart';
 import '../../../contracts/presentation/providers/contracts_controller.dart';
 import '../../../users/presentation/providers/users_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class WinterCheckoutScreen extends ConsumerStatefulWidget {
   final String winterContractId;
@@ -150,7 +153,7 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
     final contractsAsync = ref.watch(allWinterContractsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final controllerState = ref.watch(apartmentInspectionsControllerProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
     ref.listen<AsyncValue<void>>(apartmentInspectionsControllerProvider, (
       _,
@@ -166,8 +169,8 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('تسليم الشقة (عقد شتوي)')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'تسليم الشقة (عقد شتوي)'),
       body: contractsAsync.when(
         data: (contracts) {
           final contract = contracts.firstWhere(
@@ -237,29 +240,26 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
+                    AppCard(
+                      child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'بيانات التسليم',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTextStyles.title
+                                  .copyWith(color: colors.ink),
                             ),
                             const SizedBox(height: 8),
                             Text('الطالب: ${contract.studentName}'),
                             Text('شقة ${apt.apartmentNumber}'),
                             Text(
                               'التأمين: ${contract.depositEgp.toCurrencyFormat()} ج.م',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.primary,
+                              style: AppTextStyles.tabular(
+                                AppTextStyles.title
+                                    .copyWith(color: colors.accent),
                               ),
                             ),
                           ],
-                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -270,8 +270,8 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       ),
                       trailing: const Icon(Icons.calendar_today),
                       shape: RoundedRectangleBorder(
-                        side: BorderSide(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(color: colors.border),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       onTap: _selectDate,
                     ),
@@ -314,7 +314,10 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       ),
 
                     const SizedBox(height: 24),
-                    Text('حالة النظافة', style: theme.textTheme.titleMedium),
+                    Text(
+                      'حالة النظافة',
+                      style: AppTextStyles.title.copyWith(color: colors.ink),
+                    ),
                     const SizedBox(height: 8),
                     SegmentedButton<bool>(
                       segments: const [
@@ -352,7 +355,7 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                     const SizedBox(height: 24),
                     Text(
                       'فحص العدادات والتسويات',
-                      style: theme.textTheme.titleMedium,
+                      style: AppTextStyles.title.copyWith(color: colors.ink),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -390,20 +393,15 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                     const SizedBox(height: 24),
                     if (apt.inventory != null &&
                         apt.inventory!.trim().isNotEmpty) ...[
-                      Card(
-                        color: theme.colorScheme.primaryContainer.withValues(
-                          alpha: 0.1,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
+                      AppCard(
+                        color: colors.brandSoft,
+                        child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'قائمة الفحص (الجرد):',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                ),
+                                style: AppTextStyles.title
+                                    .copyWith(color: colors.brand),
                               ),
                               const SizedBox(height: 8),
                               ...(() {
@@ -425,10 +423,8 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                                       ),
                                       child: Text(
                                         item,
-                                        style: TextStyle(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: AppTextStyles.label
+                                            .copyWith(color: colors.brand),
                                       ),
                                     );
                                   }
@@ -448,7 +444,6 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                                 });
                               })(),
                             ],
-                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -537,41 +532,36 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                     ),
 
                     const SizedBox(height: 32),
-                    Card(
-                      color: _isEarlyCheckout && !_broughtReplacement
-                          ? theme.colorScheme.error.withValues(alpha: 0.1)
-                          : theme.colorScheme.primaryContainer.withValues(
-                              alpha: 0.3,
-                            ),
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _isEarlyCheckout && !_broughtReplacement
+                            ? colors.errSoft
+                            : colors.brandSoft,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
                           color: _isEarlyCheckout && !_broughtReplacement
-                              ? theme.colorScheme.error.withValues(alpha: 0.5)
-                              : theme.colorScheme.primary.withValues(
-                                  alpha: 0.5,
-                                ),
+                              ? colors.err.withValues(alpha: 0.5)
+                              : colors.brand.withValues(alpha: 0.5),
                         ),
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
+                      child: Column(
                           children: [
                             Text(
                               'تسوية التأمين',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTextStyles.title
+                                  .copyWith(color: colors.ink),
                             ),
-                            const Divider(),
+                            Divider(color: colors.border),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('إجمالي الخصومات:'),
                                 Text(
                                   '${totalDeduction.toCurrencyFormat()} ج.م',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.error,
+                                  style: AppTextStyles.tabular(
+                                    AppTextStyles.title
+                                        .copyWith(color: colors.err),
                                   ),
                                 ),
                               ],
@@ -581,10 +571,8 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Text(
                                   'تم مصادرة التأمين بالكامل بسبب الخروج المبكر بدون بديل.',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.error,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: AppTextStyles.label
+                                      .copyWith(color: colors.err),
                                 ),
                               ),
                             const SizedBox(height: 8),
@@ -594,37 +582,45 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                                 const Text('المبلغ المسترد للطالب:'),
                                 Text(
                                   '${refund.toCurrencyFormat()} ج.م',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
+                                  style: AppTextStyles.tabular(
+                                    AppTextStyles.h3.copyWith(color: colors.ok),
                                   ),
                                 ),
                               ],
                             ),
                           ],
-                        ),
                       ),
                     ),
 
                     const SizedBox(height: 32),
-                    ElevatedButton(
+                    AppButton(
+                      label: 'تسجيل استلام الشقة وتسوية التأمين',
+                      expand: true,
+                      loading: controllerState.isLoading,
                       onPressed: controllerState.isLoading
                           ? null
                           : () => _submit(apt.id, contract.depositEgp),
-                      child: controllerState.isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('تسجيل استلام الشقة وتسوية التأمين'),
                     ),
                   ],
                 ),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, st) => Center(child: Text('Error: $e')),
+            loading: () => const LoadingSkeleton(),
+            error: (e, st) => ErrorState(
+              title: 'تعذر تحميل بيانات الشقة',
+              message: 'Error: $e',
+              retryLabel: 'إعادة المحاولة',
+              onRetry: () => ref.invalidate(apartmentsProvider),
+            ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذر تحميل بيانات العقد',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(allWinterContractsProvider),
+        ),
       ),
     );
   }
