@@ -238,112 +238,122 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
               return Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   children: [
                     AppCard(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'بيانات التسليم',
-                              style: AppTextStyles.title
-                                  .copyWith(color: colors.ink),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          IconTile(
+                            icon: Icons.key_outlined,
+                            tint: colors.winter,
+                            size: 48,
+                            iconSize: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'بيانات التسليم',
+                                  style: AppTextStyles.label
+                                      .copyWith(color: colors.ink2),
+                                ),
+                                Text(
+                                  contract.studentName,
+                                  style: AppTextStyles.h2
+                                      .copyWith(color: colors.ink),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: [
+                                    StatusChip(
+                                      label: 'شقة ${apt.apartmentNumber}',
+                                      kind: StatusChipKind.winter,
+                                      icon: Icons.door_front_door_outlined,
+                                    ),
+                                    StatusChip(
+                                      label:
+                                          'التأمين: ${contract.depositEgp.toCurrencyFormat()} ج.م',
+                                      kind: StatusChipKind.brand,
+                                      icon: Icons.shield_outlined,
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            Text('الطالب: ${contract.studentName}'),
-                            Text('شقة ${apt.apartmentNumber}'),
-                            Text(
-                              'التأمين: ${contract.depositEgp.toCurrencyFormat()} ج.م',
-                              style: AppTextStyles.tabular(
-                                AppTextStyles.title
-                                    .copyWith(color: colors.accent),
-                              ),
-                            ),
-                          ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      title: const Text('تاريخ التسليم / الفحص'),
-                      subtitle: Text(
-                        _inspectionDate.toLocal().toString().split(' ')[0],
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: colors.border),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      onTap: _selectDate,
+                    const SectionTitle(title: 'بيانات الفحص'),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: AppDateField(
+                            label: 'تاريخ التسليم / الفحص',
+                            value: _inspectionDate
+                                .toLocal()
+                                .toString()
+                                .split(' ')[0],
+                            onTap: _selectDate,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppTextField(
+                            label: 'اسم المستلم / الفاحص',
+                            prefixIcon: Icons.person_outline,
+                            controller: _inspectorNameController,
+                            validator: (v) =>
+                                v == null || v.isEmpty ? 'مطلوب' : null,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _inspectorNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'اسم المستلم / الفاحص',
-                      ),
-                      validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    SwitchListTile(
-                      title: const Text(
-                        'خروج مبكر عن ميعاد العقد؟',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                    const SectionTitle(title: 'الخروج المبكر'),
+                    AppSwitchRow(
+                      title: 'خروج مبكر عن ميعاد العقد؟',
+                      icon: Icons.directions_run,
+                      tint: colors.warn,
                       value: _isEarlyCheckout,
                       onChanged: (val) => setState(() {
                         _isEarlyCheckout = val;
                         if (!val) _broughtReplacement = false;
                       }),
                     ),
-                    if (_isEarlyCheckout)
+                    if (_isEarlyCheckout) ...[
+                      const SizedBox(height: 8),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: SwitchListTile(
-                          title: const Text(
-                            'هل جاب طالب بديل؟',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: const Text(
-                            'إذا لم يجلب بديل، سيتم مصادرة التأمين بالكامل.',
-                          ),
+                        padding: const EdgeInsetsDirectional.only(start: 16),
+                        child: AppSwitchRow(
+                          title: 'هل جاب طالب بديل؟',
+                          subtitle:
+                              'إذا لم يجلب بديل، سيتم مصادرة التأمين بالكامل.',
+                          icon: Icons.swap_horiz,
                           value: _broughtReplacement,
                           onChanged: (val) =>
                               setState(() => _broughtReplacement = val),
                         ),
                       ),
+                    ],
 
-                    const SizedBox(height: 24),
-                    Text(
-                      'حالة النظافة',
-                      style: AppTextStyles.title.copyWith(color: colors.ink),
-                    ),
-                    const SizedBox(height: 8),
-                    SegmentedButton<bool>(
-                      segments: const [
-                        ButtonSegment(
-                          value: true,
-                          label: Text('نظيفة'),
-                          icon: Icon(Icons.cleaning_services),
-                        ),
-                        ButtonSegment(
-                          value: false,
-                          label: Text('تحتاج نظافة'),
-                          icon: Icon(Icons.warning),
-                        ),
-                      ],
-                      selected: {_isClean},
-                      onSelectionChanged: (Set<bool> newSelection) {
-                        setState(() => _isClean = newSelection.first);
-                      },
+                    const SectionTitle(title: 'حالة النظافة'),
+                    SegmentedTabs(
+                      labels: const ['نظيفة', 'تحتاج نظافة'],
+                      index: _isClean ? 0 : 1,
+                      onChanged: (i) => setState(() => _isClean = i == 0),
                     ),
                     if (!_isClean) ...[
                       const SizedBox(height: 16),
-                      TextFormField(
+                      AppTextField(
+                        label: 'خصم نظافة (ج.م)',
+                        prefixIcon: Icons.cleaning_services_outlined,
                         controller: _cleaningDeductionController,
-                        decoration: const InputDecoration(
-                          labelText: 'خصم نظافة (ج.م)',
-                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -352,20 +362,14 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       ),
                     ],
 
-                    const SizedBox(height: 24),
-                    Text(
-                      'فحص العدادات والتسويات',
-                      style: AppTextStyles.title.copyWith(color: colors.ink),
-                    ),
-                    const SizedBox(height: 8),
+                    const SectionTitle(title: 'فحص العدادات والتسويات'),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: TextFormField(
+                          child: AppTextField(
+                            label: 'خصم غاز (ج.م)',
                             controller: _gasDeductionController,
-                            decoration: const InputDecoration(
-                              labelText: 'خصم غاز (ج.م)',
-                            ),
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
@@ -373,13 +377,11 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: TextFormField(
+                          child: AppTextField(
+                            label: 'خصم كهرباء (ج.م)',
                             controller: _electricityDeductionController,
-                            decoration: const InputDecoration(
-                              labelText: 'خصم كهرباء (ج.م)',
-                            ),
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
@@ -448,24 +450,22 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    SwitchListTile(
-                      title: const Text(
-                        'هل يوجد تلفيات في المحتويات؟',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: const Text(
-                        'تسجيل الأشياء المكسورة أو التالفة ومين هيتحمل تكلفتها',
-                      ),
+                    const SectionTitle(title: 'التلفيات'),
+                    AppSwitchRow(
+                      title: 'هل يوجد تلفيات في المحتويات؟',
+                      subtitle:
+                          'تسجيل الأشياء المكسورة أو التالفة ومين هيتحمل تكلفتها',
+                      icon: Icons.report_problem_outlined,
+                      tint: colors.warn,
                       value: _hasDamages,
                       onChanged: (val) => setState(() => _hasDamages = val),
                     ),
                     if (_hasDamages) ...[
                       const SizedBox(height: 16),
-                      TextFormField(
+                      AppTextField(
+                        label: 'تفاصيل التلفيات',
+                        prefixIcon: Icons.notes_outlined,
                         controller: _damagesDescriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'تفاصيل التلفيات',
-                        ),
                         maxLines: 3,
                         validator: (v) =>
                             _hasDamages && (v == null || v.isEmpty)
@@ -473,27 +473,22 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                             : null,
                       ),
                       const SizedBox(height: 16),
-                      SwitchListTile(
-                        title: const Text(
-                          'تسجيل التلفيات كطلب صيانة',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: const Text(
-                          'لعدم معرفة تكلفة التصليح حتى يراها العامل',
-                        ),
+                      AppSwitchRow(
+                        title: 'تسجيل التلفيات كطلب صيانة',
+                        subtitle: 'لعدم معرفة تكلفة التصليح حتى يراها العامل',
+                        icon: Icons.build_outlined,
                         value: _createMaintenanceRequest,
                         onChanged: (val) =>
                             setState(() => _createMaintenanceRequest = val),
                       ),
                       const SizedBox(height: 16),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: TextFormField(
+                            child: AppTextField(
+                              label: 'خصم تلفيات (ج.م)',
                               controller: _tenantFineController,
-                              decoration: const InputDecoration(
-                                labelText: 'خصم تلفيات (ج.م)',
-                              ),
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
@@ -503,14 +498,12 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                             ),
                           ),
                           if (!_createMaintenanceRequest) ...[
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: TextFormField(
+                              child: AppTextField(
+                                label: 'تكلفة تصليح علينا (ج.م)',
+                                helperText: 'ستُسجل كمصروف',
                                 controller: _ownerCostController,
-                                decoration: const InputDecoration(
-                                  labelText: 'تكلفة تصليح علينا (ج.م)',
-                                  helperText: 'ستُسجل كمصروف',
-                                ),
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,
@@ -523,11 +516,10 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    TextFormField(
+                    AppTextField(
+                      label: 'ملاحظات أخرى (اختياري)',
+                      prefixIcon: Icons.sticky_note_2_outlined,
                       controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'ملاحظات أخرى (اختياري)',
-                      ),
                       maxLines: 2,
                     ),
 
@@ -592,15 +584,6 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
-                    AppButton(
-                      label: 'تسجيل استلام الشقة وتسوية التأمين',
-                      expand: true,
-                      loading: controllerState.isLoading,
-                      onPressed: controllerState.isLoading
-                          ? null
-                          : () => _submit(apt.id, contract.depositEgp),
-                    ),
                   ],
                 ),
               );
@@ -621,6 +604,36 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
           retryLabel: 'إعادة المحاولة',
           onRetry: () => ref.invalidate(allWinterContractsProvider),
         ),
+      ),
+      bottomNavigationBar: contractsAsync.maybeWhen(
+        data: (contracts) {
+          final contract = contracts.firstWhere(
+            (c) => c.id == widget.winterContractId,
+          );
+          return apartmentsAsync.maybeWhen(
+            data: (apartments) {
+              final apt = apartments.firstWhere(
+                (a) => a.id == contract.apartmentId,
+              );
+              return BottomActionBar(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      label: 'تسجيل استلام الشقة وتسوية التأمين',
+                      icon: Icons.check_circle,
+                      loading: controllerState.isLoading,
+                      onPressed: controllerState.isLoading
+                          ? null
+                          : () => _submit(apt.id, contract.depositEgp),
+                    ),
+                  ),
+                ],
+              );
+            },
+            orElse: () => null,
+          );
+        },
+        orElse: () => null,
       ),
     );
   }

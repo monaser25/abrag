@@ -440,7 +440,7 @@ class _AddSummerBookingScreenState
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             if (widget.bookingId != null)
               bookingsAsync.when(
@@ -494,6 +494,7 @@ class _AddSummerBookingScreenState
                 loading: () => const LinearProgressIndicator(),
                 error: (error, stack) => const SizedBox.shrink(),
               ),
+            const SectionTitle(title: 'الشقة'),
             buildingsAsync.when(
               data: (buildings) {
                 if (buildings.isNotEmpty && _selectedBuildingId == null) {
@@ -504,8 +505,9 @@ class _AddSummerBookingScreenState
                     });
                   });
                 }
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'اختر المبنى'),
+                return AppDropdownField<String>(
+                  label: 'اختر المبنى',
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
@@ -521,7 +523,7 @@ class _AddSummerBookingScreenState
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
@@ -547,8 +549,9 @@ class _AddSummerBookingScreenState
                           .toList()
                     : apartments;
 
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'اختر الشقة'),
+                return AppDropdownField<String>(
+                  label: 'اختر الشقة',
+                  prefixIcon: Icons.door_front_door_outlined,
                   initialValue: _selectedApartmentId,
                   items: filteredApts
                       .map(
@@ -565,27 +568,37 @@ class _AddSummerBookingScreenState
               loading: () => const SizedBox.shrink(),
               error: (e, st) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
+            const SectionTitle(title: 'بيانات الضيف'),
+            AppTextField(
+              label: 'اسم الضيف',
+              prefixIcon: Icons.person_outline,
               controller: _guestNameController,
-              decoration: const InputDecoration(labelText: 'اسم الضيف'),
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _guestPhoneController,
-              decoration: const InputDecoration(labelText: 'رقم الهاتف'),
-              keyboardType: TextInputType.phone,
-              validator: _optionalEgyptianPhoneValidator,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nationalIdController,
-              decoration: const InputDecoration(
-                labelText: 'الرقم القومي (اختياري)',
-              ),
-              keyboardType: TextInputType.number,
-              validator: _optionalNationalIdValidator,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: 'رقم الهاتف',
+                    prefixIcon: Icons.phone_outlined,
+                    controller: _guestPhoneController,
+                    keyboardType: TextInputType.phone,
+                    validator: _optionalEgyptianPhoneValidator,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: 'الرقم القومي (اختياري)',
+                    prefixIcon: Icons.badge_outlined,
+                    controller: _nationalIdController,
+                    keyboardType: TextInputType.number,
+                    validator: _optionalNationalIdValidator,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
@@ -623,35 +636,30 @@ class _AddSummerBookingScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SectionTitle(title: 'الإقامة'),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   flex: 2,
-                  child: ListTile(
-                    title: const Text('تاريخ الدخول'),
-                    subtitle: Text(
-                      _checkInDate != null
-                          ? DateFormat(
-                              'EEEE yyyy-MM-dd hh:mm a',
-                              'ar',
-                            ).format(_checkInDate!)
-                          : 'اختر التاريخ',
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
+                  child: AppDateField(
+                    label: 'تاريخ الدخول',
+                    value: _checkInDate != null
+                        ? DateFormat(
+                            'EEEE yyyy-MM-dd hh:mm a',
+                            'ar',
+                          ).format(_checkInDate!)
+                        : null,
+                    placeholder: 'اختر التاريخ',
                     onTap: () => _selectDate(context, true),
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(color: colors.border),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   flex: 1,
-                  child: TextFormField(
+                  child: AppTextField(
+                    label: 'عدد الأيام',
                     controller: _daysController,
-                    decoration: const InputDecoration(labelText: 'عدد الأيام'),
                     keyboardType: TextInputType.number,
                     onChanged: (_) => _calculateCheckoutDate(),
                     validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
@@ -660,96 +668,123 @@ class _AddSummerBookingScreenState
               ],
             ),
             if (_checkOutDate != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'تاريخ الخروج: ${DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar').format(_checkOutDate!)}',
-                style: AppTextStyles.body.copyWith(color: colors.ok),
+              const SizedBox(height: 12),
+              AppCard(
+                color: colors.okSoft,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.event_available, size: 18, color: colors.ok),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'تاريخ الخروج: ${DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar').format(_checkOutDate!)}',
+                        style: AppTextStyles.bodyS.copyWith(color: colors.ok),
+                      ),
+                    ),
+                    if (_checkInDate!.isAfter(DateTime.now())) ...[
+                      const SizedBox(width: 8),
+                      const StatusChip(
+                        label: 'حجز مستقبلي',
+                        kind: StatusChipKind.warn,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              if (_checkInDate!.isAfter(DateTime.now())) ...[
-                const SizedBox(height: 8),
-                const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: StatusChip(
-                    label: 'حجز مستقبلي',
-                    kind: StatusChipKind.warn,
-                  ),
-                ),
-              ],
             ],
-            const Divider(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _totalPriceController,
-                    decoration: const InputDecoration(
-                      labelText: 'السعر الإجمالي (ج.م)',
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [CurrencyInputFormatter()],
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'مطلوب';
-                      return null;
-                    },
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _amountPaidController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    decoration: InputDecoration(
-                      labelText:
-                          _totalPriceController.text.isNotEmpty &&
-                              _amountPaidController.text ==
+            const SectionTitle(title: 'المبلغ والدفع'),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          label: 'السعر الإجمالي (ج.م)',
+                          controller: _totalPriceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [CurrencyInputFormatter()],
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'مطلوب';
+                            return null;
+                          },
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppTextField(
+                          label:
+                              _totalPriceController.text.isNotEmpty &&
+                                  _amountPaidController.text ==
+                                      _totalPriceController.text
+                              ? 'المبلغ المدفوع بالكامل'
+                              : 'المبلغ المدفوع (العربون)',
+                          controller: _amountPaidController,
+                          autovalidateMode:
+                              AutovalidateMode.onUserInteraction,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [CurrencyInputFormatter()],
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'مطلوب';
+                            final paid =
+                                double.tryParse(v.replaceAll(',', '')) ?? 0;
+                            final total =
+                                double.tryParse(
                                   _totalPriceController.text
-                          ? 'المبلغ المدفوع بالكامل'
-                          : 'المبلغ المدفوع (العربون)',
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [CurrencyInputFormatter()],
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'مطلوب';
-                      final paid = double.tryParse(v.replaceAll(',', '')) ?? 0;
-                      final total =
-                          double.tryParse(
-                            _totalPriceController.text.replaceAll(',', ''),
-                          ) ??
-                          0;
-                      if (paid > total) {
-                        return 'العربون أكبر من الإجمالي';
-                      }
-                      return null;
-                    },
-                    onChanged: (_) => setState(() {}),
+                                      .replaceAll(',', ''),
+                                ) ??
+                                0;
+                            if (paid > total) {
+                              return 'العربون أكبر من الإجمالي';
+                            }
+                            return null;
+                          },
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'طريقة الدفع',
+                    style: AppTextStyles.label.copyWith(color: colors.ink2),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedTabs(
+                    labels: const ['نقدي (كاش)', 'فودافون كاش', 'إنستاباي'],
+                    index: _paymentMethod == 'vodafone_cash'
+                        ? 1
+                        : _paymentMethod == 'instapay'
+                            ? 2
+                            : 0,
+                    onChanged: (i) => setState(
+                      () => _paymentMethod = const [
+                        'cash',
+                        'vodafone_cash',
+                        'instapay',
+                      ][i],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'طريقة الدفع'),
-              initialValue: _paymentMethod,
-              items: const [
-                DropdownMenuItem(value: 'cash', child: Text('نقدي (كاش)')),
-                DropdownMenuItem(
-                  value: 'vodafone_cash',
-                  child: Text('فودافون كاش'),
-                ),
-                DropdownMenuItem(value: 'instapay', child: Text('إنستاباي')),
-              ],
-              onChanged: (v) => setState(() => _paymentMethod = v!),
-            ),
-            const Divider(height: 32),
+            const SectionTitle(title: 'السمسار والعمولة'),
             brokersAsync.when(
               data: (brokers) {
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'السمسار'),
+                return AppDropdownField<String>(
+                  label: 'السمسار',
+                  prefixIcon: Icons.handshake_outlined,
                   initialValue: _selectedBrokerId,
                   items: [
                     const DropdownMenuItem(
@@ -775,14 +810,15 @@ class _AddSummerBookingScreenState
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => const SizedBox.shrink(),
             ),
             if (_selectedBrokerId == 'other') ...[
               const SizedBox(height: 16),
-              TextFormField(
+              AppTextField(
+                label: 'اسم السمسار',
+                prefixIcon: Icons.person_outline,
                 controller: _brokerNameController,
-                decoration: const InputDecoration(labelText: 'اسم السمسار'),
                 validator: (v) =>
                     _selectedBrokerId == 'other' && (v == null || v.isEmpty)
                     ? 'مطلوب'
@@ -791,48 +827,60 @@ class _AddSummerBookingScreenState
             ],
             if (_selectedBrokerId != null) ...[
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'نوع العمولة'),
-                initialValue: _commissionType,
-                items: const [
-                  DropdownMenuItem(value: 'none', child: Text('بدون عمولة')),
-                  DropdownMenuItem(
-                    value: 'percentage',
-                    child: Text('نسبة مئوية (%)'),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: AppDropdownField<String>(
+                      label: 'نوع العمولة',
+                      initialValue: _commissionType,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'none',
+                          child: Text('بدون عمولة'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'percentage',
+                          child: Text('نسبة مئوية (%)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'fixed',
+                          child: Text('مبلغ ثابت'),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() {
+                        _commissionType = v!;
+                        _commissionController.clear();
+                      }),
+                    ),
                   ),
-                  DropdownMenuItem(value: 'fixed', child: Text('مبلغ ثابت')),
+                  if (_commissionType != 'none') ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppTextField(
+                        label: _commissionType == 'percentage'
+                            ? 'النسبة (%)'
+                            : 'المبلغ (ج.م)',
+                        controller: _commissionController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: _commissionType == 'fixed'
+                            ? [CurrencyInputFormatter()]
+                            : [],
+                        onChanged: (_) => setState(() {}),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'مطلوب' : null,
+                      ),
+                    ),
+                  ],
                 ],
-                onChanged: (v) => setState(() {
-                  _commissionType = v!;
-                  _commissionController.clear();
-                }),
               ),
             ],
             if (_commissionType != 'none' && _selectedBrokerId != null) ...[
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _commissionController,
-                decoration: InputDecoration(
-                  labelText: _commissionType == 'percentage'
-                      ? 'النسبة (%)'
-                      : 'المبلغ (ج.م)',
-                ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: _commissionType == 'fixed'
-                    ? [CurrencyInputFormatter()]
-                    : [],
-                onChanged: (_) => setState(() {}),
-                validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colors.accentSoft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              AppCard(
+                color: colors.accentSoft,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -850,15 +898,20 @@ class _AddSummerBookingScreenState
                 ),
               ),
             ],
-            const SizedBox(height: 32),
-            AppButton(
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
               label: widget.bookingId == null ? 'حفظ الحجز' : 'حفظ التعديل',
-              expand: true,
+              icon: Icons.check,
               loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

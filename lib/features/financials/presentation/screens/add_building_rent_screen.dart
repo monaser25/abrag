@@ -152,8 +152,9 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            const SectionTitle(title: 'القسط'),
             buildingsAsync.when(
               data: (buildings) {
                 if (buildings.isNotEmpty && _selectedBuildingId == null) {
@@ -163,8 +164,9 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
                     });
                   });
                 }
-                return DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.buildings),
+                return AppDropdownField<String>(
+                  label: l10n.buildings,
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
@@ -181,68 +183,92 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: 'رقم القسط'),
-              initialValue: _installmentNumber,
-              items: const [
-                DropdownMenuItem(value: 1, child: Text('القسط الأول')),
-                DropdownMenuItem(value: 2, child: Text('القسط الثاني')),
-                DropdownMenuItem(value: 3, child: Text('القسط الثالث')),
-                DropdownMenuItem(value: 4, child: Text('القسط الرابع')),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppDropdownField<int>(
+                    label: 'رقم القسط',
+                    prefixIcon: Icons.tag,
+                    initialValue: _installmentNumber,
+                    items: const [
+                      DropdownMenuItem(value: 1, child: Text('القسط الأول')),
+                      DropdownMenuItem(value: 2, child: Text('القسط الثاني')),
+                      DropdownMenuItem(value: 3, child: Text('القسط الثالث')),
+                      DropdownMenuItem(value: 4, child: Text('القسط الرابع')),
+                    ],
+                    onChanged: (v) => setState(() => _installmentNumber = v!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: l10n.amount,
+                    prefixIcon: Icons.payments_outlined,
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [CurrencyInputFormatter()],
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
               ],
-              onChanged: (v) => setState(() => _installmentNumber = v!),
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _amountController,
-              decoration: InputDecoration(labelText: l10n.amount),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [CurrencyInputFormatter()],
-              validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-              onChanged: (_) => setState(() {}),
+            AppDateField(
+              label: 'تاريخ الدفع',
+              value: _date?.toString().split(' ')[0],
+              placeholder: l10n.selectDate,
+              onTap: () => _selectDate(context),
             ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('هل يوجد خصم من المالك؟'),
-              subtitle: const Text('مثل شراء غرض للعمارة'),
+            const SectionTitle(title: 'الخصم'),
+            AppSwitchRow(
+              title: 'هل يوجد خصم من المالك؟',
+              subtitle: 'مثل شراء غرض للعمارة',
+              icon: Icons.discount_outlined,
               value: _hasDiscount,
               onChanged: (val) => setState(() => _hasDiscount = val),
             ),
             if (_hasDiscount) ...[
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _discountController,
-                decoration: const InputDecoration(
-                  labelText: 'قيمة الخصم (ج.م)',
-                ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [CurrencyInputFormatter()],
-                validator: (v) =>
-                    _hasDiscount && (v == null || v.isEmpty) ? 'مطلوب' : null,
-                onChanged: (_) => setState(() {}),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      label: 'قيمة الخصم (ج.م)',
+                      controller: _discountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [CurrencyInputFormatter()],
+                      validator: (v) => _hasDiscount && (v == null || v.isEmpty)
+                          ? 'مطلوب'
+                          : null,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppTextField(
+                      label: 'سبب الخصم',
+                      controller: _discountReasonController,
+                      validator: (v) => _hasDiscount && (v == null || v.isEmpty)
+                          ? 'مطلوب'
+                          : null,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _discountReasonController,
-                decoration: const InputDecoration(labelText: 'سبب الخصم'),
-                validator: (v) =>
-                    _hasDiscount && (v == null || v.isEmpty) ? 'مطلوب' : null,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colors.brandSoft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              AppCard(
+                color: colors.brandSoft,
                 child: Wrap(
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -258,32 +284,27 @@ class _AddBuildingRentScreenState extends ConsumerState<AddBuildingRentScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.tabular(
-                        AppTextStyles.title.copyWith(color: colors.accent),
+                        AppTextStyles.h3.copyWith(color: colors.accent),
                       ),
                     ),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            ListTile(
-              title: Text(_date?.toString().split(' ')[0] ?? l10n.selectDate),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDate(context),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: colors.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            const SizedBox(height: 32),
-            AppButton(
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
               label: 'حفظ القسط',
-              expand: true,
+              icon: Icons.check,
               loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

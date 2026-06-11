@@ -79,33 +79,42 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            TextFormField(
+            const SectionTitle(title: 'بيانات المبنى'),
+            AppTextField(
+              label: 'اسم المبنى',
+              prefixIcon: Icons.apartment,
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'اسم المبنى'),
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'العنوان',
+              prefixIcon: Icons.place_outlined,
               controller: _addressController,
-              decoration: const InputDecoration(labelText: 'العنوان'),
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'عدد الشقق',
+              prefixIcon: Icons.grid_view_outlined,
               controller: _totalApartmentsController,
-              decoration: const InputDecoration(labelText: 'عدد الشقق'),
               keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 32),
-            AppButton(
-              label: 'حفظ',
-              expand: true,
-              loading: controllerState.isLoading,
-              onPressed: controllerState.isLoading ? null : _submit,
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حفظ',
+              icon: Icons.check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }

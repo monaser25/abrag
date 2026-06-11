@@ -500,14 +500,13 @@ class _AddWinterContractScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: DropdownButtonFormField<String>(
+          child: AppDropdownField<String>(
+            label: label,
+            prefixIcon: Icons.school_outlined,
             initialValue: selectedValue,
-            decoration: InputDecoration(
-              labelText: label,
-              helperText: allOptions.isEmpty
-                  ? 'اضغط + لإضافة أول اختيار'
-                  : 'اختياراتك المخصصة فقط',
-            ),
+            helperText: allOptions.isEmpty
+                ? 'اضغط + لإضافة أول اختيار'
+                : 'اختياراتك المخصصة فقط',
             items: allOptions
                 .map(
                   (option) =>
@@ -518,28 +517,35 @@ class _AddWinterContractScreenState
           ),
         ),
         const SizedBox(width: 8),
-        IconButton.filledTonal(
-          tooltip: 'إضافة',
-          onPressed: () => _showAddAcademicOptionDialog(
-            title: addTitle,
-            label: addLabel,
-            currentOptions: options,
-            onSaved: onSaved,
-            targetController: controller,
+        Padding(
+          padding: const EdgeInsets.only(top: 26),
+          child: AppIconButton(
+            tooltip: 'إضافة',
+            onPressed: () => _showAddAcademicOptionDialog(
+              title: addTitle,
+              label: addLabel,
+              currentOptions: options,
+              onSaved: onSaved,
+              targetController: controller,
+            ),
+            icon: Icons.add,
           ),
-          icon: const Icon(Icons.add),
         ),
-        IconButton(
-          tooltip: 'حذف الاختيار الحالي',
-          onPressed: selectedValue == null || !options.contains(selectedValue)
-              ? null
-              : () => _deleteAcademicOption(
-                  value: selectedValue,
-                  currentOptions: options,
-                  onSaved: onSaved,
-                  controllers: linkedControllers,
-                ),
-          icon: const Icon(Icons.delete_outline),
+        Padding(
+          padding: const EdgeInsets.only(top: 26),
+          child: AppIconButton(
+            tooltip: 'حذف الاختيار الحالي',
+            onPressed:
+                selectedValue == null || !options.contains(selectedValue)
+                ? null
+                : () => _deleteAcademicOption(
+                    value: selectedValue,
+                    currentOptions: options,
+                    onSaved: onSaved,
+                    controllers: linkedControllers,
+                  ),
+            icon: Icons.delete_outline,
+          ),
         ),
       ],
     );
@@ -635,8 +641,9 @@ class _AddWinterContractScreenState
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            const SectionTitle(title: 'الشقة والعقد'),
             buildingsAsync.when(
               data: (buildings) {
                 if (buildings.isNotEmpty && _selectedBuildingId == null) {
@@ -646,8 +653,9 @@ class _AddWinterContractScreenState
                     });
                   });
                 }
-                return DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.buildings),
+                return AppDropdownField<String>(
+                  label: l10n.buildings,
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
@@ -663,68 +671,84 @@ class _AddWinterContractScreenState
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
-            apartmentsAsync.when(
-              data: (apartments) {
-                final filteredApts = _selectedBuildingId != null
-                    ? apartments
-                          .where((a) => a.buildingId == _selectedBuildingId)
-                          .toList()
-                    : apartments;
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: apartmentsAsync.when(
+                    data: (apartments) {
+                      final filteredApts = _selectedBuildingId != null
+                          ? apartments
+                                .where(
+                                  (a) => a.buildingId == _selectedBuildingId,
+                                )
+                                .toList()
+                          : apartments;
 
-                return DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.apartments),
-                  initialValue: _selectedApartmentId,
-                  items: filteredApts
-                      .map(
-                        (a) => DropdownMenuItem(
-                          value: a.id,
-                          child: Text('شقة ${a.apartmentNumber}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedApartmentId = v),
-                  validator: (v) => v == null ? 'مطلوب' : null,
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (e, st) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'نوع العقد'),
-              initialValue: _contractType,
-              items: const [
-                DropdownMenuItem(
-                  value: 'student',
-                  child: Text('عقد طلبة (مغتربين)'),
+                      return AppDropdownField<String>(
+                        label: l10n.apartments,
+                        prefixIcon: Icons.door_front_door_outlined,
+                        initialValue: _selectedApartmentId,
+                        items: filteredApts
+                            .map(
+                              (a) => DropdownMenuItem(
+                                value: a.id,
+                                child: Text('شقة ${a.apartmentNumber}'),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => _selectedApartmentId = v),
+                        validator: (v) => v == null ? 'مطلوب' : null,
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, st) => const SizedBox.shrink(),
+                  ),
                 ),
-                DropdownMenuItem(value: 'family', child: Text('عقد أسرة')),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppDropdownField<String>(
+                    label: 'نوع العقد',
+                    initialValue: _contractType,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'student',
+                        child: Text('عقد طلبة (مغتربين)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'family',
+                        child: Text('عقد أسرة'),
+                      ),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => _contractType = v);
+                      }
+                    },
+                  ),
+                ),
               ],
-              onChanged: (v) {
-                if (v != null) {
-                  setState(() => _contractType = v);
-                }
-              },
             ),
-            const SizedBox(height: 16),
-            TextFormField(
+            const SectionTitle(title: 'بيانات المستأجر'),
+            AppTextField(
+              label: _contractType == 'student'
+                  ? l10n.studentName
+                  : 'اسم المستأجر (رب الأسرة)',
+              prefixIcon: Icons.person_outline,
               controller: _studentNameController,
-              decoration: InputDecoration(
-                labelText: _contractType == 'student'
-                    ? l10n.studentName
-                    : 'اسم المستأجر (رب الأسرة)',
-              ),
               validator: (v) =>
                   v == null || v.isEmpty ? l10n.requiredField : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'رقم الهاتف',
+              prefixIcon: Icons.phone_outlined,
               controller: _studentPhoneController,
-              decoration: const InputDecoration(labelText: 'رقم الهاتف'),
               keyboardType: TextInputType.phone,
               validator: _optionalEgyptianPhoneValidator,
             ),
@@ -759,82 +783,83 @@ class _AddWinterContractScreenState
                 const SizedBox(height: 8),
                 Text(
                   'القوائم مخصصة لك فقط. استخدم زر + لإضافة الجامعات والكليات التي تتعامل معها.',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
                 ),
               ],
             ],
-            const SizedBox(height: 16),
-            ListTile(
-              title: Text(
-                l10n.checkInDate,
-              ), // Reusing checkInDate translation for simplicity, could add startDate
-              subtitle: Text(
-                _startDate?.toString().split(' ')[0] ?? l10n.selectDate,
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDate(context, true),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: colors.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
+            const SectionTitle(title: 'مدة العقد والمبالغ'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppDateField(
+                    label: l10n.checkInDate,
+                    value: _startDate?.toString().split(' ')[0],
+                    placeholder: l10n.selectDate,
+                    onTap: () => _selectDate(context, true),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppDateField(
+                    label: l10n.checkOutDate,
+                    value: _endDate?.toString().split(' ')[0],
+                    placeholder: l10n.selectDate,
+                    onTap: () => _selectDate(context, false),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            ListTile(
-              title: Text(l10n.checkOutDate), // Reusing
-              subtitle: Text(
-                _endDate?.toString().split(' ')[0] ?? l10n.selectDate,
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDate(context, false),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: colors.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: l10n.monthlyRent,
+                    prefixIcon: Icons.payments_outlined,
+                    controller: _monthlyRentController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [CurrencyInputFormatter()],
+                    validator: (v) =>
+                        v == null || v.isEmpty ? l10n.requiredField : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: l10n.deposit,
+                    prefixIcon: Icons.shield_outlined,
+                    controller: _depositController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [CurrencyInputFormatter()],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _monthlyRentController,
-              decoration: InputDecoration(labelText: l10n.monthlyRent),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [CurrencyInputFormatter()],
-              validator: (v) =>
-                  v == null || v.isEmpty ? l10n.requiredField : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _depositController,
-              decoration: InputDecoration(labelText: l10n.deposit),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [CurrencyInputFormatter()],
-            ),
-            const SizedBox(height: 16),
             if (_contractType == 'student') ...[
-              SwitchListTile(
-                title: const Text('إضافة بيانات زميل سكن'),
+              const SectionTitle(title: 'زميل السكن'),
+              AppSwitchRow(
+                title: 'إضافة بيانات زميل سكن',
+                icon: Icons.group_outlined,
                 value: _hasRoommate,
                 onChanged: (val) => setState(() => _hasRoommate = val),
               ),
-              if (_hasRoommate)
+              if (_hasRoommate) ...[
+                const SizedBox(height: 12),
                 AppCard(
                   color: colors.surface2,
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'بيانات الزميل',
-                          style:
-                              AppTextStyles.title.copyWith(color: colors.ink),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
+                        AppTextField(
+                          label: 'اسم الزميل',
+                          prefixIcon: Icons.person_outline,
                           controller: _roommateNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'اسم الزميل',
-                          ),
                         ),
                         const SizedBox(height: 8),
                         _customAcademicDropdown(
@@ -867,15 +892,15 @@ class _AddWinterContractScreenState
                           const SizedBox(height: 8),
                           Text(
                             'أضف اختياراتك من زر + ثم اختار منها.',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: AppTextStyles.caption
+                                .copyWith(color: colors.ink3),
                           ),
                         ],
                         const SizedBox(height: 8),
-                        TextFormField(
+                        AppTextField(
+                          label: 'الرقم القومي للزميل',
+                          prefixIcon: Icons.badge_outlined,
                           controller: _roommateNationalIdController,
-                          decoration: const InputDecoration(
-                            labelText: 'الرقم القومي للزميل',
-                          ),
                           keyboardType: TextInputType.number,
                           validator: _optionalNationalIdValidator,
                           onChanged: (_) => setState(() {}),
@@ -926,13 +951,13 @@ class _AddWinterContractScreenState
                       ],
                   ),
                 ),
+              ],
             ],
-            const SizedBox(height: 16),
-            TextFormField(
+            const SectionTitle(title: 'الهوية والمستندات'),
+            AppTextField(
+              label: 'الرقم القومي (المستأجر الأساسي)',
+              prefixIcon: Icons.badge_outlined,
               controller: _nationalIdController,
-              decoration: const InputDecoration(
-                labelText: 'الرقم القومي (المستأجر الأساسي)',
-              ),
               keyboardType: TextInputType.number,
               validator: _optionalNationalIdValidator,
               onChanged: (_) => setState(() {}),
@@ -943,7 +968,7 @@ class _AddWinterContractScreenState
             const SizedBox(height: 16),
             Text(
               'صور بطاقة المستأجر الأساسي:',
-              style: AppTextStyles.title.copyWith(color: colors.ink),
+              style: AppTextStyles.label.copyWith(color: colors.ink2),
             ),
             const SizedBox(height: 8),
             Row(
@@ -984,7 +1009,7 @@ class _AddWinterContractScreenState
             const SizedBox(height: 16),
             Text(
               'صور العقد:',
-              style: AppTextStyles.title.copyWith(color: colors.ink),
+              style: AppTextStyles.label.copyWith(color: colors.ink2),
             ),
             const SizedBox(height: 8),
             Row(
@@ -1024,31 +1049,44 @@ class _AddWinterContractScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('الكهرباء على الطالب'),
+            const SectionTitle(title: 'المرافق'),
+            AppSwitchRow(
+              title: 'الكهرباء على الطالب',
+              icon: Icons.bolt_outlined,
+              tint: colors.warn,
               value: _isElectricityOnStudent,
               onChanged: (val) => setState(() => _isElectricityOnStudent = val),
             ),
-            SwitchListTile(
-              title: const Text('الغاز على الطالب'),
+            const SizedBox(height: 8),
+            AppSwitchRow(
+              title: 'الغاز على الطالب',
+              icon: Icons.local_fire_department_outlined,
+              tint: colors.summer,
               value: _isGasOnStudent,
               onChanged: (val) => setState(() => _isGasOnStudent = val),
             ),
-            SwitchListTile(
-              title: const Text('المياه على الطالب'),
+            const SizedBox(height: 8),
+            AppSwitchRow(
+              title: 'المياه على الطالب',
+              icon: Icons.water_drop_outlined,
+              tint: colors.winter,
               value: _isWaterOnStudent,
               onChanged: (val) => setState(() => _isWaterOnStudent = val),
             ),
-            const SizedBox(height: 32),
-            AppButton(
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
               label: l10n.save,
-              expand: true,
+              icon: Icons.check,
               loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

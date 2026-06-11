@@ -28,6 +28,8 @@ class AppTextField extends StatelessWidget {
     this.focusNode,
     this.textDirection,
     this.autofocus = false,
+    this.autovalidateMode,
+    this.helperText,
   });
 
   final String? label;
@@ -48,6 +50,8 @@ class AppTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final TextDirection? textDirection;
   final bool autofocus;
+  final AutovalidateMode? autovalidateMode;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +71,11 @@ class AppTextField extends StatelessWidget {
       focusNode: focusNode,
       textDirection: textDirection,
       autofocus: autofocus,
+      autovalidateMode: autovalidateMode,
       style: AppTextStyles.body.copyWith(fontSize: 15, color: colors.ink),
       decoration: InputDecoration(
         hintText: hint,
+        helperText: helperText,
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, size: 20, color: colors.ink3)
             : null,

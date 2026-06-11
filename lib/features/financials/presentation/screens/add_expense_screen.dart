@@ -10,7 +10,6 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 
 import '../../../../core/database/database.dart';
 
-import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../providers/financial_transfers_provider.dart';
@@ -151,8 +150,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            const SectionTitle(title: 'الموقع'),
             buildingsAsync.when(
               data: (buildings) {
                 if (buildings.isNotEmpty && _selectedBuildingId == null) {
@@ -163,8 +163,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                     });
                   });
                 }
-                return DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.buildings),
+                return AppDropdownField<String>(
+                  label: l10n.buildings,
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
@@ -181,7 +182,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
@@ -193,8 +194,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                           .toList()
                     : apartments;
 
-                return DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.apartments),
+                return AppDropdownField<String>(
+                  label: l10n.apartments,
+                  prefixIcon: Icons.door_front_door_outlined,
                   initialValue: _selectedApartmentId,
                   items: [
                     const DropdownMenuItem<String>(
@@ -214,9 +216,10 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               loading: () => const SizedBox.shrink(),
               error: (e, st) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(labelText: l10n.expenseType),
+            const SectionTitle(title: 'تفاصيل المصروف'),
+            AppDropdownField<String>(
+              label: l10n.expenseType,
+              prefixIcon: Icons.category_outlined,
               initialValue: _selectedExpenseType,
               items: _expenseTypes
                   .map(
@@ -230,72 +233,95 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'طريقة دفع المصروف'),
-              initialValue: _selectedPaymentMethod,
-              items: paymentAccounts.entries
-                  .map(
-                    (entry) => DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppDropdownField<String>(
+                    label: 'طريقة دفع المصروف',
+                    initialValue: _selectedPaymentMethod,
+                    items: paymentAccounts.entries
+                        .map(
+                          (entry) => DropdownMenuItem(
+                            value: entry.key,
+                            child: Text(entry.value),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(
+                      () =>
+                          _selectedPaymentMethod = v ?? _selectedPaymentMethod,
                     ),
-                  )
-                  .toList(),
-              onChanged: (v) => setState(
-                () => _selectedPaymentMethod = v ?? _selectedPaymentMethod,
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'الموسم'),
-              initialValue: _selectedSeason,
-              items: seasonOptionsAround(includeGeneric: false)
-                  .map(
-                    (option) => DropdownMenuItem(
-                      value: option.key,
-                      child: Text(option.label),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppDropdownField<String>(
+                    label: 'الموسم',
+                    initialValue: _selectedSeason,
+                    items: seasonOptionsAround(includeGeneric: false)
+                        .map(
+                          (option) => DropdownMenuItem(
+                            value: option.key,
+                            child: Text(option.label),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(
+                      () => _selectedSeason = v ?? _selectedSeason,
                     ),
-                  )
-                  .toList(),
-              onChanged: (v) => setState(
-                () => _selectedSeason = v ?? _selectedSeason,
-              ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _amountController,
-              decoration: InputDecoration(labelText: l10n.amount),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [CurrencyInputFormatter()],
-              validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: l10n.amount,
+                    prefixIcon: Icons.payments_outlined,
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [CurrencyInputFormatter()],
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppDateField(
+                    label: 'التاريخ',
+                    value: _date?.toString().split(' ')[0],
+                    placeholder: l10n.selectDate,
+                    onTap: () => _selectDate(context),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            ListTile(
-              title: Text(_date?.toString().split(' ')[0] ?? l10n.selectDate),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDate(context),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: context.colors.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: l10n.description,
+              prefixIcon: Icons.notes_outlined,
               controller: _descriptionController,
-              decoration: InputDecoration(labelText: l10n.description),
               maxLines: 3,
-            ),
-            const SizedBox(height: 32),
-            AppButton(
-              label: 'حفظ',
-              expand: true,
-              loading: controllerState.isLoading,
-              onPressed: controllerState.isLoading ? null : _submit,
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حفظ',
+              icon: Icons.check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }

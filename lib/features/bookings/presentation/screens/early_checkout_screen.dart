@@ -108,77 +108,83 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               AppCard(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'النزيل الحالي',
-                        style:
-                            AppTextStyles.label.copyWith(color: colors.ink2),
-                      ),
-                      Text(
-                        booking.guestName,
-                        style: AppTextStyles.h2.copyWith(color: colors.ink),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconTile(
+                      icon: Icons.directions_walk,
+                      tint: colors.summer,
+                      size: 48,
+                      iconSize: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.calendar_month,
-                            size: 16,
-                            color: colors.ink3,
-                          ),
-                          const SizedBox(width: 8),
                           Text(
-                            'الحجز الأصلي: $originalDays أيام',
-                            style: AppTextStyles.body
+                            'النزيل الحالي',
+                            style: AppTextStyles.label
                                 .copyWith(color: colors.ink2),
+                          ),
+                          Text(
+                            booking.guestName,
+                            style:
+                                AppTextStyles.h2.copyWith(color: colors.ink),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              StatusChip(
+                                label: 'الحجز الأصلي: $originalDays أيام',
+                                kind: StatusChipKind.neutral,
+                                icon: Icons.calendar_month,
+                              ),
+                              StatusChip(
+                                label:
+                                    'المدفوع: ${booking.totalPriceEgp} ج.م',
+                                kind: StatusChipKind.brand,
+                                icon: Icons.payments,
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      Text(
-                        'إجمالي المدفوع: ${booking.totalPriceEgp} ج.م',
-                        style: AppTextStyles.tabular(
-                          AppTextStyles.title.copyWith(color: colors.accent),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SectionTitle(title: 'حساب الاسترداد'),
               AppCard(
                 child: Column(
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'الأيام المستخدمة',
-                            style: AppTextStyles.body
-                                .copyWith(color: colors.ink2),
+                          Expanded(
+                            child: MiniMetric(
+                              icon: Icons.check_circle_outline,
+                              value: '$usedDays',
+                              label: 'الأيام المستخدمة',
+                              tint: colors.ok,
+                            ),
                           ),
-                          Text(
-                            '$usedDays',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ok),
+                          Container(
+                            width: 1,
+                            height: 38,
+                            color: colors.border,
                           ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'الأيام المتبقية',
-                            style: AppTextStyles.body
-                                .copyWith(color: colors.ink2),
-                          ),
-                          Text(
-                            '$remainingDays',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.err),
+                          Expanded(
+                            child: MiniMetric(
+                              icon: Icons.hourglass_bottom,
+                              value: '$remainingDays',
+                              label: 'الأيام المتبقية',
+                              tint: colors.err,
+                            ),
                           ),
                         ],
                       ),
@@ -204,11 +210,11 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                         isTitle: true,
                       ),
                       const SizedBox(height: 16),
-                      SwitchListTile(
-                        title: const Text('عدم استرداد نقود'),
-                        subtitle: const Text(
-                          'تسجيل الخروج المبكر بدون رجوع أي مبلغ',
-                        ),
+                      AppSwitchRow(
+                        title: 'عدم استرداد نقود',
+                        subtitle: 'تسجيل الخروج المبكر بدون رجوع أي مبلغ',
+                        icon: Icons.money_off,
+                        tint: colors.err,
                         value: _noRefund,
                         onChanged: (val) {
                           setState(() {
@@ -220,47 +226,29 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                           });
                         },
                       ),
-                      SwitchListTile(
-                        title: const Text('استرداد مخصص'),
-                        subtitle: const Text('تعديل مبلغ الاسترداد يدوياً'),
+                      const SizedBox(height: 8),
+                      AppSwitchRow(
+                        title: 'استرداد مخصص',
+                        subtitle: 'تعديل مبلغ الاسترداد يدوياً',
+                        icon: Icons.tune,
                         value: _customRefund,
                         onChanged: _noRefund
                             ? null
                             : (val) => setState(() => _customRefund = val),
                       ),
-                      if (_customRefund)
-                        TextFormField(
+                      if (_customRefund) ...[
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          label: 'مبلغ الاسترداد الفعلي (ج.م)',
+                          prefixIcon: Icons.payments_outlined,
                           controller: _refundController,
-                          decoration: const InputDecoration(
-                            labelText: 'مبلغ الاسترداد الفعلي (ج.م)',
-                          ),
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
                         ),
+                      ],
                     ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              AppButton(
-                label: 'فحص الشقة وتأكيد الخروج',
-                icon: Icons.fact_check,
-                expand: true,
-                loading: controllerState.isLoading,
-                onPressed: controllerState.isLoading || remainingDays <= 0
-                    ? null
-                    : () {
-                        context.go(
-                          Uri(
-                            path: '/inspections/add',
-                            queryParameters: {
-                              'apartmentId': booking.apartmentId,
-                              'earlyCheckoutBookingId': booking.id,
-                              'newCheckoutDate': today.toIso8601String(),
-                            },
-                          ).toString(),
-                        );
-                      },
               ),
             ],
           );
@@ -272,6 +260,47 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
           retryLabel: 'إعادة المحاولة',
           onRetry: () => ref.invalidate(allSummerBookingsProvider),
         ),
+      ),
+      bottomNavigationBar: bookingsAsync.maybeWhen(
+        data: (bookings) {
+          final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
+          final today = DateTime.now();
+          final originalDays = _calendarDays(
+            booking.checkInDate,
+            booking.checkOutDate,
+          );
+          final usedDays = _calendarDays(
+            booking.checkInDate,
+            today,
+          ).clamp(1, originalDays);
+          final remainingDays = (originalDays - usedDays).clamp(0, 10000);
+          return BottomActionBar(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'فحص الشقة وتأكيد الخروج',
+                  icon: Icons.fact_check,
+                  loading: controllerState.isLoading,
+                  onPressed: controllerState.isLoading || remainingDays <= 0
+                      ? null
+                      : () {
+                          context.go(
+                            Uri(
+                              path: '/inspections/add',
+                              queryParameters: {
+                                'apartmentId': booking.apartmentId,
+                                'earlyCheckoutBookingId': booking.id,
+                                'newCheckoutDate': today.toIso8601String(),
+                              },
+                            ).toString(),
+                          );
+                        },
+                ),
+              ),
+            ],
+          );
+        },
+        orElse: () => null,
       ),
     );
   }

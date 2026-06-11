@@ -156,14 +156,14 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            const SectionTitle(title: 'الشقة'),
             apartmentsAsync.when(
               data: (apartments) {
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'الشقة المُراد فحصها',
-                  ),
+                return AppDropdownField<String>(
+                  label: 'الشقة المُراد فحصها',
+                  prefixIcon: Icons.door_front_door_outlined,
                   initialValue: _selectedApartmentId,
                   items: apartments
                       .map(
@@ -181,7 +181,7 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                   validator: (v) => v == null ? 'مطلوب' : null,
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
@@ -261,94 +261,70 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                 },
                 orElse: () => const SizedBox.shrink(),
               ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('تاريخ الفحص'),
-              subtitle: Text(
-                _inspectionDate.toLocal().toString().split(' ')[0],
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: colors.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onTap: _selectDate,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _inspectorNameController,
-              decoration: const InputDecoration(
-                labelText: 'اسم الفاحص / المُستلم',
-              ),
-              validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'حالة النظافة',
-              style: AppTextStyles.title.copyWith(color: colors.ink),
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(
-                  value: true,
-                  label: Text('نظيفة'),
-                  icon: Icon(Icons.cleaning_services),
+            const SectionTitle(title: 'بيانات الفحص'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppDateField(
+                    label: 'تاريخ الفحص',
+                    value: _inspectionDate.toLocal().toString().split(' ')[0],
+                    onTap: _selectDate,
+                  ),
                 ),
-                ButtonSegment(
-                  value: false,
-                  label: Text('تحتاج نظافة'),
-                  icon: Icon(Icons.warning),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: 'اسم الفاحص / المُستلم',
+                    prefixIcon: Icons.person_outline,
+                    controller: _inspectorNameController,
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                  ),
                 ),
               ],
-              selected: {_isClean},
-              onSelectionChanged: (Set<bool> newSelection) {
-                setState(() => _isClean = newSelection.first);
-              },
             ),
-            const SizedBox(height: 24),
-            SwitchListTile(
-              title: const Text(
-                'هل يوجد تلفيات في المحتويات؟',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text(
-                'تسجيل الأشياء المكسورة أو التالفة ومين هيتحمل تكلفتها',
-              ),
+            const SectionTitle(title: 'حالة النظافة'),
+            SegmentedTabs(
+              labels: const ['نظيفة', 'تحتاج نظافة'],
+              index: _isClean ? 0 : 1,
+              onChanged: (i) => setState(() => _isClean = i == 0),
+            ),
+            const SectionTitle(title: 'التلفيات'),
+            AppSwitchRow(
+              title: 'هل يوجد تلفيات في المحتويات؟',
+              subtitle: 'تسجيل الأشياء المكسورة أو التالفة ومين هيتحمل تكلفتها',
+              icon: Icons.report_problem_outlined,
+              tint: colors.warn,
               value: _hasDamages,
               onChanged: (val) => setState(() => _hasDamages = val),
             ),
             if (_hasDamages) ...[
               const SizedBox(height: 16),
-              TextFormField(
+              AppTextField(
+                label: 'تفاصيل التلفيات',
+                prefixIcon: Icons.notes_outlined,
                 controller: _damagesDescriptionController,
-                decoration: const InputDecoration(labelText: 'تفاصيل التلفيات'),
                 maxLines: 3,
                 validator: (v) =>
                     _hasDamages && (v == null || v.isEmpty) ? 'مطلوب' : null,
               ),
               const SizedBox(height: 16),
-              SwitchListTile(
-                title: const Text(
-                  'تسجيل التلفيات كطلب صيانة',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'لعدم معرفة تكلفة التصليح حتى يراها العامل',
-                ),
+              AppSwitchRow(
+                title: 'تسجيل التلفيات كطلب صيانة',
+                subtitle: 'لعدم معرفة تكلفة التصليح حتى يراها العامل',
+                icon: Icons.build_outlined,
                 value: _createMaintenanceRequest,
                 onChanged: (val) =>
                     setState(() => _createMaintenanceRequest = val),
               ),
               const SizedBox(height: 16),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: TextFormField(
+                    child: AppTextField(
+                      label: 'غرامة المستأجر (ج.م)',
                       controller: _tenantFineController,
-                      decoration: const InputDecoration(
-                        labelText: 'غرامة المستأجر (ج.م)',
-                      ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -356,14 +332,12 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                     ),
                   ),
                   if (!_createMaintenanceRequest) ...[
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: TextFormField(
+                      child: AppTextField(
+                        label: 'تكلفة تصليح علينا (ج.م)',
+                        helperText: 'ستُسجل كمصروف',
                         controller: _ownerCostController,
-                        decoration: const InputDecoration(
-                          labelText: 'تكلفة تصليح علينا (ج.م)',
-                          helperText: 'ستُسجل كمصروف',
-                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -375,22 +349,26 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
               ),
             ],
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'ملاحظات أخرى (اختياري)',
+              prefixIcon: Icons.sticky_note_2_outlined,
               controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'ملاحظات أخرى (اختياري)',
-              ),
               maxLines: 2,
-            ),
-            const SizedBox(height: 32),
-            AppButton(
-              label: 'حفظ الفحص',
-              expand: true,
-              loading: controllerState.isLoading,
-              onPressed: controllerState.isLoading ? null : _submit,
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حفظ الفحص',
+              icon: Icons.check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }

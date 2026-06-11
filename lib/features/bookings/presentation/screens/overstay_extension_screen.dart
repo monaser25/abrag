@@ -124,42 +124,53 @@ class _OverstayExtensionScreenState
               booking.checkOutDate.add(Duration(days: _extraDays));
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               AppCard(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'النزيل الحالي',
-                        style:
-                            AppTextStyles.label.copyWith(color: colors.ink2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconTile(
+                      icon: Icons.more_time,
+                      tint: colors.summer,
+                      size: 48,
+                      iconSize: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'النزيل الحالي',
+                            style: AppTextStyles.label
+                                .copyWith(color: colors.ink2),
+                          ),
+                          Text(
+                            booking.guestName,
+                            style:
+                                AppTextStyles.h2.copyWith(color: colors.ink),
+                          ),
+                          const SizedBox(height: 12),
+                          _InfoLine(
+                            icon: Icons.event_busy,
+                            label: 'الخروج الحالي',
+                            value: formatter.format(booking.checkOutDate),
+                          ),
+                          const SizedBox(height: 8),
+                          _InfoLine(
+                            icon: Icons.event_available,
+                            label: 'الخروج الجديد',
+                            value: formatter.format(newCheckoutDate),
+                            valueColor: colors.ok,
+                          ),
+                        ],
                       ),
-                      Text(
-                        booking.guestName,
-                        style: AppTextStyles.h2.copyWith(color: colors.ink),
-                      ),
-                      const SizedBox(height: 12),
-                      _InfoLine(
-                        icon: Icons.event_busy,
-                        label: 'الخروج الحالي',
-                        value: formatter.format(booking.checkOutDate),
-                      ),
-                      const SizedBox(height: 8),
-                      _InfoLine(
-                        icon: Icons.event_available,
-                        label: 'الخروج الجديد',
-                        value: formatter.format(newCheckoutDate),
-                      ),
-                    ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'عدد أيام التمديد',
-                style: AppTextStyles.title.copyWith(color: colors.ink),
-              ),
-              const SizedBox(height: 8),
+              const SectionTitle(title: 'عدد أيام التمديد'),
               AppCard(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -202,28 +213,26 @@ class _OverstayExtensionScreenState
                     ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SectionTitle(title: 'السعر والحساب'),
               AppCard(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('تخصيص سعر الليلة'),
-                        subtitle: Text(
-                          'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
-                        ),
+                      AppSwitchRow(
+                        title: 'تخصيص سعر الليلة',
+                        subtitle:
+                            'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
+                        icon: Icons.tune,
                         value: _useCustomPrice,
                         onChanged: (val) =>
                             setState(() => _useCustomPrice = val),
                       ),
                       if (_useCustomPrice) ...[
-                        const SizedBox(height: 8),
-                        TextFormField(
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          label: 'سعر الليلة (ج.م)',
+                          prefixIcon: Icons.payments_outlined,
                           controller: _customPriceController,
-                          decoration: const InputDecoration(
-                            labelText: 'سعر الليلة (ج.م)',
-                          ),
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
@@ -257,25 +266,6 @@ class _OverstayExtensionScreenState
                     ],
                 ),
               ),
-              const SizedBox(height: 24),
-              AppButton(
-                label: 'تأكيد التمديد',
-                icon: Icons.check_circle,
-                expand: true,
-                loading: controllerState.isLoading,
-                onPressed: controllerState.isLoading
-                    ? null
-                    : () {
-                        ref
-                            .read(bookingsControllerProvider.notifier)
-                            .extendBooking(
-                              id: widget.bookingId,
-                              newCheckoutDate: newCheckoutDate,
-                              overstayDays: _extraDays,
-                              additionalFeeEgp: additionalFee,
-                            );
-                      },
-              ),
             ],
           );
         },
@@ -286,6 +276,47 @@ class _OverstayExtensionScreenState
           retryLabel: 'إعادة المحاولة',
           onRetry: () => ref.invalidate(allSummerBookingsProvider),
         ),
+      ),
+      bottomNavigationBar: bookingsAsync.maybeWhen(
+        data: (bookings) {
+          final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
+          final originalDays = booking.checkOutDate
+              .difference(booking.checkInDate)
+              .inDays
+              .clamp(1, 10000);
+          final automaticDailyRate = booking.totalPriceEgp / originalDays;
+          final dailyRate = _useCustomPrice
+              ? (double.tryParse(_customPriceController.text) ?? 0)
+              : automaticDailyRate;
+          final additionalFee = dailyRate * _extraDays;
+          final newCheckoutDate =
+              _customCheckoutDate ??
+              booking.checkOutDate.add(Duration(days: _extraDays));
+          return BottomActionBar(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'تأكيد التمديد',
+                  icon: Icons.check_circle,
+                  loading: controllerState.isLoading,
+                  onPressed: controllerState.isLoading
+                      ? null
+                      : () {
+                          ref
+                              .read(bookingsControllerProvider.notifier)
+                              .extendBooking(
+                                id: widget.bookingId,
+                                newCheckoutDate: newCheckoutDate,
+                                overstayDays: _extraDays,
+                                additionalFeeEgp: additionalFee,
+                              );
+                        },
+                ),
+              ),
+            ],
+          );
+        },
+        orElse: () => null,
       ),
     );
   }

@@ -147,13 +147,20 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            const SectionTitle(title: 'الموقع'),
             buildingsAsync.when(
               data: (buildings) {
-                if (buildings.isEmpty) return const Text('أضف مبنى أولاً');
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'المبنى'),
+                if (buildings.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.apartment,
+                    title: 'أضف مبنى أولاً',
+                  );
+                }
+                return AppDropdownField<String>(
+                  label: 'المبنى',
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
@@ -165,108 +172,103 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
                   validator: (v) => v == null ? 'مطلوب' : null,
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _numberController,
-              decoration: const InputDecoration(labelText: 'رقم الشقة'),
-              validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: 'رقم الشقة',
+                    prefixIcon: Icons.door_front_door_outlined,
+                    controller: _numberController,
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: 'الدور',
+                    prefixIcon: Icons.layers_outlined,
+                    controller: _floorController,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _floorController,
-              decoration: const InputDecoration(labelText: 'الدور'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
+            const SectionTitle(title: 'بيانات الخط الأرضي'),
             AppCard(
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'بيانات الخط الأرضي',
-                      style: AppTextStyles.title.copyWith(color: colors.ink),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _landlineNumberController,
-                      decoration: const InputDecoration(
-                        labelText: 'رقم الخط الأرضي',
-                        prefixIcon: Icon(Icons.phone),
-                      ),
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _landlineOwnerController,
-                      decoration: const InputDecoration(
-                        labelText: 'اسم صاحب الخط',
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _landlineNotesController,
-                      decoration: const InputDecoration(
-                        labelText: 'ملاحظات الخط',
-                        prefixIcon: Icon(Icons.notes),
-                      ),
-                      maxLines: 2,
-                    ),
-                  ],
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTextField(
+                    label: 'رقم الخط الأرضي',
+                    prefixIcon: Icons.phone_outlined,
+                    controller: _landlineNumberController,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    label: 'اسم صاحب الخط',
+                    prefixIcon: Icons.person_outline,
+                    controller: _landlineOwnerController,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    label: 'ملاحظات الخط',
+                    prefixIcon: Icons.notes_outlined,
+                    controller: _landlineNotesController,
+                    maxLines: 2,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            SectionTitle(
+              title: 'محتويات الشقة (جرد مبدئي)',
+              action: AppButton(
+                label: 'حفظ كقالب',
+                icon: Icons.save_outlined,
+                variant: AppButtonVariant.ghost,
+                small: true,
+                onPressed: _saveAsGlobalTemplate,
+              ),
+            ),
             AppCard(
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'محتويات الشقة (جرد مبدئي)',
-                          style:
-                              AppTextStyles.title.copyWith(color: colors.ink),
-                        ),
-                        AppButton(
-                          label: 'حفظ كقالب',
-                          icon: Icons.save,
-                          variant: AppButtonVariant.ghost,
-                          small: true,
-                          onPressed: _saveAsGlobalTemplate,
-                        ),
-                      ],
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
+                    style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _inventoryController,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'الأجهزة الكهربائية:\nثلاجة\nغسالة\n\nالأثاث:\nسرير كبير\nدولاب',
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
-                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _inventoryController,
-                      decoration: const InputDecoration(
-                        hintText:
-                            'الأجهزة الكهربائية:\nثلاجة\nغسالة\n\nالأثاث:\nسرير كبير\nدولاب',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 8,
-                    ),
-                  ],
+                    maxLines: 8,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 32),
-            AppButton(
-              label: 'حفظ',
-              expand: true,
-              loading: controllerState.isLoading,
-              onPressed: controllerState.isLoading ? null : _submit,
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حفظ',
+              icon: Icons.check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }

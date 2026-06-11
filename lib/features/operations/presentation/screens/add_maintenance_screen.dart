@@ -95,8 +95,9 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            const SectionTitle(title: 'الموقع'),
             buildingsAsync.when(
               data: (buildings) {
                 if (widget.request != null && _selectedBuildingId == null) {
@@ -118,8 +119,9 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                     });
                   });
                 }
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'اختر المبنى'),
+                return AppDropdownField<String>(
+                  label: 'اختر المبنى',
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))).toList(),
                   onChanged: widget.request != null ? null : (v) {
@@ -130,32 +132,33 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
             apartmentsAsync.when(
               data: (apartments) {
-                final filteredApts = _selectedBuildingId != null 
+                final filteredApts = _selectedBuildingId != null
                     ? apartments.where((a) => a.buildingId == _selectedBuildingId).toList()
                     : apartments;
-                
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'الشقة'),
+
+                return AppDropdownField<String>(
+                  label: 'الشقة',
+                  prefixIcon: Icons.door_front_door_outlined,
                   initialValue: _selectedApartmentId,
                   items: filteredApts.map((a) => DropdownMenuItem(value: a.id, child: Text('شقة ${a.apartmentNumber}'))).toList(),
                   onChanged: widget.request != null ? null : (v) => setState(() => _selectedApartmentId = v),
                   validator: (v) => v == null ? 'مطلوب' : null,
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
-            const SizedBox(height: 16),
+            const SectionTitle(title: 'تفاصيل العطل'),
             techniciansAsync.when(
               data: (technicians) {
                 final activeTechs = technicians.where((t) => t.syncStatus != SyncStatus.pendingDelete).toList();
-                
+
                 // Ensure the selected technician is in the list, if not, add it temporarily
                 if (_selectedTechnicianId != null && !activeTechs.any((t) => t.id == _selectedTechnicianId)) {
                    final oldTech = technicians.firstWhere((t) => t.id == _selectedTechnicianId, orElse: () => technicians.first);
@@ -164,8 +167,9 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                    }
                 }
 
-                return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'الفني / العامل (اختياري)'),
+                return AppDropdownField<String>(
+                  label: 'الفني / العامل (اختياري)',
+                  prefixIcon: Icons.engineering_outlined,
                   initialValue: _selectedTechnicianId,
                   items: [
                     const DropdownMenuItem(value: null, child: Text('بدون فني')),
@@ -174,41 +178,49 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                   onChanged: (v) => setState(() => _selectedTechnicianId = v),
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'اسم المُبلّغ (اختياري)',
+              prefixIcon: Icons.person_outline,
               controller: _reportedByController,
-              decoration: const InputDecoration(labelText: 'اسم المُبلّغ (اختياري)'),
               // Validator removed to make it optional
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'وصف العطل',
+              prefixIcon: Icons.build_outlined,
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'وصف العطل'),
               maxLines: 4,
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
             ),
             if (widget.request?.status == 'resolved') ...[
               const SizedBox(height: 16),
-              TextFormField(
+              AppTextField(
+                label: 'التكلفة (ج.م)',
+                prefixIcon: Icons.payments_outlined,
                 controller: _costController,
-                decoration: const InputDecoration(labelText: 'التكلفة (ج.م)'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [CurrencyInputFormatter()],
                 validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
               ),
             ],
-            const SizedBox(height: 32),
-            AppButton(
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
               label: 'حفظ الطلب',
-              expand: true,
+              icon: Icons.check,
               loading: controllerState.isLoading,
               onPressed: controllerState.isLoading ? null : _submit,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
