@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/buildings_controller.dart';
 
 import '../../../../core/database/database.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class AddBuildingScreen extends ConsumerStatefulWidget {
   final Building? building;
@@ -71,38 +72,49 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
       },
     );
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.building == null ? 'إضافة مبنى' : 'تعديل بيانات المبنى')),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: widget.building == null ? 'إضافة مبنى' : 'تعديل بيانات المبنى',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            TextFormField(
+            const SectionTitle(title: 'بيانات المبنى'),
+            AppTextField(
+              label: 'اسم المبنى',
+              prefixIcon: Icons.apartment,
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'اسم المبنى'),
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'العنوان',
+              prefixIcon: Icons.place_outlined,
               controller: _addressController,
-              decoration: const InputDecoration(labelText: 'العنوان'),
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: 'عدد الشقق',
+              prefixIcon: Icons.grid_view_outlined,
               controller: _totalApartmentsController,
-              decoration: const InputDecoration(labelText: 'عدد الشقق'),
               keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ'),
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حفظ',
+              icon: Icons.check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/meter_readings_controller.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -87,15 +88,17 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('إضافة قراءة عداد')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'إضافة قراءة عداد'),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            SwitchListTile(
-              title: const Text('مصروف مشترك (للمبنى بالكامل)'),
+            const SectionTitle(title: 'الموقع'),
+            AppSwitchRow(
+              title: 'مصروف مشترك (للمبنى بالكامل)',
+              icon: Icons.holiday_village_outlined,
               value: _isSharedExpense,
               onChanged: (val) {
                 setState(() {
@@ -116,8 +119,9 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
                     });
                   });
                 }
-                return DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.buildings),
+                return AppDropdownField<String>(
+                  label: l10n.buildings,
+                  prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
                   items: buildings
                       .map(
@@ -133,7 +137,7 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
                   },
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const LinearProgressIndicator(),
               error: (e, st) => Text('Error: $e'),
             ),
             if (!_isSharedExpense) ...[
@@ -146,8 +150,9 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
                             .toList()
                       : apartments;
 
-                  return DropdownButtonFormField<String>(
-                    decoration: InputDecoration(labelText: l10n.apartments),
+                  return AppDropdownField<String>(
+                    label: l10n.apartments,
+                    prefixIcon: Icons.door_front_door_outlined,
                     initialValue: _selectedApartmentId,
                     items: filteredApts
                         .map(
@@ -166,54 +171,63 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
                 error: (e, st) => const SizedBox.shrink(),
               ),
             ],
-            const SizedBox(height: 16),
-            ListTile(
-              title: Text(_date?.toString().split(' ')[0] ?? l10n.selectDate),
-              trailing: const Icon(Icons.calendar_today),
+            const SectionTitle(title: 'القراءة'),
+            AppDateField(
+              label: 'تاريخ القراءة',
+              value: _date?.toString().split(' ')[0],
+              placeholder: l10n.selectDate,
               onTap: () => _selectDate(context),
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _previousReadingController,
-              decoration: InputDecoration(labelText: l10n.previousReading),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (v) {
-                final value = double.tryParse(v?.trim() ?? '');
-                if (value == null) return 'مطلوب';
-                if (value < 0) return 'القراءة لا يمكن أن تكون سالبة';
-                return null;
-              },
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: l10n.previousReading,
+                    prefixIcon: Icons.history,
+                    controller: _previousReadingController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) {
+                      final value = double.tryParse(v?.trim() ?? '');
+                      if (value == null) return 'مطلوب';
+                      if (value < 0) return 'القراءة لا يمكن أن تكون سالبة';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    label: l10n.currentReading,
+                    prefixIcon: Icons.electric_meter_outlined,
+                    controller: _currentReadingController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) {
+                      final current = double.tryParse(v?.trim() ?? '');
+                      final previous = double.tryParse(
+                        _previousReadingController.text.trim(),
+                      );
+                      if (current == null) return 'مطلوب';
+                      if (current < 0) return 'القراءة لا يمكن أن تكون سالبة';
+                      if (previous != null && current < previous) {
+                        return 'القراءة الحالية لازم تكون أكبر من أو تساوي السابقة';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _currentReadingController,
-              decoration: InputDecoration(labelText: l10n.currentReading),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              validator: (v) {
-                final current = double.tryParse(v?.trim() ?? '');
-                final previous = double.tryParse(
-                  _previousReadingController.text.trim(),
-                );
-                if (current == null) return 'مطلوب';
-                if (current < 0) return 'القراءة لا يمكن أن تكون سالبة';
-                if (previous != null && current < previous) {
-                  return 'القراءة الحالية لازم تكون أكبر من أو تساوي السابقة';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
+            AppTextField(
+              label: l10n.amount,
+              prefixIcon: Icons.payments_outlined,
               controller: _amountController,
-              decoration: InputDecoration(labelText: l10n.amount),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -224,15 +238,20 @@ class _AddMeterReadingScreenState extends ConsumerState<AddMeterReadingScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: controllerState.isLoading ? null : _submit,
-              child: controllerState.isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('حفظ'),
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomActionBar(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: 'حفظ',
+              icon: Icons.check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
+            ),
+          ),
+        ],
       ),
     );
   }
