@@ -383,7 +383,7 @@ class _RentRow extends StatelessWidget {
                   Text(
                     amount,
                     style: AppTextStyles.tabular(
-                      AppTextStyles.title.copyWith(color: colors.brand),
+                      AppTextStyles.title.copyWith(color: colors.ink),
                     ),
                   ),
                   AppIconButton(icon: Icons.edit_outlined, onPressed: onEdit),

@@ -14,6 +14,8 @@ class AppTheme {
 
   static ThemeData get darkTheme => _build(AbragColors.dark, Brightness.dark);
 
+  static ThemeData get lightTheme => _build(AbragColors.light, Brightness.light);
+
   static ThemeData _build(AbragColors c, Brightness brightness) {
     final colorScheme = ColorScheme(
       brightness: brightness,
@@ -54,7 +56,10 @@ class AppTheme {
       cardColor: c.surface,
       canvasColor: c.bg,
       dividerColor: c.border,
-      textTheme: AppTypography.textTheme,
+      textTheme: AppTypography.textTheme.apply(
+        bodyColor: c.ink,
+        displayColor: c.ink,
+      ),
       iconTheme: IconThemeData(color: c.ink),
       extensions: [c],
       appBarTheme: AppBarTheme(

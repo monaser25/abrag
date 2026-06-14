@@ -112,7 +112,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           Text(
                             'إجمالي الأشخاص: ${filtered.length}',
                             style: AppTextStyles.title
-                                .copyWith(color: colors.brand),
+                                .copyWith(color: colors.ink),
                           ),
                         ],
                       ),
