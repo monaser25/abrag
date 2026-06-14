@@ -74,7 +74,7 @@ class PdfExportService {
                     ],
                   ),
                   pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
                       pw.Image(logo, height: 88),
                       pw.SizedBox(height: 1),
@@ -144,7 +144,10 @@ class PdfExportService {
               style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 10),
-            pw.TableHelper.fromTextArray(
+            // Manual table (not TableHelper) so البيان can bold the
+            // transaction type — مصروف / حجز صيفي / دفعة شتوية / شغل عامل —
+            // making each row's kind scannable at a glance.
+            pw.Table(
               border: const pw.TableBorder(
                 top: pw.BorderSide(color: PdfColors.grey500),
                 bottom: pw.BorderSide(color: PdfColors.grey500),
@@ -159,27 +162,10 @@ class PdfExportService {
                   width: 0.5,
                 ),
               ),
-              headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
-                fontSize: 9.5,
-              ),
-              headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.grey800,
-              ),
-              oddRowDecoration: const pw.BoxDecoration(
-                color: PdfColors.grey100,
-              ),
-              cellPadding: const pw.EdgeInsets.symmetric(
-                horizontal: 5,
-                vertical: 6,
-              ),
-              cellStyle: const pw.TextStyle(fontSize: 9.5),
-              cellAlignment: pw.Alignment.centerRight,
-              // Structured columns, ordered right-to-left the way the user
-              // reads a statement: when → which unit → what → who brokered
-              // it + their cut → how it was paid → the amount. Only البيان
-              // flexes; the rest are fixed so values stay on one line.
+              defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+              // Ordered right-to-left the way the user reads a statement:
+              // when → which unit → what → who brokered it + their cut →
+              // how it was paid → the amount. Only البيان flexes.
               columnWidths: {
                 0: const pw.FixedColumnWidth(66), // التاريخ
                 1: const pw.FixedColumnWidth(38), // الشقة
@@ -189,26 +175,36 @@ class PdfExportService {
                 5: const pw.FixedColumnWidth(72), // طريقة الدفع
                 6: const pw.FixedColumnWidth(62), // المبلغ
               },
-              headers: const [
-                'التاريخ',
-                'الشقة',
-                'البيان',
-                'السمسار',
-                'العمولة',
-                'طريقة الدفع',
-                'المبلغ',
+              children: [
+                pw.TableRow(
+                  repeat: true, // repeat header on every page
+                  decoration: const pw.BoxDecoration(color: PdfColors.grey800),
+                  children: const [
+                    'التاريخ',
+                    'الشقة',
+                    'البيان',
+                    'السمسار',
+                    'العمولة',
+                    'طريقة الدفع',
+                    'المبلغ',
+                  ].map(_headerCell).toList(),
+                ),
+                for (var i = 0; i < transactions.length; i++)
+                  pw.TableRow(
+                    decoration: i.isOdd
+                        ? const pw.BoxDecoration(color: PdfColors.grey100)
+                        : null,
+                    children: [
+                      _cell('${transactions[i]['date'] ?? ''}'),
+                      _cell('${transactions[i]['unit'] ?? ''}'),
+                      _bayanCell('${transactions[i]['description'] ?? ''}'),
+                      _cell('${transactions[i]['broker'] ?? '—'}'),
+                      _cell('${transactions[i]['commission'] ?? '—'}'),
+                      _cell('${transactions[i]['payment'] ?? ''}'),
+                      _cell('${transactions[i]['amount'] ?? ''}'),
+                    ],
+                  ),
               ],
-              data: transactions.map((t) {
-                return [
-                  t['date'] ?? '',
-                  t['unit'] ?? '',
-                  t['description'] ?? '',
-                  t['broker'] ?? '—',
-                  t['commission'] ?? '—',
-                  t['payment'] ?? '',
-                  t['amount'] ?? '',
-                ];
-              }).toList(),
             ),
           ];
         },
@@ -243,6 +239,56 @@ class PdfExportService {
     );
 
     return pdf.save();
+  }
+
+  /// Statement table header cell.
+  static pw.Widget _headerCell(String text) {
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 7),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 9.5,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.white,
+        ),
+      ),
+    );
+  }
+
+  /// Plain right-aligned statement table cell.
+  static pw.Widget _cell(String text) {
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+      child: pw.Text(text, style: const pw.TextStyle(fontSize: 9.5)),
+    );
+  }
+
+  /// البيان cell: the transaction type (text before the first colon) is
+  /// bold so the kind of entry stands out; the rest stays regular weight.
+  static pw.Widget _bayanCell(String full) {
+    final idx = full.indexOf(':');
+    final type = idx >= 0 ? full.substring(0, idx).trim() : full.trim();
+    final rest = idx >= 0 ? full.substring(idx + 1).trim() : '';
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+      child: pw.RichText(
+        textDirection: pw.TextDirection.rtl,
+        text: pw.TextSpan(
+          style: const pw.TextStyle(fontSize: 9.5),
+          children: [
+            pw.TextSpan(
+              text: type,
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            if (rest.isNotEmpty) pw.TextSpan(text: ' — $rest'),
+          ],
+        ),
+      ),
+    );
   }
 
   /// A single summary card: title, large total, then optional
@@ -360,7 +406,7 @@ class PdfExportService {
                   ],
                 ),
                 pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
                     pw.Image(logo, height: 84),
                     pw.SizedBox(height: 1),
