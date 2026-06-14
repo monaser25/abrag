@@ -42,20 +42,4 @@ class AppColors {
   static const Color errSoft = Color(0x24FB5A66);
 
   static const Color white = Color(0xFFFFFFFF);
-
-  // ---------------------------------------------------------------------
-  // Legacy aliases — old navy/gold identity names, re-pointed at the new
-  // palette so un-migrated screens adopt it without code changes.
-  // Scheduled for removal in Phase 8 (ui-redesign/final-qa).
-  // ---------------------------------------------------------------------
-  static const Color navyBackground = bg;
-  static const Color goldPrimary = accent;
-  static const Color cardBackground = surface;
-  static const Color textPrimary = ink;
-  static const Color textSecondary = ink2;
-  static const Color divider = border;
-  static const Color error = err;
-  static const Color success = ok;
-  static const Color warning = warn;
-  static const Color info = brand;
 }

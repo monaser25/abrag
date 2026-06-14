@@ -566,7 +566,7 @@ class StudentDetailsScreen extends ConsumerWidget {
                 children: [
                   InteractiveViewer(child: _buildImagePreview(normalizedPath)),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red),
+                    icon: Icon(Icons.close, color: context.colors.err),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -652,7 +652,7 @@ class _MissingImageBox extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, color: Colors.grey),
+              Icon(Icons.cloud_off, color: context.colors.ink3),
               const SizedBox(height: 6),
               Text(
                 message,
