@@ -4,8 +4,12 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/financial_transfers_provider.dart';
 
 class FinancialTransfersScreen extends ConsumerStatefulWidget {
@@ -55,7 +59,12 @@ class _FinancialTransfersScreenState
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: context.colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) {
+        final colors = context.colors;
         return DraggableScrollableSheet(
           expand: false,
           initialChildSize: 0.82,
@@ -73,7 +82,7 @@ class _FinancialTransfersScreenState
                   padding: EdgeInsets.only(
                     left: 16,
                     right: 16,
-                    top: 16,
+                    top: 12,
                     bottom: MediaQuery.of(context).viewInsets.bottom + 16,
                   ),
                   child: Form(
@@ -81,13 +90,25 @@ class _FinancialTransfersScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: colors.border2,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
                         Text(
                           isEditing ? 'تعديل عملية مالية' : 'عملية مالية جديدة',
-                          style: Theme.of(context).textTheme.titleLarge,
+                          style: AppTextStyles.h3.copyWith(color: colors.ink),
                         ),
                         const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'نوع العملية'),
+                        AppDropdownField<String>(
+                          label: 'نوع العملية',
+                          prefixIcon: Icons.swap_horiz,
                           initialValue: _transferType,
                           items: const [
                             DropdownMenuItem(
@@ -117,8 +138,9 @@ class _FinancialTransfersScreenState
                           }),
                         ),
                         const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'الموسم'),
+                        AppDropdownField<String>(
+                          label: 'الموسم',
+                          prefixIcon: Icons.event_repeat,
                           initialValue: _season,
                           items: seasonOptionsAround(includeGeneric: false)
                               .map(
@@ -133,8 +155,9 @@ class _FinancialTransfersScreenState
                           ),
                         ),
                         const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'من'),
+                        AppDropdownField<String>(
+                          label: 'من',
+                          prefixIcon: Icons.account_balance_wallet_outlined,
                           initialValue: _fromAccount,
                           items: paymentAccounts.entries
                               .map(
@@ -152,8 +175,9 @@ class _FinancialTransfersScreenState
                         ),
                         const SizedBox(height: 12),
                         if (_transferType == 'internal')
-                          DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(labelText: 'إلى'),
+                          AppDropdownField<String>(
+                            label: 'إلى',
+                            prefixIcon: Icons.south_east,
                             initialValue: _toAccount,
                             items: paymentAccounts.entries
                                 .map(
@@ -168,14 +192,23 @@ class _FinancialTransfersScreenState
                             ),
                           )
                         else
-                          const InputDecorator(
-                            decoration: InputDecoration(labelText: 'إلى'),
-                            child: Text('خزنة الشركة'),
+                          const AppDropdownField<String>(
+                            label: 'إلى',
+                            prefixIcon: Icons.account_balance,
+                            initialValue: 'company_vault',
+                            items: [
+                              DropdownMenuItem(
+                                value: 'company_vault',
+                                child: Text('خزنة الشركة'),
+                              ),
+                            ],
+                            onChanged: null,
                           ),
                         const SizedBox(height: 12),
-                        TextFormField(
+                        AppTextField(
                           controller: _amountController,
-                          decoration: const InputDecoration(labelText: 'المبلغ'),
+                          label: 'المبلغ',
+                          prefixIcon: Icons.payments_outlined,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
@@ -186,16 +219,19 @@ class _FinancialTransfersScreenState
                                   : null,
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
+                        AppTextField(
                           controller: _notesController,
-                          decoration: const InputDecoration(
-                            labelText: 'ملاحظات / مكان نقل النقدية',
-                            hintText: 'مثال: تم نقل النقدية للخزنة الرئيسية',
-                          ),
+                          label: 'ملاحظات / مكان نقل النقدية',
+                          hint: 'مثال: تم نقل النقدية للخزنة الرئيسية',
+                          prefixIcon: Icons.sticky_note_2_outlined,
                           maxLines: 3,
                         ),
-                        const SizedBox(height: 16),
-                        FilledButton.icon(
+                        const SizedBox(height: 20),
+                        AppButton(
+                          label: isEditing ? 'حفظ التعديل' : 'حفظ العملية',
+                          icon: Icons.save_outlined,
+                          expand: true,
+                          loading: controllerState.isLoading,
                           onPressed: controllerState.isLoading
                               ? null
                               : () {
@@ -234,14 +270,6 @@ class _FinancialTransfersScreenState
                                     }
                                   }
                                 },
-                          icon: controllerState.isLoading
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.save),
-                          label: Text(isEditing ? 'حفظ التعديل' : 'حفظ العملية'),
                         ),
                       ],
                     ),
@@ -263,6 +291,7 @@ class _FinancialTransfersScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: context.colors.surface,
         title: const Text('حذف عملية التحويل؟'),
         content: Text(
           'سيتم حذف عملية بقيمة ${transfer.amountEgp.toCurrencyFormat()} ج.م من السجل، وسيتم تحديث أرصدة الخزنة تلقائيًا.',
@@ -293,7 +322,7 @@ class _FinancialTransfersScreenState
     final transfersAsync = ref.watch(financialTransfersProvider);
     final settingsAsync = ref.watch(appSettingsProvider);
     final activeSeason = ref.watch(activeSeasonKeyProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm', 'ar');
 
     if (!_didApplyActiveSeason && settingsAsync.hasValue) {
@@ -317,19 +346,24 @@ class _FinancialTransfersScreenState
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('خزنة الشركة والتحويلات'),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'خزنة الشركة والتحويلات',
         actions: [
-          IconButton(
+          AppIconButton(
             tooltip: 'عملية جديدة',
+            icon: Icons.add,
             onPressed: () => _showTransferSheet(),
-            icon: const Icon(Icons.add),
           ),
         ],
       ),
+      floatingActionButton: AppFab(
+        onPressed: () => _showTransferSheet(),
+        icon: Icons.add,
+        label: 'عملية جديدة',
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
           balancesAsync.when(
             data: (balances) {
@@ -360,25 +394,25 @@ class _FinancialTransfersScreenState
                           title: 'نقدية حاليًا',
                           value: '${(balances['cash'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.money,
-                          color: Colors.green,
+                          color: colors.ok,
                         ),
                         _BalanceCard(
                           title: 'فودافون كاش',
                           value: '${(balances['vodafone_cash'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.phone_android,
-                          color: Colors.redAccent,
+                          color: colors.err,
                         ),
                         _BalanceCard(
                           title: 'إنستا باي',
                           value: '${(balances['instapay'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.bolt,
-                          color: Colors.blueAccent,
+                          color: colors.brand,
                         ),
                         _BalanceCard(
                           title: 'خزنة الشركة',
                           value: '${(balances['company_vault'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.account_balance,
-                          color: theme.colorScheme.primary,
+                          color: colors.accent,
                           isWide: true,
                         ),
                       ];
@@ -397,90 +431,88 @@ class _FinancialTransfersScreenState
                 ],
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Text('حدث خطأ: $error'),
+            loading: () => const LoadingSkeleton(),
+            error: (error, _) => Text(
+              'حدث خطأ: $error',
+              style: AppTextStyles.body.copyWith(color: colors.err),
+            ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(Icons.history, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'سجل التحويلات والتوريد',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
+          const SectionTitle(title: 'سجل التحويلات والتوريد'),
           transfersAsync.when(
             data: (transfers) {
               if (transfers.isEmpty) {
-                return const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(child: Text('لا توجد تحويلات حتى الآن')),
-                  ),
+                return const EmptyState(
+                  icon: Icons.swap_horiz,
+                  title: 'لا توجد تحويلات حتى الآن',
                 );
               }
               return Column(
                 children: transfers.map((transfer) {
-                  return Card(
+                  final isDeposit = transfer.transferType == 'cash_deposit';
+                  final title = isDeposit
+                      ? 'توريد نقدية إلى خزنة الشركة'
+                      : '${paymentAccounts[transfer.fromAccount] ?? transfer.fromAccount} ← ${paymentAccounts[transfer.toAccount] ?? transfer.toAccount}';
+                  final subtitle =
+                      '${transfer.amountEgp.toCurrencyFormat()} ج.م • ${_seasonLabel(transfer.season)}\n${dateFormat.format(transfer.transferDate)}${transfer.notes == null ? '' : '\n${transfer.notes}'}';
+                  return AppCard(
+                    onTap: () => _showTransferSheet(transfer: transfer),
                     margin: const EdgeInsets.only(bottom: 10),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
-                        child: Icon(
-                          transfer.transferType == 'cash_deposit'
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        IconTile(
+                          icon: isDeposit
                               ? Icons.account_balance
                               : Icons.swap_horiz,
-                          color: theme.colorScheme.primary,
+                          tint: colors.brand,
                         ),
-                      ),
-                      title: Text(
-                        transfer.transferType == 'cash_deposit'
-                            ? 'توريد نقدية إلى خزنة الشركة'
-                            : '${paymentAccounts[transfer.fromAccount] ?? transfer.fromAccount} ← ${paymentAccounts[transfer.toAccount] ?? transfer.toAccount}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        '${transfer.amountEgp.toCurrencyFormat()} ج.م • ${_seasonLabel(transfer.season)}\n${dateFormat.format(transfer.transferDate)}${transfer.notes == null ? '' : '\n${transfer.notes}'}',
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _showTransferSheet(transfer: transfer);
-                          } else if (value == 'delete') {
-                            _confirmDelete(transfer);
-                          }
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'edit', child: Text('تعديل')),
-                          PopupMenuItem(value: 'delete', child: Text('حذف')),
-                        ],
-                      ),
-                      onTap: () => _showTransferSheet(transfer: transfer),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: AppTextStyles.title
+                                    .copyWith(color: colors.ink),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                subtitle,
+                                style: AppTextStyles.bodyS
+                                    .copyWith(color: colors.ink2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          color: colors.surface2,
+                          icon: Icon(Icons.more_vert, color: colors.ink3),
+                          onSelected: (value) {
+                            if (value == 'edit') {
+                              _showTransferSheet(transfer: transfer);
+                            } else if (value == 'delete') {
+                              _confirmDelete(transfer);
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(value: 'edit', child: Text('تعديل')),
+                            PopupMenuItem(value: 'delete', child: Text('حذف')),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Text('حدث خطأ: $error'),
+            loading: () => const LoadingSkeleton(),
+            error: (error, _) => Text(
+              'حدث خطأ: $error',
+              style: AppTextStyles.body.copyWith(color: colors.err),
+            ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showTransferSheet(),
-        icon: const Icon(Icons.add),
-        label: const Text('عملية جديدة'),
       ),
     );
   }
@@ -503,39 +535,36 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: color.withValues(alpha: 0.14),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.bodyMedium),
-                  const SizedBox(height: 4),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      value,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+    final colors = context.colors;
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          IconTile(icon: icon, tint: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    value,
+                    style: AppTextStyles.tabular(
+                      AppTextStyles.h3.copyWith(color: colors.ink),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -554,21 +583,21 @@ class _TreasuryHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.22),
-            theme.colorScheme.surfaceContainerHighest,
+            colors.brand.withValues(alpha: 0.22),
+            colors.surface2,
           ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: AppRadius.rMd,
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.18),
+          color: colors.brand.withValues(alpha: 0.18),
         ),
       ),
       child: Column(
@@ -576,20 +605,15 @@ class _TreasuryHeroCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                child: Icon(
-                  Icons.account_balance_wallet,
-                  color: theme.colorScheme.primary,
-                ),
+              IconTile(
+                icon: Icons.account_balance_wallet,
+                tint: colors.brand,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'الخزنة حسب $season',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.h3.copyWith(color: colors.ink),
                 ),
               ),
             ],
@@ -626,26 +650,28 @@ class _HeroValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.62),
-        borderRadius: BorderRadius.circular(16),
+        color: colors.surface,
+        borderRadius: AppRadius.rSm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.bodySmall),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
+          ),
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
             child: Text(
               value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+              style: AppTextStyles.tabular(
+                AppTextStyles.title.copyWith(color: colors.brand),
               ),
             ),
           ),
@@ -663,26 +689,19 @@ class _SeasonSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            labelText: 'فلترة حسب الموسم',
-            prefixIcon: Icon(Icons.event_repeat),
-          ),
-          initialValue: value,
-          items: seasonOptionsAround()
-              .map(
-                (option) => DropdownMenuItem(
-                  value: option.key,
-                  child: Text(option.label),
-                ),
-              )
-              .toList(),
-          onChanged: (next) => onChanged(next ?? 'all'),
-        ),
-      ),
+    return AppDropdownField<String>(
+      label: 'فلترة حسب الموسم',
+      prefixIcon: Icons.event_repeat,
+      initialValue: value,
+      items: seasonOptionsAround()
+          .map(
+            (option) => DropdownMenuItem(
+              value: option.key,
+              child: Text(option.label),
+            ),
+          )
+          .toList(),
+      onChanged: (next) => onChanged(next ?? 'all'),
     );
   }
 }

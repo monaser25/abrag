@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../users/presentation/providers/users_provider.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class AdminProfileScreen extends ConsumerStatefulWidget {
   const AdminProfileScreen({super.key});
@@ -11,11 +12,13 @@ class AdminProfileScreen extends ConsumerStatefulWidget {
 
 class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   bool _initialized = false;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -39,41 +42,51 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('الملف الشخصي')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'الملف الشخصي'),
       body: profileAsync.when(
         data: (profile) {
           if (profile == null) {
-            return const Center(child: Text('بيانات المستخدم غير متاحة'));
+            return const EmptyState(
+              icon: Icons.person_off_outlined,
+              title: 'بيانات المستخدم غير متاحة',
+            );
           }
 
           if (!_initialized) {
             _nameController.text = profile.fullName ?? '';
+            _emailController.text = profile.email;
             _initialized = true;
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              const CircleAvatar(
-                radius: 50,
-                child: Icon(Icons.person, size: 50),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'الاسم الكامل'),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: profile.email,
-                decoration: const InputDecoration(
-                  labelText: 'البريد الإلكتروني',
+              Center(
+                child: AppAvatar(
+                  name: profile.fullName ?? profile.email,
+                  size: 96,
                 ),
+              ),
+              const SizedBox(height: 24),
+              AppTextField(
+                controller: _nameController,
+                label: 'الاسم الكامل',
+                prefixIcon: Icons.person_outline,
+              ),
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: _emailController,
+                label: 'البريد الإلكتروني',
+                prefixIcon: Icons.email_outlined,
                 readOnly: true,
               ),
-              const SizedBox(height: 32),
-              ElevatedButton(
+              const SizedBox(height: 28),
+              AppButton(
+                label: 'تحديث البيانات',
+                icon: Icons.save_outlined,
+                expand: true,
+                loading: controllerState.isLoading,
                 onPressed: controllerState.isLoading
                     ? null
                     : () {
@@ -84,15 +97,17 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                               fullName: _nameController.text,
                             );
                       },
-                child: controllerState.isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('تحديث البيانات'),
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذّر تحميل الملف',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(currentUserProfileProvider),
+        ),
       ),
     );
   }

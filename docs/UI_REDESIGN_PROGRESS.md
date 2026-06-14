@@ -8,8 +8,8 @@
 | 3 — Dashboard & role homes | `ui-redesign/dashboard` | ✅ Merged (PR #3, `2257bf2`) | [#3](https://github.com/monaser25/abrag/pull/3) | Feature-preservation rule; meter readings restored + guarded (`_PermissionRoute`, manage_expenses) |
 | 4 — Core flows | `ui-redesign/core-flows` | ✅ Merged (PR #4, `1cf6e8e`) | [#4](https://github.com/monaser25/abrag/pull/4) | 9 screens: bookings hub/list/details/calendar, contracts hub/details/payments, apartments grid/profile |
 | 5 — Reports & settings | `ui-redesign/reports-settings` | ✅ Merged (PR #5, `a8c320f`) | [#5](https://github.com/monaser25/abrag/pull/5) | 12 screens: reports suite, statement + preview, system log, search, notifications, settings root |
-| 6 — Forms & modals | `ui-redesign/forms-modals` | 🔄 In review | (see PR) | 12 forms: add summer booking/winter contract/apartment/building/expense/building rent/meter reading/maintenance/inspection + early checkout/overstay extension/winter checkout; validators + submit paths verified byte-identical |
-| 7 — Missing screens | `ui-redesign/missing-screens` | ⏸ Not started | — | |
+| 6 — Forms & modals | `ui-redesign/forms-modals` | ✅ Merged (PR #6, `c98f899`) | [#6](https://github.com/monaser25/abrag/pull/6) | 12 forms redesigned to prototype anatomy (round 2); reusable form kit `form_fields.dart` added; validators + submit paths verified byte-identical |
+| 7 — Missing screens | `ui-redesign/missing-screens` | 🔄 In review | (see PR) | 23 screens: buildings list, bulk inventory, landlines; financial lists (expenses/building rent/transfers/meter readings); operations (maintenance/technicians/technician details/cleaning supplies/inspections); people (brokers list/details/visibility, customers, guest profile); settings subs (admin profile/users & permissions/pricing/season transition/checkout times/data management). All providers/validators/routes preserved; pricing screen left as pre-existing placeholder |
 | 8 — Final QA | `ui-redesign/final-qa` | ⏸ Not started | — | |
 
 ## Decisions log (owner-approved 2026-06-10)

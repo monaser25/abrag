@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/expenses_provider.dart';
 import '../providers/financial_transfers_provider.dart';
 
@@ -86,59 +89,61 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final expensesAsync = ref.watch(expensesProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.expenses),
+    final dateLabel = _startDate != null && _endDate != null
+        ? '${_startDate!.toLocal().toString().split(' ')[0]} - ${_endDate!.toLocal().toString().split(' ')[0]}'
+        : null;
+
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: l10n.expenses,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_alt_off),
+          AppIconButton(
+            icon: Icons.filter_alt_off,
             onPressed: _clearFilters,
             tooltip: 'مسح الفلاتر',
           ),
         ],
       ),
+      floatingActionButton: AppFab(
+        onPressed: () => context.go('/expenses/add'),
+        icon: Icons.add,
+      ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'نوع المصروف',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
+                  child: AppDropdownField<String?>(
+                    label: 'نوع المصروف',
                     initialValue: _selectedType,
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('الكل')),
-                      ..._types.map((t) => DropdownMenuItem(
-                            value: t,
-                            child: Text(_translateExpenseType(t)),
-                          )),
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('الكل'),
+                      ),
+                      ..._types.map(
+                        (t) => DropdownMenuItem<String?>(
+                          value: t,
+                          child: Text(_translateExpenseType(t)),
+                        ),
+                      ),
                     ],
                     onChanged: (val) => setState(() => _selectedType = val),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: InkWell(
+                  child: AppDateField(
+                    label: 'التاريخ',
+                    value: dateLabel,
+                    placeholder: 'اختر الفترة',
+                    icon: Icons.date_range,
                     onTap: () => _selectDateRange(context),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'التاريخ',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      child: Text(
-                        _startDate != null && _endDate != null
-                            ? '${_startDate!.toLocal().toString().split(' ')[0]} - ${_endDate!.toLocal().toString().split(' ')[0]}'
-                            : 'اختر الفترة',
-                        style: theme.textTheme.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -148,17 +153,17 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
             child: expensesAsync.when(
               data: (expenses) {
                 var filtered = expenses.toList();
-                
+
                 if (_selectedType != null) {
                   filtered = filtered.where((e) => e.expenseType == _selectedType).toList();
                 }
-                
+
                 if (_startDate != null && _endDate != null) {
                   filtered = filtered.where((e) {
                     final d = e.expenseDate.toLocal();
                     final start = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
                     final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day, 23, 59, 59);
-                    return d.isAfter(start.subtract(const Duration(seconds: 1))) && 
+                    return d.isAfter(start.subtract(const Duration(seconds: 1))) &&
                            d.isBefore(end.add(const Duration(seconds: 1)));
                   }).toList();
                 }
@@ -175,7 +180,10 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                 }
 
                 if (filtered.isEmpty) {
-                  return Center(child: Text(l10n.noData));
+                  return EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: l10n.noData,
+                  );
                 }
 
                 final totalAmount = filtered.fold<double>(0, (sum, e) => sum + e.amountEgp);
@@ -183,117 +191,82 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                 return Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('الإجمالي:', style: theme.textTheme.titleMedium),
-                          Text(
-                            '${totalAmount.toCurrencyFormat()} ج.م',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: AppCard(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'الإجمالي',
+                                    style: AppTextStyles.title
+                                        .copyWith(color: colors.ink2),
+                                  ),
+                                  Text(
+                                    '${totalAmount.toCurrencyFormat()} ج.م',
+                                    style: AppTextStyles.tabular(
+                                      AppTextStyles.h3
+                                          .copyWith(color: colors.brand),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 150,
+                            child: AppDropdownField<String>(
+                              initialValue: _selectedSort,
+                              prefixIcon: Icons.sort,
+                              items: const [
+                                DropdownMenuItem(value: 'date_desc', child: Text('الأحدث أولاً')),
+                                DropdownMenuItem(value: 'date_asc', child: Text('الأقدم أولاً')),
+                                DropdownMenuItem(value: 'amount_desc', child: Text('الأعلى تكلفة')),
+                                DropdownMenuItem(value: 'amount_asc', child: Text('الأقل تكلفة')),
+                              ],
+                              onChanged: (val) => setState(
+                                () => _selectedSort = val ?? 'date_desc',
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'ترتيب حسب',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    initialValue: _selectedSort,
-                    items: const [
-                      DropdownMenuItem(value: 'date_desc', child: Text('الأحدث أولاً')),
-                      DropdownMenuItem(value: 'date_asc', child: Text('الأقدم أولاً')),
-                      DropdownMenuItem(value: 'amount_desc', child: Text('الأعلى تكلفة')),
-                      DropdownMenuItem(value: 'amount_asc', child: Text('الأقل تكلفة')),
-                    ],
-                    onChanged: (val) => setState(() => _selectedSort = val ?? 'date_desc'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
+                    Expanded(
                       child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final expense = filtered[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
-                                child: Icon(Icons.money_off, color: theme.colorScheme.error),
-                              ),
-                              title: Text(
-                                _translateExpenseType(expense.expenseType),
-                                style: theme.textTheme.titleMedium,
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    expense.expenseDate.toLocal().toString().split(' ')[0],
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                  if (expense.description != null && expense.description!.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        expense.description!,
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: Text(
-                                      'طريقة الدفع: ${_translatePaymentMethod(expense.paymentMethod)}',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    'الموسم: ${_translateSeason(expense.season)}',
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '${expense.amountEgp.toCurrencyFormat()} ج.م',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      color: theme.colorScheme.error,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  if (expense.expenseType != 'maintenance')
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, size: 20),
-                                      onPressed: () {
-                                        if (expense.expenseType == 'building_rent') {
-                                          context.go('/building_rent/edit', extra: expense);
-                                        } else {
-                                          context.go('/expenses/edit', extra: expense);
-                                        }
-                                      },
-                                    ),
-                                ],
-                              ),
+                          return _ExpenseRow(
+                            type: _translateExpenseType(expense.expenseType),
+                            date: expense.expenseDate
+                                .toLocal()
+                                .toString()
+                                .split(' ')[0],
+                            description: expense.description,
+                            paymentMethod: _translatePaymentMethod(
+                              expense.paymentMethod,
                             ),
+                            season: _translateSeason(expense.season),
+                            amount: '${expense.amountEgp.toCurrencyFormat()} ج.م',
+                            onEdit: expense.expenseType != 'maintenance'
+                                ? () {
+                                    if (expense.expenseType == 'building_rent') {
+                                      context.go('/building_rent/edit', extra: expense);
+                                    } else {
+                                      context.go('/expenses/edit', extra: expense);
+                                    }
+                                  }
+                                : null,
                           );
                         },
                       ),
@@ -301,17 +274,103 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                   ],
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
+              loading: () => const LoadingSkeleton(),
+              error: (error, stack) => ErrorState(
+                title: 'تعذّر تحميل المصروفات',
+                message: 'Error: $error',
+                retryLabel: 'إعادة المحاولة',
+                onRetry: () => ref.invalidate(expensesProvider),
+              ),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.go('/expenses/add');
-        },
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class _ExpenseRow extends StatelessWidget {
+  const _ExpenseRow({
+    required this.type,
+    required this.date,
+    required this.description,
+    required this.paymentMethod,
+    required this.season,
+    required this.amount,
+    this.onEdit,
+  });
+
+  final String type;
+  final String date;
+  final String? description;
+  final String paymentMethod;
+  final String season;
+  final String amount;
+  final VoidCallback? onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IconTile(icon: Icons.money_off, tint: colors.err),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  type,
+                  style: AppTextStyles.title.copyWith(color: colors.ink),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  date,
+                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                ),
+                if (description != null && description!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description!,
+                    style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(
+                  'طريقة الدفع: $paymentMethod',
+                  style: AppTextStyles.caption.copyWith(color: colors.brand),
+                ),
+                Text(
+                  'الموسم: $season',
+                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                amount,
+                style: AppTextStyles.tabular(
+                  AppTextStyles.title.copyWith(color: colors.err),
+                ),
+              ),
+              if (onEdit != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: AppIconButton(
+                    icon: Icons.edit_outlined,
+                    onPressed: onEdit,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

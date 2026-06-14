@@ -6,7 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/users_provider.dart';
 import '../../../bookings/presentation/providers/bookings_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class BrokerDetailsScreen extends ConsumerWidget {
   final String brokerId;
@@ -33,61 +36,68 @@ class BrokerDetailsScreen extends ConsumerWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('تعديل بيانات السمسار'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'اسم السمسار'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'مطلوب' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: 'رقم التليفون'),
-                keyboardType: TextInputType.phone,
-                textDirection: TextDirection.ltr,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(11),
-                ],
-                validator: (value) {
-                  final phone = value?.trim() ?? '';
-                  if (phone.isEmpty) return null;
-                  return RegExp(r'^01\d{9}$').hasMatch(phone)
-                      ? null
-                      : 'رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01';
-                },
-              ),
-            ],
+      builder: (dialogContext) {
+        final colors = dialogContext.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('تعديل بيانات السمسار'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppTextField(
+                  controller: nameController,
+                  label: 'اسم السمسار',
+                  prefixIcon: Icons.person_outline,
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'مطلوب' : null,
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: phoneController,
+                  label: 'رقم التليفون',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  textDirection: TextDirection.ltr,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(11),
+                  ],
+                  validator: (value) {
+                    final phone = value?.trim() ?? '';
+                    if (phone.isEmpty) return null;
+                    return RegExp(r'^01\d{9}$').hasMatch(phone)
+                        ? null
+                        : 'رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01';
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              ref
-                  .read(brokersControllerProvider.notifier)
-                  .updateBroker(
-                    id: broker.id,
-                    fullName: nameController.text,
-                    phoneNumber: phoneController.text,
-                  );
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'حفظ',
+              small: true,
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                ref
+                    .read(brokersControllerProvider.notifier)
+                    .updateBroker(
+                      id: broker.id,
+                      fullName: nameController.text,
+                      phoneNumber: phoneController.text,
+                    );
+                Navigator.pop(dialogContext);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -95,15 +105,13 @@ class BrokerDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final brokersAsync = ref.watch(brokersProvider);
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('تفاصيل السمسار'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/brokers'),
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'تفاصيل السمسار',
+        showBack: true,
+        onBack: () => context.go('/brokers'),
         actions: [
           brokersAsync.maybeWhen(
             data: (brokers) {
@@ -111,8 +119,8 @@ class BrokerDetailsScreen extends ConsumerWidget {
                 (b) => b.id == brokerId,
                 orElse: () => throw Exception('Broker not found'),
               );
-              return IconButton(
-                icon: const Icon(Icons.edit),
+              return AppIconButton(
+                icon: Icons.edit_outlined,
                 onPressed: () => _showAddBrokerDialog(context, ref, broker),
               );
             },
@@ -159,109 +167,134 @@ class BrokerDetailsScreen extends ConsumerWidget {
               ? 0.0
               : (brokerBookings.length / allBookingsCount) * 100;
 
+          final hasPhone =
+              broker.phoneNumber != null && broker.phoneNumber!.isNotEmpty;
+          final showEmail = !hasPhone && !broker.email.startsWith('broker-');
+          final name = broker.fullName ?? broker.email;
+
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: theme.colorScheme.primaryContainer
-                            .withValues(alpha: 0.2),
-                        child: Icon(
-                          Icons.person,
-                          size: 40,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
+              AppCard(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    AppAvatar(name: name, size: 80),
+                    const SizedBox(height: 14),
+                    Text(
+                      name,
+                      style: AppTextStyles.h2.copyWith(color: colors.ink),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (hasPhone) ...[
                       const SizedBox(height: 16),
-                      Text(
-                        broker.fullName ?? broker.email,
-                        style: theme.textTheme.headlineMedium,
+                      AppButton(
+                        label: broker.phoneNumber!,
+                        icon: Icons.call,
+                        onPressed: () => _makePhoneCall(broker.phoneNumber!),
                       ),
-                      const SizedBox(height: 16),
-                      if (broker.phoneNumber != null &&
-                          broker.phoneNumber!.isNotEmpty)
-                        ElevatedButton.icon(
-                          onPressed: () => _makePhoneCall(broker.phoneNumber!),
-                          icon: const Icon(Icons.call),
-                          label: Text(broker.phoneNumber!),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      if ((broker.phoneNumber == null ||
-                              broker.phoneNumber!.isEmpty) &&
-                          !broker.email.startsWith('broker-'))
-                        Text(
-                          broker.email,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
                     ],
-                  ),
+                    if (showEmail) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        broker.email,
+                        style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Text('الإحصائيات', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 16),
-              Card(
-                child: ListTile(
-                  leading: Icon(Icons.check_circle, color: Colors.green),
-                  title: const Text('عدد الحجوزات الناجحة'),
-                  trailing: Text(
-                    '${brokerBookings.length}',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
+              const SectionTitle(title: 'الإحصائيات'),
+              _StatTile(
+                icon: Icons.check_circle,
+                tint: colors.ok,
+                title: 'عدد الحجوزات الناجحة',
+                value: '${brokerBookings.length}',
               ),
-              Card(
-                child: ListTile(
-                  leading: Icon(
-                    Icons.percent,
-                    color: theme.colorScheme.primary,
-                  ),
-                  title: const Text('نسبة الزباين من خلاله'),
-                  subtitle: const Text('من إجمالي حجوزات الصيف'),
-                  trailing: Text(
-                    '${contributionPercent.toStringAsFixed(1)}%',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
+              _StatTile(
+                icon: Icons.percent,
+                tint: colors.brand,
+                title: 'نسبة الزباين من خلاله',
+                subtitle: 'من إجمالي حجوزات الصيف',
+                value: '${contributionPercent.toStringAsFixed(1)}%',
               ),
-              Card(
-                child: ListTile(
-                  leading: Icon(Icons.money, color: theme.colorScheme.primary),
-                  title: const Text('إجمالي العمولات'),
-                  trailing: Text(
-                    '${totalCommissions.toCurrencyFormat()} ج.م',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
+              _StatTile(
+                icon: Icons.savings_outlined,
+                tint: colors.brand,
+                title: 'إجمالي العمولات',
+                value: '${totalCommissions.toCurrencyFormat()} ج.م',
               ),
-              Card(
-                child: ListTile(
-                  leading: Icon(
-                    Icons.payments,
-                    color: theme.colorScheme.secondary,
-                  ),
-                  title: const Text('إجمالي حجوزاته'),
-                  trailing: Text(
-                    '${totalSales.toCurrencyFormat()} ج.م',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
+              _StatTile(
+                icon: Icons.payments,
+                tint: colors.accent,
+                title: 'إجمالي حجوزاته',
+                value: '${totalSales.toCurrencyFormat()} ج.م',
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, stack) => ErrorState(
+          title: 'تعذّر تحميل بيانات السمسار',
+          message: 'Error: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(brokersProvider),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.icon,
+    required this.tint,
+    required this.title,
+    required this.value,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final Color tint;
+  final String title;
+  final String value;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          IconTile(icon: icon, tint: tint),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.body.copyWith(color: colors.ink),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            value,
+            style: AppTextStyles.tabular(
+              AppTextStyles.h3.copyWith(color: colors.ink),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class CheckoutSettingsScreen extends ConsumerStatefulWidget {
   const CheckoutSettingsScreen({super.key});
@@ -20,10 +23,10 @@ class _CheckoutSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(appSettingsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('مواعيد الخروج')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'مواعيد الخروج'),
       body: settingsAsync.when(
         data: (settings) {
           if (!_initialized) {
@@ -36,73 +39,63 @@ class _CheckoutSettingsScreenState
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: theme.colorScheme.primary
-                                .withValues(alpha: 0.15),
-                            child: Icon(
-                              Icons.wb_sunny_outlined,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'ميعاد خروج حجوزات الصيف',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'هيتطبّق تلقائياً عند حساب تاريخ الخروج في الحجز الجديد.',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.schedule),
-                        title: const Text('الساعة الحالية'),
-                        subtitle: Text(_summerCheckoutTime.format(context)),
-                        trailing: OutlinedButton.icon(
-                          onPressed: () async {
-                            final picked = await showTimePicker(
-                              context: context,
-                              initialTime: _summerCheckoutTime,
-                            );
-                            if (picked != null) {
-                              setState(() => _summerCheckoutTime = picked);
-                            }
-                          },
-                          icon: const Icon(Icons.edit),
-                          label: const Text('تغيير'),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconTile(
+                          icon: Icons.wb_sunny_outlined,
+                          tint: colors.summer,
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ميعاد خروج حجوزات الصيف',
+                                style: AppTextStyles.title
+                                    .copyWith(color: colors.ink),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'هيتطبّق تلقائياً عند حساب تاريخ الخروج في الحجز الجديد.',
+                                style: AppTextStyles.bodyS
+                                    .copyWith(color: colors.ink2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    AppDateField(
+                      label: 'الساعة الحالية',
+                      value: _summerCheckoutTime.format(context),
+                      icon: Icons.schedule,
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: _summerCheckoutTime,
+                        );
+                        if (picked != null) {
+                          setState(() => _summerCheckoutTime = picked);
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
-              FilledButton.icon(
+              AppButton(
+                label: 'حفظ الإعدادات',
+                icon: Icons.save_outlined,
+                expand: true,
+                loading: _saving,
                 onPressed: _saving
                     ? null
                     : () async {
@@ -120,20 +113,17 @@ class _CheckoutSettingsScreenState
                           const SnackBar(content: Text('تم حفظ ميعاد الخروج')),
                         );
                       },
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: const Text('حفظ الإعدادات'),
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+        loading: () => const LoadingSkeleton(),
+        error: (error, _) => ErrorState(
+          title: 'تعذّر تحميل الإعدادات',
+          message: 'حدث خطأ: $error',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(appSettingsProvider),
+        ),
       ),
     );
   }

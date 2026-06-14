@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/apartments_controller.dart';
 
 class BulkInventoryScreen extends ConsumerStatefulWidget {
@@ -84,6 +88,7 @@ class _BulkInventoryScreenState extends ConsumerState<BulkInventoryScreen> {
   Widget build(BuildContext context) {
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final controllerState = ref.watch(apartmentsControllerProvider);
+    final colors = context.colors;
 
     ref.listen<AsyncValue<void>>(apartmentsControllerProvider, (_, state) {
       state.whenOrNull(
@@ -99,109 +104,92 @@ class _BulkInventoryScreenState extends ConsumerState<BulkInventoryScreen> {
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('تعميم الجرد على الشقق')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'تعميم الجرد على الشقق'),
+      bottomNavigationBar: BottomActionBar(
         children: [
-          Card(
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'محتويات الجرد',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextButton.icon(
-                        onPressed: _saveAsGlobalTemplate,
-                        icon: const Icon(Icons.save, size: 18),
-                        label: const Text('حفظ كقالب'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _inventoryController,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'الأجهزة الكهربائية:\nثلاجة\nغسالة\n\nالأثاث:\nسرير كبير\nدولاب',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 8,
-                  ),
-                ],
-              ),
+          Expanded(
+            child: AppButton(
+              label: 'تعميم الجرد الآن',
+              icon: Icons.playlist_add_check,
+              loading: controllerState.isLoading,
+              onPressed: controllerState.isLoading ? null : _submit,
             ),
           ),
-          const SizedBox(height: 16),
-          Card(
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  RadioGroup<bool>(
-                    groupValue: _appendMode,
-                    onChanged: (val) =>
-                        setState(() => _appendMode = val ?? _appendMode),
-                    child: Column(
-                      children: [
-                        RadioListTile<bool>(
-                          title: const Text('إضافة الجرد الجديد (الاحتفاظ بالقديم)'),
-                          subtitle: const Text(
-                            'سيتم إضافة المحتويات الجديدة فوق الجرد الموجود في كل شقة.',
-                          ),
-                          value: true,
-                        ),
-                        RadioListTile<bool>(
-                          title: const Text('استبدال الجرد (حذف القديم)'),
-                          subtitle: const Text(
-                            'تحذير: سيتم مسح أي جرد قديم بالشقق واستبداله بالكامل.',
-                          ),
-                          value: false,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          SectionTitle(
+            title: 'محتويات الجرد',
+            action: AppButton(
+              label: 'حفظ كقالب',
+              icon: Icons.bookmark_add_outlined,
+              variant: AppButtonVariant.ghost,
+              small: true,
+              onPressed: _saveAsGlobalTemplate,
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'تحديد الشقق لتطبيق الجرد عليها:',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
+                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: _inventoryController,
+                  hint:
+                      'الأجهزة الكهربائية:\nثلاجة\nغسالة\n\nالأثاث:\nسرير كبير\nدولاب',
+                  maxLines: 8,
+                ),
+              ],
+            ),
+          ),
+          const SectionTitle(title: 'طريقة التطبيق'),
+          _ModeOption(
+            icon: Icons.playlist_add,
+            title: 'إضافة الجرد الجديد (الاحتفاظ بالقديم)',
+            subtitle:
+                'سيتم إضافة المحتويات الجديدة فوق الجرد الموجود في كل شقة.',
+            selected: _appendMode,
+            onTap: () => setState(() => _appendMode = true),
           ),
           const SizedBox(height: 8),
+          _ModeOption(
+            icon: Icons.delete_sweep_outlined,
+            title: 'استبدال الجرد (حذف القديم)',
+            subtitle: 'تحذير: سيتم مسح أي جرد قديم بالشقق واستبداله بالكامل.',
+            tint: colors.warn,
+            selected: !_appendMode,
+            onTap: () => setState(() => _appendMode = false),
+          ),
+          const SectionTitle(title: 'تحديد الشقق لتطبيق الجرد عليها'),
           apartmentsAsync.when(
             data: (apartments) {
               if (apartments.isEmpty) {
-                return const Text('لا توجد شقق مسجلة.');
+                return AppCard(
+                  child: Text(
+                    'لا توجد شقق مسجلة.',
+                    style: AppTextStyles.body.copyWith(color: colors.ink2),
+                  ),
+                );
               }
 
-              return Card(
+              return AppCard(
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Column(
                   children: [
-                    CheckboxListTile(
-                      title: const Text(
-                        'تحديد كل الشقق',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      value: _selectAll,
-                      onChanged: (val) {
+                    _CheckRow(
+                      title: 'تحديد كل الشقق',
+                      strong: true,
+                      selected: _selectAll,
+                      onTap: () {
                         setState(() {
-                          _selectAll = val ?? false;
+                          _selectAll = !_selectAll;
                           if (_selectAll) {
                             _selectedApartmentIds.addAll(
                               apartments.map((a) => a.id),
@@ -212,16 +200,16 @@ class _BulkInventoryScreenState extends ConsumerState<BulkInventoryScreen> {
                         });
                       },
                     ),
-                    const Divider(height: 1),
+                    Divider(height: 1, color: colors.border),
                     ...apartments.map((apt) {
-                      return CheckboxListTile(
-                        title: Text(
-                          'شقة ${apt.apartmentNumber} (الدور ${apt.floorNumber ?? "-"})',
-                        ),
-                        value: _selectedApartmentIds.contains(apt.id),
-                        onChanged: (val) {
+                      final selected = _selectedApartmentIds.contains(apt.id);
+                      return _CheckRow(
+                        title:
+                            'شقة ${apt.apartmentNumber} (الدور ${apt.floorNumber ?? "-"})',
+                        selected: selected,
+                        onTap: () {
                           setState(() {
-                            if (val == true) {
+                            if (!selected) {
                               _selectedApartmentIds.add(apt.id);
                             } else {
                               _selectedApartmentIds.remove(apt.id);
@@ -239,21 +227,125 @@ class _BulkInventoryScreenState extends ConsumerState<BulkInventoryScreen> {
                 ),
               );
             },
-            loading: () => const CircularProgressIndicator(),
-            error: (e, st) => Text('Error: $e'),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: controllerState.isLoading ? null : _submit,
-            icon: const Icon(Icons.playlist_add_check),
-            label: controllerState.isLoading
-                ? const CircularProgressIndicator()
-                : const Text('تعميم الجرد الآن'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+            loading: () => const LoadingSkeleton(),
+            error: (e, st) => Text(
+              'Error: $e',
+              style: AppTextStyles.body.copyWith(color: colors.err),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Radio-style option card (append vs. replace). Mirrors the original
+/// [RadioListTile] choice: tapping selects this mode.
+class _ModeOption extends StatelessWidget {
+  const _ModeOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+    this.tint,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final effectiveTint = tint ?? colors.brand;
+    return Tappable(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? effectiveTint.withValues(alpha: 0.10) : colors.surface,
+          borderRadius: AppRadius.rMd,
+          border: Border.all(
+            color: selected ? effectiveTint : colors.border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              size: 22,
+              color: selected ? effectiveTint : colors.ink3,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.title.copyWith(color: colors.ink),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.caption.copyWith(color: colors.ink2),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Selectable apartment / select-all row with a trailing check indicator.
+class _CheckRow extends StatelessWidget {
+  const _CheckRow({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+    this.strong = false,
+  });
+
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool strong;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Tappable(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: (strong ? AppTextStyles.title : AppTextStyles.body)
+                    .copyWith(color: colors.ink),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              selected ? Icons.check_circle : Icons.circle_outlined,
+              size: 22,
+              color: selected ? colors.brand : colors.ink3,
+            ),
+          ],
+        ),
       ),
     );
   }
