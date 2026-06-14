@@ -34,7 +34,11 @@ class BuildingListScreen extends ConsumerWidget {
             itemCount: buildings.length,
             itemBuilder: (context, index) {
               final building = buildings[index];
-              return _BuildingRow(building: building, l10n: l10n);
+              return _BuildingRow(
+                building: building,
+                l10n: l10n,
+                onDelete: () => _confirmDelete(context, ref, building),
+              );
             },
           );
         },
@@ -48,16 +52,68 @@ class BuildingListScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic building,
+  ) async {
+    // Captured before any async gap so it stays valid after the dialog closes
+    // and the row's own context is removed when the delete succeeds.
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.colors.surface,
+        title: const Text('حذف المبنى'),
+        content: Text(
+          'هل تريد حذف مبنى "${building.name}"؟ لا يمكن التراجع عن هذه الخطوة.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء'),
+          ),
+          AppButton(
+            label: 'حذف',
+            variant: AppButtonVariant.royal,
+            small: true,
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await ref
+        .read(buildingsControllerProvider.notifier)
+        .deleteBuilding(building.id);
+    ref.read(buildingsControllerProvider).whenOrNull(
+          data: (_) => messenger.showSnackBar(
+            const SnackBar(content: Text('تم حذف المبنى')),
+          ),
+          error: (e, _) => messenger.showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
+            ),
+          ),
+        );
+  }
 }
 
-/// Building row: building icon tile, name + address, apartment-count chip and
-/// an explicit edit action (preserves the original list affordance — the row
-/// itself had no tap target; only the edit button navigates to `/buildings/edit`).
+/// Building row: building icon tile, name + address, apartment-count chip,
+/// and explicit edit + delete actions. Delete is guarded server-side
+/// (refuses when the building still has apartments/readings/expenses).
 class _BuildingRow extends StatelessWidget {
-  const _BuildingRow({required this.building, required this.l10n});
+  const _BuildingRow({
+    required this.building,
+    required this.l10n,
+    required this.onDelete,
+  });
 
   final dynamic building;
   final AppLocalizations l10n;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -96,10 +152,13 @@ class _BuildingRow extends StatelessWidget {
             label: '${building.totalApartments} ${l10n.apartments}',
             kind: StatusChipKind.neutral,
           ),
-          const SizedBox(width: 2),
           AppIconButton(
             icon: Icons.edit_outlined,
             onPressed: () => context.go('/buildings/edit', extra: building),
+          ),
+          AppIconButton(
+            icon: Icons.delete_outline,
+            onPressed: onDelete,
           ),
         ],
       ),
