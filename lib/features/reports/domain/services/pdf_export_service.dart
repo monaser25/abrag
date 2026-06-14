@@ -27,6 +27,10 @@ class PdfExportService {
     );
     final ttfBold = pw.Font.ttf(fontDataBold);
 
+    // Brand mark (monochrome wordmark) for the report header.
+    final logoData = await rootBundle.load('assets/icons/abrag_mono.png');
+    final logo = pw.MemoryImage(logoData.buffer.asUint8List());
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -67,16 +71,10 @@ class PdfExportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
+                      pw.Image(logo, height: 32),
+                      pw.SizedBox(height: 4),
                       pw.Text(
-                        'أبراج',
-                        style: pw.TextStyle(
-                          fontSize: 20,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromHex('#F4A225'),
-                        ),
-                      ),
-                      pw.Text(
-                        'إدارة الأملاك الذكية',
+                        'للاستثمار العقاري',
                         style: const pw.TextStyle(
                           fontSize: 10,
                           color: PdfColors.grey600,
@@ -284,6 +282,10 @@ class PdfExportService {
     );
     final ttfBold = pw.Font.ttf(fontDataBold);
 
+    // Brand mark (monochrome wordmark) for the report header.
+    final logoData = await rootBundle.load('assets/icons/abrag_mono.png');
+    final logo = pw.MemoryImage(logoData.buffer.asUint8List());
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -320,13 +322,19 @@ class PdfExportService {
                     ),
                   ],
                 ),
-                pw.Text(
-                  'أبراج',
-                  style: pw.TextStyle(
-                    fontSize: 20,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColor.fromHex('#F4A225'),
-                  ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Image(logo, height: 30),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'للاستثمار العقاري',
+                      style: const pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

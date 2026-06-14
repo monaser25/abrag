@@ -110,6 +110,7 @@ flutter:
   assets:
     - .env
     - assets/icons/abrag_icon.png
+    - assets/icons/abrag_mono.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
