@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../providers/apartments_controller.dart';
 
 class LandlinesManagementScreen extends ConsumerStatefulWidget {
@@ -19,19 +22,17 @@ class _LandlinesManagementScreenState
   @override
   Widget build(BuildContext context) {
     final apartmentsAsync = ref.watch(apartmentsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('إدارة الخطوط الأرضية')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'إدارة الخطوط الأرضية'),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'ابحث برقم الشقة، رقم الخط، أو اسم صاحب الخط',
-                prefixIcon: Icon(Icons.search),
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: AppTextField(
+              hint: 'ابحث برقم الشقة، رقم الخط، أو اسم صاحب الخط',
+              prefixIcon: Icons.search,
               onChanged: (value) => setState(() => _search = value.trim()),
             ),
           ),
@@ -65,71 +66,59 @@ class _LandlinesManagementScreenState
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _MiniCounter(
-                                label: 'خطوط مسجلة',
-                                value: '$registered',
-                                color: Colors.green,
-                              ),
+                    AppCard(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: MiniMetric(
+                              icon: Icons.phone_in_talk,
+                              value: '$registered',
+                              label: 'خطوط مسجلة',
+                              tint: colors.ok,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _MiniCounter(
-                                label: 'بدون خط',
-                                value: '${apartments.length - registered}',
-                                color: Colors.orange,
-                              ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 38,
+                            color: colors.border,
+                          ),
+                          Expanded(
+                            child: MiniMetric(
+                              icon: Icons.phone_disabled,
+                              value: '${apartments.length - registered}',
+                              label: 'بدون خط',
+                              tint: colors.warn,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     if (filtered.isEmpty)
                       const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: Text('لا توجد نتائج')),
+                        padding: EdgeInsets.only(top: 32),
+                        child: EmptyState(
+                          icon: Icons.phone_outlined,
+                          title: 'لا توجد نتائج',
+                        ),
                       )
                     else
                       ...filtered.map(
-                        (apartment) => Card(
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary
-                                  .withValues(alpha: 0.14),
-                              child: const Icon(Icons.phone),
-                            ),
-                            title: Text('شقة ${apartment.apartmentNumber}'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (apartment.landlineNumber ?? '').isEmpty
-                                      ? 'لا يوجد رقم أرضي مسجل'
-                                      : 'رقم الخط: ${apartment.landlineNumber}',
-                                ),
-                                if ((apartment.landlineOwnerName ?? '')
-                                    .isNotEmpty)
-                                  Text(
-                                    'صاحب الخط: ${apartment.landlineOwnerName}',
-                                  ),
-                              ],
-                            ),
-                            trailing: const Icon(Icons.edit),
-                            onTap: () => _showEditSheet(apartment),
-                          ),
+                        (apartment) => _LandlineRow(
+                          apartment: apartment,
+                          onTap: () => _showEditSheet(apartment),
                         ),
                       ),
                   ],
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+              loading: () => const LoadingSkeleton(),
+              error: (error, _) => ErrorState(
+                title: 'تعذّر تحميل الخطوط',
+                message: 'حدث خطأ: $error',
+                retryLabel: 'إعادة المحاولة',
+                onRetry: () => ref.invalidate(apartmentsProvider),
+              ),
             ),
           ),
         ],
@@ -138,6 +127,7 @@ class _LandlinesManagementScreenState
   }
 
   Future<void> _showEditSheet(dynamic apartment) async {
+    final colors = context.colors;
     final numberController = TextEditingController(
       text: apartment.landlineNumber ?? '',
     );
@@ -151,40 +141,61 @@ class _LandlinesManagementScreenState
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
           left: 16,
           right: 16,
-          top: 16,
+          top: 12,
           bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: colors.border2,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             Text(
               'تعديل خط شقة ${apartment.apartmentNumber}',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: AppTextStyles.h3.copyWith(color: colors.ink),
             ),
             const SizedBox(height: 16),
-            TextField(
+            AppTextField(
+              label: 'رقم الخط الأرضي',
+              prefixIcon: Icons.phone,
               controller: numberController,
-              decoration: const InputDecoration(labelText: 'رقم الخط الأرضي'),
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 12),
-            TextField(
+            AppTextField(
+              label: 'اسم صاحب الخط',
+              prefixIcon: Icons.person_outline,
               controller: ownerController,
-              decoration: const InputDecoration(labelText: 'اسم صاحب الخط'),
             ),
             const SizedBox(height: 12),
-            TextField(
+            AppTextField(
+              label: 'ملاحظات',
+              prefixIcon: Icons.sticky_note_2_outlined,
               controller: notesController,
-              decoration: const InputDecoration(labelText: 'ملاحظات'),
               maxLines: 2,
             ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
+            const SizedBox(height: 20),
+            AppButton(
+              label: 'حفظ',
+              icon: Icons.save_outlined,
+              expand: true,
               onPressed: () {
                 ref
                     .read(apartmentsControllerProvider.notifier)
@@ -196,8 +207,6 @@ class _LandlinesManagementScreenState
                     );
                 context.pop();
               },
-              icon: const Icon(Icons.save),
-              label: const Text('حفظ'),
             ),
           ],
         ),
@@ -210,35 +219,62 @@ class _LandlinesManagementScreenState
   }
 }
 
-class _MiniCounter extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
+/// Landline row: phone tile, apartment number, line number + owner, edit affordance.
+class _LandlineRow extends StatelessWidget {
+  const _LandlineRow({required this.apartment, required this.onTap});
 
-  const _MiniCounter({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  final dynamic apartment;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-          Text(label),
-        ],
-      ),
-    );
+    final colors = context.colors;
+    final number = (apartment.landlineNumber ?? '') as String;
+    final owner = (apartment.landlineOwnerName ?? '') as String;
+    final hasLine = number.isNotEmpty;
+    return AppCard(
+      onTap: onTap,
+      margin: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
+      child: Row(
+          children: [
+            IconTile(
+              icon: hasLine ? Icons.phone : Icons.phone_disabled,
+              tint: hasLine ? colors.brand : colors.ink3,
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'شقة ${apartment.apartmentNumber}',
+                    style: AppTextStyles.title.copyWith(color: colors.ink),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasLine ? 'رقم الخط: $number' : 'لا يوجد رقم أرضي مسجل',
+                    style: AppTextStyles.caption.copyWith(
+                      color: hasLine ? colors.ink2 : colors.ink3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (owner.isNotEmpty)
+                    Text(
+                      'صاحب الخط: $owner',
+                      style:
+                          AppTextStyles.caption.copyWith(color: colors.ink3),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.edit_outlined, size: 18, color: colors.ink3),
+          ],
+        ),
+      );
   }
 }

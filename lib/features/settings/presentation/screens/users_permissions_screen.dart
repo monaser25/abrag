@@ -5,7 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drift/drift.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_shadows.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/error_dialog.dart';
+import '../../../../shared/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../providers/permissions_provider.dart';
 
@@ -31,6 +36,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -49,22 +57,23 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              backgroundColor: context.colors.surface,
               title: const Text('إضافة نموذج صلاحيات (Role)'),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    TextField(
+                    AppTextField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'اسم النموذج (مثال: مستقبل عملاء)',
-                      ),
+                      label: 'اسم النموذج (مثال: مستقبل عملاء)',
+                      prefixIcon: Icons.badge_outlined,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'الصلاحيات المتاحة:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.label
+                          .copyWith(color: context.colors.ink2),
                     ),
                     ...kAppPermissions.entries.map((e) {
                       return CheckboxListTile(
@@ -89,7 +98,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('إلغاء'),
                 ),
-                ElevatedButton(
+                AppButton(
+                  label: 'حفظ',
+                  small: true,
                   onPressed: () {
                     final name = nameController.text.trim();
                     if (name.isNotEmpty && selectedPerms.isNotEmpty) {
@@ -99,7 +110,6 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                       Navigator.pop(ctx);
                     }
                   },
-                  child: const Text('حفظ'),
                 ),
               ],
             );
@@ -123,22 +133,23 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
           return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
+                backgroundColor: context.colors.surface,
                 title: const Text('تعديل نموذج الصلاحيات'),
                 content: SizedBox(
                   width: double.maxFinite,
                   child: ListView(
                     shrinkWrap: true,
                     children: [
-                      TextField(
+                      AppTextField(
                         controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'اسم النموذج',
-                        ),
+                        label: 'اسم النموذج',
+                        prefixIcon: Icons.badge_outlined,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'الصلاحيات المتاحة:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: AppTextStyles.label
+                            .copyWith(color: context.colors.ink2),
                       ),
                       ...kAppPermissions.entries.map((entry) {
                         return CheckboxListTile(
@@ -163,7 +174,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text('إلغاء'),
                   ),
-                  ElevatedButton(
+                  AppButton(
+                    label: 'حفظ التعديل',
+                    small: true,
                     onPressed: () async {
                       final newName = nameController.text.trim();
                       if (newName.isEmpty || selectedPerms.isEmpty) {
@@ -182,7 +195,6 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                           );
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
-                    child: const Text('حفظ التعديل'),
                   ),
                 ],
               );
@@ -207,36 +219,35 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              backgroundColor: context.colors.surface,
               title: const Text('إضافة مستخدم جديد'),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    TextField(
+                    AppTextField(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'الاسم'),
+                      label: 'الاسم',
+                      prefixIcon: Icons.person_outline,
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
+                    const SizedBox(height: 12),
+                    AppTextField(
                       controller: emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'البريد الإلكتروني',
-                      ),
+                      label: 'البريد الإلكتروني',
+                      prefixIcon: Icons.email_outlined,
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
+                    const SizedBox(height: 12),
+                    AppTextField(
                       controller: passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'كلمة المرور',
-                      ),
+                      label: 'كلمة المرور',
+                      prefixIcon: Icons.lock_outline,
                       obscureText: true,
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: 'اختر نموذج الصلاحيات',
-                      ),
+                    AppDropdownField<String>(
+                      label: 'اختر نموذج الصلاحيات',
+                      prefixIcon: Icons.shield_outlined,
                       initialValue: selectedTemplate,
                       items: availableTemplates
                           .map(
@@ -253,7 +264,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('إلغاء'),
                 ),
-                ElevatedButton(
+                AppButton(
+                  label: 'إنشاء الحساب',
+                  small: true,
                   onPressed: () async {
                     final email = emailController.text.trim();
                     final password = passwordController.text;
@@ -321,7 +334,6 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                       if (mounted) this.setState(() => _isLoading = false);
                     }
                   },
-                  child: const Text('إنشاء الحساب'),
                 ),
               ],
             );
@@ -399,6 +411,7 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.colors.surface,
         title: const Text('حذف المستخدم'),
         content: Text(
           'هل تريد حذف ${user.fullName?.isNotEmpty == true ? user.fullName : user.email}؟ سيتم حذف حساب الدخول والصلاحيات.',
@@ -463,6 +476,7 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
         context: context,
         builder: (ctx) => StatefulBuilder(
           builder: (ctx, dialogSetState) => AlertDialog(
+            backgroundColor: ctx.colors.surface,
             title: const Text('تعديل المستخدم والصلاحية'),
             content: SizedBox(
               width: double.maxFinite,
@@ -474,37 +488,34 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                   child: mat.Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextField(
+                      AppTextField(
                         controller: nameController,
+                        label: 'الاسم',
+                        prefixIcon: Icons.person_outline,
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(labelText: 'الاسم'),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
+                      AppTextField(
                         controller: emailController,
+                        label: 'البريد الإلكتروني',
+                        prefixIcon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'البريد الإلكتروني',
-                        ),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
+                      AppTextField(
                         controller: passwordController,
+                        label: 'كلمة مرور جديدة',
+                        prefixIcon: Icons.lock_outline,
                         obscureText: true,
                         textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
-                          labelText: 'كلمة مرور جديدة',
-                          helperText: 'اتركها فارغة لو مش عايز تغيرها',
-                        ),
+                        helperText: 'اتركها فارغة لو مش عايز تغيرها',
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
+                      AppDropdownField<String>(
+                        label: 'نموذج الصلاحيات',
+                        prefixIcon: Icons.shield_outlined,
                         initialValue: newTemplate,
-                        decoration: const InputDecoration(
-                          labelText: 'نموذج الصلاحيات',
-                        ),
                         items: [
                           const DropdownMenuItem<String>(
                             value: null,
@@ -536,7 +547,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('إلغاء'),
               ),
-              ElevatedButton(
+              AppButton(
+                label: 'حفظ',
+                small: true,
                 onPressed: () async {
                   final fullName = nameController.text.trim();
                   final email = emailController.text.trim().toLowerCase();
@@ -618,7 +631,6 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                     if (mounted) setState(() => _isLoading = false);
                   }
                 },
-                child: const Text('حفظ'),
               ),
             ],
           ),
@@ -635,76 +647,118 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(allUsersProvider);
     final rolesConfig = ref.watch(rolesConfigProvider);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('المستخدمين والصلاحيات'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'المستخدمين'),
-            Tab(text: 'نماذج الصلاحيات (Roles)'),
-          ],
-        ),
-      ),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'المستخدمين والصلاحيات'),
+      floatingActionButton: _tabController.index == 0
+          ? AppFab(
+              onPressed: () =>
+                  _createUser(rolesConfig.roleTemplates.keys.toList()),
+              icon: Icons.person_add,
+              label: 'مستخدم جديد',
+            )
+          : null,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
+          ? const LoadingSkeleton()
+          : mat.Column(
               children: [
-                // Users Tab
-                usersAsync.when(
-                  data: (users) {
-                    final activeUsers = users
-                        .where(
-                          (u) =>
-                              u.role == 'admin' ||
-                              u.role == 'staff' ||
-                              u.role == 'viewer',
-                        )
-                        .toList();
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: activeUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = activeUsers[index];
-                        final isSuperAdmin = user.role == 'admin';
-                        final customRole = rolesConfig.userRoles[user.id];
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: colors.surface2,
+                    borderRadius: BorderRadius.circular(AppRadius.segTrack),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.segItem),
+                      boxShadow: AppShadows.sm,
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: colors.ink,
+                    unselectedLabelColor: colors.ink2,
+                    labelStyle: AppTextStyles.label,
+                    tabs: const [
+                      Tab(text: 'المستخدمين'),
+                      Tab(text: 'نماذج الصلاحيات (Roles)'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Users Tab
+                      usersAsync.when(
+                        data: (users) {
+                          final activeUsers = users
+                              .where(
+                                (u) =>
+                                    u.role == 'admin' ||
+                                    u.role == 'staff' ||
+                                    u.role == 'viewer',
+                              )
+                              .toList();
+                          return ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                            itemCount: activeUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = activeUsers[index];
+                              final isSuperAdmin = user.role == 'admin';
+                              final customRole = rolesConfig.userRoles[user.id];
 
-                        String roleLabel = 'مراقب';
-                        if (isSuperAdmin) {
-                          roleLabel = '👑 مدير النظام (Super Admin)';
-                        } else if (customRole != null) {
-                          roleLabel = '💼 $customRole';
-                        }
+                              String roleLabel = 'مراقب';
+                              if (isSuperAdmin) {
+                                roleLabel = '👑 مدير النظام (Super Admin)';
+                              } else if (customRole != null) {
+                                roleLabel = '💼 $customRole';
+                              }
 
-                        return Card(
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: isSuperAdmin
-                                  ? Colors.orange.withValues(alpha: 0.2)
-                                  : Colors.blue.withValues(alpha: 0.2),
-                              child: Icon(
-                                Icons.person,
-                                color: isSuperAdmin
-                                    ? Colors.orange
-                                    : Colors.blue,
-                              ),
-                            ),
-                            title: Text(
-                              user.fullName?.isNotEmpty == true
+                              final displayName =
+                                  user.fullName?.isNotEmpty == true
                                   ? user.fullName!
-                                  : user.email,
-                            ),
-                            subtitle: Text(roleLabel),
-                            trailing: isSuperAdmin
-                                ? null
-                                : Wrap(
-                                    spacing: 4,
-                                    children: [
-                                      IconButton(
+                                  : user.email;
+
+                              return AppCard(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                child: Row(
+                                  children: [
+                                    AppAvatar(
+                                      name: displayName,
+                                      tint: isSuperAdmin
+                                          ? colors.accent
+                                          : colors.brand,
+                                    ),
+                                    const SizedBox(width: 13),
+                                    Expanded(
+                                      child: mat.Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            displayName,
+                                            style: AppTextStyles.title
+                                                .copyWith(color: colors.ink),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            roleLabel,
+                                            style: AppTextStyles.caption
+                                                .copyWith(color: colors.ink2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (!isSuperAdmin) ...[
+                                      AppIconButton(
                                         tooltip: 'تعديل المستخدم',
-                                        icon: const Icon(Icons.settings),
+                                        icon: Icons.settings_outlined,
                                         onPressed: () => _editUser(
                                           user,
                                           customRole,
@@ -712,134 +766,170 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                                               .toList(),
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                        ),
+                                      AppIconButton(
+                                        icon: Icons.delete_outline,
                                         onPressed: () => _deleteUser(user),
                                       ),
                                     ],
-                                  ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, st) => Center(child: Text('Error: $e')),
-                ),
-
-                // Templates Tab
-                ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    if (rolesConfig.roleTemplates.isEmpty)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: Text('لا توجد نماذج صلاحيات حتى الآن.'),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        loading: () => const LoadingSkeleton(),
+                        error: (e, st) => ErrorState(
+                          title: 'تعذّر تحميل المستخدمين',
+                          message: 'Error: $e',
+                          retryLabel: 'إعادة المحاولة',
+                          onRetry: () => ref.invalidate(allUsersProvider),
                         ),
                       ),
-                    ...rolesConfig.roleTemplates.entries.map((entry) {
-                      return Card(
-                        child: ExpansionTile(
-                          title: Text(
-                            '💼 ${entry.key}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text('${entry.value.length} صلاحيات'),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 8.0,
-                              ),
-                              child: Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: entry.value.map((perm) {
-                                  final label = kAppPermissions[perm] ?? perm;
-                                  return Chip(
-                                    label: Text(
-                                      label,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  );
-                                }).toList(),
+
+                      // Templates Tab
+                      ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        children: [
+                          if (rolesConfig.roleTemplates.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 24),
+                              child: EmptyState(
+                                icon: Icons.shield_outlined,
+                                title: 'لا توجد نماذج صلاحيات حتى الآن.',
                               ),
                             ),
-                            OverflowBar(
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () =>
-                                      _editTemplate(entry.key, entry.value),
-                                  icon: const Icon(Icons.edit),
-                                  label: const Text('تعديل النموذج'),
+                          ...rolesConfig.roleTemplates.entries.map((entry) {
+                            return AppCard(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: EdgeInsets.zero,
+                              child: Theme(
+                                data: Theme.of(context).copyWith(
+                                  dividerColor: Colors.transparent,
                                 ),
-                                TextButton.icon(
-                                  onPressed: () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: const Text('تأكيد الحذف'),
-                                        content: Text(
-                                          'هل تريد حذف النموذج "${entry.key}"؟ سيتم تجريد المستخدمين المرتبطين به من الصلاحيات.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(ctx, false),
-                                            child: const Text('إلغاء'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () =>
-                                                Navigator.pop(ctx, true),
-                                            child: const Text('حذف'),
-                                          ),
-                                        ],
+                                child: ExpansionTile(
+                                  shape: const Border(),
+                                  collapsedShape: const Border(),
+                                  tilePadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  iconColor: colors.ink2,
+                                  collapsedIconColor: colors.ink3,
+                                  title: Text(
+                                    '💼 ${entry.key}',
+                                    style: AppTextStyles.title
+                                        .copyWith(color: colors.ink),
+                                  ),
+                                  subtitle: Text(
+                                    '${entry.value.length} صلاحيات',
+                                    style: AppTextStyles.caption
+                                        .copyWith(color: colors.ink3),
+                                  ),
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        4,
+                                        16,
+                                        8,
                                       ),
-                                    );
-                                    if (confirm == true) {
-                                      ref
-                                          .read(rolesConfigControllerProvider)
-                                          .deleteTemplate(entry.key);
-                                    }
-                                  },
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                  label: const Text(
-                                    'حذف النموذج',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: entry.value.map((perm) {
+                                          final label =
+                                              kAppPermissions[perm] ?? perm;
+                                          return StatusChip(
+                                            label: label,
+                                            kind: StatusChipKind.neutral,
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                    OverflowBar(
+                                      children: [
+                                        AppButton(
+                                          label: 'تعديل النموذج',
+                                          icon: Icons.edit_outlined,
+                                          variant: AppButtonVariant.ghost,
+                                          small: true,
+                                          onPressed: () => _editTemplate(
+                                            entry.key,
+                                            entry.value,
+                                          ),
+                                        ),
+                                        TextButton.icon(
+                                          onPressed: () async {
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (ctx) => AlertDialog(
+                                                backgroundColor:
+                                                    ctx.colors.surface,
+                                                title:
+                                                    const Text('تأكيد الحذف'),
+                                                content: Text(
+                                                  'هل تريد حذف النموذج "${entry.key}"؟ سيتم تجريد المستخدمين المرتبطين به من الصلاحيات.',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          ctx,
+                                                          false,
+                                                        ),
+                                                    child: const Text('إلغاء'),
+                                                  ),
+                                                  FilledButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          ctx,
+                                                          true,
+                                                        ),
+                                                    child: const Text('حذف'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                            if (confirm == true) {
+                                              ref
+                                                  .read(
+                                                    rolesConfigControllerProvider,
+                                                  )
+                                                  .deleteTemplate(entry.key);
+                                            }
+                                          },
+                                          icon: Icon(
+                                            Icons.delete_outline,
+                                            color: colors.err,
+                                          ),
+                                          label: Text(
+                                            'حذف النموذج',
+                                            style: TextStyle(color: colors.err),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 32),
-                    ElevatedButton.icon(
-                      onPressed: _createTemplate,
-                      icon: const Icon(Icons.add),
-                      label: const Text('إنشاء نموذج صلاحيات جديد'),
-                    ),
-                  ],
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 24),
+                          AppButton(
+                            label: 'إنشاء نموذج صلاحيات جديد',
+                            icon: Icons.add,
+                            variant: AppButtonVariant.royal,
+                            expand: true,
+                            onPressed: _createTemplate,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-      floatingActionButton: _tabController.index == 0
-          ? FloatingActionButton.extended(
-              onPressed: () =>
-                  _createUser(rolesConfig.roleTemplates.keys.toList()),
-              icon: const Icon(Icons.person_add),
-              label: const Text('مستخدم جديد'),
-            )
-          : null,
     );
   }
 }

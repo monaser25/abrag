@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/data_management_provider.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class DataManagementScreen extends ConsumerStatefulWidget {
   const DataManagementScreen({super.key});
@@ -16,10 +19,10 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('إدارة البيانات')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'إدارة البيانات'),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           _ActionCard(
             title: 'تصدير كل البيانات',
@@ -85,31 +88,41 @@ class _DataManagementScreenState extends ConsumerState<DataManagementScreen> {
     final passwordController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('تأكيد مسح البيانات'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('اكتب باسورد الإيميل لتأكيد المسح.'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'كلمة المرور'),
+      builder: (dialogContext) {
+        final colors = dialogContext.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('تأكيد مسح البيانات'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'اكتب باسورد الإيميل لتأكيد المسح.',
+                style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                controller: passwordController,
+                label: 'كلمة المرور',
+                prefixIcon: Icons.lock_outline,
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'مسح',
+              variant: AppButtonVariant.royal,
+              small: true,
+              onPressed: () => Navigator.pop(dialogContext, true),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('مسح'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     if (confirmed == true && passwordController.text.isNotEmpty) {
       await _run(
@@ -139,23 +152,36 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger
-        ? Theme.of(context).colorScheme.error
-        : Theme.of(context).colorScheme.primary;
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.14),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(subtitle),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
+    final colors = context.colors;
+    final tint = danger ? colors.err : colors.brand;
+    return AppCard(
+      onTap: onTap,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          IconTile(icon: icon, tint: tint),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.title.copyWith(
+                    color: danger ? colors.err : colors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.arrow_forward_ios, size: 14, color: colors.ink3),
+        ],
       ),
     );
   }

@@ -5,6 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/customers_provider.dart';
 import '../providers/customers_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
   const CustomersScreen({super.key});
@@ -27,22 +31,17 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(customersProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('كل العملاء')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'كل العملاء'),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'البحث بالاسم، رقم التليفون، أو الرقم القومي...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+            child: AppTextField(
+              hint: 'البحث بالاسم، رقم التليفون، أو الرقم القومي...',
+              prefixIcon: Icons.search,
               onChanged: (value) {
                 setState(() => _searchQuery = value.toLowerCase().trim());
               },
@@ -98,153 +97,131 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 }
 
                 if (filtered.isEmpty) {
-                  return const Center(
-                    child: Text('لا يوجد أشخاص يطابقون بحثك'),
+                  return const EmptyState(
+                    icon: Icons.people_outline,
+                    title: 'لا يوجد أشخاص يطابقون بحثك',
                   );
                 }
 
                 return Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                       child: Row(
                         children: [
                           Text(
                             'إجمالي الأشخاص: ${filtered.length}',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: AppTextStyles.title
+                                .copyWith(color: colors.brand),
                           ),
                         ],
                       ),
                     ),
                     Expanded(
                       child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final customer = filtered[index];
                           final latestActivity = customer.activities.isEmpty
                               ? null
                               : customer.activities.first;
-                          final avatarColor = customer.isMixed
-                              ? Colors.purple
+                          final avatarTint = customer.isMixed
+                              ? colors.brand
                               : customer.hasSummer
-                              ? Colors.orange
-                              : Colors.blue;
+                                  ? colors.summer
+                                  : colors.winter;
 
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: InkWell(
-                              onTap: () {
-                                if (customer.hasSummer) {
-                                  context.push(
-                                    '/summer_bookings/guest/${Uri.encodeComponent(customer.name)}',
-                                  );
-                                  return;
-                                }
-                                if (latestActivity != null) {
-                                  context.push(latestActivity.route);
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: avatarColor.withValues(
-                                        alpha: 0.18,
+                          return AppCard(
+                            onTap: () {
+                              if (customer.hasSummer) {
+                                context.push(
+                                  '/summer_bookings/guest/${Uri.encodeComponent(customer.name)}',
+                                );
+                                return;
+                              }
+                              if (latestActivity != null) {
+                                context.push(latestActivity.route);
+                              }
+                            },
+                            margin: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              children: [
+                                AppAvatar(name: customer.name, tint: avatarTint),
+                                const SizedBox(width: 13),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        customer.name,
+                                        style: AppTextStyles.title
+                                            .copyWith(color: colors.ink),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      child: Icon(
-                                        customer.isMixed
-                                            ? Icons.groups
-                                            : customer.hasSummer
-                                            ? Icons.wb_sunny
-                                            : Icons.ac_unit,
-                                        color: avatarColor,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
                                         children: [
-                                          Text(
-                                            customer.name,
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Wrap(
-                                            spacing: 6,
-                                            runSpacing: 4,
-                                            children: [
-                                              if (customer.hasSummer)
-                                                const _TypeBadge(
-                                                  label: 'مصيف',
-                                                  color: Colors.orange,
-                                                ),
-                                              if (customer.hasWinter)
-                                                const _TypeBadge(
-                                                  label: 'شتوي',
-                                                  color: Colors.blue,
-                                                ),
-                                              _TypeBadge(
-                                                label:
-                                                    '${customer.activities.length} نشاط',
-                                                color: Colors.green,
-                                              ),
-                                              _TypeBadge(
-                                                label:
-                                                    customer.isCurrentlyStaying
-                                                    ? 'ساكن حاليًا'
-                                                    : 'غير ساكن',
-                                                color:
-                                                    customer.isCurrentlyStaying
-                                                    ? Colors.teal
-                                                    : Colors.grey,
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          if ((customer.phone ?? '').isNotEmpty)
-                                            Text(customer.phone!),
-                                          if ((customer.nationalId ?? '')
-                                              .isNotEmpty)
-                                            Text(
-                                              'الرقم القومي: ${customer.nationalId}',
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                    color: Colors.grey,
-                                                  ),
+                                          if (customer.hasSummer)
+                                            const StatusChip(
+                                              label: 'مصيف',
+                                              kind: StatusChipKind.summer,
                                             ),
+                                          if (customer.hasWinter)
+                                            const StatusChip(
+                                              label: 'شتوي',
+                                              kind: StatusChipKind.winter,
+                                            ),
+                                          StatusChip(
+                                            label:
+                                                '${customer.activities.length} نشاط',
+                                            kind: StatusChipKind.ok,
+                                          ),
+                                          StatusChip(
+                                            label: customer.isCurrentlyStaying
+                                                ? 'ساكن حاليًا'
+                                                : 'غير ساكن',
+                                            kind: customer.isCurrentlyStaying
+                                                ? StatusChipKind.brand
+                                                : StatusChipKind.neutral,
+                                          ),
                                         ],
                                       ),
-                                    ),
-                                    if ((customer.phone ?? '').isNotEmpty)
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.call,
-                                          color: Colors.green,
+                                      if ((customer.phone ?? '').isNotEmpty) ...[
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          customer.phone!,
+                                          textDirection: TextDirection.ltr,
+                                          style: AppTextStyles.caption
+                                              .copyWith(color: colors.ink2),
                                         ),
-                                        onPressed: () =>
-                                            _makePhoneCall(customer.phone!),
-                                      ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () =>
-                                          _showEditCustomerSheet(customer),
-                                    ),
-                                  ],
+                                      ],
+                                      if ((customer.nationalId ?? '')
+                                          .isNotEmpty)
+                                        Text(
+                                          'الرقم القومي: ${customer.nationalId}',
+                                          style: AppTextStyles.caption
+                                              .copyWith(color: colors.ink3),
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                                if ((customer.phone ?? '').isNotEmpty)
+                                  AppIconButton(
+                                    icon: Icons.call,
+                                    onPressed: () =>
+                                        _makePhoneCall(customer.phone!),
+                                  ),
+                                AppIconButton(
+                                  icon: Icons.edit_outlined,
+                                  onPressed: () =>
+                                      _showEditCustomerSheet(customer),
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -253,8 +230,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                   ],
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+              loading: () => const LoadingSkeleton(),
+              error: (error, _) => ErrorState(
+                title: 'تعذّر تحميل العملاء',
+                message: 'حدث خطأ: $error',
+                retryLabel: 'إعادة المحاولة',
+                onRetry: () => ref.invalidate(customersProvider),
+              ),
             ),
           ),
         ],
@@ -263,17 +245,32 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   }
 
   Widget _buildFilterChip(String label, String value) {
+    final colors = context.colors;
     final isSelected = _filter == value;
-    final theme = Theme.of(context);
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => setState(() => _filter = value),
-      selectedColor: theme.colorScheme.primaryContainer,
+    return Tappable(
+      onTap: () => setState(() => _filter = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.brandSoft : colors.surface,
+          borderRadius: AppRadius.rPill,
+          border: Border.all(
+            color: isSelected ? colors.brand : colors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.label.copyWith(
+            color: isSelected ? colors.brand : colors.ink2,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 
   Future<void> _showEditCustomerSheet(CustomerModel customer) async {
+    final colors = context.colors;
     final nameController = TextEditingController(text: customer.name);
     final phoneController = TextEditingController(text: customer.phone ?? '');
     final nationalIdController = TextEditingController(
@@ -283,11 +280,15 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
           left: 16,
           right: 16,
-          top: 16,
+          top: 12,
           bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
         ),
         child: Form(
@@ -296,33 +297,50 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: colors.border2,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               Text(
                 'تعديل بيانات العميل',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: AppTextStyles.h3.copyWith(color: colors.ink),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: 16),
+              AppTextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'الاسم'),
+                label: 'الاسم',
+                prefixIcon: Icons.person_outline,
                 validator: (value) =>
                     value == null || value.trim().isEmpty ? 'مطلوب' : null,
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: phoneController,
-                decoration: const InputDecoration(labelText: 'رقم الهاتف'),
+                label: 'رقم الهاتف',
+                prefixIcon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 validator: _optionalEgyptianPhoneValidator,
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              AppTextField(
                 controller: nationalIdController,
-                decoration: const InputDecoration(labelText: 'الرقم القومي'),
+                label: 'الرقم القومي',
+                prefixIcon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
                 validator: _optionalNationalIdValidator,
               ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
+              const SizedBox(height: 20),
+              AppButton(
+                label: 'حفظ',
+                icon: Icons.save_outlined,
+                expand: true,
                 onPressed: () {
                   if (!formKey.currentState!.validate()) return;
                   ref
@@ -335,8 +353,6 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                       );
                   Navigator.pop(sheetContext);
                 },
-                icon: const Icon(Icons.save),
-                label: const Text('حفظ'),
               ),
             ],
           ),
@@ -364,32 +380,5 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       return 'الرقم القومي لازم يكون 14 رقم';
     }
     return null;
-  }
-}
-
-class _TypeBadge extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _TypeBadge({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
   }
 }

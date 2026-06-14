@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/technicians_provider.dart';
-
 import '../../../../core/database/tables.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class TechniciansScreen extends ConsumerStatefulWidget {
   const TechniciansScreen({super.key});
@@ -30,98 +32,105 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          technician == null ? 'إضافة فني/عامل' : 'تعديل بيانات العامل',
-        ),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'الاسم'),
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'مطلوب' : null,
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: specialtyController.text.isNotEmpty
-                      ? specialtyController.text
-                      : 'سباكة',
-                  decoration: const InputDecoration(labelText: 'التخصص'),
-                  items: ['سباكة', 'كهرباء', 'نجارة', 'نقاشة', 'نظافة', 'أخرى']
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                      .toList(),
-                  onChanged: (v) => specialtyController.text = v ?? 'أخرى',
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'رقم الهاتف'),
-                  keyboardType: TextInputType.phone,
-                  textDirection: TextDirection.ltr,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(11),
-                  ],
-                  validator: (value) {
-                    final phone = value?.trim() ?? '';
-                    if (phone.isEmpty) return null;
-                    return RegExp(r'^01\d{9}$').hasMatch(phone)
-                        ? null
-                        : 'رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'ملاحظات / تقييم',
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: Text(
+            technician == null ? 'إضافة فني/عامل' : 'تعديل بيانات العامل',
+          ),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppTextField(
+                    controller: nameController,
+                    label: 'الاسم',
+                    prefixIcon: Icons.person_outline,
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'مطلوب' : null,
                   ),
-                  maxLines: 2,
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  AppDropdownField<String>(
+                    label: 'التخصص',
+                    prefixIcon: Icons.handyman_outlined,
+                    initialValue: specialtyController.text.isNotEmpty
+                        ? specialtyController.text
+                        : 'سباكة',
+                    items: const ['سباكة', 'كهرباء', 'نجارة', 'نقاشة', 'نظافة', 'أخرى']
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) => specialtyController.text = v ?? 'أخرى',
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: phoneController,
+                    label: 'رقم الهاتف',
+                    prefixIcon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
+                    validator: (value) {
+                      final phone = value?.trim() ?? '';
+                      if (phone.isEmpty) return null;
+                      return RegExp(r'^01\d{9}$').hasMatch(phone)
+                          ? null
+                          : 'رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: notesController,
+                    label: 'ملاحظات / تقييم',
+                    prefixIcon: Icons.sticky_note_2_outlined,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'حفظ',
+              small: true,
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
 
-              if (technician == null) {
-                ref
-                    .read(techniciansControllerProvider.notifier)
-                    .addTechnician(
-                      name: nameController.text.trim(),
-                      specialty: specialtyController.text,
-                      phone: phoneController.text.trim(),
-                      notes: notesController.text.trim(),
-                    );
-              } else {
-                ref
-                    .read(techniciansControllerProvider.notifier)
-                    .updateTechnician(
-                      technician.id,
-                      name: nameController.text.trim(),
-                      specialty: specialtyController.text,
-                      phone: phoneController.text.trim(),
-                      notes: notesController.text.trim(),
-                    );
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
+                if (technician == null) {
+                  ref
+                      .read(techniciansControllerProvider.notifier)
+                      .addTechnician(
+                        name: nameController.text.trim(),
+                        specialty: specialtyController.text,
+                        phone: phoneController.text.trim(),
+                        notes: notesController.text.trim(),
+                      );
+                } else {
+                  ref
+                      .read(techniciansControllerProvider.notifier)
+                      .updateTechnician(
+                        technician.id,
+                        name: nameController.text.trim(),
+                        specialty: specialtyController.text,
+                        phone: phoneController.text.trim(),
+                        notes: notesController.text.trim(),
+                      );
+                }
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -135,9 +144,14 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
   @override
   Widget build(BuildContext context) {
     final techniciansAsync = ref.watch(techniciansProvider);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('العمال والفنيين')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'العمال والفنيين'),
+      floatingActionButton: AppFab(
+        onPressed: () => _showAddEditDialog(),
+        icon: Icons.add,
+      ),
       body: techniciansAsync.when(
         data: (technicians) {
           final activeTechnicians = technicians
@@ -145,58 +159,74 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
               .toList();
 
           if (activeTechnicians.isEmpty) {
-            return const Center(child: Text('لا يوجد فنيين مسجلين'));
+            return const EmptyState(
+              icon: Icons.engineering_outlined,
+              title: 'لا يوجد فنيين مسجلين',
+            );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
             itemCount: activeTechnicians.length,
             itemBuilder: (context, index) {
               final tech = activeTechnicians[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () => context.go('/technicians/details/${tech.id}'),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      child: Icon(_getIconForSpecialty(tech.specialty)),
+              final hasPhone = tech.phone != null && tech.phone!.isNotEmpty;
+              return AppCard(
+                onTap: () => context.go('/technicians/details/${tech.id}'),
+                margin: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    IconTile(
+                      icon: _getIconForSpecialty(tech.specialty),
+                      tint: colors.brand,
                     ),
-                    title: Text(tech.name),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('التخصص: ${tech.specialty}'),
-                        if (tech.phone != null && tech.phone!.isNotEmpty)
-                          Text('الهاتف: ${tech.phone}'),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (tech.phone != null && tech.phone!.isNotEmpty)
-                          IconButton(
-                            icon: const Icon(Icons.call, color: Colors.green),
-                            onPressed: () => _makePhoneCall(tech.phone!),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tech.name,
+                            style: AppTextStyles.title
+                                .copyWith(color: colors.ink),
                           ),
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => _showAddEditDialog(tech),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            'التخصص: ${tech.specialty}',
+                            style: AppTextStyles.caption
+                                .copyWith(color: colors.ink2),
+                          ),
+                          if (hasPhone)
+                            Text(
+                              'الهاتف: ${tech.phone}',
+                              style: AppTextStyles.caption
+                                  .copyWith(color: colors.ink3),
+                            ),
+                        ],
+                      ),
                     ),
-                    isThreeLine: tech.phone != null && tech.phone!.isNotEmpty,
-                  ),
+                    if (hasPhone)
+                      AppIconButton(
+                        icon: Icons.call,
+                        onPressed: () => _makePhoneCall(tech.phone!),
+                      ),
+                    AppIconButton(
+                      icon: Icons.edit_outlined,
+                      onPressed: () => _showAddEditDialog(tech),
+                    ),
+                  ],
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditDialog(),
-        child: const Icon(Icons.add),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذّر تحميل الفنيين',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(techniciansProvider),
+        ),
       ),
     );
   }

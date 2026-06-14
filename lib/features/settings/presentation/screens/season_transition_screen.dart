@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class SeasonTransitionScreen extends ConsumerWidget {
   const SeasonTransitionScreen({super.key});
@@ -14,9 +17,10 @@ class SeasonTransitionScreen extends ConsumerWidget {
     final settingsAsync = ref.watch(appSettingsProvider);
     final settingsController = ref.watch(appSettingsControllerProvider);
     final db = ref.watch(databaseProvider);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('إدارة المواسم')),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'إدارة المواسم'),
       body: settingsAsync.when(
         data: (settings) {
           final activeSeason =
@@ -62,6 +66,7 @@ class SeasonTransitionScreen extends ConsumerWidget {
             final confirmed = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
+                backgroundColor: context.colors.surface,
                 title: Text('حذف ${seasonLabel(key)}؟'),
                 content: const Text(
                   'سيتم إخفاء الموسم الفارغ من القائمة. لو احتجته لاحقًا يمكن إنشاؤه/تفعيله مرة أخرى من بدء موسم جديد.',
@@ -93,102 +98,115 @@ class SeasonTransitionScreen extends ConsumerWidget {
             await settingsController.updateSettings(newSettings);
           }
 
+          final isSummerActive = activeSeason.startsWith('summer');
+
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            child: Icon(
-                              activeSeason.startsWith('summer')
-                                  ? Icons.wb_sunny
-                                  : Icons.ac_unit,
-                            ),
+              AppCard(
+                color: colors.brandSoft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconTile(
+                          icon: isSummerActive
+                              ? Icons.wb_sunny
+                              : Icons.ac_unit,
+                          tint: isSummerActive ? colors.summer : colors.winter,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'الموسم النشط: ${seasonLabel(activeSeason)}',
+                            style:
+                                AppTextStyles.h3.copyWith(color: colors.ink),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'الموسم النشط: ${seasonLabel(activeSeason)}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'الموسم النشط هو اللي يظهر افتراضيًا في الفلاتر عشان الشغل اليومي ما يتلخبطش. المواسم القديمة لا تُحذف، وتفضل موجودة في التقارير وكشف الحساب وسجل النشاط.',
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: () => activateSeason(next),
-                        icon: const Icon(Icons.add),
-                        label: Text('بدء ${seasonLabel(next)}'),
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'الموسم النشط هو اللي يظهر افتراضيًا في الفلاتر عشان الشغل اليومي ما يتلخبطش. المواسم القديمة لا تُحذف، وتفضل موجودة في التقارير وكشف الحساب وسجل النشاط.',
+                      style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                    ),
+                    const SizedBox(height: 16),
+                    AppButton(
+                      label: 'بدء ${seasonLabel(next)}',
+                      icon: Icons.add,
+                      variant: AppButtonVariant.royal,
+                      onPressed: () => activateSeason(next),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'كل المواسم',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
+              const SectionTitle(title: 'كل المواسم'),
               ...options.map(
                 (option) => FutureBuilder<int>(
                   future: _seasonUsageCount(db, option.key),
                   builder: (context, snapshot) {
                     final count = snapshot.data;
                     final isActive = option.key == activeSeason;
-                    return Card(
-                      child: ListTile(
-                        leading: Icon(
-                          option.key.startsWith('summer')
-                              ? Icons.wb_sunny
-                              : Icons.ac_unit,
-                          color: isActive
-                              ? Theme.of(context).colorScheme.primary
-                              : null,
-                        ),
-                        title: Text(option.label),
-                        subtitle: Text(
-                          isActive
-                              ? 'نشط حاليًا — أي بيانات جديدة ستدخل هنا'
-                              : count == null
-                                  ? 'جاري فحص بيانات الموسم...'
-                                  : count == 0
-                                      ? 'فارغ — يمكن حذفه من القائمة'
-                                      : 'أرشيف يحتوي على $count عملية',
-                        ),
-                        trailing: Wrap(
-                          spacing: 4,
-                          children: [
-                            if (isActive)
-                              const Icon(Icons.check_circle)
-                            else
-                              TextButton(
-                                onPressed: () => activateSeason(option.key),
-                                child: const Text('تفعيل'),
-                              ),
-                            IconButton(
-                              tooltip: 'حذف الموسم الفارغ',
-                              onPressed: count == 0 &&
-                                      option.key != currentSeasonKey()
-                                  ? () => hideSeason(option.key)
-                                  : null,
-                              icon: const Icon(Icons.delete_outline),
+                    final isSummer = option.key.startsWith('summer');
+                    return AppCard(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          IconTile(
+                            icon: isSummer ? Icons.wb_sunny : Icons.ac_unit,
+                            tint: isActive
+                                ? colors.brand
+                                : (isSummer ? colors.summer : colors.winter),
+                          ),
+                          const SizedBox(width: 13),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  option.label,
+                                  style: AppTextStyles.title
+                                      .copyWith(color: colors.ink),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isActive
+                                      ? 'نشط حاليًا — أي بيانات جديدة ستدخل هنا'
+                                      : count == null
+                                          ? 'جاري فحص بيانات الموسم...'
+                                          : count == 0
+                                              ? 'فارغ — يمكن حذفه من القائمة'
+                                              : 'أرشيف يحتوي على $count عملية',
+                                  style: AppTextStyles.caption
+                                      .copyWith(color: colors.ink3),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (isActive)
+                            StatusChip(
+                              label: 'نشط',
+                              kind: StatusChipKind.ok,
+                              icon: Icons.check_circle,
+                            )
+                          else
+                            AppButton(
+                              label: 'تفعيل',
+                              variant: AppButtonVariant.ghost,
+                              small: true,
+                              onPressed: () => activateSeason(option.key),
+                            ),
+                          AppIconButton(
+                            tooltip: 'حذف الموسم الفارغ',
+                            icon: Icons.delete_outline,
+                            onPressed:
+                                count == 0 && option.key != currentSeasonKey()
+                                    ? () => hideSeason(option.key)
+                                    : null,
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -197,8 +215,13 @@ class SeasonTransitionScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذّر تحميل المواسم',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(appSettingsProvider),
+        ),
       ),
     );
   }

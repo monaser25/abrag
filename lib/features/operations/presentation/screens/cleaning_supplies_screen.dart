@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/cleaning_supplies_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class CleaningSuppliesScreen extends ConsumerStatefulWidget {
   const CleaningSuppliesScreen({super.key});
@@ -19,61 +22,68 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(supply == null ? 'إضافة صنف جديد' : 'تعديل صنف'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'اسم الصنف (كلور، معطر، صابون)'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: unitController.text,
-                decoration: const InputDecoration(labelText: 'وحدة القياس'),
-                items: const [
-                  DropdownMenuItem(value: 'لتر', child: Text('لتر')),
-                  DropdownMenuItem(value: 'كيلو', child: Text('كيلو')),
-                  DropdownMenuItem(value: 'عبوة', child: Text('عبوة / كيس')),
-                  DropdownMenuItem(value: 'قطعة', child: Text('قطعة')),
-                ],
-                onChanged: (v) {
-                  if (v != null) unitController.text = v;
-                },
-              ),
-            ],
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: Text(supply == null ? 'إضافة صنف جديد' : 'تعديل صنف'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppTextField(
+                  controller: nameController,
+                  label: 'اسم الصنف (كلور، معطر، صابون)',
+                  prefixIcon: Icons.inventory_2_outlined,
+                  validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
+                ),
+                const SizedBox(height: 12),
+                AppDropdownField<String>(
+                  label: 'وحدة القياس',
+                  prefixIcon: Icons.straighten,
+                  initialValue: unitController.text,
+                  items: const [
+                    DropdownMenuItem(value: 'لتر', child: Text('لتر')),
+                    DropdownMenuItem(value: 'كيلو', child: Text('كيلو')),
+                    DropdownMenuItem(value: 'عبوة', child: Text('عبوة / كيس')),
+                    DropdownMenuItem(value: 'قطعة', child: Text('قطعة')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) unitController.text = v;
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              if (supply == null) {
-                ref.read(cleaningSuppliesControllerProvider.notifier).addSupply(
-                  nameController.text.trim(),
-                  unitController.text,
-                );
-              } else {
-                ref.read(cleaningSuppliesControllerProvider.notifier).updateSupply(
-                  supply.id,
-                  nameController.text.trim(),
-                  unitController.text,
-                );
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'حفظ',
+              small: true,
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                if (supply == null) {
+                  ref.read(cleaningSuppliesControllerProvider.notifier).addSupply(
+                    nameController.text.trim(),
+                    unitController.text,
+                  );
+                } else {
+                  ref.read(cleaningSuppliesControllerProvider.notifier).updateSupply(
+                    supply.id,
+                    nameController.text.trim(),
+                    unitController.text,
+                  );
+                }
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -85,149 +95,164 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('تسجيل عملية شراء جديدة'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('الصنف: ${supply.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: quantityController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(labelText: 'الكمية (${supply.unit})'),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'مطلوب';
-                    final qty = double.tryParse(v);
-                    if (qty == null || qty <= 0) return 'كمية غير صحيحة';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: costController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [CurrencyInputFormatter()],
-                  decoration: const InputDecoration(labelText: 'التكلفة الإجمالية (ج.م)'),
-                  validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Text('سيتم تسجيل التكلفة تلقائياً في المصروفات', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: notesController,
-                  decoration: const InputDecoration(labelText: 'ملاحظات (مثل اسم المحل، أو اسم العامل المُستلم)'),
-                  maxLines: 2,
-                ),
-              ],
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('تسجيل عملية شراء جديدة'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'الصنف: ${supply.name}',
+                    style: AppTextStyles.title.copyWith(color: colors.ink),
+                  ),
+                  const SizedBox(height: 14),
+                  AppTextField(
+                    controller: quantityController,
+                    label: 'الكمية (${supply.unit})',
+                    prefixIcon: Icons.numbers,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'مطلوب';
+                      final qty = double.tryParse(v);
+                      if (qty == null || qty <= 0) return 'كمية غير صحيحة';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: costController,
+                    label: 'التكلفة الإجمالية (ج.م)',
+                    prefixIcon: Icons.payments_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [CurrencyInputFormatter()],
+                    helperText: 'سيتم تسجيل التكلفة تلقائياً في المصروفات',
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: notesController,
+                    label: 'ملاحظات (مثل اسم المحل، أو اسم العامل المُستلم)',
+                    prefixIcon: Icons.sticky_note_2_outlined,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              ref.read(cleaningSuppliesControllerProvider.notifier).logTransaction(
-                supplyId: supply.id,
-                type: 'purchase',
-                quantity: double.parse(quantityController.text.trim()),
-                costEgp: double.tryParse(costController.text.replaceAll(',', '').trim()) ?? 0.0,
-                notes: notesController.text.trim(),
-              );
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('إلغاء'),
             ),
-            child: const Text('تأكيد الشراء'),
-          ),
-        ],
-      ),
+            AppButton(
+              label: 'تأكيد الشراء',
+              icon: Icons.shopping_cart,
+              small: true,
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                ref.read(cleaningSuppliesControllerProvider.notifier).logTransaction(
+                  supplyId: supply.id,
+                  type: 'purchase',
+                  quantity: double.parse(quantityController.text.trim()),
+                  costEgp: double.tryParse(costController.text.replaceAll(',', '').trim()) ?? 0.0,
+                  notes: notesController.text.trim(),
+                );
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final suppliesAsync = ref.watch(cleaningSuppliesProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('أدوات ومواد النظافة'),
+    return AppScaffold(
+      appBar: const AbragAppBar(title: 'أدوات ومواد النظافة'),
+      floatingActionButton: AppFab(
+        onPressed: () => _showAddEditSupplyDialog(),
+        icon: Icons.add,
+        label: 'صنف جديد',
       ),
       body: suppliesAsync.when(
         data: (supplies) {
           if (supplies.isEmpty) {
-            return const Center(child: Text('لا توجد أصناف مسجلة. اضغط + لإضافة صنف.'));
+            return const EmptyState(
+              icon: Icons.cleaning_services_outlined,
+              title: 'لا توجد أصناف مسجلة. اضغط + لإضافة صنف.',
+            );
           }
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
             itemCount: supplies.length,
             itemBuilder: (context, index) {
               final supply = supplies[index];
-              return Card(
+              return AppCard(
                 margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: theme.colorScheme.primaryContainer,
-                                child: Icon(Icons.cleaning_services, color: theme.colorScheme.primary),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(supply.name, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                            ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconTile(
+                          icon: Icons.cleaning_services,
+                          tint: colors.brand,
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Text(
+                            supply.name,
+                            style: AppTextStyles.title
+                                .copyWith(color: colors.ink),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _showAddEditSupplyDialog(supply),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('وحدة القياس: ${supply.unit}', style: theme.textTheme.labelMedium),
-                          ElevatedButton.icon(
-                            onPressed: () => _showTransactionDialog(supply),
-                            icon: const Icon(Icons.shopping_cart, size: 16),
-                            label: const Text('تسجيل شراء'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                        AppIconButton(
+                          icon: Icons.edit_outlined,
+                          onPressed: () => _showAddEditSupplyDialog(supply),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'وحدة القياس: ${supply.unit}',
+                          style: AppTextStyles.label
+                              .copyWith(color: colors.ink2),
+                        ),
+                        AppButton(
+                          label: 'تسجيل شراء',
+                          icon: Icons.shopping_cart,
+                          variant: AppButtonVariant.royal,
+                          small: true,
+                          onPressed: () => _showTransactionDialog(supply),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddEditSupplyDialog(),
-        icon: const Icon(Icons.add),
-        label: const Text('صنف جديد'),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذّر تحميل الأصناف',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(cleaningSuppliesProvider),
+        ),
       ),
     );
   }

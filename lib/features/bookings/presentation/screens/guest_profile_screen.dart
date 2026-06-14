@@ -6,7 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../../core/theme/abrag_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/widgets.dart';
 
 class GuestProfileScreen extends ConsumerWidget {
   final String guestName;
@@ -17,22 +20,20 @@ class GuestProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final formatter = DateFormat('EEEE yyyy-MM-dd', 'ar');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ملف النزيل'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/summer_bookings/list');
-            }
-          },
-        ),
+    return AppScaffold(
+      appBar: AbragAppBar(
+        title: 'ملف النزيل',
+        showBack: true,
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/summer_bookings/list');
+          }
+        },
       ),
       body: bookingsAsync.when(
         data: (allBookings) {
@@ -41,7 +42,10 @@ class GuestProfileScreen extends ConsumerWidget {
                 ..sort((a, b) => b.checkInDate.compareTo(a.checkInDate));
 
           if (guestBookings.isEmpty) {
-            return const Center(child: Text('لا يوجد سجل لهذا النزيل'));
+            return const EmptyState(
+              icon: Icons.person_off_outlined,
+              title: 'لا يوجد سجل لهذا النزيل',
+            );
           }
 
           final latestBooking = guestBookings.first;
@@ -81,75 +85,54 @@ class GuestProfileScreen extends ConsumerWidget {
           );
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Text(
-                          guestName.isNotEmpty ? guestName[0] : '?',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer,
+              AppCard(
+                child: Row(
+                  children: [
+                    AppAvatar(name: guestName, size: 64),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            guestName,
+                            style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              guestName,
-                              style: theme.textTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              latestBooking.guestPhone ?? 'لا يوجد رقم هاتف',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                          const SizedBox(height: 4),
+                          Text(
+                            latestBooking.guestPhone ?? 'لا يوجد رقم هاتف',
+                            style:
+                                AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              StatusChip(
+                                label: '${guestBookings.length} نشاط',
+                                kind: StatusChipKind.brand,
+                                icon: Icons.history,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                Chip(
-                                  avatar: Icon(
-                                    Icons.history,
-                                    size: 16,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                  label: Text('${guestBookings.length} نشاط'),
-                                ),
-                                Chip(
-                                  avatar: Icon(
-                                    isCurrentlyStaying
-                                        ? Icons.hotel
-                                        : Icons.logout,
-                                    size: 16,
-                                    color: isCurrentlyStaying
-                                        ? Colors.green
-                                        : Colors.grey,
-                                  ),
-                                  label: Text(
-                                    isCurrentlyStaying
-                                        ? 'ساكن حاليًا'
-                                        : 'غير ساكن حاليًا',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              StatusChip(
+                                label: isCurrentlyStaying
+                                    ? 'ساكن حاليًا'
+                                    : 'غير ساكن حاليًا',
+                                kind: isCurrentlyStaying
+                                    ? StatusChipKind.ok
+                                    : StatusChipKind.neutral,
+                                icon: isCurrentlyStaying
+                                    ? Icons.hotel
+                                    : Icons.logout,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -193,9 +176,7 @@ class GuestProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _buildIdImagesSection(context, frontImage, backImage),
-              const SizedBox(height: 24),
-              Text('سجل الزيارات', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 12),
+              const SectionTitle(title: 'سجل الزيارات'),
               ...guestBookings.map((booking) {
                 final apartmentNumber = apartmentsAsync.maybeWhen(
                   data: (apartments) {
@@ -212,73 +193,77 @@ class GuestProfileScreen extends ConsumerWidget {
                   booking.checkInDate,
                   booking.earlyCheckoutDate ?? booking.checkOutDate,
                 );
-                return Card(
+                return AppCard(
+                  onTap: () =>
+                      context.push('/summer_bookings/details/${booking.id}'),
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    onTap: () =>
-                        context.push('/summer_bookings/details/${booking.id}'),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'شقة $apartmentNumber',
-                                  style: theme.textTheme.titleMedium,
-                                ),
-                              ),
-                              _StatusPill(label: _statusLabel(booking.status)),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _InfoLine(
-                            icon: Icons.login,
-                            label: 'الدخول',
-                            value: formatter.format(booking.checkInDate),
-                          ),
-                          const SizedBox(height: 6),
-                          _InfoLine(
-                            icon: Icons.logout,
-                            label: 'الخروج',
-                            value: formatter.format(
-                              booking.earlyCheckoutDate ?? booking.checkOutDate,
+                          Expanded(
+                            child: Text(
+                              'شقة $apartmentNumber',
+                              style: AppTextStyles.title
+                                  .copyWith(color: colors.ink),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          _InfoLine(
-                            icon: Icons.nights_stay,
-                            label: 'عدد الأيام',
-                            value: '$days يوم',
-                          ),
-                          const SizedBox(height: 6),
-                          _InfoLine(
-                            icon: Icons.price_change,
-                            label: 'السعر اليومي',
-                            value:
-                                '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toDouble().toCurrencyFormat()} ج.م',
-                          ),
-                          const Divider(),
-                          _InfoLine(
-                            icon: Icons.payments,
-                            label: 'المدفوع',
-                            value:
-                                '${booking.amountPaidEgp.toDouble().toCurrencyFormat()} ج.م',
-                            valueColor: Colors.green,
+                          StatusChip(
+                            label: _statusLabel(booking.status),
+                            kind: _statusKind(booking.status),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      _InfoLine(
+                        icon: Icons.login,
+                        label: 'الدخول',
+                        value: formatter.format(booking.checkInDate),
+                      ),
+                      const SizedBox(height: 6),
+                      _InfoLine(
+                        icon: Icons.logout,
+                        label: 'الخروج',
+                        value: formatter.format(
+                          booking.earlyCheckoutDate ?? booking.checkOutDate,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _InfoLine(
+                        icon: Icons.nights_stay,
+                        label: 'عدد الأيام',
+                        value: '$days يوم',
+                      ),
+                      const SizedBox(height: 6),
+                      _InfoLine(
+                        icon: Icons.price_change,
+                        label: 'السعر اليومي',
+                        value:
+                            '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toDouble().toCurrencyFormat()} ج.م',
+                      ),
+                      Divider(color: colors.border),
+                      _InfoLine(
+                        icon: Icons.payments,
+                        label: 'المدفوع',
+                        value:
+                            '${booking.amountPaidEgp.toDouble().toCurrencyFormat()} ج.م',
+                        valueColor: colors.ok,
+                      ),
+                    ],
                   ),
                 );
               }),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingSkeleton(),
+        error: (e, st) => ErrorState(
+          title: 'تعذّر تحميل ملف النزيل',
+          message: 'Error: $e',
+          retryLabel: 'إعادة المحاولة',
+          onRetry: () => ref.invalidate(allSummerBookingsProvider),
+        ),
       ),
     );
   }
@@ -288,33 +273,34 @@ class GuestProfileScreen extends ConsumerWidget {
     String? frontPath,
     String? backPath,
   ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('صور البطاقة', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _IdImageTile(
-                    title: 'أمام البطاقة',
-                    imagePath: frontPath,
-                  ),
+    final colors = context.colors;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'صور البطاقة',
+            style: AppTextStyles.title.copyWith(color: colors.ink),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _IdImageTile(
+                  title: 'أمام البطاقة',
+                  imagePath: frontPath,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _IdImageTile(
-                    title: 'خلف البطاقة',
-                    imagePath: backPath,
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _IdImageTile(
+                  title: 'خلف البطاقة',
+                  imagePath: backPath,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -326,45 +312,43 @@ class GuestProfileScreen extends ConsumerWidget {
     required int? age,
     required String? governorate,
   }) {
+    final colors = context.colors;
     final formatter = DateFormat('yyyy-MM-dd', 'ar');
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'بيانات شخصية',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            _InfoLine(
-              icon: Icons.badge,
-              label: 'الرقم القومي',
-              value: (nationalId ?? '').isEmpty ? 'غير مسجل' : nationalId!,
-            ),
-            const SizedBox(height: 6),
-            _InfoLine(
-              icon: Icons.cake,
-              label: 'تاريخ الميلاد',
-              value: birthDate == null
-                  ? 'غير متاح'
-                  : formatter.format(birthDate),
-            ),
-            const SizedBox(height: 6),
-            _InfoLine(
-              icon: Icons.calendar_today,
-              label: 'السن',
-              value: age == null ? 'غير متاح' : '$age سنة',
-            ),
-            const SizedBox(height: 6),
-            _InfoLine(
-              icon: Icons.location_city,
-              label: 'المحافظة',
-              value: governorate ?? 'غير متاحة',
-            ),
-          ],
-        ),
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'بيانات شخصية',
+            style: AppTextStyles.title.copyWith(color: colors.ink),
+          ),
+          const SizedBox(height: 12),
+          _InfoLine(
+            icon: Icons.badge,
+            label: 'الرقم القومي',
+            value: (nationalId ?? '').isEmpty ? 'غير مسجل' : nationalId!,
+          ),
+          const SizedBox(height: 6),
+          _InfoLine(
+            icon: Icons.cake,
+            label: 'تاريخ الميلاد',
+            value: birthDate == null
+                ? 'غير متاح'
+                : formatter.format(birthDate),
+          ),
+          const SizedBox(height: 6),
+          _InfoLine(
+            icon: Icons.calendar_today,
+            label: 'السن',
+            value: age == null ? 'غير متاح' : '$age سنة',
+          ),
+          const SizedBox(height: 6),
+          _InfoLine(
+            icon: Icons.location_city,
+            label: 'المحافظة',
+            value: governorate ?? 'غير متاحة',
+          ),
+        ],
       ),
     );
   }
@@ -375,37 +359,26 @@ class GuestProfileScreen extends ConsumerWidget {
     String value,
     IconData icon,
   ) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return SizedBox(
       width: (MediaQuery.sizeOf(context).width - 48) / 2,
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Icon(icon, color: theme.colorScheme.primary),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: theme.textTheme.titleSmall,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+      child: AppCard(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: [
+            IconTile(icon: icon, tint: colors.brand, size: 38),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: AppTextStyles.caption.copyWith(color: colors.ink3),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: AppTextStyles.title.copyWith(color: colors.ink),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -515,6 +488,21 @@ class GuestProfileScreen extends ConsumerWidget {
         return status;
     }
   }
+
+  StatusChipKind _statusKind(String status) {
+    switch (status) {
+      case 'confirmed':
+        return StatusChipKind.ok;
+      case 'checked_out':
+        return StatusChipKind.neutral;
+      case 'cancelled':
+        return StatusChipKind.err;
+      case 'pending':
+        return StatusChipKind.warn;
+      default:
+        return StatusChipKind.brand;
+    }
+  }
 }
 
 class _IdImageTile extends StatelessWidget {
@@ -525,6 +513,7 @@ class _IdImageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final hasImage = imagePath != null && imagePath!.isNotEmpty;
     final file = hasImage ? File(imagePath!) : null;
     final fileExists = file?.existsSync() ?? false;
@@ -548,45 +537,31 @@ class _IdImageTile extends StatelessWidget {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
+          color: colors.surface2,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          border: Border.all(color: colors.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: fileExists
             ? Image.file(
                 file!,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Text('الصورة غير متاحة', textAlign: TextAlign.center),
+                errorBuilder: (context, error, stackTrace) => Center(
+                  child: Text(
+                    'الصورة غير متاحة',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyS.copyWith(color: colors.ink3),
+                  ),
                 ),
               )
             : Center(
                 child: Text(
                   '$title\nالصورة غير متاحة',
                   textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyS.copyWith(color: colors.ink3),
                 ),
               ),
       ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final String label;
-
-  const _StatusPill({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
     );
   }
 }
@@ -606,27 +581,25 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 6),
+        Icon(icon, size: 16, color: colors.ink3),
+        const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.body.copyWith(color: colors.ink2),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: TextStyle(color: valueColor, fontWeight: FontWeight.w600),
+            style: AppTextStyles.body.copyWith(
+              color: valueColor ?? colors.ink,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
