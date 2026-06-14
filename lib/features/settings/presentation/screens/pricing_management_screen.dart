@@ -74,7 +74,7 @@ class PricingManagementScreen extends ConsumerWidget {
               Text(
                 price,
                 style: AppTextStyles.tabular(
-                  AppTextStyles.h2.copyWith(color: colors.brand),
+                  AppTextStyles.h2.copyWith(color: colors.ink),
                 ),
               ),
               AppButton(

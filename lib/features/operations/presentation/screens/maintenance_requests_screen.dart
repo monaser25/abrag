@@ -296,7 +296,7 @@ class _RequestCard extends StatelessWidget {
                 Text(
                   cost,
                   style: AppTextStyles.tabular(
-                    AppTextStyles.title.copyWith(color: colors.brand),
+                    AppTextStyles.title.copyWith(color: colors.ink),
                   ),
                 ),
             ],

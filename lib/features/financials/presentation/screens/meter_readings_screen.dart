@@ -110,7 +110,7 @@ class _ReadingCard extends StatelessWidget {
               Text(
                 '${reading.amountEgp} ج.م',
                 style: AppTextStyles.tabular(
-                  AppTextStyles.title.copyWith(color: colors.brand),
+                  AppTextStyles.title.copyWith(color: colors.ink),
                 ),
               ),
             ],

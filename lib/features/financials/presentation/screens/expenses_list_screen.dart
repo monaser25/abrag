@@ -213,7 +213,7 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                                     '${totalAmount.toCurrencyFormat()} ج.م',
                                     style: AppTextStyles.tabular(
                                       AppTextStyles.h3
-                                          .copyWith(color: colors.brand),
+                                          .copyWith(color: colors.ink),
                                     ),
                                   ),
                                 ],

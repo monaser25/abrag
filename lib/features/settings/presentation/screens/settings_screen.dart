@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/theme_mode_provider.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../../../users/presentation/providers/users_provider.dart';
@@ -30,11 +31,23 @@ class SettingsScreen extends ConsumerWidget {
       );
     }
 
+    final isLight = ref.watch(themeModeProvider) == ThemeMode.light;
+
     return AppScaffold(
       appBar: const AbragAppBar(title: 'الإعدادات', subtitle: 'للمدير فقط'),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
+          const SectionTitle(title: 'المظهر'),
+          AppSwitchRow(
+            title: 'الوضع الفاتح',
+            subtitle: 'تبديل بين المظهر الفاتح والداكن',
+            icon: isLight ? Icons.light_mode : Icons.dark_mode,
+            tint: colors.accent,
+            value: isLight,
+            onChanged: (value) =>
+                ref.read(themeModeProvider.notifier).setLight(value),
+          ),
           const SectionTitle(title: 'الحساب'),
           NavRow(
             icon: Icons.person_outline,

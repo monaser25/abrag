@@ -53,6 +53,7 @@ class AppDropdownField<T> extends StatelessWidget {
     final colors = context.colors;
     final field = DropdownButtonFormField<T>(
       key: fieldKey,
+      isExpanded: true,
       initialValue: initialValue,
       items: items,
       onChanged: onChanged,

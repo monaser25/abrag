@@ -671,7 +671,7 @@ class _HeroValue extends StatelessWidget {
             child: Text(
               value,
               style: AppTextStyles.tabular(
-                AppTextStyles.title.copyWith(color: colors.brand),
+                AppTextStyles.title.copyWith(color: colors.ink),
               ),
             ),
           ),
