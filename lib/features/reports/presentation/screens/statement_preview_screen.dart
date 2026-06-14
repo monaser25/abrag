@@ -71,14 +71,16 @@ class StatementPreviewScreen extends ConsumerWidget {
                       'description': [
                         t.description,
                         if (t.buildingName != null) t.buildingName,
-                        if (t.brokerName != null && t.brokerName!.isNotEmpty)
-                          'سمسار: ${t.brokerName}',
                         if (t.technicianName != null &&
                             t.technicianName!.isNotEmpty)
                           'عامل: ${t.technicianName}',
-                        if (t.brokerCommission > 0)
-                          'عمولة السمسار: ${t.brokerCommission.toCurrencyFormat()} ج.م',
                       ].join(' - '),
+                      'broker': (t.brokerName != null && t.brokerName!.isNotEmpty)
+                          ? t.brokerName
+                          : '—',
+                      'commission': t.brokerCommission > 0
+                          ? t.brokerCommission.toCurrencyFormat()
+                          : '—',
                       'payment': _paymentMethodLabel(t.paymentMethod),
                       // Sign sits to the right of the number (RTL reading).
                       'amount': t.isRevenue

@@ -15,6 +15,8 @@ void main() {
         'date': '2026-06-${(i % 28) + 1}',
         'unit': 'شقة ${i + 1}',
         'description': 'عملية رقم $i - تفاصيل البيان المطوّلة لاختبار الالتفاف',
+        'broker': revenue ? 'سمسار $i' : '—',
+        'commission': revenue ? '250' : '—',
         'payment': i % 3 == 0 ? 'نقدي' : 'فودافون كاش',
         'amount': revenue ? '5,000 +' : '1,200 -',
         'isRevenue': revenue,
