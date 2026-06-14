@@ -301,11 +301,11 @@ class _ApartmentProfileScreenState
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const Text(
+                                Text(
                                   'اكتب كل عنصر في سطر. لإنشاء مجموعة (مثل الأجهزة الكهربائية)، اكتب اسم المجموعة في سطر وضع آخره نقطتين (:)',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey,
+                                    color: context.colors.ink3,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -713,15 +713,17 @@ class _ApartmentProfileScreenState
                             return ListTile(
                               leading: Icon(
                                 isBooking ? Icons.wb_sunny : Icons.ac_unit,
-                                color: isBooking ? Colors.orange : Colors.blue,
+                                color: isBooking
+                                    ? context.colors.summer
+                                    : context.colors.winter,
                               ),
                               title: Text(name),
                               subtitle: Text(formatter.format(start)),
                               trailing: Text(
                                 '${price.toCurrencyFormat()} ج.م',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  color: context.colors.ok,
                                 ),
                               ),
                               onTap: () {
@@ -778,9 +780,9 @@ class _ApartmentProfileScreenState
                           itemBuilder: (context, index) {
                             final expense = expenses[index];
                             return ListTile(
-                              leading: const Icon(
+                              leading: Icon(
                                 Icons.money_off,
-                                color: Colors.red,
+                                color: context.colors.err,
                               ),
                               title: Text(
                                 _translateExpenseType(expense.expenseType),
@@ -793,9 +795,9 @@ class _ApartmentProfileScreenState
                                         .toLocal()
                                         .toString()
                                         .split(' ')[0],
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
+                                      color: context.colors.ink3,
                                     ),
                                   ),
                                   Text(expense.description ?? 'بدون تفاصيل'),
