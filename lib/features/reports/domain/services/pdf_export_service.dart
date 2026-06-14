@@ -71,7 +71,7 @@ class PdfExportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
-                      pw.Image(logo, height: 32),
+                      pw.Image(logo, height: 56),
                       pw.SizedBox(height: 4),
                       pw.Text(
                         'للاستثمار العقاري',
@@ -325,7 +325,7 @@ class PdfExportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Image(logo, height: 30),
+                    pw.Image(logo, height: 52),
                     pw.SizedBox(height: 4),
                     pw.Text(
                       'للاستثمار العقاري',
