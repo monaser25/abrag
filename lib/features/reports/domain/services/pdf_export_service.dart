@@ -109,7 +109,6 @@ class PdfExportService {
                 borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
               ),
               child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
                   _summaryCell(
                     title: 'إجمالي الإيرادات',
@@ -117,20 +116,20 @@ class PdfExportService {
                     totalColor: PdfColors.green700,
                     breakdown: revenueBreakdown,
                   ),
-                  pw.Container(width: 1, color: PdfColors.grey300),
                   _summaryCell(
                     title: 'إجمالي المصروفات',
                     total: totalExpenses.toCurrencyFormat(),
                     totalColor: PdfColors.red700,
                     breakdown: expenseBreakdown,
+                    leadingDivider: true,
                   ),
-                  pw.Container(width: 1, color: PdfColors.grey300),
                   _summaryCell(
                     title: 'صافي الربح',
                     total: netProfit.toCurrencyFormat(),
                     totalColor: PdfColors.grey900,
                     breakdown: netBreakdown,
                     background: PdfColors.grey100,
+                    leadingDivider: true,
                   ),
                 ],
               ),
@@ -245,11 +244,17 @@ class PdfExportService {
     required PdfColor totalColor,
     required List<List<String>> breakdown,
     PdfColor? background,
+    bool leadingDivider = false,
   }) {
     return pw.Expanded(
       child: pw.Container(
         padding: const pw.EdgeInsets.all(10),
-        color: background,
+        decoration: pw.BoxDecoration(
+          color: background,
+          border: leadingDivider
+              ? const pw.Border(left: pw.BorderSide(color: PdfColors.grey300))
+              : null,
+        ),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
