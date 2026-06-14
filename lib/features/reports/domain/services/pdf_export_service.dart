@@ -71,13 +71,14 @@ class PdfExportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
-                      pw.Image(logo, height: 76),
-                      pw.SizedBox(height: 4),
+                      pw.Image(logo, height: 90),
+                      pw.SizedBox(height: 2),
                       pw.Text(
                         'للاستثمار العقاري',
                         style: const pw.TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: PdfColors.grey600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -220,10 +221,17 @@ class PdfExportService {
                 color: PdfColors.grey100,
               ),
               cellPadding: const pw.EdgeInsets.symmetric(
-                horizontal: 8,
+                horizontal: 6,
                 vertical: 7,
               ),
+              cellStyle: const pw.TextStyle(fontSize: 10),
               cellAlignment: pw.Alignment.centerRight,
+              // Keep date + amount on a single line; let البيان take the rest.
+              columnWidths: {
+                0: const pw.FixedColumnWidth(85), // التاريخ
+                1: const pw.FlexColumnWidth(), // البيان
+                2: const pw.FixedColumnWidth(95), // المبلغ (ج.م)
+              },
               headers: ['التاريخ', 'البيان', 'المبلغ (ج.م)'],
               data: transactions.map((t) {
                 return [t['date'], t['description'], t['amount'].toString()];
@@ -325,13 +333,14 @@ class PdfExportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Image(logo, height: 72),
-                    pw.SizedBox(height: 4),
+                    pw.Image(logo, height: 86),
+                    pw.SizedBox(height: 2),
                     pw.Text(
                       'للاستثمار العقاري',
                       style: const pw.TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         color: PdfColors.grey600,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -365,9 +374,10 @@ class PdfExportService {
             headerDecoration: const pw.BoxDecoration(color: PdfColors.grey800),
             oddRowDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
             cellPadding: const pw.EdgeInsets.symmetric(
-              horizontal: 8,
+              horizontal: 6,
               vertical: 7,
             ),
+            cellStyle: const pw.TextStyle(fontSize: 10),
             cellAlignment: pw.Alignment.centerRight,
             headers: headers,
             data: rows,
