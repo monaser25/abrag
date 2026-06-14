@@ -56,7 +56,10 @@ class AppTheme {
       cardColor: c.surface,
       canvasColor: c.bg,
       dividerColor: c.border,
-      textTheme: AppTypography.textTheme,
+      textTheme: AppTypography.textTheme.apply(
+        bodyColor: c.ink,
+        displayColor: c.ink,
+      ),
       iconTheme: IconThemeData(color: c.ink),
       extensions: [c],
       appBarTheme: AppBarTheme(
