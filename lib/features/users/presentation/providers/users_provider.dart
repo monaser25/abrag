@@ -10,9 +10,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final brokersProvider = StreamProvider<List<UserProfile>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(
-    db.userProfiles,
-  )..where((t) => t.role.equals('broker'))).watch();
+  return (db.select(db.userProfiles)
+        ..where(
+          (t) =>
+              t.role.equals('broker') &
+              t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+        ))
+      .watch();
 });
 
 final currentUserProfileProvider = StreamProvider<UserProfile?>((ref) {
@@ -180,6 +184,33 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
           'fullName': fullName.trim(),
           'phoneNumber': normalizedPhone,
         },
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> deleteBroker(String id) async {
+    state = const AsyncLoading();
+    try {
+      final old = await (_db.select(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      // Soft-delete; the sync engine pushes this as a server delete. Past
+      // bookings keep their denormalized broker_name, so history is preserved.
+      await (_db.update(_db.userProfiles)..where((t) => t.id.equals(id))).write(
+        const UserProfilesCompanion(
+          syncStatus: Value(SyncStatus.pendingDelete),
+        ),
+      );
+      await _auditLog.log(
+        action: 'delete',
+        entityType: 'broker',
+        entityId: id,
+        title: 'حذف سمسار',
+        description: 'تم حذف سمسار ${old?.fullName ?? old?.email ?? ''}',
+        oldValues: old?.toJson(),
       );
       state = const AsyncData(null);
     } catch (e, st) {

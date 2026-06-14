@@ -113,6 +113,11 @@ class BrokersListScreen extends ConsumerWidget {
                       onPressed: () =>
                           _showAddBrokerDialog(context, ref, broker),
                     ),
+                    AppIconButton(
+                      icon: Icons.delete_outline,
+                      onPressed: () =>
+                          _confirmDeleteBroker(context, ref, broker),
+                    ),
                     Icon(Icons.arrow_forward_ios, size: 14, color: colors.ink3),
                   ],
                 ),
@@ -129,6 +134,50 @@ class BrokersListScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteBroker(
+    BuildContext context,
+    WidgetRef ref,
+    UserProfile broker,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final name = broker.fullName ?? broker.email;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final colors = dialogContext.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('حذف سمسار'),
+          content: Text(
+            'هل تريد حذف "$name"؟ الحجوزات القديمة هتفضل محتفظة باسم السمسار.',
+            style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'حذف',
+              variant: AppButtonVariant.royal,
+              small: true,
+              onPressed: () => Navigator.pop(dialogContext, true),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(brokersControllerProvider.notifier).deleteBroker(broker.id);
+      messenger.showSnackBar(
+        SnackBar(content: Text('تم حذف $name')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('تعذّر الحذف: $e')));
+    }
   }
 
   void _showAddBrokerDialog(

@@ -17,6 +17,47 @@ class TechniciansScreen extends ConsumerStatefulWidget {
 }
 
 class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
+  Future<void> _confirmDelete(dynamic technician) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final colors = dialogContext.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('حذف عامل/فني'),
+          content: Text(
+            'هل تريد حذف "${technician.name}"؟',
+            style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'حذف',
+              variant: AppButtonVariant.royal,
+              small: true,
+              onPressed: () => Navigator.pop(dialogContext, true),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+    try {
+      await ref
+          .read(techniciansControllerProvider.notifier)
+          .deleteTechnician(technician.id);
+      messenger.showSnackBar(
+        SnackBar(content: Text('تم حذف ${technician.name}')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('تعذّر الحذف: $e')));
+    }
+  }
+
   void _showAddEditDialog([dynamic technician]) {
     final nameController = TextEditingController(text: technician?.name ?? '');
     final specialtyController = TextEditingController(
@@ -213,6 +254,10 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                     AppIconButton(
                       icon: Icons.edit_outlined,
                       onPressed: () => _showAddEditDialog(tech),
+                    ),
+                    AppIconButton(
+                      icon: Icons.delete_outline,
+                      onPressed: () => _confirmDelete(tech),
                     ),
                   ],
                 ),
