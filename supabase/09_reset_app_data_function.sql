@@ -36,7 +36,8 @@ begin
   delete from winter_contracts;
   delete from summer_bookings;
   delete from apartments;
-  delete from buildings;
+  -- Keep the app settings/permissions row (__ABRAG_SETTINGS__); delete real buildings.
+  delete from buildings where id <> 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 end;
 $$;
 

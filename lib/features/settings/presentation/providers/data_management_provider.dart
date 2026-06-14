@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
@@ -130,7 +131,10 @@ class DataManagementService {
       await _db.delete(_db.winterContracts).go();
       await _db.delete(_db.summerBookings).go();
       await _db.delete(_db.apartments).go();
-      await _db.delete(_db.buildings).go();
+      // Keep the app settings/permissions row (__ABRAG_SETTINGS__).
+      await (_db.delete(
+        _db.buildings,
+      )..where((t) => t.id.isNotValue(kSettingsBuildingId))).go();
     });
   }
 
