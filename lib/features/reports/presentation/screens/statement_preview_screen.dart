@@ -47,6 +47,10 @@ class StatementPreviewScreen extends ConsumerWidget {
               ? baseTitle
               : '$baseTitle - $filtersLabel';
 
+          final revenueBreakdown = _breakdownByMethod(filtered, revenue: true);
+          final expenseBreakdown = _breakdownByMethod(filtered, revenue: false);
+          final netBreakdown = _netBreakdownByMethod(filtered);
+
           return PdfPreview(
             build: (format) => PdfExportService.generateStatementPdf(
               title: title,
@@ -54,27 +58,32 @@ class StatementPreviewScreen extends ConsumerWidget {
               totalRevenue: totalRev,
               totalExpenses: totalExp,
               netProfit: profit,
+              revenueBreakdown: revenueBreakdown,
+              expenseBreakdown: expenseBreakdown,
+              netBreakdown: netBreakdown,
               transactions: filtered
                   .map(
                     (t) => {
                       'date': t.date.toLocal().toString().split(' ')[0],
+                      'unit': t.apartmentNumber != null
+                          ? 'شقة ${t.apartmentNumber}'
+                          : '—',
                       'description': [
                         t.description,
-                        if (t.apartmentNumber != null)
-                          'شقة ${t.apartmentNumber}',
                         if (t.buildingName != null) t.buildingName,
                         if (t.brokerName != null && t.brokerName!.isNotEmpty)
                           'سمسار: ${t.brokerName}',
                         if (t.technicianName != null &&
                             t.technicianName!.isNotEmpty)
                           'عامل: ${t.technicianName}',
-                        'طريقة الدفع: ${_paymentMethodLabel(t.paymentMethod)}',
                         if (t.brokerCommission > 0)
                           'عمولة السمسار: ${t.brokerCommission.toCurrencyFormat()} ج.م',
                       ].join(' - '),
+                      'payment': _paymentMethodLabel(t.paymentMethod),
+                      // Sign sits to the right of the number (RTL reading).
                       'amount': t.isRevenue
-                          ? '+ ${t.amount.toCurrencyFormat()}'
-                          : '- ${t.amount.toCurrencyFormat()}',
+                          ? '${t.amount.toCurrencyFormat()} +'
+                          : '${t.amount.toCurrencyFormat()} -',
                       'isRevenue': t.isRevenue,
                     },
                   )
@@ -138,6 +147,48 @@ class StatementPreviewScreen extends ConsumerWidget {
       labels.add('بحث: ${filters.personQuery}');
     }
     return labels.join(' - ');
+  }
+
+  static const List<String> _methodOrder = [
+    'cash',
+    'vodafone_cash',
+    'instapay',
+    'deposit_deduction',
+  ];
+
+  /// Sum of revenue (or expense) transactions grouped by payment method,
+  /// returned as ordered `[label, amount]` rows for non-zero methods.
+  List<List<String>> _breakdownByMethod(
+    List<Transaction> transactions, {
+    required bool revenue,
+  }) {
+    final totals = <String, double>{};
+    for (final t in transactions.where((t) => t.isRevenue == revenue)) {
+      totals[t.paymentMethod] = (totals[t.paymentMethod] ?? 0) + t.amount;
+    }
+    return [
+      for (final m in _methodOrder)
+        if ((totals[m] ?? 0) != 0)
+          [_paymentMethodLabel(m), totals[m]!.toCurrencyFormat()],
+    ];
+  }
+
+  /// Net (revenue − expense) per payment method, ordered, non-zero only.
+  List<List<String>> _netBreakdownByMethod(List<Transaction> transactions) {
+    final rev = <String, double>{};
+    final exp = <String, double>{};
+    for (final t in transactions) {
+      final map = t.isRevenue ? rev : exp;
+      map[t.paymentMethod] = (map[t.paymentMethod] ?? 0) + t.amount;
+    }
+    return [
+      for (final m in _methodOrder)
+        if (((rev[m] ?? 0) - (exp[m] ?? 0)) != 0)
+          [
+            _paymentMethodLabel(m),
+            ((rev[m] ?? 0) - (exp[m] ?? 0)).toCurrencyFormat(),
+          ],
+    ];
   }
 
   String _paymentMethodLabel(String method) {

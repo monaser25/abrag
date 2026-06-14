@@ -11,8 +11,13 @@ class PdfExportService {
     required double totalRevenue,
     required double totalExpenses,
     required double netProfit,
-    required List<Map<String, dynamic>>
-    transactions, // {date, description, amount, isRevenue}
+    // {date, unit, description, payment, amount, isRevenue}
+    required List<Map<String, dynamic>> transactions,
+    // Each entry: [label, amount] — payment-method breakdown lines shown
+    // under the matching total card.
+    List<List<String>> revenueBreakdown = const [],
+    List<List<String>> expenseBreakdown = const [],
+    List<List<String>> netBreakdown = const [],
   }) async {
     final pdf = pw.Document();
 
@@ -104,83 +109,28 @@ class PdfExportService {
                 borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
               ),
               child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  pw.Expanded(
-                    child: pw.Container(
-                      padding: const pw.EdgeInsets.all(10),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            'إجمالي الإيرادات',
-                            style: const pw.TextStyle(
-                              fontSize: 12,
-                              color: PdfColors.grey700,
-                            ),
-                          ),
-                          pw.Text(
-                            '${totalRevenue.toCurrencyFormat()} ج.م',
-                            style: pw.TextStyle(
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.green700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _summaryCell(
+                    title: 'إجمالي الإيرادات',
+                    total: totalRevenue.toCurrencyFormat(),
+                    totalColor: PdfColors.green700,
+                    breakdown: revenueBreakdown,
                   ),
-                  pw.Container(width: 1, height: 40, color: PdfColors.grey300),
-                  pw.Expanded(
-                    child: pw.Container(
-                      padding: const pw.EdgeInsets.all(10),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            'إجمالي المصروفات',
-                            style: const pw.TextStyle(
-                              fontSize: 12,
-                              color: PdfColors.grey700,
-                            ),
-                          ),
-                          pw.Text(
-                            '${totalExpenses.toCurrencyFormat()} ج.م',
-                            style: pw.TextStyle(
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.red700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  pw.Container(width: 1, color: PdfColors.grey300),
+                  _summaryCell(
+                    title: 'إجمالي المصروفات',
+                    total: totalExpenses.toCurrencyFormat(),
+                    totalColor: PdfColors.red700,
+                    breakdown: expenseBreakdown,
                   ),
-                  pw.Container(width: 1, height: 40, color: PdfColors.grey300),
-                  pw.Expanded(
-                    child: pw.Container(
-                      padding: const pw.EdgeInsets.all(10),
-                      color: PdfColors.grey100,
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            'صافي الربح',
-                            style: const pw.TextStyle(
-                              fontSize: 12,
-                              color: PdfColors.grey700,
-                            ),
-                          ),
-                          pw.Text(
-                            '${netProfit.toCurrencyFormat()} ج.م',
-                            style: pw.TextStyle(
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  pw.Container(width: 1, color: PdfColors.grey300),
+                  _summaryCell(
+                    title: 'صافي الربح',
+                    total: netProfit.toCurrencyFormat(),
+                    totalColor: PdfColors.grey900,
+                    breakdown: netBreakdown,
+                    background: PdfColors.grey100,
                   ),
                 ],
               ),
@@ -226,15 +176,30 @@ class PdfExportService {
               ),
               cellStyle: const pw.TextStyle(fontSize: 10),
               cellAlignment: pw.Alignment.centerRight,
-              // Keep date + amount on a single line; let البيان take the rest.
+              // Structured columns so each value is readable on one line;
+              // البيان (description) takes the remaining flexible space.
               columnWidths: {
-                0: const pw.FixedColumnWidth(85), // التاريخ
-                1: const pw.FlexColumnWidth(), // البيان
-                2: const pw.FixedColumnWidth(95), // المبلغ (ج.م)
+                0: const pw.FixedColumnWidth(62), // التاريخ
+                1: const pw.FixedColumnWidth(48), // الشقة
+                2: const pw.FlexColumnWidth(), // البيان
+                3: const pw.FixedColumnWidth(82), // طريقة الدفع
+                4: const pw.FixedColumnWidth(78), // المبلغ
               },
-              headers: ['التاريخ', 'البيان', 'المبلغ (ج.م)'],
+              headers: const [
+                'التاريخ',
+                'الشقة',
+                'البيان',
+                'طريقة الدفع',
+                'المبلغ',
+              ],
               data: transactions.map((t) {
-                return [t['date'], t['description'], t['amount'].toString()];
+                return [
+                  t['date'] ?? '',
+                  t['unit'] ?? '',
+                  t['description'] ?? '',
+                  t['payment'] ?? '',
+                  t['amount'] ?? '',
+                ];
               }).toList(),
             ),
           ];
@@ -270,6 +235,56 @@ class PdfExportService {
     );
 
     return pdf.save();
+  }
+
+  /// A single summary card: title, large total, then optional
+  /// payment-method breakdown lines (each `[label, amount]`).
+  static pw.Widget _summaryCell({
+    required String title,
+    required String total,
+    required PdfColor totalColor,
+    required List<List<String>> breakdown,
+    PdfColor? background,
+  }) {
+    return pw.Expanded(
+      child: pw.Container(
+        padding: const pw.EdgeInsets.all(10),
+        color: background,
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              title,
+              style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+            ),
+            pw.SizedBox(height: 2),
+            pw.Text(
+              '$total ج.م',
+              style: pw.TextStyle(
+                fontSize: 15,
+                fontWeight: pw.FontWeight.bold,
+                color: totalColor,
+              ),
+            ),
+            if (breakdown.isNotEmpty) ...[
+              pw.SizedBox(height: 5),
+              ...breakdown.map(
+                (b) => pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 1.5),
+                  child: pw.Text(
+                    '${b[1]} ${b[0]}',
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   static Future<Uint8List> generateMetricsPdf({
