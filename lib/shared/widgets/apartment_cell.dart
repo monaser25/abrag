@@ -42,36 +42,38 @@ class ApartmentCell extends StatelessWidget {
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      number,
-                      style: AppTextStyles.tabular(
-                        TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: colors.ink,
-                        ),
+              // Status dot pinned to the top corner.
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              // Unit number centered in the tile.
+              Expanded(
+                child: Center(
+                  child: Text(
+                    number,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.tabular(
+                      TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: colors.ink,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
+                ),
               ),
               ?footer,
             ],
