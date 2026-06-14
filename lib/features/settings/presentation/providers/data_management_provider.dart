@@ -107,20 +107,12 @@ class DataManagementService {
   }
 
   Future<void> _deleteServerData() async {
-    await _supabase.from('audit_logs').delete().neq('id', '');
-    await _supabase.from('maintenance_requests').delete().neq('id', '');
-    await _supabase.from('apartment_inspections').delete().neq('id', '');
-    await _supabase.from('cleaning_transactions').delete().neq('id', '');
-    await _supabase.from('cleaning_supplies').delete().neq('id', '');
-    await _supabase.from('technicians').delete().neq('id', '');
-    await _supabase.from('financial_transfers').delete().neq('id', '');
-    await _supabase.from('expenses').delete().neq('id', '');
-    await _supabase.from('meter_readings').delete().neq('id', '');
-    await _supabase.from('winter_payments').delete().neq('id', '');
-    await _supabase.from('winter_contracts').delete().neq('id', '');
-    await _supabase.from('summer_bookings').delete().neq('id', '');
-    await _supabase.from('apartments').delete().neq('id', '');
-    await _supabase.from('buildings').delete().neq('id', '');
+    // Single admin-guarded server function (see
+    // supabase/09_reset_app_data_function.sql). Replaces the previous
+    // per-table client deletes, which RLS silently turned into no-ops for
+    // non-admins. The RPC is atomic and raises if the caller isn't an admin,
+    // so the UI surfaces a real error instead of a false success.
+    await _supabase.rpc('reset_app_data');
   }
 
   Future<void> _deleteLocalData() async {
