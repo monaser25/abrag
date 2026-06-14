@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
@@ -208,7 +209,9 @@ final financialReportProvider = StreamProvider<FinancialSummary>((ref) {
 Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
   final expenses = await db.select(db.expenses).get();
   final summerBookings = await db.select(db.summerBookings).get();
-  final buildings = await db.select(db.buildings).get();
+  final buildings = await (db.select(db.buildings)
+        ..where((t) => t.id.isNotValue(kSettingsBuildingId)))
+      .get();
   final apartments = await db.select(db.apartments).get();
   final winterContracts = await db.select(db.winterContracts).get();
   final winterPayments = await db.select(db.winterPayments).get();

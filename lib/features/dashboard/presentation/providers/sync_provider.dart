@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'package:drift/drift.dart';
+import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/services/notification_service.dart';
 import 'database_provider.dart';
@@ -135,7 +136,11 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
 // Stats providers for dashboard
 final buildingsCountProvider = StreamProvider<int>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.select(db.buildings).watch().map((list) => list.length);
+  // Exclude the __ABRAG_SETTINGS__ sentinel row so the count matches the list.
+  return (db.select(db.buildings)
+        ..where((t) => t.id.isNotValue(kSettingsBuildingId)))
+      .watch()
+      .map((list) => list.length);
 });
 
 final apartmentsCountProvider = StreamProvider<int>((ref) {
