@@ -25,6 +25,8 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
     'نجارة',
     'أنابيب',
     'بوتوجازات',
+    'غسالات',
+    'ثلاجات',
     'نظافة',
     'أخرى',
   ];
@@ -382,6 +384,10 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
         return Icons.plumbing;
       case 'بوتوجازات':
         return Icons.local_fire_department;
+      case 'غسالات':
+        return Icons.local_laundry_service;
+      case 'ثلاجات':
+        return Icons.kitchen;
       case 'نقاشة':
         return Icons.format_paint;
       default:
