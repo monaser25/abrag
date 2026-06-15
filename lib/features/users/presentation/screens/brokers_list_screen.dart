@@ -4,10 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/users_provider.dart';
+import '../../../bookings/presentation/providers/bookings_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/widgets.dart';
+
+/// Search query for the brokers list (name / phone).
+final _brokerSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 class BrokersListScreen extends ConsumerWidget {
   const BrokersListScreen({super.key});
@@ -24,6 +28,15 @@ class BrokersListScreen extends ConsumerWidget {
     final brokersAsync = ref.watch(brokersProvider);
     final controllerState = ref.watch(brokersControllerProvider);
     final colors = context.colors;
+    final query = ref.watch(_brokerSearchProvider).trim().toLowerCase();
+    final bookingsAsync = ref.watch(allSummerBookingsProvider);
+    // Bookings handled per broker (most-dealt-with first).
+    final dealCounts = <String, int>{};
+    for (final b in bookingsAsync.asData?.value ?? const []) {
+      if (b.brokerId != null) {
+        dealCounts[b.brokerId!] = (dealCounts[b.brokerId!] ?? 0) + 1;
+      }
+    }
 
     return AppScaffold(
       appBar: AbragAppBar(
@@ -59,70 +72,123 @@ class BrokersListScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-            itemCount: brokers.length,
-            itemBuilder: (context, index) {
-              final broker = brokers[index];
-              final hasPhone =
-                  broker.phoneNumber != null && broker.phoneNumber!.isNotEmpty;
-              final showEmail = !hasPhone && !broker.email.startsWith('broker-');
-              final name = broker.fullName ?? broker.email;
-              return AppCard(
-                onTap: () => context.push('/brokers/details/${broker.id}'),
-                margin: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    AppAvatar(name: name),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: AppTextStyles.title.copyWith(color: colors.ink),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (hasPhone)
-                            Text(
-                              broker.phoneNumber!,
-                              textDirection: TextDirection.ltr,
-                              style: AppTextStyles.caption
-                                  .copyWith(color: colors.ink2),
-                            ),
-                          if (showEmail)
-                            Text(
-                              broker.email,
-                              style: AppTextStyles.caption
-                                  .copyWith(color: colors.ink3),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (hasPhone)
-                      AppIconButton(
-                        icon: Icons.call,
-                        onPressed: () => _makePhoneCall(broker.phoneNumber!),
-                      ),
-                    AppIconButton(
-                      icon: Icons.edit_outlined,
-                      onPressed: () =>
-                          _showAddBrokerDialog(context, ref, broker),
-                    ),
-                    AppIconButton(
-                      icon: Icons.delete_outline,
-                      onPressed: () =>
-                          _confirmDeleteBroker(context, ref, broker),
-                    ),
-                    Icon(Icons.arrow_forward_ios, size: 14, color: colors.ink3),
-                  ],
+          final filtered = brokers.where((broker) {
+            if (query.isEmpty) return true;
+            final name = (broker.fullName ?? broker.email).toLowerCase();
+            final phone = (broker.phoneNumber ?? '').toLowerCase();
+            final phone2 = (broker.secondaryPhone ?? '').toLowerCase();
+            return name.contains(query) ||
+                phone.contains(query) ||
+                phone2.contains(query);
+          }).toList()
+            // Most-dealt-with first, then by name.
+            ..sort((a, b) {
+              final ca = dealCounts[a.id] ?? 0;
+              final cb = dealCounts[b.id] ?? 0;
+              if (cb != ca) return cb.compareTo(ca);
+              return (a.fullName ?? a.email).compareTo(b.fullName ?? b.email);
+            });
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: AppTextField(
+                  hint: 'ابحث باسم السمسار أو رقم التليفون...',
+                  prefixIcon: Icons.search,
+                  onChanged: (value) =>
+                      ref.read(_brokerSearchProvider.notifier).state = value,
                 ),
-              );
-            },
+              ),
+              if (filtered.isEmpty)
+                const Expanded(
+                  child: EmptyState(
+                    icon: Icons.search_off,
+                    title: 'لا يوجد سمسار يطابق البحث',
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final broker = filtered[index];
+                      final hasPhone = broker.phoneNumber != null &&
+                          broker.phoneNumber!.isNotEmpty;
+                      final showEmail =
+                          !hasPhone && !broker.email.startsWith('broker-');
+                      final name = broker.fullName ?? broker.email;
+                      final deals = dealCounts[broker.id] ?? 0;
+                      return AppCard(
+                        onTap: () =>
+                            context.push('/brokers/details/${broker.id}'),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            AppAvatar(name: name),
+                            const SizedBox(width: 13),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: AppTextStyles.title
+                                        .copyWith(color: colors.ink),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (hasPhone)
+                                    Text(
+                                      broker.phoneNumber!,
+                                      textDirection: TextDirection.ltr,
+                                      style: AppTextStyles.caption
+                                          .copyWith(color: colors.ink2),
+                                    ),
+                                  if (showEmail)
+                                    Text(
+                                      broker.email,
+                                      style: AppTextStyles.caption
+                                          .copyWith(color: colors.ink3),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  const SizedBox(height: 6),
+                                  StatusChip(
+                                    label: '$deals حجز',
+                                    kind: deals > 0
+                                        ? StatusChipKind.ok
+                                        : StatusChipKind.neutral,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (hasPhone)
+                              AppIconButton(
+                                icon: Icons.call,
+                                onPressed: () =>
+                                    _makePhoneCall(broker.phoneNumber!),
+                              ),
+                            AppIconButton(
+                              icon: Icons.edit_outlined,
+                              onPressed: () =>
+                                  _showAddBrokerDialog(context, ref, broker),
+                            ),
+                            AppIconButton(
+                              icon: Icons.delete_outline,
+                              onPressed: () =>
+                                  _confirmDeleteBroker(context, ref, broker),
+                            ),
+                            Icon(Icons.arrow_forward_ios,
+                                size: 14, color: colors.ink3),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
           );
         },
         loading: () => const LoadingSkeleton(),
