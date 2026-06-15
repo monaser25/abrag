@@ -91,6 +91,7 @@ class BrokerDetailsScreen extends ConsumerWidget {
                       id: broker.id,
                       fullName: nameController.text,
                       phoneNumber: phoneController.text,
+                      secondaryPhone: broker.secondaryPhone,
                     );
                 Navigator.pop(dialogContext);
               },

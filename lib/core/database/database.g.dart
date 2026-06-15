@@ -72,6 +72,17 @@ class $UserProfilesTable extends UserProfiles
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _secondaryPhoneMeta = const VerificationMeta(
+    'secondaryPhone',
+  );
+  @override
+  late final GeneratedColumn<String> secondaryPhone = GeneratedColumn<String>(
+    'secondary_phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
   late final GeneratedColumn<String> role = GeneratedColumn<String>(
@@ -112,6 +123,7 @@ class $UserProfilesTable extends UserProfiles
     email,
     fullName,
     phoneNumber,
+    secondaryPhone,
     role,
     createdAt,
     updatedAt,
@@ -162,6 +174,15 @@ class $UserProfilesTable extends UserProfiles
         phoneNumber.isAcceptableOrUnknown(
           data['phone_number']!,
           _phoneNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('secondary_phone')) {
+      context.handle(
+        _secondaryPhoneMeta,
+        secondaryPhone.isAcceptableOrUnknown(
+          data['secondary_phone']!,
+          _secondaryPhoneMeta,
         ),
       );
     }
@@ -222,6 +243,10 @@ class $UserProfilesTable extends UserProfiles
         DriftSqlType.string,
         data['${effectivePrefix}phone_number'],
       ),
+      secondaryPhone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}secondary_phone'],
+      ),
       role: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}role'],
@@ -253,6 +278,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
   final String email;
   final String? fullName;
   final String? phoneNumber;
+  final String? secondaryPhone;
   final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -263,6 +289,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     required this.email,
     this.fullName,
     this.phoneNumber,
+    this.secondaryPhone,
     required this.role,
     required this.createdAt,
     required this.updatedAt,
@@ -284,6 +311,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     if (!nullToAbsent || phoneNumber != null) {
       map['phone_number'] = Variable<String>(phoneNumber);
     }
+    if (!nullToAbsent || secondaryPhone != null) {
+      map['secondary_phone'] = Variable<String>(secondaryPhone);
+    }
     map['role'] = Variable<String>(role);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -302,6 +332,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       phoneNumber: phoneNumber == null && nullToAbsent
           ? const Value.absent()
           : Value(phoneNumber),
+      secondaryPhone: secondaryPhone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(secondaryPhone),
       role: Value(role),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -324,6 +357,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       email: serializer.fromJson<String>(json['email']),
       fullName: serializer.fromJson<String?>(json['fullName']),
       phoneNumber: serializer.fromJson<String?>(json['phoneNumber']),
+      secondaryPhone: serializer.fromJson<String?>(json['secondaryPhone']),
       role: serializer.fromJson<String>(json['role']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -341,6 +375,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       'email': serializer.toJson<String>(email),
       'fullName': serializer.toJson<String?>(fullName),
       'phoneNumber': serializer.toJson<String?>(phoneNumber),
+      'secondaryPhone': serializer.toJson<String?>(secondaryPhone),
       'role': serializer.toJson<String>(role),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -354,6 +389,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     String? email,
     Value<String?> fullName = const Value.absent(),
     Value<String?> phoneNumber = const Value.absent(),
+    Value<String?> secondaryPhone = const Value.absent(),
     String? role,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -364,6 +400,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     email: email ?? this.email,
     fullName: fullName.present ? fullName.value : this.fullName,
     phoneNumber: phoneNumber.present ? phoneNumber.value : this.phoneNumber,
+    secondaryPhone: secondaryPhone.present
+        ? secondaryPhone.value
+        : this.secondaryPhone,
     role: role ?? this.role,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -382,6 +421,9 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
       phoneNumber: data.phoneNumber.present
           ? data.phoneNumber.value
           : this.phoneNumber,
+      secondaryPhone: data.secondaryPhone.present
+          ? data.secondaryPhone.value
+          : this.secondaryPhone,
       role: data.role.present ? data.role.value : this.role,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -397,6 +439,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           ..write('email: $email, ')
           ..write('fullName: $fullName, ')
           ..write('phoneNumber: $phoneNumber, ')
+          ..write('secondaryPhone: $secondaryPhone, ')
           ..write('role: $role, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -412,6 +455,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     email,
     fullName,
     phoneNumber,
+    secondaryPhone,
     role,
     createdAt,
     updatedAt,
@@ -426,6 +470,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
           other.email == this.email &&
           other.fullName == this.fullName &&
           other.phoneNumber == this.phoneNumber &&
+          other.secondaryPhone == this.secondaryPhone &&
           other.role == this.role &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -438,6 +483,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   final Value<String> email;
   final Value<String?> fullName;
   final Value<String?> phoneNumber;
+  final Value<String?> secondaryPhone;
   final Value<String> role;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -449,6 +495,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     this.email = const Value.absent(),
     this.fullName = const Value.absent(),
     this.phoneNumber = const Value.absent(),
+    this.secondaryPhone = const Value.absent(),
     this.role = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -461,6 +508,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     required String email,
     this.fullName = const Value.absent(),
     this.phoneNumber = const Value.absent(),
+    this.secondaryPhone = const Value.absent(),
     this.role = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -476,6 +524,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     Expression<String>? email,
     Expression<String>? fullName,
     Expression<String>? phoneNumber,
+    Expression<String>? secondaryPhone,
     Expression<String>? role,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -488,6 +537,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       if (email != null) 'email': email,
       if (fullName != null) 'full_name': fullName,
       if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (secondaryPhone != null) 'secondary_phone': secondaryPhone,
       if (role != null) 'role': role,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -502,6 +552,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     Value<String>? email,
     Value<String?>? fullName,
     Value<String?>? phoneNumber,
+    Value<String?>? secondaryPhone,
     Value<String>? role,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -514,6 +565,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      secondaryPhone: secondaryPhone ?? this.secondaryPhone,
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -544,6 +596,9 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     if (phoneNumber.present) {
       map['phone_number'] = Variable<String>(phoneNumber.value);
     }
+    if (secondaryPhone.present) {
+      map['secondary_phone'] = Variable<String>(secondaryPhone.value);
+    }
     if (role.present) {
       map['role'] = Variable<String>(role.value);
     }
@@ -568,6 +623,7 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
           ..write('email: $email, ')
           ..write('fullName: $fullName, ')
           ..write('phoneNumber: $phoneNumber, ')
+          ..write('secondaryPhone: $secondaryPhone, ')
           ..write('role: $role, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -12144,6 +12200,7 @@ typedef $$UserProfilesTableCreateCompanionBuilder =
       required String email,
       Value<String?> fullName,
       Value<String?> phoneNumber,
+      Value<String?> secondaryPhone,
       Value<String> role,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -12157,6 +12214,7 @@ typedef $$UserProfilesTableUpdateCompanionBuilder =
       Value<String> email,
       Value<String?> fullName,
       Value<String?> phoneNumber,
+      Value<String?> secondaryPhone,
       Value<String> role,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -12200,6 +12258,11 @@ class $$UserProfilesTableFilterComposer
 
   ColumnFilters<String> get phoneNumber => $composableBuilder(
     column: $table.phoneNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get secondaryPhone => $composableBuilder(
+    column: $table.secondaryPhone,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12258,6 +12321,11 @@ class $$UserProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get secondaryPhone => $composableBuilder(
+    column: $table.secondaryPhone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get role => $composableBuilder(
     column: $table.role,
     builder: (column) => ColumnOrderings(column),
@@ -12308,6 +12376,11 @@ class $$UserProfilesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get secondaryPhone => $composableBuilder(
+    column: $table.secondaryPhone,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
 
@@ -12355,6 +12428,7 @@ class $$UserProfilesTableTableManager
                 Value<String> email = const Value.absent(),
                 Value<String?> fullName = const Value.absent(),
                 Value<String?> phoneNumber = const Value.absent(),
+                Value<String?> secondaryPhone = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -12366,6 +12440,7 @@ class $$UserProfilesTableTableManager
                 email: email,
                 fullName: fullName,
                 phoneNumber: phoneNumber,
+                secondaryPhone: secondaryPhone,
                 role: role,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -12379,6 +12454,7 @@ class $$UserProfilesTableTableManager
                 required String email,
                 Value<String?> fullName = const Value.absent(),
                 Value<String?> phoneNumber = const Value.absent(),
+                Value<String?> secondaryPhone = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -12390,6 +12466,7 @@ class $$UserProfilesTableTableManager
                 email: email,
                 fullName: fullName,
                 phoneNumber: phoneNumber,
+                secondaryPhone: secondaryPhone,
                 role: role,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

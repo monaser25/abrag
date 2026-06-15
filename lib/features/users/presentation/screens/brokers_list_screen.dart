@@ -189,7 +189,19 @@ class BrokersListScreen extends ConsumerWidget {
     final phoneController = TextEditingController(
       text: broker?.phoneNumber ?? '',
     );
+    final secondaryController = TextEditingController(
+      text: broker?.secondaryPhone ?? '',
+    );
+    var showSecondary = (broker?.secondaryPhone ?? '').trim().isNotEmpty;
     final formKey = GlobalKey<FormState>();
+
+    String? phoneValidator(String? value) {
+      final phone = value?.trim() ?? '';
+      if (phone.isEmpty) return null;
+      return RegExp(r'^01\d{9}$').hasMatch(phone)
+          ? null
+          : 'رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01';
+    }
 
     showDialog(
       context: context,
@@ -200,36 +212,57 @@ class BrokersListScreen extends ConsumerWidget {
           title: Text(broker == null ? 'إضافة سمسار' : 'تعديل بيانات السمسار'),
           content: Form(
             key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppTextField(
-                  controller: nameController,
-                  label: 'اسم السمسار',
-                  prefixIcon: Icons.person_outline,
-                  validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'مطلوب' : null,
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  controller: phoneController,
-                  label: 'رقم التليفون',
-                  prefixIcon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  textDirection: TextDirection.ltr,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(11),
-                  ],
-                  validator: (value) {
-                    final phone = value?.trim() ?? '';
-                    if (phone.isEmpty) return null;
-                    return RegExp(r'^01\d{9}$').hasMatch(phone)
-                        ? null
-                        : 'رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 01';
-                  },
-                ),
-              ],
+            child: StatefulBuilder(
+              builder: (context, setLocalState) => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppTextField(
+                    controller: nameController,
+                    label: 'اسم السمسار',
+                    prefixIcon: Icons.person_outline,
+                    validator: (v) =>
+                        v == null || v.trim().isEmpty ? 'مطلوب' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: phoneController,
+                    label: 'رقم التليفون',
+                    prefixIcon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
+                    validator: phoneValidator,
+                  ),
+                  if (showSecondary) ...[
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: secondaryController,
+                      label: 'رقم تليفون آخر (اختياري)',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      textDirection: TextDirection.ltr,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: phoneValidator,
+                    ),
+                  ] else
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            setLocalState(() => showSecondary = true),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('إضافة رقم آخر'),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -243,12 +276,16 @@ class BrokersListScreen extends ConsumerWidget {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
 
+                final secondary = showSecondary
+                    ? secondaryController.text
+                    : null;
                 if (broker == null) {
                   ref
                       .read(brokersControllerProvider.notifier)
                       .addBroker(
                         fullName: nameController.text,
                         phoneNumber: phoneController.text,
+                        secondaryPhone: secondary,
                       );
                 } else {
                   ref
@@ -257,6 +294,7 @@ class BrokersListScreen extends ConsumerWidget {
                         id: broker.id,
                         fullName: nameController.text,
                         phoneNumber: phoneController.text,
+                        secondaryPhone: secondary,
                       );
                 }
                 Navigator.pop(dialogContext);

@@ -114,10 +114,12 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
   Future<void> addBroker({
     required String fullName,
     required String phoneNumber,
+    String? secondaryPhone,
   }) async {
     state = const AsyncLoading();
     try {
       final normalizedPhone = _normalizeEgyptianMobile(phoneNumber);
+      final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
       final id = const Uuid().v4();
       final now = DateTime.now();
       await _db
@@ -128,6 +130,7 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
               email: 'broker-$id@local.abrag',
               fullName: Value(fullName.trim()),
               phoneNumber: Value(normalizedPhone),
+              secondaryPhone: Value(normalizedSecondary),
               role: const Value('broker'),
               createdAt: now,
               updatedAt: now,
@@ -156,10 +159,12 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
     required String id,
     required String fullName,
     required String phoneNumber,
+    String? secondaryPhone,
   }) async {
     state = const AsyncLoading();
     try {
       final normalizedPhone = _normalizeEgyptianMobile(phoneNumber);
+      final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
       final old = await (_db.select(
         _db.userProfiles,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
@@ -168,6 +173,7 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
         UserProfilesCompanion(
           fullName: Value(fullName.trim()),
           phoneNumber: Value(normalizedPhone),
+          secondaryPhone: Value(normalizedSecondary),
           updatedAt: Value(now),
           syncStatus: const Value(SyncStatus.pendingUpdate),
         ),

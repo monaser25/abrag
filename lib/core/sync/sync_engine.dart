@@ -273,6 +273,7 @@ class SyncEngine {
           'email': item.email,
           'full_name': item.fullName,
           'phone_number': item.phoneNumber,
+          'secondary_phone': item.secondaryPhone,
           'role': item.role,
           'created_at': item.createdAt.toUtc().toIso8601String(),
           'updated_at': item.updatedAt.toUtc().toIso8601String(),
@@ -989,6 +990,9 @@ class SyncEngine {
                 phoneNumber: row['phone_number'] == null
                     ? const Value.absent()
                     : Value(row['phone_number']),
+                secondaryPhone: row['secondary_phone'] == null
+                    ? const Value.absent()
+                    : Value(row['secondary_phone']),
                 role: row['role'] == null
                     ? const Value.absent()
                     : Value(row['role']),

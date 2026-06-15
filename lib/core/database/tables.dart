@@ -14,6 +14,7 @@ class UserProfiles extends Table with SyncableTable {
   TextColumn get email => text()();
   TextColumn get fullName => text().nullable()();
   TextColumn get phoneNumber => text().nullable()();
+  TextColumn get secondaryPhone => text().nullable()();
   TextColumn get role => text().withDefault(const Constant('viewer'))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
