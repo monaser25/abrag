@@ -170,6 +170,8 @@ class BrokerDetailsScreen extends ConsumerWidget {
 
           final hasPhone =
               broker.phoneNumber != null && broker.phoneNumber!.isNotEmpty;
+          final hasSecondary = broker.secondaryPhone != null &&
+              broker.secondaryPhone!.isNotEmpty;
           final showEmail = !hasPhone && !broker.email.startsWith('broker-');
           final name = broker.fullName ?? broker.email;
 
@@ -193,6 +195,16 @@ class BrokerDetailsScreen extends ConsumerWidget {
                         label: broker.phoneNumber!,
                         icon: Icons.call,
                         onPressed: () => _makePhoneCall(broker.phoneNumber!),
+                      ),
+                    ],
+                    if (hasSecondary) ...[
+                      const SizedBox(height: 10),
+                      AppButton(
+                        label: broker.secondaryPhone!,
+                        icon: Icons.call_outlined,
+                        variant: AppButtonVariant.outline,
+                        onPressed: () =>
+                            _makePhoneCall(broker.secondaryPhone!),
                       ),
                     ],
                     if (showEmail) ...[

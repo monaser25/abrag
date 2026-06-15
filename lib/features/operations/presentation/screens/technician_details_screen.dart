@@ -38,6 +38,8 @@ class TechnicianDetailsScreen extends ConsumerWidget {
             orElse: () => throw Exception('العامل غير موجود'),
           );
           final hasPhone = tech.phone != null && tech.phone!.isNotEmpty;
+          final hasSecondary =
+              tech.secondaryPhone != null && tech.secondaryPhone!.isNotEmpty;
           final hasNotes = tech.notes != null && tech.notes!.isNotEmpty;
 
           return ListView(
@@ -67,6 +69,15 @@ class TechnicianDetailsScreen extends ConsumerWidget {
                         label: tech.phone!,
                         icon: Icons.call,
                         onPressed: () => _makePhoneCall(tech.phone!),
+                      ),
+                    ],
+                    if (hasSecondary) ...[
+                      const SizedBox(height: 10),
+                      AppButton(
+                        label: tech.secondaryPhone!,
+                        icon: Icons.call_outlined,
+                        variant: AppButtonVariant.outline,
+                        onPressed: () => _makePhoneCall(tech.secondaryPhone!),
                       ),
                     ],
                     if (hasNotes) ...[
