@@ -194,6 +194,7 @@ class Technicians extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get phone => text().nullable()();
+  TextColumn get secondaryPhone => text().nullable()();
   TextColumn get specialty => text()(); // e.g., سباكة, نجارة, كهرباء
   TextColumn get notes => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();

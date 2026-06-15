@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration {
@@ -206,6 +206,13 @@ class AppDatabase extends _$AppDatabase {
         if (from < 20) {
           try {
             await m.addColumn(userProfiles, userProfiles.secondaryPhone);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
+        }
+        if (from < 21) {
+          try {
+            await m.addColumn(technicians, technicians.secondaryPhone);
           } catch (_) {
             // Ignore if this legacy migration was already applied.
           }

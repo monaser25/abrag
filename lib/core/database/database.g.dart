@@ -8083,6 +8083,17 @@ class $TechniciansTable extends Technicians
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _secondaryPhoneMeta = const VerificationMeta(
+    'secondaryPhone',
+  );
+  @override
+  late final GeneratedColumn<String> secondaryPhone = GeneratedColumn<String>(
+    'secondary_phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _specialtyMeta = const VerificationMeta(
     'specialty',
   );
@@ -8121,6 +8132,7 @@ class $TechniciansTable extends Technicians
     id,
     name,
     phone,
+    secondaryPhone,
     specialty,
     notes,
     createdAt,
@@ -8163,6 +8175,15 @@ class $TechniciansTable extends Technicians
       context.handle(
         _phoneMeta,
         phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('secondary_phone')) {
+      context.handle(
+        _secondaryPhoneMeta,
+        secondaryPhone.isAcceptableOrUnknown(
+          data['secondary_phone']!,
+          _secondaryPhoneMeta,
+        ),
       );
     }
     if (data.containsKey('specialty')) {
@@ -8218,6 +8239,10 @@ class $TechniciansTable extends Technicians
         DriftSqlType.string,
         data['${effectivePrefix}phone'],
       ),
+      secondaryPhone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}secondary_phone'],
+      ),
       specialty: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}specialty'],
@@ -8248,6 +8273,7 @@ class Technician extends DataClass implements Insertable<Technician> {
   final String id;
   final String name;
   final String? phone;
+  final String? secondaryPhone;
   final String specialty;
   final String? notes;
   final DateTime createdAt;
@@ -8257,6 +8283,7 @@ class Technician extends DataClass implements Insertable<Technician> {
     required this.id,
     required this.name,
     this.phone,
+    this.secondaryPhone,
     required this.specialty,
     this.notes,
     required this.createdAt,
@@ -8275,6 +8302,9 @@ class Technician extends DataClass implements Insertable<Technician> {
     if (!nullToAbsent || phone != null) {
       map['phone'] = Variable<String>(phone);
     }
+    if (!nullToAbsent || secondaryPhone != null) {
+      map['secondary_phone'] = Variable<String>(secondaryPhone);
+    }
     map['specialty'] = Variable<String>(specialty);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
@@ -8292,6 +8322,9 @@ class Technician extends DataClass implements Insertable<Technician> {
       phone: phone == null && nullToAbsent
           ? const Value.absent()
           : Value(phone),
+      secondaryPhone: secondaryPhone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(secondaryPhone),
       specialty: Value(specialty),
       notes: notes == null && nullToAbsent
           ? const Value.absent()
@@ -8315,6 +8348,7 @@ class Technician extends DataClass implements Insertable<Technician> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       phone: serializer.fromJson<String?>(json['phone']),
+      secondaryPhone: serializer.fromJson<String?>(json['secondaryPhone']),
       specialty: serializer.fromJson<String>(json['specialty']),
       notes: serializer.fromJson<String?>(json['notes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -8331,6 +8365,7 @@ class Technician extends DataClass implements Insertable<Technician> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'phone': serializer.toJson<String?>(phone),
+      'secondaryPhone': serializer.toJson<String?>(secondaryPhone),
       'specialty': serializer.toJson<String>(specialty),
       'notes': serializer.toJson<String?>(notes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -8343,6 +8378,7 @@ class Technician extends DataClass implements Insertable<Technician> {
     String? id,
     String? name,
     Value<String?> phone = const Value.absent(),
+    Value<String?> secondaryPhone = const Value.absent(),
     String? specialty,
     Value<String?> notes = const Value.absent(),
     DateTime? createdAt,
@@ -8352,6 +8388,9 @@ class Technician extends DataClass implements Insertable<Technician> {
     id: id ?? this.id,
     name: name ?? this.name,
     phone: phone.present ? phone.value : this.phone,
+    secondaryPhone: secondaryPhone.present
+        ? secondaryPhone.value
+        : this.secondaryPhone,
     specialty: specialty ?? this.specialty,
     notes: notes.present ? notes.value : this.notes,
     createdAt: createdAt ?? this.createdAt,
@@ -8367,6 +8406,9 @@ class Technician extends DataClass implements Insertable<Technician> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       phone: data.phone.present ? data.phone.value : this.phone,
+      secondaryPhone: data.secondaryPhone.present
+          ? data.secondaryPhone.value
+          : this.secondaryPhone,
       specialty: data.specialty.present ? data.specialty.value : this.specialty,
       notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -8381,6 +8423,7 @@ class Technician extends DataClass implements Insertable<Technician> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('phone: $phone, ')
+          ..write('secondaryPhone: $secondaryPhone, ')
           ..write('specialty: $specialty, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt')
@@ -8395,6 +8438,7 @@ class Technician extends DataClass implements Insertable<Technician> {
     id,
     name,
     phone,
+    secondaryPhone,
     specialty,
     notes,
     createdAt,
@@ -8408,6 +8452,7 @@ class Technician extends DataClass implements Insertable<Technician> {
           other.id == this.id &&
           other.name == this.name &&
           other.phone == this.phone &&
+          other.secondaryPhone == this.secondaryPhone &&
           other.specialty == this.specialty &&
           other.notes == this.notes &&
           other.createdAt == this.createdAt);
@@ -8419,6 +8464,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> phone;
+  final Value<String?> secondaryPhone;
   final Value<String> specialty;
   final Value<String?> notes;
   final Value<DateTime> createdAt;
@@ -8429,6 +8475,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.phone = const Value.absent(),
+    this.secondaryPhone = const Value.absent(),
     this.specialty = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -8440,6 +8487,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
     required String id,
     required String name,
     this.phone = const Value.absent(),
+    this.secondaryPhone = const Value.absent(),
     required String specialty,
     this.notes = const Value.absent(),
     required DateTime createdAt,
@@ -8454,6 +8502,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? phone,
+    Expression<String>? secondaryPhone,
     Expression<String>? specialty,
     Expression<String>? notes,
     Expression<DateTime>? createdAt,
@@ -8465,6 +8514,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (phone != null) 'phone': phone,
+      if (secondaryPhone != null) 'secondary_phone': secondaryPhone,
       if (specialty != null) 'specialty': specialty,
       if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
@@ -8478,6 +8528,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
     Value<String>? id,
     Value<String>? name,
     Value<String?>? phone,
+    Value<String?>? secondaryPhone,
     Value<String>? specialty,
     Value<String?>? notes,
     Value<DateTime>? createdAt,
@@ -8489,6 +8540,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
       id: id ?? this.id,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      secondaryPhone: secondaryPhone ?? this.secondaryPhone,
       specialty: specialty ?? this.specialty,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
@@ -8516,6 +8568,9 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
     if (phone.present) {
       map['phone'] = Variable<String>(phone.value);
     }
+    if (secondaryPhone.present) {
+      map['secondary_phone'] = Variable<String>(secondaryPhone.value);
+    }
     if (specialty.present) {
       map['specialty'] = Variable<String>(specialty.value);
     }
@@ -8539,6 +8594,7 @@ class TechniciansCompanion extends UpdateCompanion<Technician> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('phone: $phone, ')
+          ..write('secondaryPhone: $secondaryPhone, ')
           ..write('specialty: $specialty, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
@@ -17764,6 +17820,7 @@ typedef $$TechniciansTableCreateCompanionBuilder =
       required String id,
       required String name,
       Value<String?> phone,
+      Value<String?> secondaryPhone,
       required String specialty,
       Value<String?> notes,
       required DateTime createdAt,
@@ -17776,6 +17833,7 @@ typedef $$TechniciansTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String?> phone,
+      Value<String?> secondaryPhone,
       Value<String> specialty,
       Value<String?> notes,
       Value<DateTime> createdAt,
@@ -17846,6 +17904,11 @@ class $$TechniciansTableFilterComposer
 
   ColumnFilters<String> get phone => $composableBuilder(
     column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get secondaryPhone => $composableBuilder(
+    column: $table.secondaryPhone,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17924,6 +17987,11 @@ class $$TechniciansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get secondaryPhone => $composableBuilder(
+    column: $table.secondaryPhone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get specialty => $composableBuilder(
     column: $table.specialty,
     builder: (column) => ColumnOrderings(column),
@@ -17968,6 +18036,11 @@ class $$TechniciansTableAnnotationComposer
 
   GeneratedColumn<String> get phone =>
       $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get secondaryPhone => $composableBuilder(
+    column: $table.secondaryPhone,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get specialty =>
       $composableBuilder(column: $table.specialty, builder: (column) => column);
@@ -18038,6 +18111,7 @@ class $$TechniciansTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> phone = const Value.absent(),
+                Value<String?> secondaryPhone = const Value.absent(),
                 Value<String> specialty = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -18048,6 +18122,7 @@ class $$TechniciansTableTableManager
                 id: id,
                 name: name,
                 phone: phone,
+                secondaryPhone: secondaryPhone,
                 specialty: specialty,
                 notes: notes,
                 createdAt: createdAt,
@@ -18060,6 +18135,7 @@ class $$TechniciansTableTableManager
                 required String id,
                 required String name,
                 Value<String?> phone = const Value.absent(),
+                Value<String?> secondaryPhone = const Value.absent(),
                 required String specialty,
                 Value<String?> notes = const Value.absent(),
                 required DateTime createdAt,
@@ -18070,6 +18146,7 @@ class $$TechniciansTableTableManager
                 id: id,
                 name: name,
                 phone: phone,
+                secondaryPhone: secondaryPhone,
                 specialty: specialty,
                 notes: notes,
                 createdAt: createdAt,

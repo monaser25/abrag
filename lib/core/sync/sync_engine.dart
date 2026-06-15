@@ -714,6 +714,7 @@ class SyncEngine {
           'id': item.id,
           'name': item.name,
           'phone': item.phone,
+          'secondary_phone': item.secondaryPhone,
           'specialty': item.specialty,
           'notes': item.notes,
           'created_at': item.createdAt.toUtc().toIso8601String(),
@@ -1436,6 +1437,9 @@ class SyncEngine {
                 phone: row['phone'] == null
                     ? const Value.absent()
                     : Value(row['phone']),
+                secondaryPhone: row['secondary_phone'] == null
+                    ? const Value.absent()
+                    : Value(row['secondary_phone']),
                 specialty: row['specialty'] == null
                     ? const Value.absent()
                     : Value(row['specialty']),

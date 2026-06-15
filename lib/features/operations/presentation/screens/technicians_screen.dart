@@ -17,6 +17,17 @@ class TechniciansScreen extends ConsumerStatefulWidget {
 }
 
 class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
+  String _search = '';
+
+  static const List<String> _specialties = [
+    'سباكة',
+    'كهرباء',
+    'نجارة',
+    'أنابيب وغاز',
+    'نظافة',
+    'أخرى',
+  ];
+
   Future<void> _confirmDelete(dynamic technician) async {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
@@ -66,10 +77,27 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
     final phoneController = TextEditingController(
       text: technician?.phone ?? '',
     );
+    final secondaryController = TextEditingController(
+      text: technician?.secondaryPhone ?? '',
+    );
+    var showSecondary = (technician?.secondaryPhone ?? '').trim().isNotEmpty;
     final notesController = TextEditingController(
       text: technician?.notes ?? '',
     );
     final formKey = GlobalKey<FormState>();
+    // Specialty list may include a legacy value (e.g. نقاشة) not in the
+    // current options; fall back so the dropdown's initialValue stays valid.
+    final initialSpecialty = _specialties.contains(specialtyController.text)
+        ? specialtyController.text
+        : 'أخرى';
+
+    String? phoneValidator(String? value) {
+      final phone = value?.trim() ?? '';
+      if (phone.isEmpty) return null;
+      return RegExp(r'^01\d{9}$').hasMatch(phone)
+          ? null
+          : 'رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
+    }
 
     showDialog(
       context: context,
@@ -83,55 +111,76 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppTextField(
-                    controller: nameController,
-                    label: 'الاسم',
-                    prefixIcon: Icons.person_outline,
-                    validator: (value) =>
-                        value == null || value.trim().isEmpty ? 'مطلوب' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  AppDropdownField<String>(
-                    label: 'التخصص',
-                    prefixIcon: Icons.handyman_outlined,
-                    initialValue: specialtyController.text.isNotEmpty
-                        ? specialtyController.text
-                        : 'سباكة',
-                    items: const ['سباكة', 'كهرباء', 'نجارة', 'نقاشة', 'نظافة', 'أخرى']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (v) => specialtyController.text = v ?? 'أخرى',
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: phoneController,
-                    label: 'رقم الهاتف',
-                    prefixIcon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    textDirection: TextDirection.ltr,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(11),
-                    ],
-                    validator: (value) {
-                      final phone = value?.trim() ?? '';
-                      if (phone.isEmpty) return null;
-                      return RegExp(r'^01\d{9}$').hasMatch(phone)
-                          ? null
-                          : 'رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01';
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: notesController,
-                    label: 'ملاحظات / تقييم',
-                    prefixIcon: Icons.sticky_note_2_outlined,
-                    maxLines: 2,
-                  ),
-                ],
+              child: StatefulBuilder(
+                builder: (context, setLocalState) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppTextField(
+                      controller: nameController,
+                      label: 'الاسم',
+                      prefixIcon: Icons.person_outline,
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? 'مطلوب'
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    AppDropdownField<String>(
+                      label: 'التخصص',
+                      prefixIcon: Icons.handyman_outlined,
+                      initialValue: initialSpecialty,
+                      items: _specialties
+                          .map((s) =>
+                              DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (v) => specialtyController.text = v ?? 'أخرى',
+                    ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: phoneController,
+                      label: 'رقم الهاتف',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      textDirection: TextDirection.ltr,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: phoneValidator,
+                    ),
+                    if (showSecondary) ...[
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: secondaryController,
+                        label: 'رقم هاتف آخر (اختياري)',
+                        prefixIcon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        textDirection: TextDirection.ltr,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
+                        ],
+                        validator: phoneValidator,
+                      ),
+                    ] else
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: TextButton.icon(
+                          onPressed: () =>
+                              setLocalState(() => showSecondary = true),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('إضافة رقم آخر'),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: notesController,
+                      label: 'ملاحظات / تقييم',
+                      prefixIcon: Icons.sticky_note_2_outlined,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -146,6 +195,9 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
 
+                final secondary = showSecondary
+                    ? secondaryController.text.trim()
+                    : null;
                 if (technician == null) {
                   ref
                       .read(techniciansControllerProvider.notifier)
@@ -153,6 +205,7 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                         name: nameController.text.trim(),
                         specialty: specialtyController.text,
                         phone: phoneController.text.trim(),
+                        secondaryPhone: secondary,
                         notes: notesController.text.trim(),
                       );
                 } else {
@@ -163,6 +216,7 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                         name: nameController.text.trim(),
                         specialty: specialtyController.text,
                         phone: phoneController.text.trim(),
+                        secondaryPhone: secondary,
                         notes: notesController.text.trim(),
                       );
                 }
@@ -206,11 +260,45 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-            itemCount: activeTechnicians.length,
-            itemBuilder: (context, index) {
-              final tech = activeTechnicians[index];
+          final query = _search.toLowerCase();
+          final filtered = query.isEmpty
+              ? activeTechnicians
+              : activeTechnicians.where((t) {
+                  final name = t.name.toLowerCase();
+                  final specialty = t.specialty.toLowerCase();
+                  final phone = (t.phone ?? '').toLowerCase();
+                  final phone2 = (t.secondaryPhone ?? '').toLowerCase();
+                  return name.contains(query) ||
+                      specialty.contains(query) ||
+                      phone.contains(query) ||
+                      phone2.contains(query);
+                }).toList();
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: AppTextField(
+                  hint: 'ابحث بالاسم، التخصص، أو رقم الهاتف...',
+                  prefixIcon: Icons.search,
+                  onChanged: (value) =>
+                      setState(() => _search = value.trim()),
+                ),
+              ),
+              if (filtered.isEmpty)
+                const Expanded(
+                  child: EmptyState(
+                    icon: Icons.search_off,
+                    title: 'لا يوجد فني يطابق البحث',
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final tech = filtered[index];
               final hasPhone = tech.phone != null && tech.phone!.isNotEmpty;
               return AppCard(
                 onTap: () => context.go('/technicians/details/${tech.id}'),
@@ -262,7 +350,10 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                   ],
                 ),
               );
-            },
+                    },
+                  ),
+                ),
+            ],
           );
         },
         loading: () => const LoadingSkeleton(),
@@ -286,6 +377,8 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
         return Icons.handyman;
       case 'نظافة':
         return Icons.cleaning_services;
+      case 'أنابيب وغاز':
+        return Icons.gas_meter;
       case 'نقاشة':
         return Icons.format_paint;
       default:
