@@ -213,8 +213,8 @@ class _AddSummerBookingScreenState
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: isCheckIn
-          ? DateTime.now()
-          : (_checkInDate ?? DateTime.now()),
+          ? (_checkInDate ?? DateTime.now())
+          : (_checkOutDate ?? DateTime.now()),
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
@@ -226,11 +226,21 @@ class _AddSummerBookingScreenState
           (settings['summer_checkout_hour'] as num?)?.toInt() ?? 8;
       final checkoutMinute =
           (settings['summer_checkout_minute'] as num?)?.toInt() ?? 0;
+
+      final TimeOfDay defaultTime;
+      if (isCheckIn) {
+        defaultTime = _checkInDate != null
+            ? TimeOfDay.fromDateTime(_checkInDate!)
+            : const TimeOfDay(hour: 14, minute: 0);
+      } else {
+        defaultTime = _checkOutDate != null
+            ? TimeOfDay.fromDateTime(_checkOutDate!)
+            : TimeOfDay(hour: checkoutHour, minute: checkoutMinute);
+      }
+
       final pickedTime = await showTimePicker(
         context: context,
-        initialTime: isCheckIn
-            ? TimeOfDay.now()
-            : TimeOfDay(hour: checkoutHour, minute: checkoutMinute),
+        initialTime: defaultTime,
       );
 
       if (pickedTime != null) {
@@ -613,9 +623,7 @@ class _AddSummerBookingScreenState
                           : 'بطاقة (أمام)',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _idFrontImage != null
-                          ? colors.ok
-                          : null,
+                      foregroundColor: _idFrontImage != null ? colors.ok : null,
                     ),
                   ),
                 ),
@@ -628,9 +636,7 @@ class _AddSummerBookingScreenState
                       _idBackImage != null ? 'تم التقاط الخلف' : 'بطاقة (خلف)',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _idBackImage != null
-                          ? colors.ok
-                          : null,
+                      foregroundColor: _idBackImage != null ? colors.ok : null,
                     ),
                   ),
                 ),
@@ -729,8 +735,7 @@ class _AddSummerBookingScreenState
                               ? 'المبلغ المدفوع بالكامل'
                               : 'المبلغ المدفوع (العربون)',
                           controller: _amountPaidController,
-                          autovalidateMode:
-                              AutovalidateMode.onUserInteraction,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
@@ -741,8 +746,10 @@ class _AddSummerBookingScreenState
                                 double.tryParse(v.replaceAll(',', '')) ?? 0;
                             final total =
                                 double.tryParse(
-                                  _totalPriceController.text
-                                      .replaceAll(',', ''),
+                                  _totalPriceController.text.replaceAll(
+                                    ',',
+                                    '',
+                                  ),
                                 ) ??
                                 0;
                             if (paid > total) {
@@ -766,8 +773,8 @@ class _AddSummerBookingScreenState
                     index: _paymentMethod == 'vodafone_cash'
                         ? 1
                         : _paymentMethod == 'instapay'
-                            ? 2
-                            : 0,
+                        ? 2
+                        : 0,
                     onChanged: (i) => setState(
                       () => _paymentMethod = const [
                         'cash',
