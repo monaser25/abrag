@@ -11,10 +11,12 @@ class CleaningSuppliesScreen extends ConsumerStatefulWidget {
   const CleaningSuppliesScreen({super.key});
 
   @override
-  ConsumerState<CleaningSuppliesScreen> createState() => _CleaningSuppliesScreenState();
+  ConsumerState<CleaningSuppliesScreen> createState() =>
+      _CleaningSuppliesScreenState();
 }
 
-class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen> {
+class _CleaningSuppliesScreenState
+    extends ConsumerState<CleaningSuppliesScreen> {
   void _showAddEditSupplyDialog([CleaningSupply? supply]) {
     final nameController = TextEditingController(text: supply?.name ?? '');
     final unitController = TextEditingController(text: supply?.unit ?? 'عبوة');
@@ -36,7 +38,8 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                   controller: nameController,
                   label: 'اسم الصنف (كلور، معطر، صابون)',
                   prefixIcon: Icons.inventory_2_outlined,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'مطلوب' : null,
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'مطلوب' : null,
                 ),
                 const SizedBox(height: 12),
                 AppDropdownField<String>(
@@ -67,16 +70,20 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
                 if (supply == null) {
-                  ref.read(cleaningSuppliesControllerProvider.notifier).addSupply(
-                    nameController.text.trim(),
-                    unitController.text,
-                  );
+                  ref
+                      .read(cleaningSuppliesControllerProvider.notifier)
+                      .addSupply(
+                        nameController.text.trim(),
+                        unitController.text,
+                      );
                 } else {
-                  ref.read(cleaningSuppliesControllerProvider.notifier).updateSupply(
-                    supply.id,
-                    nameController.text.trim(),
-                    unitController.text,
-                  );
+                  ref
+                      .read(cleaningSuppliesControllerProvider.notifier)
+                      .updateSupply(
+                        supply.id,
+                        nameController.text.trim(),
+                        unitController.text,
+                      );
                 }
                 Navigator.pop(ctx);
               },
@@ -116,7 +123,9 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                     controller: quantityController,
                     label: 'الكمية (${supply.unit})',
                     prefixIcon: Icons.numbers,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'مطلوب';
                       final qty = double.tryParse(v);
@@ -129,7 +138,9 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                     controller: costController,
                     label: 'التكلفة الإجمالية (ج.م)',
                     prefixIcon: Icons.payments_outlined,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [CurrencyInputFormatter()],
                     helperText: 'سيتم تسجيل التكلفة تلقائياً في المصروفات',
                     validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
@@ -156,13 +167,104 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
               small: true,
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
-                ref.read(cleaningSuppliesControllerProvider.notifier).logTransaction(
-                  supplyId: supply.id,
-                  type: 'purchase',
-                  quantity: double.parse(quantityController.text.trim()),
-                  costEgp: double.tryParse(costController.text.replaceAll(',', '').trim()) ?? 0.0,
-                  notes: notesController.text.trim(),
-                );
+                ref
+                    .read(cleaningSuppliesControllerProvider.notifier)
+                    .logTransaction(
+                      supplyId: supply.id,
+                      type: 'purchase',
+                      quantity: double.parse(quantityController.text.trim()),
+                      costEgp:
+                          double.tryParse(
+                            costController.text.replaceAll(',', '').trim(),
+                          ) ??
+                          0.0,
+                      notes: notesController.text.trim(),
+                    );
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showConsumptionDialog(CleaningSupply supply) {
+    final quantityController = TextEditingController();
+    final notesController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('تسجيل استهلاك'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'الصنف: ${supply.name}',
+                    style: AppTextStyles.title.copyWith(color: colors.ink),
+                  ),
+                  const SizedBox(height: 14),
+                  AppTextField(
+                    controller: quantityController,
+                    label: 'الكمية المستهلكة (${supply.unit})',
+                    prefixIcon: Icons.numbers,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'مطلوب';
+                      final qty = double.tryParse(v);
+                      if (qty == null || qty <= 0) return 'كمية غير صحيحة';
+                      if (qty > supply.stockQuantity) {
+                        final available =
+                            supply.stockQuantity.truncateToDouble() ==
+                                supply.stockQuantity
+                            ? supply.stockQuantity.toInt().toString()
+                            : supply.stockQuantity.toString();
+                        return 'الكمية تتجاوز المتاح ($available)';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: notesController,
+                    label: 'ملاحظات (مثل: الشقة، أو اسم العامل)',
+                    prefixIcon: Icons.sticky_note_2_outlined,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('إلغاء'),
+            ),
+            AppButton(
+              label: 'تأكيد الاستهلاك',
+              icon: Icons.remove_circle_outline,
+              small: true,
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                ref
+                    .read(cleaningSuppliesControllerProvider.notifier)
+                    .logTransaction(
+                      supplyId: supply.id,
+                      type: 'consumption',
+                      quantity: double.parse(quantityController.text.trim()),
+                      notes: notesController.text.trim(),
+                    );
                 Navigator.pop(ctx);
               },
             ),
@@ -197,6 +299,12 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
             itemCount: supplies.length,
             itemBuilder: (context, index) {
               final supply = supplies[index];
+              final formattedCount =
+                  supply.stockQuantity.truncateToDouble() ==
+                      supply.stockQuantity
+                  ? supply.stockQuantity.toInt().toString()
+                  : supply.stockQuantity.toString();
+
               return AppCard(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: Column(
@@ -212,8 +320,9 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                         Expanded(
                           child: Text(
                             supply.name,
-                            style: AppTextStyles.title
-                                .copyWith(color: colors.ink),
+                            style: AppTextStyles.title.copyWith(
+                              color: colors.ink,
+                            ),
                           ),
                         ),
                         AppIconButton(
@@ -224,12 +333,39 @@ class _CleaningSuppliesScreenState extends ConsumerState<CleaningSuppliesScreen>
                     ),
                     const SizedBox(height: 14),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'وحدة القياس: ${supply.unit}',
-                          style: AppTextStyles.label
-                              .copyWith(color: colors.ink2),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'المتبقي: $formattedCount ${supply.unit}',
+                                style: AppTextStyles.title.copyWith(
+                                  color: colors.brand,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'وحدة القياس: ${supply.unit}',
+                                style: AppTextStyles.label.copyWith(
+                                  color: colors.ink2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        AppButton(
+                          label: 'تسجيل استهلاك',
+                          icon: Icons.remove_circle_outline,
+                          small: true,
+                          onPressed: () => _showConsumptionDialog(supply),
                         ),
                         AppButton(
                           label: 'تسجيل شراء',
