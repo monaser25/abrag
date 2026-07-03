@@ -76,6 +76,34 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  /// Soft-delete: mark the expense as pendingDelete so it disappears from the
+  /// UI and the sync engine deletes it on the server. Mirrors the technicians/
+  /// brokers delete pattern; keeps history recoverable until the next sync.
+  Future<void> deleteExpense(String id) async {
+    state = const AsyncLoading();
+    try {
+      final old = await (_db.select(
+        _db.expenses,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      await (_db.update(_db.expenses)..where((t) => t.id.equals(id))).write(
+        const ExpensesCompanion(syncStatus: Value(SyncStatus.pendingDelete)),
+      );
+      await _auditLog.log(
+        action: 'delete',
+        entityType: 'expense',
+        entityId: id,
+        title: 'حذف مصروف',
+        description:
+            'تم حذف مصروف بقيمة ${old?.amountEgp ?? ''} ج.م',
+        route: '/expenses',
+        oldValues: old?.toJson(),
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
   Future<void> updateExpense({
     required String id,
     String? buildingId,

@@ -6,6 +6,7 @@ import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../providers/expenses_provider.dart';
+import '../providers/expenses_controller.dart';
 import '../providers/financial_transfers_provider.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
@@ -32,6 +33,34 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
     'cleaning',
     'other',
   ];
+
+  void _confirmDeleteExpense(String id) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: const Text('هل أنت متأكد من حذف هذا المصروف؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () {
+              ref
+                  .read(expensesControllerProvider.notifier)
+                  .deleteExpense(id);
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
 
   String _translateExpenseType(String type) {
     switch (type) {
@@ -267,6 +296,9 @@ class _ExpensesListScreenState extends ConsumerState<ExpensesListScreen> {
                                     }
                                   }
                                 : null,
+                            onDelete: expense.expenseType != 'maintenance'
+                                ? () => _confirmDeleteExpense(expense.id)
+                                : null,
                           );
                         },
                       ),
@@ -298,6 +330,7 @@ class _ExpenseRow extends StatelessWidget {
     required this.season,
     required this.amount,
     this.onEdit,
+    this.onDelete,
   });
 
   final String type;
@@ -307,6 +340,7 @@ class _ExpenseRow extends StatelessWidget {
   final String season;
   final String amount;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -366,6 +400,14 @@ class _ExpenseRow extends StatelessWidget {
                   child: AppIconButton(
                     icon: Icons.edit_outlined,
                     onPressed: onEdit,
+                  ),
+                ),
+              if (onDelete != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: AppIconButton(
+                    icon: Icons.delete_outline,
+                    onPressed: onDelete,
                   ),
                 ),
             ],
