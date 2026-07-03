@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
@@ -15,6 +16,13 @@ class GuestProfileScreen extends ConsumerWidget {
   final String guestName;
 
   const GuestProfileScreen({super.key, required this.guestName});
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,10 +109,27 @@ class GuestProfileScreen extends ConsumerWidget {
                             style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            latestBooking.guestPhone ?? 'لا يوجد رقم هاتف',
-                            style:
-                                AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  (latestBooking.guestPhone?.trim().isNotEmpty ??
+                                          false)
+                                      ? latestBooking.guestPhone!
+                                      : 'لا يوجد رقم هاتف',
+                                  style: AppTextStyles.bodyS
+                                      .copyWith(color: colors.ink2),
+                                ),
+                              ),
+                              if (latestBooking.guestPhone?.trim().isNotEmpty ??
+                                  false)
+                                AppIconButton(
+                                  icon: Icons.call,
+                                  onPressed: () => _makePhoneCall(
+                                    latestBooking.guestPhone!.trim(),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 10),
                           Wrap(

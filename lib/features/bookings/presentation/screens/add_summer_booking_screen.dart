@@ -682,7 +682,7 @@ class _AddSummerBookingScreenState
                     Expanded(
                       child: Text(
                         'تاريخ الخروج: ${DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar').format(_checkOutDate!)}',
-                        style: AppTextStyles.bodyS.copyWith(color: colors.ok),
+                        style: AppTextStyles.bodyS.copyWith(color: colors.ink),
                       ),
                     ),
                     if (_checkInDate!.isAfter(DateTime.now())) ...[
