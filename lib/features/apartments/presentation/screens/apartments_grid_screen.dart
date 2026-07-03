@@ -5,8 +5,9 @@ import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/widgets.dart';
-import '../providers/apartments_controller.dart';
-import '../providers/apartment_profile_provider.dart';
+import '../providers/apartments_status_provider.dart';
+
+final availableOnlyFilterProvider = StateProvider.autoDispose<bool>((ref) => false);
 
 class ApartmentsGridScreen extends ConsumerWidget {
   const ApartmentsGridScreen({super.key});
@@ -14,12 +15,20 @@ class ApartmentsGridScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final apartmentsAsync = ref.watch(apartmentsProvider);
+    final statusesAsync = ref.watch(apartmentsWithStatusProvider);
+    final availableOnly = ref.watch(availableOnlyFilterProvider);
 
     return AppScaffold(
       appBar: AbragAppBar(
         title: l10n.apartments,
         actions: [
+          AppIconButton(
+            icon: availableOnly ? Icons.filter_alt : Icons.filter_alt_off,
+            tooltip: availableOnly ? 'عرض الكل' : 'المتاحة فقط',
+            onPressed: () {
+              ref.read(availableOnlyFilterProvider.notifier).state = !availableOnly;
+            },
+          ),
           AppIconButton(
             icon: Icons.playlist_add_check,
             tooltip: 'تعميم الجرد',
@@ -27,53 +36,79 @@ class ApartmentsGridScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: apartmentsAsync.when(
-        data: (apartments) {
-          if (apartments.isEmpty) {
+      body: statusesAsync.when(
+        data: (statuses) {
+          var filteredStatuses = statuses;
+          if (availableOnly) {
+            filteredStatuses = filteredStatuses
+                .where((s) => !s.isOccupied && !s.needsCleaning)
+                .toList();
+          }
+
+          if (filteredStatuses.isEmpty) {
             return EmptyState(
               icon: Icons.meeting_room_outlined,
               title: l10n.noData,
             );
           }
-          return GridView.builder(
+
+          final buildingGroups = <String, List<ApartmentStatus>>{};
+          for (final s in filteredStatuses) {
+            buildingGroups.putIfAbsent(s.buildingName, () => []).add(s);
+          }
+
+          final sortedBuildings = buildingGroups.keys.toList()..sort();
+
+          return ListView.builder(
             padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 90),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: apartments.length,
+            itemCount: sortedBuildings.length,
             itemBuilder: (context, index) {
-              final apt = apartments[index];
-              return Consumer(
-                builder: (context, ref, child) {
-                  final profileAsync = ref.watch(
-                    apartmentProfileProvider(apt.id),
-                  );
-                  final colors = context.colors;
+              final bName = sortedBuildings[index];
+              final bApartments = buildingGroups[bName]!;
 
-                  return profileAsync.when(
-                    data: (data) {
-                      final isCleaning =
-                          data.apartment.cleaningStatus == 'needs_cleaning';
-                      final isOccupied = data.isOccupied;
+              bApartments.sort((a, b) {
+                final numA = int.tryParse(a.apartment.apartmentNumber);
+                final numB = int.tryParse(b.apartment.apartmentNumber);
+                if (numA != null && numB != null) return numA.compareTo(numB);
+                if (numA != null) return -1;
+                if (numB != null) return 1;
+                return a.apartment.apartmentNumber
+                    .compareTo(b.apartment.apartmentNumber);
+              });
 
-                      // Same status semantics as before, token colors.
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionTitle(title: bName),
+                  GridView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: bApartments.length,
+                    itemBuilder: (context, i) {
+                      final aptStatus = bApartments[i];
+                      final colors = context.colors;
+
                       Color statusColor = colors.ok;
                       String statusText = 'متاحة';
-                      if (isCleaning) {
+                      if (aptStatus.needsCleaning) {
                         statusColor = colors.warn;
                         statusText = 'نظافة';
-                      } else if (isOccupied) {
+                      } else if (aptStatus.isOccupied) {
                         statusColor = colors.err;
                         statusText = 'مشغولة';
                       }
 
                       return ApartmentCell(
-                        number: apt.apartmentNumber,
+                        number: aptStatus.apartment.apartmentNumber,
                         statusColor: statusColor,
-                        onTap: () =>
-                            context.push('/apartments/profile/${apt.id}'),
+                        onTap: () => context.push(
+                            '/apartments/profile/${aptStatus.apartment.id}'),
                         footer: Text(
                           statusText,
                           style: AppTextStyles.caption.copyWith(
@@ -85,19 +120,8 @@ class ApartmentsGridScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    loading: () => const SkeletonBox(
-                      height: double.infinity,
-                      radius: 9,
-                    ),
-                    error: (err, stack) => Container(
-                      decoration: BoxDecoration(
-                        color: colors.errSoft,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Icon(Icons.error_outline, color: colors.err),
-                    ),
-                  );
-                },
+                  ),
+                ],
               );
             },
           );
@@ -107,7 +131,7 @@ class ApartmentsGridScreen extends ConsumerWidget {
           title: 'تعذّر تحميل البيانات',
           message: '$error',
           retryLabel: 'إعادة المحاولة',
-          onRetry: () => ref.invalidate(apartmentsProvider),
+          onRetry: () => ref.invalidate(apartmentsWithStatusProvider),
         ),
       ),
       floatingActionButton: AppFab(
