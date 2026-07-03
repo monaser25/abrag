@@ -165,6 +165,12 @@ final appNotificationsProvider = Provider<AsyncValue<List<AppNotification>>>((
     final notifications = <AppNotification>[];
     final now = DateTime.now();
 
+    // Resolve apartment id -> human apartment number for notification text (#17).
+    final allApartments = apartmentsAsync.asData?.value ?? [];
+    final apartmentNumberById = {
+      for (final a in allApartments) a.id: a.apartmentNumber,
+    };
+
     // 0. Activity notifications from other users.
     if (hasPerm('view_notifications')) {
       final activityLogs = activityLogsAsync.asData?.value ?? [];
@@ -221,7 +227,7 @@ final appNotificationsProvider = Provider<AsyncValue<List<AppNotification>>>((
               id: 'booking_checkout_${b.id}',
               title: 'موعد خروج مصيف',
               body:
-                  'العميل ${b.guestName} في شقة ${b.apartmentId} موعد خروجه ${diff == 0 ? "اليوم" : "غداً"} الساعة 8 صباحاً.',
+                  'العميل ${b.guestName} في شقة ${apartmentNumberById[b.apartmentId] ?? b.apartmentId} موعد خروجه ${diff == 0 ? "اليوم" : "غداً"} الساعة 8 صباحاً.',
               date: checkoutDate,
               type: 'checkout',
               route: '/summer_bookings/details/${b.id}',

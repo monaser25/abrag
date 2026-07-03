@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -13,6 +13,7 @@ import '../../../users/presentation/providers/users_provider.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/input_formatters.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
@@ -664,6 +665,8 @@ class BookingDetailsScreen extends ConsumerWidget {
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              textDirection: TextDirection.ltr,
+              inputFormatters: const [ArabicDigitsInputFormatter()],
               decoration: const InputDecoration(
                 labelText: 'المبلغ اللي هيتسدد الآن',
               ),

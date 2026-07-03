@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/theme/abrag_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/utils/input_formatters.dart';
 
 /// Themed text field (`.field`) with an optional label above.
 /// Visual styling comes from the global [InputDecorationTheme]; this wrapper
@@ -56,20 +57,31 @@ class AppTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Numeric/phone fields: auto-convert Arabic digits to ASCII and render the
+    // content left-to-right so pasted numbers don't appear reversed in RTL.
+    final kt = keyboardType;
+    final isNumeric = kt != null &&
+        (kt.index == TextInputType.number.index ||
+            kt.index == TextInputType.phone.index);
+    final effectiveFormatters = <TextInputFormatter>[
+      if (isNumeric) const ArabicDigitsInputFormatter(),
+      ...?inputFormatters,
+    ];
     final field = TextFormField(
       controller: controller,
       validator: validator,
       onChanged: onChanged,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
-      inputFormatters: inputFormatters,
+      inputFormatters: effectiveFormatters.isEmpty ? null : effectiveFormatters,
       obscureText: obscureText,
       enabled: enabled,
       readOnly: readOnly,
       maxLines: maxLines,
       onTap: onTap,
       focusNode: focusNode,
-      textDirection: textDirection,
+      textDirection:
+          textDirection ?? (isNumeric ? TextDirection.ltr : null),
       autofocus: autofocus,
       autovalidateMode: autovalidateMode,
       style: AppTextStyles.body.copyWith(fontSize: 15, color: colors.ink),
