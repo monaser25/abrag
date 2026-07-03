@@ -294,11 +294,33 @@ class _AddSummerBookingScreenState
     return null;
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate() &&
         _checkInDate != null &&
         _checkOutDate != null &&
         _selectedApartmentId != null) {
+      String? finalBrokerId = _selectedBrokerId == 'other'
+          ? null
+          : _selectedBrokerId;
+      String? finalBrokerName = _selectedBrokerId == 'other'
+          ? _brokerNameController.text.trim()
+          : null;
+
+      if (_selectedBrokerId == 'other' &&
+          _brokerNameController.text.trim().isNotEmpty) {
+        try {
+          finalBrokerId = await ref
+              .read(brokersControllerProvider.notifier)
+              .findOrCreateBrokerByName(_brokerNameController.text.trim());
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('خطأ في إضافة السمسار: $e')));
+          return;
+        }
+      }
+
       final args = (
         apartmentId: _selectedApartmentId!,
         guestName: _guestNameController.text.trim(),
@@ -316,10 +338,8 @@ class _AddSummerBookingScreenState
             ) ??
             0,
         paymentMethod: _paymentMethod,
-        brokerId: _selectedBrokerId == 'other' ? null : _selectedBrokerId,
-        brokerName: _selectedBrokerId == 'other'
-            ? _brokerNameController.text.trim()
-            : null,
+        brokerId: finalBrokerId,
+        brokerName: finalBrokerName,
         brokerCommissionType: _commissionType,
         brokerCommissionFixedEgp: _commissionType == 'fixed'
             ? (double.tryParse(

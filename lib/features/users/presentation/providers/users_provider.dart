@@ -10,12 +10,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final brokersProvider = StreamProvider<List<UserProfile>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.userProfiles)
-        ..where(
-          (t) =>
-              t.role.equals('broker') &
-              t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
-        ))
+  return (db.select(db.userProfiles)..where(
+        (t) =>
+            t.role.equals('broker') &
+            t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+      ))
       .watch();
 });
 
@@ -111,6 +110,65 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
     _auditLog = AuditLogService(_db);
   }
 
+  /// Insert a new broker (userProfiles, role='broker') and return its id.
+  /// Shared by [addBroker] and [findOrCreateBrokerByName].
+  Future<String> _insertBroker({
+    required String fullName,
+    String? phoneNumber,
+    String? secondaryPhone,
+  }) async {
+    final normalizedPhone = _normalizeEgyptianMobile(phoneNumber ?? '');
+    final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+    await _db
+        .into(_db.userProfiles)
+        .insert(
+          UserProfilesCompanion.insert(
+            id: id,
+            email: 'broker-$id@local.abrag',
+            fullName: Value(fullName.trim()),
+            phoneNumber: Value(normalizedPhone),
+            secondaryPhone: Value(normalizedSecondary),
+            role: const Value('broker'),
+            createdAt: now,
+            updatedAt: now,
+            syncStatus: const Value(SyncStatus.pendingInsert),
+          ),
+        );
+    await _auditLog.log(
+      action: 'create',
+      entityType: 'broker',
+      entityId: id,
+      title: 'إضافة سمسار',
+      description: 'تم إضافة سمسار باسم ${fullName.trim()}',
+      route: '/brokers/details/$id',
+      newValues: {'fullName': fullName.trim(), 'phoneNumber': normalizedPhone},
+    );
+    return id;
+  }
+
+  /// Returns the id of an existing broker whose name matches (case-insensitive),
+  /// otherwise creates a new broker with that name and returns its id. Used when
+  /// a booking references a broker typed via the "other" option (#12).
+  Future<String> findOrCreateBrokerByName(String name) async {
+    final trimmedName = name.trim();
+    final existingList =
+        await (_db.select(_db.userProfiles)..where(
+              (t) =>
+                  t.role.equals('broker') &
+                  t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+            ))
+            .get();
+    for (final b in existingList) {
+      if ((b.fullName ?? '').trim().toLowerCase() ==
+          trimmedName.toLowerCase()) {
+        return b.id;
+      }
+    }
+    return _insertBroker(fullName: trimmedName);
+  }
+
   Future<void> addBroker({
     required String fullName,
     required String phoneNumber,
@@ -118,36 +176,10 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     try {
-      final normalizedPhone = _normalizeEgyptianMobile(phoneNumber);
-      final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
-      final id = const Uuid().v4();
-      final now = DateTime.now();
-      await _db
-          .into(_db.userProfiles)
-          .insert(
-            UserProfilesCompanion.insert(
-              id: id,
-              email: 'broker-$id@local.abrag',
-              fullName: Value(fullName.trim()),
-              phoneNumber: Value(normalizedPhone),
-              secondaryPhone: Value(normalizedSecondary),
-              role: const Value('broker'),
-              createdAt: now,
-              updatedAt: now,
-              syncStatus: const Value(SyncStatus.pendingInsert),
-            ),
-          );
-      await _auditLog.log(
-        action: 'create',
-        entityType: 'broker',
-        entityId: id,
-        title: 'إضافة سمسار',
-        description: 'تم إضافة سمسار باسم ${fullName.trim()}',
-        route: '/brokers/details/$id',
-        newValues: {
-          'fullName': fullName.trim(),
-          'phoneNumber': normalizedPhone,
-        },
+      await _insertBroker(
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        secondaryPhone: secondaryPhone,
       );
       state = const AsyncData(null);
     } catch (e, st) {
@@ -164,7 +196,9 @@ class BrokersController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final normalizedPhone = _normalizeEgyptianMobile(phoneNumber);
-      final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
+      final normalizedSecondary = _normalizeEgyptianMobile(
+        secondaryPhone ?? '',
+      );
       final old = await (_db.select(
         _db.userProfiles,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
