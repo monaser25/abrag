@@ -21,10 +21,22 @@ class BookingListScreen extends ConsumerStatefulWidget {
 
 class _BookingListScreenState extends ConsumerState<BookingListScreen> {
   String _selectedFilter =
-      'nearest'; // nearest, in_progress, upcoming, finished
+      'nearest'; // nearest, in_progress, upcoming, unpaid, finished
 
-  static const _filterKeys = ['nearest', 'in_progress', 'upcoming', 'finished'];
-  static const _filterLabels = ['الأقرب', 'جارية', 'قادمة', 'منتهية'];
+  static const _filterKeys = [
+    'nearest',
+    'in_progress',
+    'upcoming',
+    'unpaid',
+    'finished',
+  ];
+  static const _filterLabels = [
+    'الأقرب',
+    'جارية',
+    'قادمة',
+    'مديونة',
+    'منتهية',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +81,15 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                           effectiveEnd.isAfter(now);
                       final isUpcoming =
                           !isFinished && b.checkInDate.isAfter(now);
+                      final baseTotal =
+                          b.totalPriceEgp - b.overstayFeeEgp;
+                      final hasOutstanding = b.status != 'cancelled' &&
+                          (baseTotal - b.amountPaidEgp) > 0.01;
 
                       if (_selectedFilter == 'nearest') return !isFinished;
                       if (_selectedFilter == 'in_progress') return isCurrent;
                       if (_selectedFilter == 'upcoming') return isUpcoming;
+                      if (_selectedFilter == 'unpaid') return hasOutstanding;
                       if (_selectedFilter == 'finished') return isFinished;
                       return true;
                     }).toList()..sort((a, b) {
