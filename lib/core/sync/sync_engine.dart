@@ -578,6 +578,44 @@ class SyncEngine {
       }
     }
 
+    final pendingBookingPayments = await (db.select(
+      db.bookingPayments,
+    )..where((t) => t.syncStatus.isNotIn([SyncStatus.synced.index]))).get();
+
+    for (final item in pendingBookingPayments) {
+      try {
+        final payload = {
+          'id': item.id,
+          'booking_id': item.bookingId,
+          'amount_egp': item.amountEgp,
+          'payment_method': item.paymentMethod,
+          'payment_date': item.paymentDate.toUtc().toIso8601String(),
+          'notes': item.notes,
+          'created_at': item.createdAt.toUtc().toIso8601String(),
+        };
+
+        if (item.syncStatus == SyncStatus.pendingDelete) {
+          await supabase.from('booking_payments').delete().eq('id', item.id);
+          await (db.delete(
+            db.bookingPayments,
+          )..where((t) => t.id.equals(item.id))).go();
+        } else {
+          await supabase.from('booking_payments').upsert(payload);
+          await (db.update(
+            db.bookingPayments,
+          )..where((t) => t.id.equals(item.id))).write(
+            const BookingPaymentsCompanion(
+              syncStatus: Value(SyncStatus.synced),
+            ),
+          );
+        }
+      } catch (e) {
+        throw Exception(
+          'Error syncing booking_payments (push): $e\nItem: $item',
+        );
+      }
+    }
+
     final pendingMeterReadings = await (db.select(
       db.meterReadings,
     )..where((t) => t.syncStatus.isNotIn([SyncStatus.synced.index]))).get();
@@ -1287,6 +1325,39 @@ class SyncEngine {
                 receiptUrl: row['receipt_url'] == null
                     ? const Value.absent()
                     : Value(row['receipt_url']),
+                createdAt: row['created_at'] == null
+                    ? const Value.absent()
+                    : Value(DateTime.parse(row['created_at'])),
+                syncStatus: const Value(SyncStatus.synced),
+              ),
+            );
+      }
+
+      // Sync BookingPayments
+      final bookingPaymentsData = await supabase
+          .from('booking_payments')
+          .select();
+      for (final row in bookingPaymentsData) {
+        await db
+            .into(db.bookingPayments)
+            .insertOnConflictUpdate(
+              BookingPaymentsCompanion(
+                id: row['id'] == null ? const Value.absent() : Value(row['id']),
+                bookingId: row['booking_id'] == null
+                    ? const Value.absent()
+                    : Value(row['booking_id']),
+                amountEgp: row['amount_egp'] == null
+                    ? const Value.absent()
+                    : Value((row['amount_egp'] as num).toDouble()),
+                paymentMethod: row['payment_method'] == null
+                    ? const Value.absent()
+                    : Value(row['payment_method']),
+                paymentDate: row['payment_date'] == null
+                    ? const Value.absent()
+                    : Value(DateTime.parse(row['payment_date'])),
+                notes: row['notes'] == null
+                    ? const Value.absent()
+                    : Value(row['notes']),
                 createdAt: row['created_at'] == null
                     ? const Value.absent()
                     : Value(DateTime.parse(row['created_at'])),
