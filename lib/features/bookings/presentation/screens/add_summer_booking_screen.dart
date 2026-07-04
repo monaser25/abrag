@@ -13,6 +13,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/config/shared_prefs_provider.dart';
+import '../../../../core/database/database.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_controller.dart';
 import '../providers/bookings_provider.dart';
@@ -111,6 +112,149 @@ class _AddSummerBookingScreenState
           _idFrontImage = savedImage;
         } else {
           _idBackImage = savedImage;
+        }
+      });
+    }
+  }
+
+  Future<void> _showPreviousGuestPicker(List<SummerBooking> bookings) async {
+    if (bookings.isEmpty) {
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => const SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: EmptyState(
+              icon: Icons.person_off_outlined,
+              title: 'لا يوجد عملاء سابقين',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final Map<String, SummerBooking> latestBookingPerGuest = {};
+    for (final b in bookings) {
+      final name = b.guestName.trim();
+      if (name.isEmpty) continue;
+
+      final existing = latestBookingPerGuest[name];
+      if (existing == null || b.checkInDate.isAfter(existing.checkInDate)) {
+        latestBookingPerGuest[name] = b;
+      }
+    }
+
+    final uniqueGuests = latestBookingPerGuest.values.toList();
+    uniqueGuests.sort((a, b) => b.checkInDate.compareTo(a.checkInDate));
+
+    if (uniqueGuests.isEmpty) {
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => const SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: EmptyState(
+              icon: Icons.person_off_outlined,
+              title: 'لا يوجد عملاء سابقين',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final selectedBooking = await showModalBottomSheet<SummerBooking>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) {
+        String searchQuery = '';
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final filteredGuests = uniqueGuests.where((b) {
+              final q = searchQuery.toLowerCase();
+              final nameMatch = b.guestName.toLowerCase().contains(q);
+              final phoneMatch = (b.guestPhone ?? '').toLowerCase().contains(q);
+              return nameMatch || phoneMatch;
+            }).toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.7,
+              minChildSize: 0.5,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (context, scrollController) => Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: AppTextField(
+                      label: 'بحث بالاسم أو رقم الهاتف',
+                      prefixIcon: Icons.search,
+                      onChanged: (val) =>
+                          setState(() => searchQuery = val.trim()),
+                    ),
+                  ),
+                  Expanded(
+                    child: filteredGuests.isEmpty
+                        ? const EmptyState(
+                            icon: Icons.search_off,
+                            title: 'لا توجد نتائج',
+                          )
+                        : ListView.builder(
+                            controller: scrollController,
+                            itemCount: filteredGuests.length,
+                            itemBuilder: (context, index) {
+                              final b = filteredGuests[index];
+                              final guestBookingsCount = bookings
+                                  .where(
+                                    (x) =>
+                                        x.guestName.trim() ==
+                                        b.guestName.trim(),
+                                  )
+                                  .length;
+                              return ListTile(
+                                leading: AppAvatar(name: b.guestName, size: 40),
+                                title: Text(b.guestName),
+                                subtitle: Text(
+                                  b.guestPhone?.isNotEmpty == true
+                                      ? b.guestPhone!
+                                      : 'لا يوجد رقم هاتف',
+                                ),
+                                trailing: StatusChip(
+                                  label: '$guestBookingsCount حجوزات',
+                                  kind: StatusChipKind.brand,
+                                ),
+                                onTap: () => Navigator.pop(context, b),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedBooking != null && mounted) {
+      setState(() {
+        _guestNameController.text = selectedBooking.guestName;
+        _guestPhoneController.text = selectedBooking.guestPhone ?? '';
+        _nationalIdController.text = selectedBooking.nationalId ?? '';
+
+        if (selectedBooking.idFrontImage != null &&
+            selectedBooking.idFrontImage!.isNotEmpty &&
+            File(selectedBooking.idFrontImage!).existsSync()) {
+          _idFrontImage = File(selectedBooking.idFrontImage!);
+        }
+        if (selectedBooking.idBackImage != null &&
+            selectedBooking.idBackImage!.isNotEmpty &&
+            File(selectedBooking.idBackImage!).existsSync()) {
+          _idBackImage = File(selectedBooking.idBackImage!);
         }
       });
     }
@@ -703,7 +847,29 @@ class _AddSummerBookingScreenState
               loading: () => const SizedBox.shrink(),
               error: (e, st) => const SizedBox.shrink(),
             ),
-            const SectionTitle(title: 'بيانات الضيف'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Expanded(child: SectionTitle(title: 'بيانات الضيف')),
+                if (widget.bookingId == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showPreviousGuestPicker(
+                        bookingsAsync.valueOrNull ?? const [],
+                      ),
+                      icon: const Icon(Icons.person_search, size: 18),
+                      label: const Text('عميل سابق'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             AppTextField(
               label: 'اسم الضيف',
               prefixIcon: Icons.person_outline,
