@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../contracts/presentation/providers/contracts_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/abrag_colors.dart';
@@ -22,6 +23,11 @@ class ViewerWebScreen extends ConsumerWidget {
         title: 'بيانات الطالب',
         subtitle: 'عرض للقراءة فقط',
         actions: [
+          AppIconButton(
+            icon: Icons.calendar_month,
+            tooltip: 'الأجندة الذكية',
+            onPressed: () => context.push('/summer_bookings/calendar'),
+          ),
           AppIconButton(
             icon: Icons.logout,
             onPressed: () {
