@@ -61,6 +61,46 @@ class ApartmentOccupancyRules {
     }
   }
 
+  Future<Set<String>> occupiedApartmentIdsForPeriod({
+    required DateTime checkInDate,
+    required DateTime checkOutDate,
+    String? excludingSummerBookingId,
+  }) async {
+    final occupiedIds = <String>{};
+
+    final summerBookings = await (_db.select(
+      _db.summerBookings,
+    )..where((t) => t.status.isNotIn(['cancelled', 'checked_out']))).get();
+    for (final booking in summerBookings) {
+      if (booking.id == excludingSummerBookingId) continue;
+      final existingEnd = booking.earlyCheckoutDate ?? booking.checkOutDate;
+      if (_periodsOverlap(
+        checkInDate,
+        checkOutDate,
+        booking.checkInDate,
+        existingEnd,
+      )) {
+        occupiedIds.add(booking.apartmentId);
+      }
+    }
+
+    final winterContracts = await (_db.select(
+      _db.winterContracts,
+    )..where((t) => t.isActive.equals(true))).get();
+    for (final contract in winterContracts) {
+      if (_periodsOverlap(
+        checkInDate,
+        checkOutDate,
+        contract.startDate,
+        contract.endDate,
+      )) {
+        occupiedIds.add(contract.apartmentId);
+      }
+    }
+
+    return occupiedIds;
+  }
+
   Future<bool> isApartmentOccupiedNow(String apartmentId) async {
     final now = DateTime.now();
     final summerBookings =

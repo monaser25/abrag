@@ -18,6 +18,7 @@ import '../providers/bookings_controller.dart';
 import '../providers/bookings_provider.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../apartments/presentation/providers/apartment_occupancy_rules_provider.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 
 class AddSummerBookingScreen extends ConsumerStatefulWidget {
@@ -52,7 +53,30 @@ class _AddSummerBookingScreenState
   String? _selectedBuildingId;
   String? _selectedBrokerId;
   bool _prefilled = false;
+  Set<String> _occupiedApartmentIds = {};
   static const _draftKey = 'summer_booking_draft_v1';
+
+  Future<void> _refreshOccupiedApartments() async {
+    if (_checkInDate != null && _checkOutDate != null) {
+      final occupancyRules = ref.read(apartmentOccupancyRulesProvider);
+      final occupiedIds = await occupancyRules.occupiedApartmentIdsForPeriod(
+        checkInDate: _checkInDate!,
+        checkOutDate: _checkOutDate!,
+        excludingSummerBookingId: widget.bookingId,
+      );
+      if (mounted) {
+        setState(() {
+          _occupiedApartmentIds = occupiedIds;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _occupiedApartmentIds = {};
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -131,6 +155,7 @@ class _AddSummerBookingScreenState
             checkoutMinute,
           );
         });
+        _refreshOccupiedApartments();
       }
     }
   }
@@ -203,6 +228,7 @@ class _AddSummerBookingScreenState
       _selectedBuildingId = draft['selectedBuildingId']?.toString();
       _selectedBrokerId = draft['selectedBrokerId']?.toString();
     });
+    _refreshOccupiedApartments();
   }
 
   Future<void> _clearDraft() async {
@@ -259,6 +285,7 @@ class _AddSummerBookingScreenState
             _checkOutDate = finalDateTime;
           }
         });
+        _refreshOccupiedApartments();
       }
     }
   }
@@ -516,6 +543,7 @@ class _AddSummerBookingScreenState
                             _idBackImage = File(b.idBackImage!);
                           }
                         });
+                        _refreshOccupiedApartments();
                       });
                     }
                   }
@@ -573,26 +601,49 @@ class _AddSummerBookingScreenState
                     });
                   }
                 }
-                final filteredApts = _selectedBuildingId != null
+                var filteredApts = _selectedBuildingId != null
                     ? apartments
                           .where((a) => a.buildingId == _selectedBuildingId)
                           .toList()
-                    : apartments;
+                    : apartments.toList();
 
-                return AppDropdownField<String>(
-                  label: 'اختر الشقة',
-                  prefixIcon: Icons.door_front_door_outlined,
-                  initialValue: _selectedApartmentId,
-                  items: filteredApts
-                      .map(
-                        (a) => DropdownMenuItem(
-                          value: a.id,
-                          child: Text('شقة ${a.apartmentNumber}'),
+                if (_checkInDate != null && _checkOutDate != null) {
+                  filteredApts = filteredApts.where((a) {
+                    if (a.id == _selectedApartmentId) return true;
+                    return !_occupiedApartmentIds.contains(a.id);
+                  }).toList();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppDropdownField<String>(
+                      label: 'اختر الشقة',
+                      prefixIcon: Icons.door_front_door_outlined,
+                      initialValue: _selectedApartmentId,
+                      items: filteredApts
+                          .map(
+                            (a) => DropdownMenuItem(
+                              value: a.id,
+                              child: Text('شقة ${a.apartmentNumber}'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedApartmentId = v),
+                      validator: (v) => v == null ? 'مطلوب' : null,
+                    ),
+                    if (_checkInDate == null || _checkOutDate == null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, right: 12),
+                        child: Text(
+                          'اختر تاريخ الدخول والخروج لعرض الشقق المتاحة فقط',
+                          style: AppTextStyles.bodyS.copyWith(
+                            color: colors.ink2,
+                          ),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedApartmentId = v),
-                  validator: (v) => v == null ? 'مطلوب' : null,
+                      ),
+                  ],
                 );
               },
               loading: () => const SizedBox.shrink(),
