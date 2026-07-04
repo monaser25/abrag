@@ -25,7 +25,7 @@ class _RootScreenState extends ConsumerState<RootScreen> {
     // Trigger sync automatically when root screen mounts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationService.registerCurrentDevice();
-      ref.read(syncControllerProvider.notifier).syncData();
+      ref.read(syncControllerProvider.notifier).syncData(silent: true);
     });
   }
 

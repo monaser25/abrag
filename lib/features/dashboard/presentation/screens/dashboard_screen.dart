@@ -51,7 +51,7 @@ class DashboardScreen extends ConsumerWidget {
         error: (error, _) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Sync failed: $error'),
+              content: const Text('فشلت المزامنة، تأكد من اتصال الإنترنت'),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -160,13 +160,17 @@ class DashboardScreen extends ConsumerWidget {
                       if (syncState.isLoading)
                         SpinningIcon(size: 13, color: colors.brand)
                       else
-                        Icon(Icons.check_circle_outline,
-                            size: 13, color: colors.ok),
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 13,
+                          color: colors.ok,
+                        ),
                       const SizedBox(width: 5),
                       Text(
                         syncState.isLoading ? 'جارٍ المزامنة' : 'تمت المزامنة',
-                        style: AppTextStyles.caption
-                            .copyWith(color: colors.ink3),
+                        style: AppTextStyles.caption.copyWith(
+                          color: colors.ink3,
+                        ),
                       ),
                     ],
                   ),

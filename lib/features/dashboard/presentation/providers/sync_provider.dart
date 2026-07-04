@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/sync/sync_engine.dart';
@@ -30,9 +31,9 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
   bool _isSyncing = false;
 
   SyncController(this._syncEngine, this._ref) : super(const AsyncData(null)) {
-    syncData();
+    syncData(silent: true);
     _periodicSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (mounted) syncData();
+      if (mounted) syncData(silent: true);
     });
     _initRealtime();
   }
@@ -72,7 +73,7 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
             _realtimeDebounceTimer?.cancel();
             _realtimeDebounceTimer = Timer(const Duration(seconds: 2), () {
               if (mounted) {
-                syncData();
+                syncData(silent: true);
               }
             });
           },
@@ -88,18 +89,22 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
     super.dispose();
   }
 
-  Future<void> syncData() async {
+  Future<void> syncData({bool silent = false}) async {
     if (_isSyncing) return;
     _isSyncing = true;
-    state = const AsyncLoading();
+    if (!silent) state = const AsyncLoading();
     try {
       final previousSync = _ref.read(lastSuccessfulSyncProvider);
       await _syncEngine.syncAll();
       await _notifyNewRemoteActivity(previousSync ?? _startedAt);
       _ref.read(lastSuccessfulSyncProvider.notifier).state = DateTime.now();
-      state = const AsyncData(null);
+      if (!silent) state = const AsyncData(null);
     } catch (e, st) {
-      state = AsyncError(e, st);
+      if (!silent) {
+        state = AsyncError(e, st);
+      } else {
+        debugPrint('Silent sync failed: $e');
+      }
     } finally {
       _isSyncing = false;
     }
