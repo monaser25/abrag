@@ -35,6 +35,7 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     required double totalPriceEgp,
     required double amountPaidEgp,
     required String paymentMethod,
+    Map<String, double> paymentBreakdown = const {},
     String? brokerId,
     String? brokerName,
     required String brokerCommissionType,
@@ -92,6 +93,26 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
               updatedAt: DateTime.now(),
             ),
           );
+
+      for (final entry in paymentBreakdown.entries) {
+        if (entry.value > 0) {
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: id,
+                  amountEgp: entry.value,
+                  paymentMethod: Value(entry.key),
+                  paymentDate: DateTime.now(),
+                  notes: const Value(null),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: DateTime.now(),
+                ),
+              );
+        }
+      }
+
       await _auditLog.log(
         action: 'create',
         entityType: 'summer_booking',
@@ -274,6 +295,71 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         oldValues: {'amountPaidEgp': booking.amountPaidEgp},
         newValues: {'amountPaidEgp': newAmountPaidEgp},
       );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> addBookingPayment({
+    required String bookingId,
+    required double amount,
+    required String paymentMethod,
+    String? notes,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await _db.transaction(() async {
+        final booking = await (_db.select(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(bookingId))).getSingle();
+        final newAmountPaidEgp = booking.amountPaidEgp + amount;
+        if (newAmountPaidEgp > booking.totalPriceEgp) {
+          throw Exception('المدفوع لا يمكن أن يكون أكبر من إجمالي الحجز');
+        }
+
+        String newStatus = booking.status;
+        if (newStatus == 'pending' && newAmountPaidEgp > 0) {
+          newStatus = 'confirmed';
+        }
+
+        await _db
+            .into(_db.bookingPayments)
+            .insert(
+              BookingPaymentsCompanion.insert(
+                id: const Uuid().v4(),
+                bookingId: bookingId,
+                amountEgp: amount,
+                paymentMethod: Value(paymentMethod),
+                paymentDate: DateTime.now(),
+                notes: Value(notes),
+                syncStatus: const Value(SyncStatus.pendingInsert),
+                createdAt: DateTime.now(),
+              ),
+            );
+
+        await (_db.update(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(bookingId))).write(
+          SummerBookingsCompanion(
+            amountPaidEgp: Value(newAmountPaidEgp),
+            status: Value(newStatus),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+
+        await _auditLog.log(
+          action: 'payment',
+          entityType: 'summer_booking',
+          entityId: bookingId,
+          title: 'تسديد حجز صيفي',
+          description: 'تم تسديد $amount ج.م',
+          route: '/summer_bookings/details/$bookingId',
+          oldValues: {'amountPaidEgp': booking.amountPaidEgp},
+          newValues: {'amountPaidEgp': newAmountPaidEgp},
+        );
+      });
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

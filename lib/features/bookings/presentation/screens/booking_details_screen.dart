@@ -104,50 +104,54 @@ class BookingDetailsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             children: [
               if (remainingAmount > 0) ...[
-                Builder(builder: (context) {
-                  final colors = context.colors;
-                  return AppCard(
-                    color: Color.alphaBlend(colors.errSoft, colors.surface),
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Icon(Icons.warning_amber, color: colors.err),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'العميل عليه باقي فلوس',
-                                style: AppTextStyles.title
-                                    .copyWith(color: colors.err),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'المتبقي ${remainingAmount.toCurrencyFormat()} ج.م. الرجاء تسديدها قبل التسليم.',
-                                style: AppTextStyles.bodyS
-                                    .copyWith(color: colors.ink2),
-                              ),
-                            ],
+                Builder(
+                  builder: (context) {
+                    final colors = context.colors;
+                    return AppCard(
+                      color: Color.alphaBlend(colors.errSoft, colors.surface),
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber, color: colors.err),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'العميل عليه باقي فلوس',
+                                  style: AppTextStyles.title.copyWith(
+                                    color: colors.err,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'المتبقي ${remainingAmount.toCurrencyFormat()} ج.م. الرجاء تسديدها قبل التسليم.',
+                                  style: AppTextStyles.bodyS.copyWith(
+                                    color: colors.ink2,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        AppButton(
-                          label: 'تسديد',
-                          small: true,
-                          onPressed: () => _showPaymentSheet(
-                            context,
-                            ref,
-                            bookingId: booking.id,
-                            currentPaid: booking.amountPaidEgp,
-                            remainingAmount: remainingAmount.toDouble(),
-                            totalAmount: baseBookingTotal.toDouble(),
+                          const SizedBox(width: 8),
+                          AppButton(
+                            label: 'تسديد',
+                            small: true,
+                            onPressed: () => _showPaymentSheet(
+                              context,
+                              ref,
+                              bookingId: booking.id,
+                              currentPaid: booking.amountPaidEgp,
+                              remainingAmount: remainingAmount.toDouble(),
+                              totalAmount: baseBookingTotal.toDouble(),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                        ],
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 16),
               ],
               _buildSection(
@@ -289,6 +293,46 @@ class BookingDetailsScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              ref
+                  .watch(bookingPaymentsProvider(booking.id))
+                  .when(
+                    data: (payments) {
+                      return _buildSection(
+                        context,
+                        title: 'تفاصيل الدفعات',
+                        icon: Icons.payments_outlined,
+                        children: payments.isEmpty
+                            ? [
+                                Text(
+                                  'لا توجد دفعات مسجلة',
+                                  style: AppTextStyles.bodyS.copyWith(
+                                    color: context.colors.ink2,
+                                  ),
+                                ),
+                              ]
+                            : payments.map((p) {
+                                final methodLabel = p.paymentMethod == 'cash'
+                                    ? 'نقدي'
+                                    : p.paymentMethod == 'instapay'
+                                    ? 'إنستاباي'
+                                    : 'فودافون كاش';
+                                final dateStr = DateFormat(
+                                  'yyyy-MM-dd',
+                                  'ar',
+                                ).format(p.paymentDate);
+                                return _buildDetailRow(
+                                  context,
+                                  '$methodLabel - $dateStr',
+                                  '${p.amountEgp.toCurrencyFormat()} ج.م',
+                                );
+                              }).toList(),
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, st) => const SizedBox.shrink(),
+                  ),
               const SizedBox(height: 16),
               _buildSection(
                 context,
@@ -641,74 +685,95 @@ class BookingDetailsScreen extends ConsumerWidget {
     final controller = TextEditingController(
       text: remainingAmount.toStringAsFixed(0),
     );
+    String selectedMethod = 'cash';
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'تسديد باقي الحجز',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            Text('المتبقي: ${remainingAmount.toCurrencyFormat()} ج.م'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              textDirection: TextDirection.ltr,
-              inputFormatters: const [ArabicDigitsInputFormatter()],
-              decoration: const InputDecoration(
-                labelText: 'المبلغ اللي هيتسدد الآن',
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'تسديد باقي الحجز',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      controller.text = remainingAmount.toStringAsFixed(0);
-                    },
-                    child: const Text('تسديد الكل'),
-                  ),
+              const SizedBox(height: 12),
+              Text('المتبقي: ${remainingAmount.toCurrencyFormat()} ج.م'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                textDirection: TextDirection.ltr,
+                inputFormatters: const [ArabicDigitsInputFormatter()],
+                decoration: const InputDecoration(
+                  labelText: 'المبلغ اللي هيتسدد الآن',
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () {
-                      final paidNow =
-                          double.tryParse(
-                            controller.text.replaceAll(',', '').trim(),
-                          ) ??
-                          0;
-                      final nextPaid = (currentPaid + paidNow).clamp(
-                        0,
-                        totalAmount,
-                      );
-                      ref
-                          .read(bookingsControllerProvider.notifier)
-                          .updateBookingPayment(
-                            id: bookingId,
-                            newAmountPaidEgp: nextPaid.toDouble(),
-                          );
-                      Navigator.pop(sheetContext);
-                    },
-                    child: const Text('حفظ التسديد'),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'طريقة الدفع',
+                style: AppTextStyles.label.copyWith(color: context.colors.ink2),
+              ),
+              const SizedBox(height: 8),
+              SegmentedTabs(
+                labels: const ['نقدي', 'فودافون كاش', 'إنستاباي'],
+                index: selectedMethod == 'vodafone_cash'
+                    ? 1
+                    : selectedMethod == 'instapay'
+                    ? 2
+                    : 0,
+                onChanged: (i) => setState(() {
+                  selectedMethod = const [
+                    'cash',
+                    'vodafone_cash',
+                    'instapay',
+                  ][i];
+                }),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        controller.text = remainingAmount.toStringAsFixed(0);
+                      },
+                      child: const Text('تسديد الكل'),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        final paidNow =
+                            double.tryParse(
+                              controller.text.replaceAll(',', '').trim(),
+                            ) ??
+                            0;
+                        ref
+                            .read(bookingsControllerProvider.notifier)
+                            .addBookingPayment(
+                              bookingId: bookingId,
+                              amount: paidNow,
+                              paymentMethod: selectedMethod,
+                            );
+                        Navigator.pop(sheetContext);
+                      },
+                      child: const Text('حفظ التسديد'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -729,10 +794,7 @@ class BookingDetailsScreen extends ConsumerWidget {
             children: [
               IconTile(icon: icon, tint: colors.brand, size: 34, iconSize: 17),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: AppTextStyles.h3.copyWith(color: colors.ink),
-              ),
+              Text(title, style: AppTextStyles.h3.copyWith(color: colors.ink)),
             ],
           ),
           const Divider(height: 24),
@@ -769,9 +831,10 @@ class BookingDetailsScreen extends ConsumerWidget {
               style: AppTextStyles.tabular(
                 (isHighlight ? AppTextStyles.title : AppTextStyles.body)
                     .copyWith(
-                  color: valueColor ??
-                      (isHighlight ? colors.accent : colors.ink),
-                ),
+                      color:
+                          valueColor ??
+                          (isHighlight ? colors.accent : colors.ink),
+                    ),
               ),
               textAlign: TextAlign.end,
             ),

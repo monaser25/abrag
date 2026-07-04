@@ -38,3 +38,20 @@ final summerBookingsProvider = StreamProvider<List<SummerBooking>>((ref) {
     return filtered;
   });
 });
+
+final bookingPaymentsProvider =
+    StreamProvider.family<List<BookingPayment>, String>((ref, bookingId) {
+      final db = ref.watch(databaseProvider);
+      return (db.select(
+        db.bookingPayments,
+      )..where((t) => t.bookingId.equals(bookingId))).watch().map((payments) {
+        final filtered =
+            payments
+                .where(
+                  (payment) => payment.syncStatus != SyncStatus.pendingDelete,
+                )
+                .toList()
+              ..sort((a, b) => a.paymentDate.compareTo(b.paymentDate));
+        return filtered;
+      });
+    });
