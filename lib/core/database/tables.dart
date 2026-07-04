@@ -139,6 +139,20 @@ class WinterPayments extends Table with SyncableTable {
   Set<Column> get primaryKey => {id};
 }
 
+class BookingPayments extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get bookingId => text().references(SummerBookings, #id)();
+  RealColumn get amountEgp => real()();
+  TextColumn get paymentMethod =>
+      text().withDefault(const Constant('cash'))(); // cash, vodafone_cash, instapay
+  DateTimeColumn get paymentDate => dateTime()();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 class MeterReadings extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get apartmentId => text().nullable().references(Apartments, #id)();

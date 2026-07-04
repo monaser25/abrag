@@ -26,6 +26,7 @@ part 'database.g.dart';
     ApartmentInspections,
     MaintenanceRequests,
     AuditLogs,
+    BookingPayments,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -33,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration {
@@ -213,6 +214,13 @@ class AppDatabase extends _$AppDatabase {
         if (from < 21) {
           try {
             await m.addColumn(technicians, technicians.secondaryPhone);
+          } catch (_) {
+            // Ignore if this legacy migration was already applied.
+          }
+        }
+        if (from < 22) {
+          try {
+            await m.createTable(bookingPayments);
           } catch (_) {
             // Ignore if this legacy migration was already applied.
           }

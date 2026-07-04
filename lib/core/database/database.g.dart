@@ -12199,6 +12199,589 @@ class AuditLogsCompanion extends UpdateCompanion<AuditLog> {
   }
 }
 
+class $BookingPaymentsTable extends BookingPayments
+    with TableInfo<$BookingPaymentsTable, BookingPayment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BookingPaymentsTable(this.attachedDatabase, [this._alias]);
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, int> syncStatus =
+      GeneratedColumn<int>(
+        'sync_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<SyncStatus>($BookingPaymentsTable.$convertersyncStatus);
+  static const VerificationMeta _lastModifiedLocalMeta = const VerificationMeta(
+    'lastModifiedLocal',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastModifiedLocal =
+      GeneratedColumn<DateTime>(
+        'last_modified_local',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: currentDateAndTime,
+      );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bookingIdMeta = const VerificationMeta(
+    'bookingId',
+  );
+  @override
+  late final GeneratedColumn<String> bookingId = GeneratedColumn<String>(
+    'booking_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES summer_bookings (id)',
+    ),
+  );
+  static const VerificationMeta _amountEgpMeta = const VerificationMeta(
+    'amountEgp',
+  );
+  @override
+  late final GeneratedColumn<double> amountEgp = GeneratedColumn<double>(
+    'amount_egp',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
+    'paymentMethod',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('cash'),
+  );
+  static const VerificationMeta _paymentDateMeta = const VerificationMeta(
+    'paymentDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> paymentDate = GeneratedColumn<DateTime>(
+    'payment_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    bookingId,
+    amountEgp,
+    paymentMethod,
+    paymentDate,
+    notes,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'booking_payments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BookingPayment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('last_modified_local')) {
+      context.handle(
+        _lastModifiedLocalMeta,
+        lastModifiedLocal.isAcceptableOrUnknown(
+          data['last_modified_local']!,
+          _lastModifiedLocalMeta,
+        ),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('booking_id')) {
+      context.handle(
+        _bookingIdMeta,
+        bookingId.isAcceptableOrUnknown(data['booking_id']!, _bookingIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookingIdMeta);
+    }
+    if (data.containsKey('amount_egp')) {
+      context.handle(
+        _amountEgpMeta,
+        amountEgp.isAcceptableOrUnknown(data['amount_egp']!, _amountEgpMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountEgpMeta);
+    }
+    if (data.containsKey('payment_method')) {
+      context.handle(
+        _paymentMethodMeta,
+        paymentMethod.isAcceptableOrUnknown(
+          data['payment_method']!,
+          _paymentMethodMeta,
+        ),
+      );
+    }
+    if (data.containsKey('payment_date')) {
+      context.handle(
+        _paymentDateMeta,
+        paymentDate.isAcceptableOrUnknown(
+          data['payment_date']!,
+          _paymentDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_paymentDateMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BookingPayment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BookingPayment(
+      syncStatus: $BookingPaymentsTable.$convertersyncStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}sync_status'],
+        )!,
+      ),
+      lastModifiedLocal: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_modified_local'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      bookingId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}booking_id'],
+      )!,
+      amountEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount_egp'],
+      )!,
+      paymentMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_method'],
+      )!,
+      paymentDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}payment_date'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BookingPaymentsTable createAlias(String alias) {
+    return $BookingPaymentsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<SyncStatus, int, int> $convertersyncStatus =
+      const EnumIndexConverter<SyncStatus>(SyncStatus.values);
+}
+
+class BookingPayment extends DataClass implements Insertable<BookingPayment> {
+  final SyncStatus syncStatus;
+  final DateTime lastModifiedLocal;
+  final String id;
+  final String bookingId;
+  final double amountEgp;
+  final String paymentMethod;
+  final DateTime paymentDate;
+  final String? notes;
+  final DateTime createdAt;
+  const BookingPayment({
+    required this.syncStatus,
+    required this.lastModifiedLocal,
+    required this.id,
+    required this.bookingId,
+    required this.amountEgp,
+    required this.paymentMethod,
+    required this.paymentDate,
+    this.notes,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    {
+      map['sync_status'] = Variable<int>(
+        $BookingPaymentsTable.$convertersyncStatus.toSql(syncStatus),
+      );
+    }
+    map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal);
+    map['id'] = Variable<String>(id);
+    map['booking_id'] = Variable<String>(bookingId);
+    map['amount_egp'] = Variable<double>(amountEgp);
+    map['payment_method'] = Variable<String>(paymentMethod);
+    map['payment_date'] = Variable<DateTime>(paymentDate);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  BookingPaymentsCompanion toCompanion(bool nullToAbsent) {
+    return BookingPaymentsCompanion(
+      syncStatus: Value(syncStatus),
+      lastModifiedLocal: Value(lastModifiedLocal),
+      id: Value(id),
+      bookingId: Value(bookingId),
+      amountEgp: Value(amountEgp),
+      paymentMethod: Value(paymentMethod),
+      paymentDate: Value(paymentDate),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory BookingPayment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BookingPayment(
+      syncStatus: $BookingPaymentsTable.$convertersyncStatus.fromJson(
+        serializer.fromJson<int>(json['syncStatus']),
+      ),
+      lastModifiedLocal: serializer.fromJson<DateTime>(
+        json['lastModifiedLocal'],
+      ),
+      id: serializer.fromJson<String>(json['id']),
+      bookingId: serializer.fromJson<String>(json['bookingId']),
+      amountEgp: serializer.fromJson<double>(json['amountEgp']),
+      paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
+      paymentDate: serializer.fromJson<DateTime>(json['paymentDate']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncStatus': serializer.toJson<int>(
+        $BookingPaymentsTable.$convertersyncStatus.toJson(syncStatus),
+      ),
+      'lastModifiedLocal': serializer.toJson<DateTime>(lastModifiedLocal),
+      'id': serializer.toJson<String>(id),
+      'bookingId': serializer.toJson<String>(bookingId),
+      'amountEgp': serializer.toJson<double>(amountEgp),
+      'paymentMethod': serializer.toJson<String>(paymentMethod),
+      'paymentDate': serializer.toJson<DateTime>(paymentDate),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  BookingPayment copyWith({
+    SyncStatus? syncStatus,
+    DateTime? lastModifiedLocal,
+    String? id,
+    String? bookingId,
+    double? amountEgp,
+    String? paymentMethod,
+    DateTime? paymentDate,
+    Value<String?> notes = const Value.absent(),
+    DateTime? createdAt,
+  }) => BookingPayment(
+    syncStatus: syncStatus ?? this.syncStatus,
+    lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+    id: id ?? this.id,
+    bookingId: bookingId ?? this.bookingId,
+    amountEgp: amountEgp ?? this.amountEgp,
+    paymentMethod: paymentMethod ?? this.paymentMethod,
+    paymentDate: paymentDate ?? this.paymentDate,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  BookingPayment copyWithCompanion(BookingPaymentsCompanion data) {
+    return BookingPayment(
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      lastModifiedLocal: data.lastModifiedLocal.present
+          ? data.lastModifiedLocal.value
+          : this.lastModifiedLocal,
+      id: data.id.present ? data.id.value : this.id,
+      bookingId: data.bookingId.present ? data.bookingId.value : this.bookingId,
+      amountEgp: data.amountEgp.present ? data.amountEgp.value : this.amountEgp,
+      paymentMethod: data.paymentMethod.present
+          ? data.paymentMethod.value
+          : this.paymentMethod,
+      paymentDate: data.paymentDate.present
+          ? data.paymentDate.value
+          : this.paymentDate,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookingPayment(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('bookingId: $bookingId, ')
+          ..write('amountEgp: $amountEgp, ')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('paymentDate: $paymentDate, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncStatus,
+    lastModifiedLocal,
+    id,
+    bookingId,
+    amountEgp,
+    paymentMethod,
+    paymentDate,
+    notes,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BookingPayment &&
+          other.syncStatus == this.syncStatus &&
+          other.lastModifiedLocal == this.lastModifiedLocal &&
+          other.id == this.id &&
+          other.bookingId == this.bookingId &&
+          other.amountEgp == this.amountEgp &&
+          other.paymentMethod == this.paymentMethod &&
+          other.paymentDate == this.paymentDate &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt);
+}
+
+class BookingPaymentsCompanion extends UpdateCompanion<BookingPayment> {
+  final Value<SyncStatus> syncStatus;
+  final Value<DateTime> lastModifiedLocal;
+  final Value<String> id;
+  final Value<String> bookingId;
+  final Value<double> amountEgp;
+  final Value<String> paymentMethod;
+  final Value<DateTime> paymentDate;
+  final Value<String?> notes;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const BookingPaymentsCompanion({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    this.id = const Value.absent(),
+    this.bookingId = const Value.absent(),
+    this.amountEgp = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
+    this.paymentDate = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BookingPaymentsCompanion.insert({
+    this.syncStatus = const Value.absent(),
+    this.lastModifiedLocal = const Value.absent(),
+    required String id,
+    required String bookingId,
+    required double amountEgp,
+    this.paymentMethod = const Value.absent(),
+    required DateTime paymentDate,
+    this.notes = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       bookingId = Value(bookingId),
+       amountEgp = Value(amountEgp),
+       paymentDate = Value(paymentDate),
+       createdAt = Value(createdAt);
+  static Insertable<BookingPayment> custom({
+    Expression<int>? syncStatus,
+    Expression<DateTime>? lastModifiedLocal,
+    Expression<String>? id,
+    Expression<String>? bookingId,
+    Expression<double>? amountEgp,
+    Expression<String>? paymentMethod,
+    Expression<DateTime>? paymentDate,
+    Expression<String>? notes,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (lastModifiedLocal != null) 'last_modified_local': lastModifiedLocal,
+      if (id != null) 'id': id,
+      if (bookingId != null) 'booking_id': bookingId,
+      if (amountEgp != null) 'amount_egp': amountEgp,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (paymentDate != null) 'payment_date': paymentDate,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BookingPaymentsCompanion copyWith({
+    Value<SyncStatus>? syncStatus,
+    Value<DateTime>? lastModifiedLocal,
+    Value<String>? id,
+    Value<String>? bookingId,
+    Value<double>? amountEgp,
+    Value<String>? paymentMethod,
+    Value<DateTime>? paymentDate,
+    Value<String?>? notes,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return BookingPaymentsCompanion(
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastModifiedLocal: lastModifiedLocal ?? this.lastModifiedLocal,
+      id: id ?? this.id,
+      bookingId: bookingId ?? this.bookingId,
+      amountEgp: amountEgp ?? this.amountEgp,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentDate: paymentDate ?? this.paymentDate,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<int>(
+        $BookingPaymentsTable.$convertersyncStatus.toSql(syncStatus.value),
+      );
+    }
+    if (lastModifiedLocal.present) {
+      map['last_modified_local'] = Variable<DateTime>(lastModifiedLocal.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (bookingId.present) {
+      map['booking_id'] = Variable<String>(bookingId.value);
+    }
+    if (amountEgp.present) {
+      map['amount_egp'] = Variable<double>(amountEgp.value);
+    }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(paymentMethod.value);
+    }
+    if (paymentDate.present) {
+      map['payment_date'] = Variable<DateTime>(paymentDate.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookingPaymentsCompanion(')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('lastModifiedLocal: $lastModifiedLocal, ')
+          ..write('id: $id, ')
+          ..write('bookingId: $bookingId, ')
+          ..write('amountEgp: $amountEgp, ')
+          ..write('paymentMethod: $paymentMethod, ')
+          ..write('paymentDate: $paymentDate, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -12225,6 +12808,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MaintenanceRequestsTable maintenanceRequests =
       $MaintenanceRequestsTable(this);
   late final $AuditLogsTable auditLogs = $AuditLogsTable(this);
+  late final $BookingPaymentsTable bookingPayments = $BookingPaymentsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -12245,6 +12831,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     apartmentInspections,
     maintenanceRequests,
     auditLogs,
+    bookingPayments,
   ];
 }
 
@@ -14341,6 +14928,29 @@ final class $$SummerBookingsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<$BookingPaymentsTable, List<BookingPayment>>
+  _bookingPaymentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.bookingPayments,
+    aliasName: $_aliasNameGenerator(
+      db.summerBookings.id,
+      db.bookingPayments.bookingId,
+    ),
+  );
+
+  $$BookingPaymentsTableProcessedTableManager get bookingPaymentsRefs {
+    final manager = $$BookingPaymentsTableTableManager(
+      $_db,
+      $_db.bookingPayments,
+    ).filter((f) => f.bookingId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _bookingPaymentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$SummerBookingsTableFilterComposer
@@ -14499,6 +15109,31 @@ class $$SummerBookingsTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> bookingPaymentsRefs(
+    Expression<bool> Function($$BookingPaymentsTableFilterComposer f) f,
+  ) {
+    final $$BookingPaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bookingPayments,
+      getReferencedColumn: (t) => t.bookingId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BookingPaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.bookingPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -14805,6 +15440,31 @@ class $$SummerBookingsTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> bookingPaymentsRefs<T extends Object>(
+    Expression<T> Function($$BookingPaymentsTableAnnotationComposer a) f,
+  ) {
+    final $$BookingPaymentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bookingPayments,
+      getReferencedColumn: (t) => t.bookingId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BookingPaymentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.bookingPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SummerBookingsTableTableManager
@@ -14820,7 +15480,7 @@ class $$SummerBookingsTableTableManager
           $$SummerBookingsTableUpdateCompanionBuilder,
           (SummerBooking, $$SummerBookingsTableReferences),
           SummerBooking,
-          PrefetchHooks Function({bool apartmentId})
+          PrefetchHooks Function({bool apartmentId, bool bookingPaymentsRefs})
         > {
   $$SummerBookingsTableTableManager(
     _$AppDatabase db,
@@ -14959,48 +15619,74 @@ class $$SummerBookingsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({apartmentId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (apartmentId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.apartmentId,
-                                referencedTable: $$SummerBookingsTableReferences
-                                    ._apartmentIdTable(db),
-                                referencedColumn:
-                                    $$SummerBookingsTableReferences
-                                        ._apartmentIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({apartmentId = false, bookingPaymentsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (bookingPaymentsRefs) db.bookingPayments,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (apartmentId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.apartmentId,
+                                    referencedTable:
+                                        $$SummerBookingsTableReferences
+                                            ._apartmentIdTable(db),
+                                    referencedColumn:
+                                        $$SummerBookingsTableReferences
+                                            ._apartmentIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (bookingPaymentsRefs)
+                        await $_getPrefetchedData<
+                          SummerBooking,
+                          $SummerBookingsTable,
+                          BookingPayment
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SummerBookingsTableReferences
+                              ._bookingPaymentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SummerBookingsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).bookingPaymentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.bookingId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -15017,7 +15703,7 @@ typedef $$SummerBookingsTableProcessedTableManager =
       $$SummerBookingsTableUpdateCompanionBuilder,
       (SummerBooking, $$SummerBookingsTableReferences),
       SummerBooking,
-      PrefetchHooks Function({bool apartmentId})
+      PrefetchHooks Function({bool apartmentId, bool bookingPaymentsRefs})
     >;
 typedef $$WinterContractsTableCreateCompanionBuilder =
     WinterContractsCompanion Function({
@@ -20534,6 +21220,423 @@ typedef $$AuditLogsTableProcessedTableManager =
       AuditLog,
       PrefetchHooks Function()
     >;
+typedef $$BookingPaymentsTableCreateCompanionBuilder =
+    BookingPaymentsCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      required String id,
+      required String bookingId,
+      required double amountEgp,
+      Value<String> paymentMethod,
+      required DateTime paymentDate,
+      Value<String?> notes,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$BookingPaymentsTableUpdateCompanionBuilder =
+    BookingPaymentsCompanion Function({
+      Value<SyncStatus> syncStatus,
+      Value<DateTime> lastModifiedLocal,
+      Value<String> id,
+      Value<String> bookingId,
+      Value<double> amountEgp,
+      Value<String> paymentMethod,
+      Value<DateTime> paymentDate,
+      Value<String?> notes,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$BookingPaymentsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $BookingPaymentsTable, BookingPayment> {
+  $$BookingPaymentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SummerBookingsTable _bookingIdTable(_$AppDatabase db) =>
+      db.summerBookings.createAlias(
+        $_aliasNameGenerator(
+          db.bookingPayments.bookingId,
+          db.summerBookings.id,
+        ),
+      );
+
+  $$SummerBookingsTableProcessedTableManager get bookingId {
+    final $_column = $_itemColumn<String>('booking_id')!;
+
+    final manager = $$SummerBookingsTableTableManager(
+      $_db,
+      $_db.summerBookings,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bookingIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$BookingPaymentsTableFilterComposer
+    extends Composer<_$AppDatabase, $BookingPaymentsTable> {
+  $$BookingPaymentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<SyncStatus, SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amountEgp => $composableBuilder(
+    column: $table.amountEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SummerBookingsTableFilterComposer get bookingId {
+    final $$SummerBookingsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookingId,
+      referencedTable: $db.summerBookings,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SummerBookingsTableFilterComposer(
+            $db: $db,
+            $table: $db.summerBookings,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BookingPaymentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BookingPaymentsTable> {
+  $$BookingPaymentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amountEgp => $composableBuilder(
+    column: $table.amountEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SummerBookingsTableOrderingComposer get bookingId {
+    final $$SummerBookingsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookingId,
+      referencedTable: $db.summerBookings,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SummerBookingsTableOrderingComposer(
+            $db: $db,
+            $table: $db.summerBookings,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BookingPaymentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BookingPaymentsTable> {
+  $$BookingPaymentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<SyncStatus, int> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get lastModifiedLocal => $composableBuilder(
+    column: $table.lastModifiedLocal,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get amountEgp =>
+      $composableBuilder(column: $table.amountEgp, builder: (column) => column);
+
+  GeneratedColumn<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get paymentDate => $composableBuilder(
+    column: $table.paymentDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$SummerBookingsTableAnnotationComposer get bookingId {
+    final $$SummerBookingsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bookingId,
+      referencedTable: $db.summerBookings,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SummerBookingsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.summerBookings,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$BookingPaymentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BookingPaymentsTable,
+          BookingPayment,
+          $$BookingPaymentsTableFilterComposer,
+          $$BookingPaymentsTableOrderingComposer,
+          $$BookingPaymentsTableAnnotationComposer,
+          $$BookingPaymentsTableCreateCompanionBuilder,
+          $$BookingPaymentsTableUpdateCompanionBuilder,
+          (BookingPayment, $$BookingPaymentsTableReferences),
+          BookingPayment,
+          PrefetchHooks Function({bool bookingId})
+        > {
+  $$BookingPaymentsTableTableManager(
+    _$AppDatabase db,
+    $BookingPaymentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BookingPaymentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BookingPaymentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BookingPaymentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> bookingId = const Value.absent(),
+                Value<double> amountEgp = const Value.absent(),
+                Value<String> paymentMethod = const Value.absent(),
+                Value<DateTime> paymentDate = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BookingPaymentsCompanion(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                bookingId: bookingId,
+                amountEgp: amountEgp,
+                paymentMethod: paymentMethod,
+                paymentDate: paymentDate,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                Value<SyncStatus> syncStatus = const Value.absent(),
+                Value<DateTime> lastModifiedLocal = const Value.absent(),
+                required String id,
+                required String bookingId,
+                required double amountEgp,
+                Value<String> paymentMethod = const Value.absent(),
+                required DateTime paymentDate,
+                Value<String?> notes = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => BookingPaymentsCompanion.insert(
+                syncStatus: syncStatus,
+                lastModifiedLocal: lastModifiedLocal,
+                id: id,
+                bookingId: bookingId,
+                amountEgp: amountEgp,
+                paymentMethod: paymentMethod,
+                paymentDate: paymentDate,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$BookingPaymentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({bookingId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (bookingId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.bookingId,
+                                referencedTable:
+                                    $$BookingPaymentsTableReferences
+                                        ._bookingIdTable(db),
+                                referencedColumn:
+                                    $$BookingPaymentsTableReferences
+                                        ._bookingIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$BookingPaymentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BookingPaymentsTable,
+      BookingPayment,
+      $$BookingPaymentsTableFilterComposer,
+      $$BookingPaymentsTableOrderingComposer,
+      $$BookingPaymentsTableAnnotationComposer,
+      $$BookingPaymentsTableCreateCompanionBuilder,
+      $$BookingPaymentsTableUpdateCompanionBuilder,
+      (BookingPayment, $$BookingPaymentsTableReferences),
+      BookingPayment,
+      PrefetchHooks Function({bool bookingId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -20568,4 +21671,6 @@ class $AppDatabaseManager {
       $$MaintenanceRequestsTableTableManager(_db, _db.maintenanceRequests);
   $$AuditLogsTableTableManager get auditLogs =>
       $$AuditLogsTableTableManager(_db, _db.auditLogs);
+  $$BookingPaymentsTableTableManager get bookingPayments =>
+      $$BookingPaymentsTableTableManager(_db, _db.bookingPayments);
 }
