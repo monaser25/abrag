@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../users/presentation/providers/users_provider.dart';
 
 const kAppPermissions = {
   'view_dashboard': 'رؤية لوحة التحكم',
@@ -11,6 +13,7 @@ const kAppPermissions = {
   'manage_apartments': 'إضافة وتعديل الشقق والمباني والجرد',
   'manage_cleaning_status': 'تعديل حالة النظافة للشقق',
   'manage_bookings': 'إضافة وإدارة الحجوزات الصيفي',
+  'view_bookings': 'رؤية الحجوزات الصيفي (قراءة فقط)',
   'manage_contracts': 'إضافة وإدارة عقود الشتوي',
   'view_contract_documents': 'رؤية صور العقود والبطاقات',
   'checkout_winter': 'تسليم واستلام الشقق',
@@ -71,6 +74,7 @@ const kDefaultRoleTemplates = {
     'view_reports',
     'view_brokers',
     'view_maintenance',
+    'view_bookings',
   ],
 };
 
@@ -199,3 +203,36 @@ class RolesConfigController {
 final rolesConfigControllerProvider = Provider(
   (ref) => RolesConfigController(ref),
 );
+
+/// The set of permission IDs that the current user has, based on their
+/// assigned permission-template. Mirrors the inline `hasPerm` logic in
+/// dashboard_screen.dart:
+///   - base-role 'admin'  → all permissions
+///   - template assigned  → that template's permission set
+///   - no template / not signed in → empty set
+final currentUserPermissionsProvider = Provider<Set<String>>((ref) {
+  final role = ref.watch(currentUserRoleProvider).value;
+  if (role == 'admin') return kAppPermissions.keys.toSet();
+
+  final userId = ref.watch(authStateProvider).value?.session?.user.id;
+  if (userId == null) return const {};
+
+  final rolesConfig = ref.watch(rolesConfigProvider);
+  final templateName = rolesConfig.userRoles[userId];
+  if (templateName == null) return const {};
+
+  final perms = rolesConfig.roleTemplates[templateName] ?? [];
+  return perms.toSet();
+});
+
+/// `true` when the current user may create/edit/delete summer bookings.
+final canManageBookingsProvider = Provider<bool>((ref) {
+  return ref.watch(currentUserPermissionsProvider).contains('manage_bookings');
+});
+
+/// `true` when the current user may at least VIEW summer bookings
+/// (either manage_bookings OR view_bookings is in their permission set).
+final canViewBookingsProvider = Provider<bool>((ref) {
+  final perms = ref.watch(currentUserPermissionsProvider);
+  return perms.contains('manage_bookings') || perms.contains('view_bookings');
+});

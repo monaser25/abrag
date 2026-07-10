@@ -29,6 +29,11 @@ class ViewerWebScreen extends ConsumerWidget {
             onPressed: () => context.push('/summer_bookings/calendar'),
           ),
           AppIconButton(
+            icon: Icons.list_alt,
+            tooltip: 'قائمة الحجوزات',
+            onPressed: () => context.push('/summer_bookings/list'),
+          ),
+          AppIconButton(
             icon: Icons.logout,
             onPressed: () {
               ref.read(loginControllerProvider.notifier).logout();
@@ -69,8 +74,7 @@ class ViewerWebScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.all(18),
                                 color: colors.winterSoft,
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       mainAxisAlignment:
@@ -81,22 +85,30 @@ class ViewerWebScreen extends ConsumerWidget {
                                           icon: Icons.ac_unit,
                                           label: 'عقد طالب',
                                         ),
-                                        Icon(Icons.ac_unit,
-                                            size: 22, color: colors.winter),
+                                        Icon(
+                                          Icons.ac_unit,
+                                          size: 22,
+                                          color: colors.winter,
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 14),
                                     Text(
                                       contract.studentName,
-                                      style: AppTextStyles.h2
-                                          .copyWith(color: colors.ink),
+                                      style: AppTextStyles.h2.copyWith(
+                                        color: colors.ink,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               Padding(
                                 padding: const EdgeInsetsDirectional.fromSTEB(
-                                    18, 4, 18, 14),
+                                  18,
+                                  4,
+                                  18,
+                                  14,
+                                ),
                                 child: Column(
                                   children: [
                                     DetailRow(
@@ -107,14 +119,12 @@ class ViewerWebScreen extends ConsumerWidget {
                                     const Divider(),
                                     DetailRow(
                                       label: 'الجامعة',
-                                      value:
-                                          contract.university ?? 'غير مسجل',
+                                      value: contract.university ?? 'غير مسجل',
                                     ),
                                     const Divider(),
                                     DetailRow(
                                       label: 'الإيجار الشهري',
-                                      value:
-                                          '${contract.monthlyRentEgp} ج.م',
+                                      value: '${contract.monthlyRentEgp} ج.م',
                                       strong: true,
                                     ),
                                   ],
@@ -130,13 +140,17 @@ class ViewerWebScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.visibility_outlined,
-                              size: 13, color: colors.ink3),
+                          Icon(
+                            Icons.visibility_outlined,
+                            size: 13,
+                            color: colors.ink3,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'عرض للقراءة فقط',
-                            style: AppTextStyles.caption
-                                .copyWith(color: colors.ink3),
+                            style: AppTextStyles.caption.copyWith(
+                              color: colors.ink3,
+                            ),
                           ),
                         ],
                       ),

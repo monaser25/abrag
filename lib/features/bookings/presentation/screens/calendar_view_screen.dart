@@ -10,6 +10,7 @@ import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
+import '../../../settings/presentation/providers/permissions_provider.dart';
 import '../providers/bookings_provider.dart';
 
 enum _CalendarFilter { all, occupied, upcomingCheckouts, upcoming, available }
@@ -65,6 +66,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     final activeSeason = ref.watch(activeSeasonKeyProvider);
     final theme = Theme.of(context);
     final monthFormatter = DateFormat('MMMM yyyy', 'ar');
+    final isViewer = !ref.watch(canManageBookingsProvider);
 
     return AppScaffold(
       appBar: AbragAppBar(
@@ -94,113 +96,111 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
               AppCard(
                 padding: const EdgeInsets.all(12),
                 child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => setState(() {
-                              _focusedDay = DateTime(
-                                _focusedDay.year,
-                                _focusedDay.month - 1,
-                              );
-                            }),
-                            icon: const Icon(Icons.chevron_right),
-                          ),
-                          Expanded(
-                            child: Text(
-                              monthFormatter.format(_focusedDay),
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => setState(() {
+                            _focusedDay = DateTime(
+                              _focusedDay.year,
+                              _focusedDay.month - 1,
+                            );
+                          }),
+                          icon: const Icon(Icons.chevron_right),
+                        ),
+                        Expanded(
+                          child: Text(
+                            monthFormatter.format(_focusedDay),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          IconButton(
-                            onPressed: () => setState(() {
-                              _focusedDay = DateTime(
-                                _focusedDay.year,
-                                _focusedDay.month + 1,
-                              );
-                            }),
-                            icon: const Icon(Icons.chevron_left),
-                          ),
-                        ],
+                        ),
+                        IconButton(
+                          onPressed: () => setState(() {
+                            _focusedDay = DateTime(
+                              _focusedDay.year,
+                              _focusedDay.month + 1,
+                            );
+                          }),
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                      ],
+                    ),
+                    TableCalendar<SummerBooking>(
+                      firstDay: DateTime.now().subtract(
+                        const Duration(days: 365),
                       ),
-                      TableCalendar<SummerBooking>(
-                        firstDay: DateTime.now().subtract(
-                          const Duration(days: 365),
-                        ),
-                        lastDay: DateTime.now().add(
-                          const Duration(days: 365 * 2),
-                        ),
-                        focusedDay: _focusedDay,
-                        selectedDayPredicate: (day) =>
-                            isSameDay(_selectedDay, day),
-                        onPageChanged: (focusedDay) {
+                      lastDay: DateTime.now().add(
+                        const Duration(days: 365 * 2),
+                      ),
+                      focusedDay: _focusedDay,
+                      selectedDayPredicate: (day) =>
+                          isSameDay(_selectedDay, day),
+                      onPageChanged: (focusedDay) {
+                        _focusedDay = focusedDay;
+                      },
+                      onDaySelected: (selectedDay, focusedDay) {
+                        setState(() {
+                          _selectedDay = selectedDay;
                           _focusedDay = focusedDay;
-                        },
-                        onDaySelected: (selectedDay, focusedDay) {
-                          setState(() {
-                            _selectedDay = selectedDay;
-                            _focusedDay = focusedDay;
-                          });
-                        },
-                        eventLoader: (day) => _eventsForDay(bookings, day),
-                        locale: 'ar',
-                        headerVisible: false,
-                        daysOfWeekHeight: 32,
-                        rowHeight: 58,
-                        calendarStyle: CalendarStyle(
-                          outsideDaysVisible: false,
-                          todayDecoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.18,
-                            ),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: theme.colorScheme.primary,
-                            ),
+                        });
+                      },
+                      eventLoader: (day) => _eventsForDay(bookings, day),
+                      locale: 'ar',
+                      headerVisible: false,
+                      daysOfWeekHeight: 32,
+                      rowHeight: 58,
+                      calendarStyle: CalendarStyle(
+                        outsideDaysVisible: false,
+                        todayDecoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.18,
                           ),
-                          selectedDecoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          markerDecoration: BoxDecoration(
-                            color: context.colors.summer,
-                            shape: BoxShape.circle,
-                          ),
-                          markersMaxCount: 3,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.colorScheme.primary),
                         ),
-                        calendarBuilders: CalendarBuilders(
-                          markerBuilder: (context, day, events) {
-                            if (events.isEmpty) return null;
-                            final hasCheckout = events.any(
-                              (booking) => _isCheckoutOnDay(booking, day),
-                            );
-                            final hasCheckIn = events.any(
-                              (booking) => _isCheckInOnDay(booking, day),
-                            );
-                            return Positioned(
-                              bottom: 4,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (hasCheckIn &&
-                                      _filter !=
-                                          _CalendarFilter.upcomingCheckouts)
-                                    _dot(context.colors.ok),
-                                  if (events.isNotEmpty &&
-                                      _filter == _CalendarFilter.all)
-                                    _dot(context.colors.summer),
-                                  if (hasCheckout) _dot(context.colors.err),
-                                ],
-                              ),
-                            );
-                          },
+                        selectedDecoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
                         ),
+                        markerDecoration: BoxDecoration(
+                          color: context.colors.summer,
+                          shape: BoxShape.circle,
+                        ),
+                        markersMaxCount: 3,
                       ),
-                    ],
-                  ),
+                      calendarBuilders: CalendarBuilders(
+                        markerBuilder: (context, day, events) {
+                          if (events.isEmpty) return null;
+                          final hasCheckout = events.any(
+                            (booking) => _isCheckoutOnDay(booking, day),
+                          );
+                          final hasCheckIn = events.any(
+                            (booking) => _isCheckInOnDay(booking, day),
+                          );
+                          return Positioned(
+                            bottom: 4,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (hasCheckIn &&
+                                    _filter !=
+                                        _CalendarFilter.upcomingCheckouts)
+                                  _dot(context.colors.ok),
+                                if (events.isNotEmpty &&
+                                    _filter == _CalendarFilter.all)
+                                  _dot(context.colors.summer),
+                                if (hasCheckout) _dot(context.colors.err),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               _SelectedDaySummary(
@@ -230,6 +230,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                 bookings,
                 apartments,
                 selectedStats,
+                isViewer: isViewer,
               ),
             ],
           );
@@ -249,8 +250,9 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     BuildContext context,
     List<SummerBooking> bookings,
     List<Apartment> apartments,
-    _DayStats stats,
-  ) {
+    _DayStats stats, {
+    bool isViewer = false,
+  }) {
     final selectedBookings = bookings.where((booking) {
       switch (_filter) {
         case _CalendarFilter.upcomingCheckouts:
@@ -293,8 +295,12 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                   leading: const CircleAvatar(child: Icon(Icons.meeting_room)),
                   title: Text('شقة ${apartment.apartmentNumber}'),
                   subtitle: Text('الدور: ${apartment.floorNumber ?? '-'}'),
-                  trailing: const Icon(Icons.add_circle_outline),
-                  onTap: () => context.push('/summer_bookings/add'),
+                  trailing: isViewer
+                      ? null
+                      : const Icon(Icons.add_circle_outline),
+                  onTap: isViewer
+                      ? null
+                      : () => context.push('/summer_bookings/add'),
                 ),
               ),
             )
@@ -306,20 +312,24 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
       return const _EmptyCalendarState(message: 'لا توجد حجوزات مطابقة للفلتر');
     }
 
-    final dateFormat = DateFormat('yyyy-MM-dd', 'ar');
+    if (_filter == _CalendarFilter.upcomingCheckouts) {
+      return _buildUpcomingCheckoutsContent(
+        context,
+        selectedBookings,
+        apartments,
+      );
+    }
+
+    final dateFormat = DateFormat('EEEE yyyy-MM-dd', 'ar');
 
     return Column(
       children: selectedBookings.map((booking) {
-        final apartment = apartments
-            .where((a) => a.id == booking.apartmentId)
-            .toList();
-        final apartmentNumber = apartment.isEmpty
-            ? booking.apartmentId
-            : apartment.first.apartmentNumber;
-        final checkoutDate = booking.earlyCheckoutDate ?? booking.checkOutDate;
-        final isCheckout = _filter == _CalendarFilter.upcomingCheckouts ||
+        final apartmentNumber = _apartmentNumberFor(apartments, booking);
+        final isCheckout =
+            _filter == _CalendarFilter.upcomingCheckouts ||
             _isCheckoutOnDay(booking, _selectedDay);
         final isCheckIn = _isCheckInOnDay(booking, _selectedDay);
+        final isFutureCheckIn = _filter == _CalendarFilter.upcoming;
         return Card(
           child: ListTile(
             leading: CircleAvatar(
@@ -343,8 +353,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             ),
             title: Text(booking.guestName),
             subtitle: Text(
-              _filter == _CalendarFilter.upcomingCheckouts
-                  ? 'شقة $apartmentNumber • خروج ${dateFormat.format(checkoutDate)}'
+              isFutureCheckIn
+                  ? 'شقة $apartmentNumber • دخول ${dateFormat.format(booking.checkInDate)}'
                   : 'شقة $apartmentNumber • ${isCheckout
                         ? "خروج"
                         : isCheckIn
@@ -357,6 +367,91 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         );
       }).toList(),
     );
+  }
+
+  Widget _buildUpcomingCheckoutsContent(
+    BuildContext context,
+    List<SummerBooking> bookings,
+    List<Apartment> apartments,
+  ) {
+    final grouped = <DateTime, List<SummerBooking>>{};
+    for (final booking in bookings) {
+      final checkoutDay = _dateOnly(
+        booking.earlyCheckoutDate ?? booking.checkOutDate,
+      );
+      grouped.putIfAbsent(checkoutDay, () => []).add(booking);
+    }
+
+    final days = grouped.keys.toList()..sort();
+    final formatter = DateFormat('EEEE، yyyy-MM-dd', 'ar');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: days.map((day) {
+        final dayBookings = grouped[day]!
+          ..sort(
+            (a, b) => _apartmentNumberFor(
+              apartments,
+              a,
+            ).compareTo(_apartmentNumberFor(apartments, b)),
+          );
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.event_available, color: context.colors.err),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        formatter.format(day),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Text('${dayBookings.length} شقق'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...dayBookings.map((booking) {
+                  final apartmentNumber = _apartmentNumberFor(
+                    apartments,
+                    booking,
+                  );
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: context.colors.errSoft,
+                      child: Icon(Icons.logout, color: context.colors.err),
+                    ),
+                    title: Text('شقة $apartmentNumber'),
+                    subtitle: Text(booking.guestName),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () =>
+                        context.push('/summer_bookings/details/${booking.id}'),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  String _apartmentNumberFor(
+    List<Apartment> apartments,
+    SummerBooking booking,
+  ) {
+    final apartment = apartments
+        .where((a) => a.id == booking.apartmentId)
+        .toList();
+    return apartment.isEmpty
+        ? booking.apartmentId
+        : apartment.first.apartmentNumber;
   }
 
   Widget _filterChip(String label, _CalendarFilter value) {
@@ -539,7 +634,8 @@ class _SelectedDaySummary extends StatelessWidget {
                   label: 'خروجات قادمة',
                   value: '${stats.checkoutCount}',
                   color: context.colors.err,
-                  onTap: () => onFilterSelected(_CalendarFilter.upcomingCheckouts),
+                  onTap: () =>
+                      onFilterSelected(_CalendarFilter.upcomingCheckouts),
                 ),
                 _TinyStat(
                   label: 'إجمالي الشقق',

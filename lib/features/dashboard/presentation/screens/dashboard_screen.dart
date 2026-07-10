@@ -49,9 +49,21 @@ class DashboardScreen extends ConsumerWidget {
     ref.listen<AsyncValue<void>>(syncControllerProvider, (_, state) {
       state.whenOrNull(
         error: (error, _) {
+          final msg = error.toString().toLowerCase();
+          final isNetworkError =
+              msg.contains('failed host lookup') ||
+              msg.contains('socketexception') ||
+              msg.contains('connection refused') ||
+              msg.contains('connection reset') ||
+              msg.contains('network is unreachable') ||
+              msg.contains('connection timed out');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('فشلت المزامنة، تأكد من اتصال الإنترنت'),
+              content: Text(
+                isNetworkError
+                    ? 'فشلت المزامنة، تأكد من اتصال الإنترنت'
+                    : 'تعذّرت المزامنة، حاول مرة تانية',
+              ),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -286,10 +298,12 @@ class DashboardScreen extends ConsumerWidget {
             ],
 
             if (hasPerm('manage_bookings') ||
+                hasPerm('view_bookings') ||
                 hasPerm('view_customers') ||
                 hasPerm('view_brokers')) ...[
               const SectionTitle(title: 'الحجوزات والعقود'),
-              if (hasPerm('manage_bookings') && (isSuperAdmin || !isWinter))
+              if ((hasPerm('manage_bookings') || hasPerm('view_bookings')) &&
+                  (isSuperAdmin || !isWinter))
                 NavRow(
                   icon: Icons.wb_sunny_outlined,
                   title: l10n.summerBookings,

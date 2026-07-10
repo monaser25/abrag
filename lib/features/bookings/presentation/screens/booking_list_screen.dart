@@ -11,6 +11,7 @@ import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../settings/presentation/providers/permissions_provider.dart';
 
 class BookingListScreen extends ConsumerStatefulWidget {
   const BookingListScreen({super.key});
@@ -30,13 +31,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     'unpaid',
     'finished',
   ];
-  static const _filterLabels = [
-    'الأقرب',
-    'جارية',
-    'قادمة',
-    'مديونة',
-    'منتهية',
-  ];
+  static const _filterLabels = ['الأقرب', 'جارية', 'قادمة', 'مديونة', 'منتهية'];
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +40,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final activeSeason = ref.watch(activeSeasonKeyProvider);
     final colors = context.colors;
+    final readOnly = !ref.watch(canManageBookingsProvider);
 
     return AppScaffold(
       appBar: AbragAppBar(
@@ -81,9 +77,9 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                           effectiveEnd.isAfter(now);
                       final isUpcoming =
                           !isFinished && b.checkInDate.isAfter(now);
-                      final baseTotal =
-                          b.totalPriceEgp - b.overstayFeeEgp;
-                      final hasOutstanding = b.status != 'cancelled' &&
+                      final baseTotal = b.totalPriceEgp - b.overstayFeeEgp;
+                      final hasOutstanding =
+                          b.status != 'cancelled' &&
                           (baseTotal - b.amountPaidEgp) > 0.01;
 
                       if (_selectedFilter == 'nearest') return !isFinished;
@@ -108,8 +104,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                   );
                 }
                 return ListView.builder(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 90),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 90),
                   itemCount: filteredBookings.length,
                   itemBuilder: (context, index) {
                     final booking = filteredBookings[index];
@@ -162,9 +157,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                       padding: const EdgeInsets.all(14),
                       onTap: () {
                         // Navigate to details
-                        context.push(
-                          '/summer_bookings/details/${booking.id}',
-                        );
+                        context.push('/summer_bookings/details/${booking.id}');
                       },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,8 +172,9 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                               Expanded(
                                 child: Text(
                                   booking.guestName,
-                                  style: AppTextStyles.title
-                                      .copyWith(color: colors.ink),
+                                  style: AppTextStyles.title.copyWith(
+                                    color: colors.ink,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -212,8 +206,9 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 'رقم الشقة: $apartmentNumber',
-                                style: AppTextStyles.caption
-                                    .copyWith(color: colors.ink3),
+                                style: AppTextStyles.caption.copyWith(
+                                  color: colors.ink3,
+                                ),
                               ),
                             ],
                           ),
@@ -229,8 +224,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                             value:
                                 '${netAmount.toDouble().toCurrencyFormat()} ج.م',
                             emphasize: true,
-                            valueColor:
-                                isPaidFull ? colors.ok : colors.accent,
+                            valueColor: isPaidFull ? colors.ok : colors.accent,
                           ),
                           const SizedBox(height: 6),
                           _MoneyRow(
@@ -278,11 +272,13 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
           ),
         ],
       ),
-      floatingActionButton: AppFab(
-        onPressed: () {
-          context.go('/summer_bookings/add');
-        },
-      ),
+      floatingActionButton: readOnly
+          ? null
+          : AppFab(
+              onPressed: () {
+                context.go('/summer_bookings/add');
+              },
+            ),
     );
   }
 
@@ -334,8 +330,7 @@ class _MoneyRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.bodyS
-              .copyWith(color: labelColor ?? colors.ink2),
+          style: AppTextStyles.bodyS.copyWith(color: labelColor ?? colors.ink2),
         ),
         Text(
           value,
@@ -367,13 +362,20 @@ class _BookingDateSummary extends StatelessWidget {
     final colors = context.colors;
     final formatter = DateFormat('EEEE yyyy-MM-dd', 'ar');
 
-    Widget line(IconData icon, String label, String value, {bool bold = false}) {
+    Widget line(
+      IconData icon,
+      String label,
+      String value, {
+      bool bold = false,
+    }) {
       return Row(
         children: [
           Icon(icon, size: 15, color: colors.ink3),
           const SizedBox(width: 6),
-          Text(label,
-              style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
+          ),
           const Spacer(),
           Text(
             value,
@@ -400,8 +402,12 @@ class _BookingDateSummary extends StatelessWidget {
           const SizedBox(height: 6),
           line(Icons.logout, 'الخروج', formatter.format(checkOutDate)),
           const Divider(height: 14),
-          line(Icons.nights_stay_outlined, 'عدد الأيام', '$daysCount يوم',
-              bold: true),
+          line(
+            Icons.nights_stay_outlined,
+            'عدد الأيام',
+            '$daysCount يوم',
+            bold: true,
+          ),
         ],
       ),
     );
