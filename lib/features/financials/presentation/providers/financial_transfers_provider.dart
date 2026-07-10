@@ -21,7 +21,9 @@ const treasuryAccounts = <String, String>{
   'company_vault': 'خزنة الشركة',
 };
 
-final financialTransfersProvider = StreamProvider<List<FinancialTransfer>>((ref) {
+final financialTransfersProvider = StreamProvider<List<FinancialTransfer>>((
+  ref,
+) {
   final db = ref.watch(databaseProvider);
   final selectedSeason = ref.watch(selectedFinancialSeasonProvider);
   final query = db.select(db.financialTransfers)
@@ -32,7 +34,9 @@ final financialTransfersProvider = StreamProvider<List<FinancialTransfer>>((ref)
   return query.watch();
 });
 
-final selectedFinancialSeasonProvider = StateProvider<String>((ref) => currentSeasonKey());
+final selectedFinancialSeasonProvider = StateProvider<String>(
+  (ref) => currentSeasonKey(),
+);
 
 final accountBalancesProvider = StreamProvider<Map<String, double>>((ref) {
   final db = ref.watch(databaseProvider);
@@ -57,10 +61,18 @@ final accountBalancesProvider = StreamProvider<Map<String, double>>((ref) {
 
   controller = StreamController<Map<String, double>>(
     onListen: () {
-      subscriptions.add(db.select(db.summerBookings).watch().listen((_) => scheduleEmit()));
-      subscriptions.add(db.select(db.winterPayments).watch().listen((_) => scheduleEmit()));
-      subscriptions.add(db.select(db.expenses).watch().listen((_) => scheduleEmit()));
-      subscriptions.add(db.select(db.financialTransfers).watch().listen((_) => scheduleEmit()));
+      subscriptions.add(
+        db.select(db.summerBookings).watch().listen((_) => scheduleEmit()),
+      );
+      subscriptions.add(
+        db.select(db.winterPayments).watch().listen((_) => scheduleEmit()),
+      );
+      subscriptions.add(
+        db.select(db.expenses).watch().listen((_) => scheduleEmit()),
+      );
+      subscriptions.add(
+        db.select(db.financialTransfers).watch().listen((_) => scheduleEmit()),
+      );
       scheduleEmit();
     },
     onCancel: () async {
@@ -89,9 +101,10 @@ Future<Map<String, double>> buildTreasuryBalances(
 
   final bookings = await db.select(db.summerBookings).get();
   for (final booking in bookings) {
-    if (booking.status == 'cancelled') continue;
+    if (booking.status == 'cancelled' || booking.status == 'deleted') continue;
+    if (booking.syncStatus == SyncStatus.pendingDelete) continue;
     if (!seasonMatchesDate(booking.checkInDate, season)) continue;
-    add(booking.paymentMethod, booking.amountPaidEgp);
+    add(booking.paymentMethod, _netSummerBookingPayment(booking));
   }
 
   final payments = await db.select(db.winterPayments).get();
@@ -102,7 +115,10 @@ Future<Map<String, double>> buildTreasuryBalances(
 
   final expenses = await db.select(db.expenses).get();
   for (final expense in expenses) {
-    final normalizedSeason = normalizeStoredSeason(expense.season, expense.expenseDate);
+    final normalizedSeason = normalizeStoredSeason(
+      expense.season,
+      expense.expenseDate,
+    );
     if (!seasonMatchesKey(normalizedSeason, season)) continue;
     add(expense.paymentMethod, -(expense.amountEgp - expense.discountEgp));
   }
@@ -110,7 +126,10 @@ Future<Map<String, double>> buildTreasuryBalances(
   final transfers = await db.select(db.financialTransfers).get();
   for (final transfer in transfers) {
     if (transfer.id == excludingTransferId) continue;
-    final normalizedSeason = normalizeStoredSeason(transfer.season, transfer.transferDate);
+    final normalizedSeason = normalizeStoredSeason(
+      transfer.season,
+      transfer.transferDate,
+    );
     if (!seasonMatchesKey(normalizedSeason, season)) continue;
     add(transfer.fromAccount, -transfer.amountEgp);
     if (transfer.transferType == 'internal') {
@@ -123,10 +142,28 @@ Future<Map<String, double>> buildTreasuryBalances(
   return balances;
 }
 
+double _netSummerBookingPayment(SummerBooking booking) {
+  final netPaid = booking.amountPaidEgp - _summerBookingCommission(booking);
+  return netPaid < 0 ? 0 : netPaid;
+}
+
+double _summerBookingCommission(SummerBooking booking) {
+  if (booking.brokerCommissionType == 'fixed') {
+    return booking.brokerCommissionFixedEgp;
+  }
+  if (booking.brokerCommissionType == 'percentage') {
+    return booking.totalPriceEgp * booking.brokerCommissionPercentage / 100;
+  }
+  // 'none' => the broker took no commission at all.
+  return 0;
+}
+
 final financialTransfersControllerProvider =
-    StateNotifierProvider<FinancialTransfersController, AsyncValue<void>>((ref) {
-  return FinancialTransfersController(ref.watch(databaseProvider));
-});
+    StateNotifierProvider<FinancialTransfersController, AsyncValue<void>>((
+      ref,
+    ) {
+      return FinancialTransfersController(ref.watch(databaseProvider));
+    });
 
 class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
@@ -162,20 +199,24 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
         );
       }
       final id = const Uuid().v4();
-      await _db.into(_db.financialTransfers).insert(
-        FinancialTransfersCompanion.insert(
-          id: id,
-          fromAccount: fromAccount,
-          toAccount: toAccount,
-          transferType: Value(transferType),
-          season: Value(effectiveSeason),
-          amountEgp: amount,
-          transferDate: date,
-          notes: Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
-          createdAt: DateTime.now(),
-          syncStatus: const Value(SyncStatus.pendingInsert),
-        ),
-      );
+      await _db
+          .into(_db.financialTransfers)
+          .insert(
+            FinancialTransfersCompanion.insert(
+              id: id,
+              fromAccount: fromAccount,
+              toAccount: toAccount,
+              transferType: Value(transferType),
+              season: Value(effectiveSeason),
+              amountEgp: amount,
+              transferDate: date,
+              notes: Value(
+                notes?.trim().isEmpty == true ? null : notes?.trim(),
+              ),
+              createdAt: DateTime.now(),
+              syncStatus: const Value(SyncStatus.pendingInsert),
+            ),
+          );
       await _auditLog.log(
         action: transferType == 'cash_deposit' ? 'cash_deposit' : 'transfer',
         entityType: 'financial_transfer',
@@ -235,8 +276,9 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
           'الرصيد غير كافي في ${treasuryAccounts[fromAccount] ?? fromAccount}. المتاح: ${available.toStringAsFixed(2)} ج.م',
         );
       }
-      await (_db.update(_db.financialTransfers)..where((t) => t.id.equals(id)))
-          .write(
+      await (_db.update(
+        _db.financialTransfers,
+      )..where((t) => t.id.equals(id))).write(
         FinancialTransfersCompanion(
           fromAccount: Value(fromAccount),
           toAccount: Value(toAccount),

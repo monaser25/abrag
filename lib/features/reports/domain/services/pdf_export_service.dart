@@ -11,11 +11,13 @@ class PdfExportService {
     required double totalRevenue,
     required double totalExpenses,
     required double netProfit,
+    double totalCommission = 0,
     // {date, unit, description, payment, amount, isRevenue}
     required List<Map<String, dynamic>> transactions,
     // Each entry: [label, amount] — payment-method breakdown lines shown
     // under the matching total card.
     List<List<String>> revenueBreakdown = const [],
+    List<List<String>> commissionBreakdown = const [],
     List<List<String>> expenseBreakdown = const [],
     List<List<String>> netBreakdown = const [],
   }) async {
@@ -115,6 +117,13 @@ class PdfExportService {
                     total: totalRevenue.toCurrencyFormat(),
                     totalColor: PdfColors.green700,
                     breakdown: revenueBreakdown,
+                  ),
+                  _summaryCell(
+                    title: 'عمولات السماسرة',
+                    total: totalCommission.toCurrencyFormat(),
+                    totalColor: PdfColors.orange700,
+                    breakdown: commissionBreakdown,
+                    leadingDivider: true,
                   ),
                   _summaryCell(
                     title: 'إجمالي المصروفات',

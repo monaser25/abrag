@@ -157,6 +157,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           filteredExpenses = filteredTransactions
               .where((t) => !t.isRevenue)
               .fold(0.0, (sum, t) => sum + t.amount);
+          // Broker commission is a cost, so net profit is after commission too
+          // (keeps this in sync with the statement PDF and the cash balance).
+          final filteredCommission = filteredTransactions
+              .where((t) => t.isRevenue)
+              .fold(0.0, (sum, t) => sum + t.brokerCommission);
 
           final apartmentMetrics = _apartmentMetrics(filteredRentals);
           final floorMetrics = _floorMetrics(filteredRentals);
@@ -191,7 +196,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           final instaRev = walletBalances['instapay'] ?? 0;
           final companyVault = walletBalances['company_vault'] ?? 0;
 
-          final filteredProfit = filteredRevenue - filteredExpenses;
+          final filteredProfit =
+              filteredRevenue - filteredCommission - filteredExpenses;
 
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -204,6 +210,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     context,
                     revenue: filteredRevenue,
                     expenses: filteredExpenses,
+                    commission: filteredCommission,
                     profit: filteredProfit,
                     cash: cashRev,
                     vodafoneCash: vfRev,
@@ -278,30 +285,30 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return AppCard(
       padding: const EdgeInsets.all(12),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'عرض حسب الموسم',
-              style: AppTextStyles.title.copyWith(color: colors.ink),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'عرض حسب الموسم',
+            style: AppTextStyles.title.copyWith(color: colors.ink),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: 'الموسم المعروض',
+              prefixIcon: Icon(Icons.event_repeat),
             ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                labelText: 'الموسم المعروض',
-                prefixIcon: Icon(Icons.event_repeat),
-              ),
-              initialValue: _filter,
-              items: seasonOptionsAround()
-                  .map(
-                    (option) => DropdownMenuItem(
-                      value: option.key,
-                      child: Text(option.label),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => _filter = value ?? 'all'),
-            ),
-          ],
+            initialValue: _filter,
+            items: seasonOptionsAround()
+                .map(
+                  (option) => DropdownMenuItem(
+                    value: option.key,
+                    child: Text(option.label),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) => setState(() => _filter = value ?? 'all'),
+          ),
+        ],
       ),
     );
   }
@@ -418,6 +425,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     BuildContext context, {
     required double revenue,
     required double expenses,
+    required double commission,
     required double profit,
     required double cash,
     required double vodafoneCash,
@@ -428,143 +436,158 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final colors = context.colors;
     return AppCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'الملخص المالي',
-                    style: AppTextStyles.h3.copyWith(color: colors.ink),
-                  ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'الملخص المالي',
+                  style: AppTextStyles.h3.copyWith(color: colors.ink),
                 ),
-                AppIconButton(
-                  tooltip: 'فتح الخزنة',
-                  onPressed: () => context.push('/financial_transfers'),
-                  icon: Icons.account_balance_wallet_outlined,
-                ),
-                const SizedBox(width: 8),
-                AppIconButton(
-                  tooltip: _hideNumbers ? 'إظهار الأرقام' : 'إخفاء الأرقام',
-                  onPressed: _toggleHideNumbers,
-                  icon: _hideNumbers ? Icons.visibility : Icons.visibility_off,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _MoneyTile(
-                    title: 'الإيرادات',
-                    value: _privateValue('${revenue.toCurrencyFormat()} ج.م'),
-                    icon: Icons.trending_up,
-                    color: colors.ok,
-                    onTap: () => _openStatement(
-                      context,
-                      _statementFilters(
-                        activeFilters,
-                        transactionType: 'revenue',
-                      ),
+              ),
+              AppIconButton(
+                tooltip: 'فتح الخزنة',
+                onPressed: () => context.push('/financial_transfers'),
+                icon: Icons.account_balance_wallet_outlined,
+              ),
+              const SizedBox(width: 8),
+              AppIconButton(
+                tooltip: _hideNumbers ? 'إظهار الأرقام' : 'إخفاء الأرقام',
+                onPressed: _toggleHideNumbers,
+                icon: _hideNumbers ? Icons.visibility : Icons.visibility_off,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _MoneyTile(
+                  title: 'الإيرادات',
+                  value: _privateValue('${revenue.toCurrencyFormat()} ج.م'),
+                  icon: Icons.trending_up,
+                  color: colors.ok,
+                  onTap: () => _openStatement(
+                    context,
+                    _statementFilters(
+                      activeFilters,
+                      transactionType: 'revenue',
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _MoneyTile(
-                    title: 'المصروفات',
-                    value: _privateValue('${expenses.toCurrencyFormat()} ج.م'),
-                    icon: Icons.trending_down,
-                    color: colors.err,
-                    onTap: () => _openStatement(
-                      context,
-                      _statementFilters(
-                        activeFilters,
-                        transactionType: 'expense',
-                      ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MoneyTile(
+                  title: 'المصروفات',
+                  value: _privateValue('${expenses.toCurrencyFormat()} ج.م'),
+                  icon: Icons.trending_down,
+                  color: colors.err,
+                  onTap: () => _openStatement(
+                    context,
+                    _statementFilters(
+                      activeFilters,
+                      transactionType: 'expense',
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _MoneyTile(
-              title: 'صافي الربح',
-              value: _privateValue('${profit.toCurrencyFormat()} ج.م'),
-              icon: Icons.account_balance_wallet,
-              color: colors.accent,
-              onTap: () => _openStatement(context, activeFilters),
-            ),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: _buildTapHint(colors),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'تفاصيل الإيرادات والخزنة الحالية',
-              style: AppTextStyles.title.copyWith(color: colors.ink),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMiniStat(
-                    colors,
-                    'نقدية حالية',
-                    _privateValue('${cash.toCurrencyFormat()} ج.م'),
-                    onTap: () => _openStatement(
-                      context,
-                      _statementFilters(
-                        activeFilters,
-                        transactionType: 'revenue',
-                        paymentMethod: 'cash',
-                      ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _MoneyTile(
+                  title: 'عمولات السماسرة',
+                  value: _privateValue('${commission.toCurrencyFormat()} ج.م'),
+                  icon: Icons.handshake_outlined,
+                  color: colors.summer,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MoneyTile(
+                  title: 'صافي الربح',
+                  value: _privateValue('${profit.toCurrencyFormat()} ج.م'),
+                  icon: Icons.account_balance_wallet,
+                  color: colors.accent,
+                  onTap: () => _openStatement(context, activeFilters),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: _buildTapHint(colors),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'تفاصيل الإيرادات والخزنة الحالية',
+            style: AppTextStyles.title.copyWith(color: colors.ink),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniStat(
+                  colors,
+                  'نقدية حالية',
+                  _privateValue('${cash.toCurrencyFormat()} ج.م'),
+                  onTap: () => _openStatement(
+                    context,
+                    _statementFilters(
+                      activeFilters,
+                      transactionType: 'revenue',
+                      paymentMethod: 'cash',
                     ),
                   ),
                 ),
-                Container(width: 1, height: 42, color: colors.border),
-                Expanded(
-                  child: _buildMiniStat(
-                    colors,
-                    'فودافون كاش',
-                    _privateValue('${vodafoneCash.toCurrencyFormat()} ج.م'),
-                    onTap: () => _openStatement(
-                      context,
-                      _statementFilters(
-                        activeFilters,
-                        transactionType: 'revenue',
-                        paymentMethod: 'vodafone_cash',
-                      ),
+              ),
+              Container(width: 1, height: 42, color: colors.border),
+              Expanded(
+                child: _buildMiniStat(
+                  colors,
+                  'فودافون كاش',
+                  _privateValue('${vodafoneCash.toCurrencyFormat()} ج.م'),
+                  onTap: () => _openStatement(
+                    context,
+                    _statementFilters(
+                      activeFilters,
+                      transactionType: 'revenue',
+                      paymentMethod: 'vodafone_cash',
                     ),
                   ),
                 ),
-                Container(width: 1, height: 42, color: colors.border),
-                Expanded(
-                  child: _buildMiniStat(
-                    colors,
-                    'إنستاباي',
-                    _privateValue('${instapay.toCurrencyFormat()} ج.م'),
-                    onTap: () => _openStatement(
-                      context,
-                      _statementFilters(
-                        activeFilters,
-                        transactionType: 'revenue',
-                        paymentMethod: 'instapay',
-                      ),
+              ),
+              Container(width: 1, height: 42, color: colors.border),
+              Expanded(
+                child: _buildMiniStat(
+                  colors,
+                  'إنستاباي',
+                  _privateValue('${instapay.toCurrencyFormat()} ج.م'),
+                  onTap: () => _openStatement(
+                    context,
+                    _statementFilters(
+                      activeFilters,
+                      transactionType: 'revenue',
+                      paymentMethod: 'instapay',
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _MoneyTile(
-              title: 'خزنة الشركة',
-              value: _privateValue('${companyVault.toCurrencyFormat()} ج.م'),
-              icon: Icons.account_balance,
-              color: colors.winter,
-              onTap: () => context.push('/financial_transfers'),
-            ),
-          ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _MoneyTile(
+            title: 'خزنة الشركة',
+            value: _privateValue('${companyVault.toCurrencyFormat()} ج.م'),
+            icon: Icons.account_balance,
+            color: colors.winter,
+            onTap: () => context.push('/financial_transfers'),
+          ),
+        ],
       ),
     );
   }
@@ -811,7 +834,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           .toList();
     }
     if (_filter != 'all') {
-      records = records.where((r) => seasonMatchesKey(r.season, _filter)).toList();
+      records = records
+          .where((r) => seasonMatchesKey(r.season, _filter))
+          .toList();
     }
     if (_expenseType != 'all' && _expenseType != 'maintenance') {
       records = [];
@@ -893,10 +918,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
 
     for (final transaction in transactions) {
-      add(
-        transaction.paymentMethod,
-        transaction.isRevenue ? transaction.amount : -transaction.amount,
-      );
+      if (transaction.isRevenue) {
+        // Cash on hand is net of broker commission — the commission leaves the
+        // same bucket the guest paid into. Keeps this in sync with the treasury
+        // balance in buildTreasuryBalances (financial_transfers_provider).
+        final net = transaction.amount - transaction.brokerCommission;
+        add(transaction.paymentMethod, net < 0 ? 0 : net);
+      } else {
+        add(transaction.paymentMethod, -transaction.amount);
+      }
     }
 
     for (final transfer in transfers) {

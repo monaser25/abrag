@@ -9,6 +9,7 @@ import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../users/presentation/providers/users_provider.dart';
+import '../../../settings/presentation/providers/permissions_provider.dart';
 
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -26,6 +27,7 @@ class BookingDetailsScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final brokersAsync = ref.watch(brokersProvider);
+    final isViewer = !ref.watch(canManageBookingsProvider);
 
     return AppScaffold(
       appBar: AbragAppBar(
@@ -39,43 +41,47 @@ class BookingDetailsScreen extends ConsumerWidget {
           }
         },
         actions: [
-          AppIconButton(
-            icon: Icons.edit_outlined,
-            onPressed: () {
-              context.go('/summer_bookings/edit/$bookingId');
-            },
-          ),
-          AppIconButton(
-            icon: Icons.delete_outline,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('تأكيد الحذف'),
-                  content: const Text('هل أنت متأكد من حذف هذا الحجز نهائياً؟'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: const Text('إلغاء'),
+          if (!isViewer) ...[
+            AppIconButton(
+              icon: Icons.edit_outlined,
+              onPressed: () {
+                context.go('/summer_bookings/edit/$bookingId');
+              },
+            ),
+            AppIconButton(
+              icon: Icons.delete_outline,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('تأكيد الحذف'),
+                    content: const Text(
+                      'هل أنت متأكد من حذف هذا الحجز نهائياً؟',
                     ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.error,
+                    actions: [
+                      TextButton(
+                        onPressed: () => context.pop(),
+                        child: const Text('إلغاء'),
                       ),
-                      onPressed: () {
-                        ref
-                            .read(bookingsControllerProvider.notifier)
-                            .deleteBooking(bookingId);
-                        context.pop();
-                        context.pop();
-                      },
-                      child: const Text('حذف'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                        onPressed: () {
+                          ref
+                              .read(bookingsControllerProvider.notifier)
+                              .deleteBooking(bookingId);
+                          context.pop();
+                          context.pop();
+                        },
+                        child: const Text('حذف'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
         ],
       ),
       body: bookingsAsync.when(
@@ -134,19 +140,21 @@ class BookingDetailsScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          AppButton(
-                            label: 'تسديد',
-                            small: true,
-                            onPressed: () => _showPaymentSheet(
-                              context,
-                              ref,
-                              bookingId: booking.id,
-                              currentPaid: booking.amountPaidEgp,
-                              remainingAmount: remainingAmount.toDouble(),
-                              totalAmount: baseBookingTotal.toDouble(),
+                          if (!isViewer) ...[
+                            const SizedBox(width: 8),
+                            AppButton(
+                              label: 'تسديد',
+                              small: true,
+                              onPressed: () => _showPaymentSheet(
+                                context,
+                                ref,
+                                bookingId: booking.id,
+                                currentPaid: booking.amountPaidEgp,
+                                remainingAmount: remainingAmount.toDouble(),
+                                totalAmount: baseBookingTotal.toDouble(),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     );
@@ -441,7 +449,7 @@ class BookingDetailsScreen extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
-              if (booking.status != 'checked_out') ...[
+              if (booking.status != 'checked_out' && !isViewer) ...[
                 Row(
                   children: [
                     Expanded(
@@ -499,7 +507,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ] else ...[
+              ] else if (booking.status == 'checked_out' && !isViewer) ...[
                 ElevatedButton.icon(
                   onPressed: () {
                     context.push(
@@ -543,6 +551,7 @@ class BookingDetailsScreen extends ConsumerWidget {
     if (booking.brokerCommissionType == 'percentage') {
       return booking.totalPriceEgp * (booking.brokerCommissionPercentage / 100);
     }
+    // 'none' => the broker took no commission at all.
     return 0;
   }
 
@@ -817,15 +826,16 @@ class BookingDetailsScreen extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          Flexible(
             flex: 2,
             child: Text(
               label,
               style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
             ),
           ),
+          const SizedBox(width: 12),
           Expanded(
-            flex: 3,
+            flex: 5,
             child: Text(
               value,
               style: AppTextStyles.tabular(
@@ -837,6 +847,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                     ),
               ),
               textAlign: TextAlign.end,
+              softWrap: true,
             ),
           ),
         ],

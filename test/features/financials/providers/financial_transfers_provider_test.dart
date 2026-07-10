@@ -16,16 +16,26 @@ void main() {
     await db.close();
   });
 
-  Future<void> seedCashRevenue(double amount) async {
+  Future<void> seedCashRevenue(
+    double amount, {
+    String brokerCommissionType = 'none',
+    double brokerCommissionFixedEgp = 0,
+    double brokerCommissionPercentage = 10,
+    double? brokerCommissionAmountEgp,
+  }) async {
     final now = DateTime(2026, 5, 17);
-    await db.into(db.buildings).insert(
+    await db
+        .into(db.buildings)
+        .insert(
           BuildingsCompanion.insert(
             id: 'building-1',
             name: 'برج 1',
             createdAt: now,
           ),
         );
-    await db.into(db.apartments).insert(
+    await db
+        .into(db.apartments)
+        .insert(
           ApartmentsCompanion.insert(
             id: 'apartment-1',
             buildingId: 'building-1',
@@ -34,7 +44,9 @@ void main() {
             updatedAt: now,
           ),
         );
-    await db.into(db.summerBookings).insert(
+    await db
+        .into(db.summerBookings)
+        .insert(
           SummerBookingsCompanion.insert(
             id: 'booking-1',
             apartmentId: 'apartment-1',
@@ -44,6 +56,10 @@ void main() {
             totalPriceEgp: amount,
             amountPaidEgp: Value(amount),
             paymentMethod: const Value('cash'),
+            brokerCommissionType: Value(brokerCommissionType),
+            brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
+            brokerCommissionPercentage: Value(brokerCommissionPercentage),
+            brokerCommissionAmountEgp: Value(brokerCommissionAmountEgp),
             createdAt: now,
             updatedAt: now,
           ),
@@ -96,6 +112,40 @@ void main() {
     expect(await db.select(db.financialTransfers).get(), isEmpty);
     expect(controller.state.toString(), contains('AsyncError'));
   });
+
+  test(
+    'cash balance uses summer booking payment net of broker commission',
+    () async {
+      final now = DateTime(2026, 5, 17);
+      await seedCashRevenue(
+        1000,
+        brokerCommissionType: 'fixed',
+        brokerCommissionFixedEgp: 120,
+      );
+      await db
+          .into(db.summerBookings)
+          .insert(
+            SummerBookingsCompanion.insert(
+              id: 'booking-2',
+              apartmentId: 'apartment-1',
+              guestName: 'محمد',
+              checkInDate: now,
+              checkOutDate: now.add(const Duration(days: 2)),
+              totalPriceEgp: 100,
+              amountPaidEgp: const Value(100),
+              paymentMethod: const Value('cash'),
+              brokerCommissionType: const Value('fixed'),
+              brokerCommissionFixedEgp: const Value(150),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      final balances = await buildTreasuryBalances(db, 'summer_2026');
+
+      expect(balances['cash'], closeTo(880, 0.001));
+    },
+  );
 
   test('deletes a transfer and records removal', () async {
     final controller = FinancialTransfersController(db);

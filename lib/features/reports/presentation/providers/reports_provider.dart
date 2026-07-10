@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
+import '../../../../core/database/tables.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
@@ -208,10 +209,16 @@ final financialReportProvider = StreamProvider<FinancialSummary>((ref) {
 
 Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
   final expenses = await db.select(db.expenses).get();
-  final summerBookings = await db.select(db.summerBookings).get();
-  final buildings = await (db.select(db.buildings)
-        ..where((t) => t.id.isNotValue(kSettingsBuildingId)))
-      .get();
+  final summerBookings =
+      await (db.select(db.summerBookings)
+            ..where((t) => t.status.isNotIn(['deleted', 'cancelled']))
+            ..where(
+              (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+            ))
+          .get();
+  final buildings = await (db.select(
+    db.buildings,
+  )..where((t) => t.id.isNotValue(kSettingsBuildingId))).get();
   final apartments = await db.select(db.apartments).get();
   final winterContracts = await db.select(db.winterContracts).get();
   final winterPayments = await db.select(db.winterPayments).get();
@@ -500,7 +507,8 @@ double _bookingCommission(SummerBooking booking) {
   if (booking.brokerCommissionType == 'percentage') {
     return booking.totalPriceEgp * booking.brokerCommissionPercentage / 100;
   }
-  return booking.brokerCommissionAmountEgp ?? 0;
+  // 'none' => the broker took no commission at all.
+  return 0;
 }
 
 double _contractMonths(DateTime start, DateTime end) {
