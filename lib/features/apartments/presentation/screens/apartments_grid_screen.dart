@@ -7,7 +7,9 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../providers/apartments_status_provider.dart';
 
-final availableOnlyFilterProvider = StateProvider.autoDispose<bool>((ref) => false);
+final availableOnlyFilterProvider = StateProvider.autoDispose<bool>(
+  (ref) => false,
+);
 
 class ApartmentsGridScreen extends ConsumerWidget {
   const ApartmentsGridScreen({super.key});
@@ -26,7 +28,8 @@ class ApartmentsGridScreen extends ConsumerWidget {
             icon: availableOnly ? Icons.filter_alt : Icons.filter_alt_off,
             tooltip: availableOnly ? 'عرض الكل' : 'المتاحة فقط',
             onPressed: () {
-              ref.read(availableOnlyFilterProvider.notifier).state = !availableOnly;
+              ref.read(availableOnlyFilterProvider.notifier).state =
+                  !availableOnly;
             },
           ),
           AppIconButton(
@@ -72,8 +75,9 @@ class ApartmentsGridScreen extends ConsumerWidget {
                 if (numA != null && numB != null) return numA.compareTo(numB);
                 if (numA != null) return -1;
                 if (numB != null) return 1;
-                return a.apartment.apartmentNumber
-                    .compareTo(b.apartment.apartmentNumber);
+                return a.apartment.apartmentNumber.compareTo(
+                  b.apartment.apartmentNumber,
+                );
               });
 
               return Column(
@@ -84,11 +88,12 @@ class ApartmentsGridScreen extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
                     itemCount: bApartments.length,
                     itemBuilder: (context, i) {
                       final aptStatus = bApartments[i];
@@ -99,6 +104,9 @@ class ApartmentsGridScreen extends ConsumerWidget {
                       if (aptStatus.needsCleaning) {
                         statusColor = colors.warn;
                         statusText = 'نظافة';
+                      } else if (aptStatus.isCheckingOutToday) {
+                        statusColor = colors.summer;
+                        statusText = 'خروج النهاردة';
                       } else if (aptStatus.isOccupied) {
                         statusColor = colors.err;
                         statusText = 'مشغولة';
@@ -108,7 +116,8 @@ class ApartmentsGridScreen extends ConsumerWidget {
                         number: aptStatus.apartment.apartmentNumber,
                         statusColor: statusColor,
                         onTap: () => context.push(
-                            '/apartments/profile/${aptStatus.apartment.id}'),
+                          '/apartments/profile/${aptStatus.apartment.id}',
+                        ),
                         footer: Text(
                           statusText,
                           style: AppTextStyles.caption.copyWith(

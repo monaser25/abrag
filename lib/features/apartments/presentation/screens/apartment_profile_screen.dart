@@ -96,6 +96,7 @@ class _ApartmentProfileScreenState
         data: (data) {
           final isCleaning = data.apartment.cleaningStatus == 'needs_cleaning';
           final isOccupied = data.isOccupied;
+          final isCheckingOutToday = data.isCheckingOutToday;
           final colors = context.colors;
 
           // Same status semantics as before, token colors.
@@ -106,6 +107,10 @@ class _ApartmentProfileScreenState
             statusColor = colors.warn;
             statusText = 'تحتاج نظافة';
             statusKind = StatusChipKind.warn;
+          } else if (isCheckingOutToday) {
+            statusColor = colors.summer;
+            statusText = 'هتخرج النهاردة';
+            statusKind = StatusChipKind.summer;
           } else if (isOccupied) {
             statusColor = colors.err;
             statusText = 'مؤجرة';
@@ -142,8 +147,9 @@ class _ApartmentProfileScreenState
                           child: Text(
                             data.apartment.apartmentNumber,
                             style: AppTextStyles.tabular(
-                              AppTextStyles.display
-                                  .copyWith(color: statusColor),
+                              AppTextStyles.display.copyWith(
+                                color: statusColor,
+                              ),
                             ),
                           ),
                         ),
@@ -170,12 +176,21 @@ class _ApartmentProfileScreenState
                                 : 'تغيير الحالة إلى: تحتاج نظافة',
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                                isCleaning ? colors.ok : colors.warn,
+                            foregroundColor: isCleaning
+                                ? colors.ok
+                                : colors.warn,
                             side: BorderSide(
                               color: isCleaning ? colors.ok : colors.warn,
                             ),
                           ),
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: () => context.push(
+                            '/summer_bookings/add?apartmentId=${Uri.encodeComponent(widget.apartmentId)}',
+                          ),
+                          icon: const Icon(Icons.beach_access_outlined),
+                          label: const Text('احجز هذه الشقة'),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -844,39 +859,41 @@ class _ApartmentProfileScreenState
     bool isPrimary = false,
     bool isError = false,
   }) {
-    return Builder(builder: (context) {
-      final colors = context.colors;
-      Color color = colors.ink2;
-      if (isPrimary) color = colors.accent;
-      if (isError) color = colors.err;
+    return Builder(
+      builder: (context) {
+        final colors = context.colors;
+        Color color = colors.ink2;
+        if (isPrimary) color = colors.accent;
+        if (isError) color = colors.err;
 
-      return AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.caption.copyWith(color: colors.ink3),
-                ),
-                Icon(icon, size: 20, color: color),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTextStyles.tabular(
-                AppTextStyles.h2.copyWith(color: color),
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.caption.copyWith(color: colors.ink3),
+                  ),
+                  Icon(icon, size: 20, color: color),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      );
-    });
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: AppTextStyles.tabular(
+                  AppTextStyles.h2.copyWith(color: color),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   int _calendarDays(DateTime start, DateTime end) {
@@ -941,10 +958,7 @@ class _InfoLine extends StatelessWidget {
       children: [
         Icon(icon, size: 15, color: colors.ink3),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
-        ),
+        Text(label, style: AppTextStyles.bodyS.copyWith(color: colors.ink2)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

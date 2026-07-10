@@ -37,6 +37,7 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
   bool _isClean = true;
   bool _hasDamages = false;
   bool _createMaintenanceRequest = false;
+  bool _inspectionSaved = false;
 
   final Map<String, bool> _inventoryChecks = {};
 
@@ -82,7 +83,19 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
     }
   }
 
+  bool get _hasCheckoutStep =>
+      widget.checkoutBookingId != null || widget.earlyCheckoutBookingId != null;
+
+  Future<void> _retryCheckout() async {
+    if (!_inspectionSaved) return;
+    await _finishInspectionFlow();
+  }
+
   void _submit() {
+    if (_inspectionSaved) {
+      _retryCheckout();
+      return;
+    }
     if (_formKey.currentState!.validate() && _selectedApartmentId != null) {
       ref
           .read(apartmentInspectionsControllerProvider.notifier)
@@ -117,39 +130,96 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
     }
   }
 
+  Future<void> _finishInspectionFlow() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    var successMessage = 'تم حفظ الفحص بنجاح ✅';
+
+    if (widget.checkoutBookingId != null) {
+      await ref
+          .read(bookingsControllerProvider.notifier)
+          .checkoutBooking(widget.checkoutBookingId!);
+      if (!mounted) return;
+
+      final checkoutState = ref.read(bookingsControllerProvider);
+      if (checkoutState.hasError) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('تعذّر تسجيل الخروج: ${checkoutState.error}')),
+        );
+        return;
+      }
+      successMessage = 'تم تسجيل خروج الشقة واستلامها بنجاح ✅';
+    } else if (widget.earlyCheckoutBookingId != null) {
+      if (widget.newCheckoutDate == null) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('تعذّر تسجيل الخروج: تاريخ الخروج المبكر غير محدد'),
+          ),
+        );
+        return;
+      }
+
+      await ref
+          .read(bookingsControllerProvider.notifier)
+          .earlyCheckoutBooking(
+            id: widget.earlyCheckoutBookingId!,
+            newCheckoutDate: DateTime.parse(widget.newCheckoutDate!),
+          );
+      if (!mounted) return;
+
+      final checkoutState = ref.read(bookingsControllerProvider);
+      if (checkoutState.hasError) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('تعذّر تسجيل الخروج: ${checkoutState.error}')),
+        );
+        return;
+      }
+      successMessage = 'تم تسجيل الخروج المبكر بنجاح ✅';
+    }
+
+    if (!mounted) return;
+    messenger.showSnackBar(SnackBar(content: Text(successMessage)));
+    router.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final controllerState = ref.watch(apartmentInspectionsControllerProvider);
 
+    ref.listen(currentUserProfileProvider, (_, state) {
+      final profile = state.value;
+      if (profile != null && profile.fullName != null) {
+        if (_inspectorNameController.text.trim().isEmpty) {
+          _inspectorNameController.text = profile.fullName!;
+        }
+      }
+    });
+
     ref.listen<AsyncValue<void>>(apartmentInspectionsControllerProvider, (
       _,
       state,
-    ) {
-      state.whenOrNull(
-        data: (_) {
-          if (widget.checkoutBookingId != null) {
-            ref
-                .read(bookingsControllerProvider.notifier)
-                .checkoutBooking(widget.checkoutBookingId!);
-          } else if (widget.earlyCheckoutBookingId != null &&
-              widget.newCheckoutDate != null) {
-            ref
-                .read(bookingsControllerProvider.notifier)
-                .earlyCheckoutBooking(
-                  id: widget.earlyCheckoutBookingId!,
-                  newCheckoutDate: DateTime.parse(widget.newCheckoutDate!),
-                );
-          }
-          context.pop();
-        },
-        error: (error, _) => ScaffoldMessenger.of(
+    ) async {
+      if (state.hasError) {
+        ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString()))),
-      );
+        ).showSnackBar(SnackBar(content: Text(state.error.toString())));
+        return;
+      }
+      if (state.hasValue) {
+        if (!_inspectionSaved) {
+          setState(() {
+            _inspectionSaved = true;
+          });
+        }
+        await _finishInspectionFlow();
+      }
     });
 
     final colors = context.colors;
+    final checkoutState = ref.watch(bookingsControllerProvider);
+    final isSubmitting = controllerState.isLoading || checkoutState.isLoading;
+    final isRetryingCheckout = _inspectionSaved && _hasCheckoutStep;
 
     return AppScaffold(
       appBar: const AbragAppBar(title: 'تسجيل فحص شقة'),
@@ -211,49 +281,51 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
                     return AppCard(
                       color: colors.brandSoft,
                       child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'قائمة الفحص (الجرد):',
-                              style: AppTextStyles.title
-                                  .copyWith(color: colors.brand),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'قائمة الفحص (الجرد):',
+                            style: AppTextStyles.title.copyWith(
+                              color: colors.brand,
                             ),
-                            const SizedBox(height: 8),
-                            ...items.map((item) {
-                              if (item.endsWith(':')) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 12.0,
-                                    bottom: 4.0,
+                          ),
+                          const SizedBox(height: 8),
+                          ...items.map((item) {
+                            if (item.endsWith(':')) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 12.0,
+                                  bottom: 4.0,
+                                ),
+                                child: Text(
+                                  item,
+                                  style: AppTextStyles.label.copyWith(
+                                    color: colors.brand,
                                   ),
-                                  child: Text(
-                                    item,
-                                    style: AppTextStyles.label
-                                        .copyWith(color: colors.brand),
-                                  ),
-                                );
-                              }
-                              return CheckboxListTile(
-                                title: Text(item),
-                                value: _inventoryChecks[item],
-                                onChanged: (val) {
-                                  setState(() {
-                                    _inventoryChecks[item] = val ?? false;
-                                  });
-                                },
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                contentPadding: EdgeInsets.zero,
-                                dense: true,
+                                ),
                               );
-                            }),
-                            const SizedBox(height: 8),
-                            Text(
-                              'يرجى مراجعة هذه المحتويات وتحديد التالف منها بالأسفل.',
-                              style: AppTextStyles.caption
-                                  .copyWith(color: colors.ink3),
+                            }
+                            return CheckboxListTile(
+                              title: Text(item),
+                              value: _inventoryChecks[item],
+                              onChanged: (val) {
+                                setState(() {
+                                  _inventoryChecks[item] = val ?? false;
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            );
+                          }),
+                          const SizedBox(height: 8),
+                          Text(
+                            'يرجى مراجعة هذه المحتويات وتحديد التالف منها بالأسفل.',
+                            style: AppTextStyles.caption.copyWith(
+                              color: colors.ink3,
                             ),
-                          ],
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -362,10 +434,14 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
         children: [
           Expanded(
             child: AppButton(
-              label: 'حفظ الفحص',
-              icon: Icons.check,
-              loading: controllerState.isLoading,
-              onPressed: controllerState.isLoading ? null : _submit,
+              label: isRetryingCheckout ? 'إعادة محاولة التسليم' : 'حفظ الفحص',
+              icon: isRetryingCheckout ? Icons.refresh : Icons.check,
+              loading: isSubmitting,
+              onPressed: isSubmitting
+                  ? null
+                  : isRetryingCheckout
+                  ? _retryCheckout
+                  : _submit,
             ),
           ),
         ],

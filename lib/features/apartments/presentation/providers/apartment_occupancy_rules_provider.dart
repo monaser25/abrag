@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database.dart';
+import '../../../../core/database/tables.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final apartmentOccupancyRulesProvider = Provider<ApartmentOccupancyRules>((
@@ -24,7 +25,13 @@ class ApartmentOccupancyRules {
     final summerBookings =
         await (_db.select(_db.summerBookings)
               ..where((t) => t.apartmentId.equals(apartmentId))
-              ..where((t) => t.status.isNotIn(['cancelled', 'checked_out'])))
+              ..where(
+                (t) =>
+                    t.status.isNotIn(['cancelled', 'checked_out', 'deleted']),
+              )
+              ..where(
+                (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+              ))
             .get();
     for (final booking in summerBookings) {
       if (booking.id == excludingSummerBookingId) continue;
@@ -68,9 +75,16 @@ class ApartmentOccupancyRules {
   }) async {
     final occupiedIds = <String>{};
 
-    final summerBookings = await (_db.select(
-      _db.summerBookings,
-    )..where((t) => t.status.isNotIn(['cancelled', 'checked_out']))).get();
+    final summerBookings =
+        await (_db.select(_db.summerBookings)
+              ..where(
+                (t) =>
+                    t.status.isNotIn(['cancelled', 'checked_out', 'deleted']),
+              )
+              ..where(
+                (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+              ))
+            .get();
     for (final booking in summerBookings) {
       if (booking.id == excludingSummerBookingId) continue;
       final existingEnd = booking.earlyCheckoutDate ?? booking.checkOutDate;
@@ -103,14 +117,20 @@ class ApartmentOccupancyRules {
 
   Future<bool> isApartmentOccupiedNow(String apartmentId) async {
     final now = DateTime.now();
+    final today = _dateOnly(now);
     final summerBookings =
         await (_db.select(_db.summerBookings)
               ..where((t) => t.apartmentId.equals(apartmentId))
-              ..where((t) => t.status.isNotIn(['cancelled', 'checked_out'])))
+              ..where(
+                (t) =>
+                    t.status.isNotIn(['cancelled', 'checked_out', 'deleted']),
+              )
+              ..where(
+                (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+              ))
             .get();
     final hasSummer = summerBookings.any((booking) {
-      final end = booking.earlyCheckoutDate ?? booking.checkOutDate;
-      return _periodContains(now, booking.checkInDate, end);
+      return !_dateOnly(booking.checkInDate).isAfter(today);
     });
     if (hasSummer) return true;
 
@@ -120,7 +140,11 @@ class ApartmentOccupancyRules {
               ..where((t) => t.isActive.equals(true)))
             .get();
     return winterContracts.any(
-      (contract) => _periodContains(now, contract.startDate, contract.endDate),
+      (contract) => _periodContainsDayAwareStart(
+        now,
+        contract.startDate,
+        contract.endDate,
+      ),
     );
   }
 
@@ -133,7 +157,15 @@ class ApartmentOccupancyRules {
     return startA.isBefore(endB) && endA.isAfter(startB);
   }
 
-  bool _periodContains(DateTime target, DateTime start, DateTime end) {
-    return !target.isBefore(start) && target.isBefore(end);
+  bool _periodContainsDayAwareStart(
+    DateTime target,
+    DateTime start,
+    DateTime end,
+  ) {
+    return !_dateOnly(start).isAfter(_dateOnly(target)) && target.isBefore(end);
+  }
+
+  DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
   }
 }
