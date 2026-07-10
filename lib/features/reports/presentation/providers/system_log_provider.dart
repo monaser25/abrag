@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart';
 
+import '../../../../core/database/tables.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class SystemLogEntry {
@@ -54,11 +55,18 @@ final systemLogsProvider = FutureProvider<List<SystemLogEntry>>((ref) async {
       .map((log) => '${log.entityType}:${log.entityId}')
       .toSet();
 
-  bool hasAudit(String type, String id) => auditedEntities.contains('$type:$id');
+  bool hasAudit(String type, String id) =>
+      auditedEntities.contains('$type:$id');
 
   // Backfill old or imported data that existed before audit logging was added.
   final fallback = <SystemLogEntry>[];
-  final summerBookings = await db.select(db.summerBookings).get();
+  final summerBookings =
+      await (db.select(db.summerBookings)
+            ..where((t) => t.status.isNotIn(['deleted']))
+            ..where(
+              (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+            ))
+          .get();
   for (final booking in summerBookings) {
     if (hasAudit('summer_booking', booking.id)) continue;
     fallback.add(
@@ -95,7 +103,8 @@ final systemLogsProvider = FutureProvider<List<SystemLogEntry>>((ref) async {
       SystemLogEntry(
         date: expense.createdAt,
         title: 'مصروف',
-        description: 'مصروف ${expense.expenseType} بقيمة ${expense.amountEgp} ج.م',
+        description:
+            'مصروف ${expense.expenseType} بقيمة ${expense.amountEgp} ج.م',
         type: 'expense',
         route: '/expenses',
         actorName: 'النظام',
@@ -207,7 +216,8 @@ final systemLogsProvider = FutureProvider<List<SystemLogEntry>>((ref) async {
       SystemLogEntry(
         date: supply.createdAt,
         title: 'أداة نظافة',
-        description: '${supply.name} - الرصيد ${supply.stockQuantity} ${supply.unit}',
+        description:
+            '${supply.name} - الرصيد ${supply.stockQuantity} ${supply.unit}',
         type: 'cleaning_supply',
         route: '/cleaning_supplies',
         actorName: 'النظام',

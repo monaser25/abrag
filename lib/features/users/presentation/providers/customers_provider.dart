@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/database/tables.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class CustomerModel {
@@ -141,7 +142,13 @@ final customersProvider = StreamProvider<List<CustomerModel>>((ref) {
       if (date.isAfter(existing.date)) existing.date = date;
     }
 
-    for (final booking in summerBookings) {
+    final activeSummerBookings = summerBookings.where(
+      (booking) =>
+          booking.status != 'deleted' &&
+          booking.syncStatus != SyncStatus.pendingDelete,
+    );
+
+    for (final booking in activeSummerBookings) {
       final now = DateTime.now();
       final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
       final isStaying =

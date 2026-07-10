@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/database/tables.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
@@ -19,7 +20,13 @@ final searchResultsProvider = StreamProvider.autoDispose<List<dynamic>>((ref) {
     final results = [];
 
     // Search Summer Bookings
-    final bookings = await db.select(db.summerBookings).get();
+    final bookings =
+        await (db.select(db.summerBookings)
+              ..where((t) => t.status.isNotIn(['deleted']))
+              ..where(
+                (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+              ))
+            .get();
     results.addAll(
       bookings.where(
         (b) =>
@@ -72,10 +79,7 @@ class GlobalSearchScreen extends ConsumerWidget {
           ),
           Expanded(
             child: query.isEmpty
-                ? const EmptyState(
-                    icon: Icons.search,
-                    title: 'اكتب للبحث...',
-                  )
+                ? const EmptyState(icon: Icons.search, title: 'اكتب للبحث...')
                 : searchResults.when(
                     data: (results) {
                       if (results.isEmpty) {

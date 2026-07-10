@@ -7,6 +7,66 @@ import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../apartments/presentation/providers/apartment_occupancy_rules_provider.dart';
 
+List<double> splitAmountExactly(double total, int count) {
+  if (count <= 0) {
+    throw ArgumentError.value(count, 'count', 'لازم تختار شقة واحدة على الأقل');
+  }
+  if (count == 1) return [total];
+
+  final parts = <double>[];
+  var acc = 0.0;
+  for (var i = 0; i < count - 1; i++) {
+    final part = double.parse((total / count).toStringAsFixed(2));
+    parts.add(part);
+    acc += part;
+  }
+  parts.add(double.parse((total - acc).toStringAsFixed(2)));
+  return parts;
+}
+
+const _bookingPaymentMethodOrder = ['cash', 'vodafone_cash', 'instapay'];
+
+List<Map<String, double>> _allocatePaymentBreakdowns({
+  required Map<String, double> paymentBreakdown,
+  required List<double> paidParts,
+}) {
+  final remainingByMethod = {
+    for (final method in _bookingPaymentMethodOrder)
+      method: _toCents(paymentBreakdown[method] ?? 0),
+  };
+
+  return [
+    for (final paidPart in paidParts)
+      _allocateApartmentPaymentBreakdown(remainingByMethod, _toCents(paidPart)),
+  ];
+}
+
+Map<String, double> _allocateApartmentPaymentBreakdown(
+  Map<String, int> remainingByMethod,
+  int paidCents,
+) {
+  var remainingPaidCents = paidCents;
+  final allocations = <String, double>{};
+
+  for (final method in _bookingPaymentMethodOrder) {
+    if (remainingPaidCents <= 0) break;
+    final methodCents = remainingByMethod[method] ?? 0;
+    if (methodCents <= 0) continue;
+    final allocatedCents = remainingPaidCents < methodCents
+        ? remainingPaidCents
+        : methodCents;
+    allocations[method] = _fromCents(allocatedCents);
+    remainingByMethod[method] = methodCents - allocatedCents;
+    remainingPaidCents -= allocatedCents;
+  }
+
+  return allocations;
+}
+
+int _toCents(double amount) => (amount * 100).round();
+
+double _fromCents(int cents) => cents / 100;
+
 final bookingsControllerProvider =
     StateNotifierProvider<BookingsController, AsyncValue<void>>((ref) {
       return BookingsController(
@@ -56,84 +116,203 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         checkOutDate: checkOutDate,
       );
 
-      final id = const Uuid().v4();
-
-      // Determine initial status based on payment
-      String status = 'pending';
-      if (amountPaidEgp >= totalPriceEgp && totalPriceEgp > 0) {
-        status = 'confirmed'; // Or checked_in if dates match
-      } else if (amountPaidEgp > 0) {
-        status = 'confirmed'; // partial payment means confirmed
-      }
-
-      await _db
-          .into(_db.summerBookings)
-          .insert(
-            SummerBookingsCompanion.insert(
-              id: id,
-              apartmentId: apartmentId,
-              guestName: guestName,
-              guestPhone: Value(guestPhone),
-              checkInDate: checkInDate,
-              checkOutDate: checkOutDate,
-              status: Value(status),
-              totalPriceEgp: totalPriceEgp,
-              amountPaidEgp: Value(amountPaidEgp),
-              paymentMethod: Value(paymentMethod),
-              brokerId: Value(brokerId),
-              brokerName: Value(brokerName),
-              brokerCommissionType: Value(brokerCommissionType),
-              brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
-              brokerCommissionPercentage: Value(brokerCommissionPercentage),
-              nationalId: Value(nationalId),
-              idFrontImage: Value(idFrontImage),
-              idBackImage: Value(idBackImage),
-              syncStatus: const Value(SyncStatus.pendingInsert),
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-          );
-
-      for (final entry in paymentBreakdown.entries) {
-        if (entry.value > 0) {
-          await _db
-              .into(_db.bookingPayments)
-              .insert(
-                BookingPaymentsCompanion.insert(
-                  id: const Uuid().v4(),
-                  bookingId: id,
-                  amountEgp: entry.value,
-                  paymentMethod: Value(entry.key),
-                  paymentDate: DateTime.now(),
-                  notes: const Value(null),
-                  syncStatus: const Value(SyncStatus.pendingInsert),
-                  createdAt: DateTime.now(),
-                ),
-              );
-        }
-      }
-
-      await _auditLog.log(
-        action: 'create',
-        entityType: 'summer_booking',
-        entityId: id,
-        title: 'إضافة حجز صيفي',
-        description:
-            'تم إضافة حجز صيفي باسم $guestName بقيمة $totalPriceEgp ج.م',
-        route: '/summer_bookings/details/$id',
-        newValues: {
-          'guestName': guestName,
-          'guestPhone': guestPhone,
-          'checkInDate': checkInDate,
-          'checkOutDate': checkOutDate,
-          'totalPriceEgp': totalPriceEgp,
-          'amountPaidEgp': amountPaidEgp,
-        },
+      await _insertSummerBooking(
+        apartmentId: apartmentId,
+        guestName: guestName,
+        guestPhone: guestPhone,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        totalPriceEgp: totalPriceEgp,
+        amountPaidEgp: amountPaidEgp,
+        paymentMethod: paymentMethod,
+        paymentBreakdown: paymentBreakdown,
+        brokerId: brokerId,
+        brokerName: brokerName,
+        brokerCommissionType: brokerCommissionType,
+        brokerCommissionFixedEgp: brokerCommissionFixedEgp,
+        brokerCommissionPercentage: brokerCommissionPercentage,
+        nationalId: nationalId,
+        idFrontImage: idFrontImage,
+        idBackImage: idBackImage,
       );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
+  }
+
+  Future<void> addBookingsForApartments({
+    required List<String> apartmentIds,
+    required String guestName,
+    required String guestPhone,
+    required DateTime checkInDate,
+    required DateTime checkOutDate,
+    required double totalPriceEgp,
+    required double amountPaidEgp,
+    required String paymentMethod,
+    Map<String, double> paymentBreakdown = const {},
+    String? brokerId,
+    String? brokerName,
+    required String brokerCommissionType,
+    required double brokerCommissionFixedEgp,
+    required double brokerCommissionPercentage,
+    String? nationalId,
+    String? idFrontImage,
+    String? idBackImage,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      final uniqueApartmentIds = apartmentIds.toSet().toList();
+      if (uniqueApartmentIds.isEmpty) {
+        throw Exception('اختر شقة واحدة على الأقل');
+      }
+      if (amountPaidEgp > totalPriceEgp) {
+        throw Exception('العربون لا يمكن أن يكون أكبر من السعر الإجمالي');
+      }
+
+      final count = uniqueApartmentIds.length;
+      final totalPriceParts = splitAmountExactly(totalPriceEgp, count);
+      final amountPaidParts = splitAmountExactly(amountPaidEgp, count);
+      final paymentBreakdownParts = _allocatePaymentBreakdowns(
+        paymentBreakdown: paymentBreakdown,
+        paidParts: amountPaidParts,
+      );
+      final fixedCommissionParts = brokerCommissionType == 'fixed'
+          ? splitAmountExactly(brokerCommissionFixedEgp, count)
+          : List<double>.filled(count, 0);
+
+      await _db.transaction(() async {
+        for (final apartmentId in uniqueApartmentIds) {
+          await _occupancyRules.ensureApartmentIsFreeForPeriod(
+            apartmentId: apartmentId,
+            checkInDate: checkInDate,
+            checkOutDate: checkOutDate,
+          );
+        }
+
+        for (var i = 0; i < count; i++) {
+          await _insertSummerBooking(
+            apartmentId: uniqueApartmentIds[i],
+            guestName: guestName,
+            guestPhone: guestPhone,
+            checkInDate: checkInDate,
+            checkOutDate: checkOutDate,
+            totalPriceEgp: totalPriceParts[i],
+            amountPaidEgp: amountPaidParts[i],
+            paymentMethod: paymentMethod,
+            paymentBreakdown: paymentBreakdownParts[i],
+            brokerId: brokerId,
+            brokerName: brokerName,
+            brokerCommissionType: brokerCommissionType,
+            brokerCommissionFixedEgp: fixedCommissionParts[i],
+            brokerCommissionPercentage: brokerCommissionPercentage,
+            nationalId: nationalId,
+            idFrontImage: idFrontImage,
+            idBackImage: idBackImage,
+          );
+        }
+      });
+
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<String> _insertSummerBooking({
+    required String apartmentId,
+    required String guestName,
+    required String guestPhone,
+    required DateTime checkInDate,
+    required DateTime checkOutDate,
+    required double totalPriceEgp,
+    required double amountPaidEgp,
+    required String paymentMethod,
+    required Map<String, double> paymentBreakdown,
+    String? brokerId,
+    String? brokerName,
+    required String brokerCommissionType,
+    required double brokerCommissionFixedEgp,
+    required double brokerCommissionPercentage,
+    String? nationalId,
+    String? idFrontImage,
+    String? idBackImage,
+  }) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+
+    var status = 'pending';
+    if (amountPaidEgp >= totalPriceEgp && totalPriceEgp > 0) {
+      status = 'confirmed';
+    } else if (amountPaidEgp > 0) {
+      status = 'confirmed';
+    }
+
+    await _db
+        .into(_db.summerBookings)
+        .insert(
+          SummerBookingsCompanion.insert(
+            id: id,
+            apartmentId: apartmentId,
+            guestName: guestName,
+            guestPhone: Value(guestPhone),
+            checkInDate: checkInDate,
+            checkOutDate: checkOutDate,
+            status: Value(status),
+            totalPriceEgp: totalPriceEgp,
+            amountPaidEgp: Value(amountPaidEgp),
+            paymentMethod: Value(paymentMethod),
+            brokerId: Value(brokerId),
+            brokerName: Value(brokerName),
+            brokerCommissionType: Value(brokerCommissionType),
+            brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
+            brokerCommissionPercentage: Value(brokerCommissionPercentage),
+            nationalId: Value(nationalId),
+            idFrontImage: Value(idFrontImage),
+            idBackImage: Value(idBackImage),
+            syncStatus: const Value(SyncStatus.pendingInsert),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+
+    for (final entry in paymentBreakdown.entries) {
+      if (entry.value > 0) {
+        await _db
+            .into(_db.bookingPayments)
+            .insert(
+              BookingPaymentsCompanion.insert(
+                id: const Uuid().v4(),
+                bookingId: id,
+                amountEgp: entry.value,
+                paymentMethod: Value(entry.key),
+                paymentDate: now,
+                notes: const Value(null),
+                syncStatus: const Value(SyncStatus.pendingInsert),
+                createdAt: now,
+              ),
+            );
+      }
+    }
+
+    await _auditLog.log(
+      action: 'create',
+      entityType: 'summer_booking',
+      entityId: id,
+      title: 'إضافة حجز صيفي',
+      description: 'تم إضافة حجز صيفي باسم $guestName بقيمة $totalPriceEgp ج.م',
+      route: '/summer_bookings/details/$id',
+      newValues: {
+        'guestName': guestName,
+        'guestPhone': guestPhone,
+        'checkInDate': checkInDate,
+        'checkOutDate': checkOutDate,
+        'totalPriceEgp': totalPriceEgp,
+        'amountPaidEgp': amountPaidEgp,
+      },
+    );
+
+    return id;
   }
 
   Future<void> updateBooking({
@@ -447,15 +626,28 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         return;
       }
 
-      await (_db.update(
-        _db.summerBookings,
-      )..where((t) => t.id.equals(id))).write(
-        SummerBookingsCompanion(
-          status: const Value('deleted'),
-          syncStatus: const Value(SyncStatus.pendingUpdate),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
+      await _db.transaction(() async {
+        await (_db.update(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).write(
+          SummerBookingsCompanion(
+            syncStatus: const Value(SyncStatus.pendingDelete),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+        // Cascade the delete to the booking's payment rows. There is no FK
+        // cascade on Drift or Supabase, so without this the booking_payments
+        // rows would be orphaned when the booking row is removed on sync.
+        // Marking them pendingDelete makes the sync engine drop them from
+        // Supabase + local too.
+        await (_db.update(
+          _db.bookingPayments,
+        )..where((t) => t.bookingId.equals(id))).write(
+          const BookingPaymentsCompanion(
+            syncStatus: Value(SyncStatus.pendingDelete),
+          ),
+        );
+      });
       await _auditLog.log(
         action: 'delete',
         entityType: 'summer_booking',

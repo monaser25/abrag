@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -38,7 +39,12 @@ class SyncEngine {
 
   Future<void> syncAll() async {
     await _runWithNetworkRetry(() async {
-      await _uploadLocalMediaBeforeSync();
+      // Media upload is best-effort: a failure must never abort the data sync.
+      try {
+        await _uploadLocalMediaBeforeSync();
+      } catch (e) {
+        debugPrint('Media upload skipped (will retry next sync): $e');
+      }
       await _pushLocalChanges();
       await _pullRemoteChanges();
     });
@@ -70,10 +76,32 @@ class SyncEngine {
   }
 
   Future<void> _uploadLocalMediaBeforeSync() async {
-    await _uploadSummerBookingImages();
-    await _uploadWinterContractImages();
-    await _uploadWinterPaymentReceipts();
-    await _uploadExpenseReceipts();
+    // Media upload must NEVER abort a data sync. It runs before push/pull, so a
+    // transient storage/upload hiccup used to fail the whole refresh (and show a
+    // misleading "check your internet" message) even though the data itself would
+    // sync fine. Each step is now non-fatal: failures are logged and the file is
+    // retried on the next sync, while push/pull still run.
+    await _uploadMediaStep(_uploadSummerBookingImages, 'summer booking images');
+    await _uploadMediaStep(
+      _uploadWinterContractImages,
+      'winter contract images',
+    );
+    await _uploadMediaStep(
+      _uploadWinterPaymentReceipts,
+      'winter payment receipts',
+    );
+    await _uploadMediaStep(_uploadExpenseReceipts, 'expense receipts');
+  }
+
+  Future<void> _uploadMediaStep(
+    Future<void> Function() step,
+    String label,
+  ) async {
+    try {
+      await step();
+    } catch (e) {
+      debugPrint('Media upload "$label" failed (non-fatal, will retry): $e');
+    }
   }
 
   bool _isRemotePath(String? path) {
@@ -84,6 +112,11 @@ class SyncEngine {
   Future<void> _uploadSummerBookingImages() async {
     final bookings = await db.select(db.summerBookings).get();
     for (final item in bookings) {
+      if (item.syncStatus == SyncStatus.pendingDelete ||
+          item.status == 'deleted') {
+        continue;
+      }
+
       final idFront = _isRemotePath(item.idFrontImage)
           ? item.idFrontImage
           : await _uploadFileIfLocal(
@@ -376,6 +409,15 @@ class SyncEngine {
 
     for (final item in pendingSummerBookings) {
       try {
+        if (item.syncStatus == SyncStatus.pendingDelete ||
+            item.status == 'deleted') {
+          await supabase.from('summer_bookings').delete().eq('id', item.id);
+          await (db.delete(
+            db.summerBookings,
+          )..where((t) => t.id.equals(item.id))).go();
+          continue;
+        }
+
         String? uploadedIdfrontimage = item.idFrontImage;
         if (uploadedIdfrontimage != null &&
             !uploadedIdfrontimage.startsWith('http')) {
@@ -422,19 +464,12 @@ class SyncEngine {
           'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
-        if (item.syncStatus == SyncStatus.pendingDelete) {
-          await supabase.from('summer_bookings').delete().eq('id', item.id);
-          await (db.delete(
-            db.summerBookings,
-          )..where((t) => t.id.equals(item.id))).go();
-        } else {
-          await supabase.from('summer_bookings').upsert(payload);
-          await (db.update(
-            db.summerBookings,
-          )..where((t) => t.id.equals(item.id))).write(
-            const SummerBookingsCompanion(syncStatus: Value(SyncStatus.synced)),
-          );
-        }
+        await supabase.from('summer_bookings').upsert(payload);
+        await (db.update(
+          db.summerBookings,
+        )..where((t) => t.id.equals(item.id))).write(
+          const SummerBookingsCompanion(syncStatus: Value(SyncStatus.synced)),
+        );
       } catch (e) {
         throw Exception(
           'Error syncing summer_bookings (push): $e\nItem: $item',

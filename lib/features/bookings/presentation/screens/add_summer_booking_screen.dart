@@ -22,10 +22,19 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../apartments/presentation/providers/apartment_occupancy_rules_provider.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 
+DateTime _dateOnly(DateTime value) {
+  return DateTime(value.year, value.month, value.day);
+}
+
 class AddSummerBookingScreen extends ConsumerStatefulWidget {
   final String? bookingId;
+  final String? initialApartmentId;
 
-  const AddSummerBookingScreen({super.key, this.bookingId});
+  const AddSummerBookingScreen({
+    super.key,
+    this.bookingId,
+    this.initialApartmentId,
+  });
 
   @override
   ConsumerState<AddSummerBookingScreen> createState() =>
@@ -53,10 +62,14 @@ class _AddSummerBookingScreenState
   String _commissionType = 'none';
   File? _idFrontImage;
   File? _idBackImage;
+  String? _existingIdFrontPath;
+  String? _existingIdBackPath;
   String? _selectedApartmentId;
+  Set<String> _selectedApartmentIds = {};
   String? _selectedBuildingId;
   String? _selectedBrokerId;
   bool _prefilled = false;
+  bool _initialApartmentSelectionApplied = false;
   Set<String> _occupiedApartmentIds = {};
   static const _draftKey = 'summer_booking_draft_v1';
 
@@ -68,10 +81,25 @@ class _AddSummerBookingScreenState
         checkOutDate: _checkOutDate!,
         excludingSummerBookingId: widget.bookingId,
       );
+      final selectedOccupiedIds = widget.bookingId == null
+          ? _selectedApartmentIds.intersection(occupiedIds)
+          : <String>{};
       if (mounted) {
         setState(() {
           _occupiedApartmentIds = occupiedIds;
+          if (widget.bookingId == null) {
+            _selectedApartmentIds.removeWhere(occupiedIds.contains);
+          }
         });
+        if (selectedOccupiedIds.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'بعض الشقق أصبحت محجوزة في هذه الفترة وتم استبعادها من الاختيار',
+              ),
+            ),
+          );
+        }
       }
     } else {
       if (mounted) {
@@ -110,11 +138,66 @@ class _AddSummerBookingScreenState
       setState(() {
         if (isFront) {
           _idFrontImage = savedImage;
+          _existingIdFrontPath = null;
         } else {
           _idBackImage = savedImage;
+          _existingIdBackPath = null;
         }
       });
     }
+  }
+
+  bool get _hasIdFrontImage =>
+      _idFrontImage != null || (_existingIdFrontPath?.isNotEmpty ?? false);
+
+  bool get _hasIdBackImage =>
+      _idBackImage != null || (_existingIdBackPath?.isNotEmpty ?? false);
+
+  void _prefillStoredIdImage({required bool isFront, String? path}) {
+    final storedPath = path?.trim();
+    File? localImage;
+    String? existingPath;
+    if (storedPath != null && storedPath.isNotEmpty) {
+      if (storedPath.startsWith('http')) {
+        existingPath = storedPath;
+      } else {
+        final file = File(storedPath);
+        if (file.existsSync()) localImage = file;
+      }
+    }
+
+    if (isFront) {
+      _idFrontImage = localImage;
+      _existingIdFrontPath = existingPath;
+    } else {
+      _idBackImage = localImage;
+      _existingIdBackPath = existingPath;
+    }
+  }
+
+  void _applyInitialApartmentSelection(List<Apartment> apartments) {
+    if (widget.bookingId != null || _initialApartmentSelectionApplied) return;
+    final apartmentId = widget.initialApartmentId;
+    if (apartmentId == null || apartmentId.isEmpty) return;
+
+    final matches = apartments.where((a) => a.id == apartmentId).toList();
+    if (matches.isEmpty) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialApartmentSelectionApplied) return;
+      if (_selectedApartmentIds.isNotEmpty) {
+        _initialApartmentSelectionApplied = true;
+        return;
+      }
+
+      final apartment = matches.first;
+      setState(() {
+        _initialApartmentSelectionApplied = true;
+        _selectedApartmentId = apartment.id;
+        _selectedApartmentIds.add(apartment.id);
+        _selectedBuildingId = apartment.buildingId;
+      });
+    });
   }
 
   Future<void> _showPreviousGuestPicker(List<SummerBooking> bookings) async {
@@ -223,9 +306,24 @@ class _AddSummerBookingScreenState
                                       ? b.guestPhone!
                                       : 'لا يوجد رقم هاتف',
                                 ),
-                                trailing: StatusChip(
-                                  label: '$guestBookingsCount حجوزات',
-                                  kind: StatusChipKind.brand,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if ((b.idFrontImage != null &&
+                                            b.idFrontImage!.isNotEmpty) ||
+                                        (b.idBackImage != null &&
+                                            b.idBackImage!.isNotEmpty)) ...[
+                                      const StatusChip(
+                                        label: 'بطاقة',
+                                        kind: StatusChipKind.ok,
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    StatusChip(
+                                      label: '$guestBookingsCount حجوزات',
+                                      kind: StatusChipKind.brand,
+                                    ),
+                                  ],
                                 ),
                                 onTap: () => Navigator.pop(context, b),
                               );
@@ -246,16 +344,14 @@ class _AddSummerBookingScreenState
         _guestPhoneController.text = selectedBooking.guestPhone ?? '';
         _nationalIdController.text = selectedBooking.nationalId ?? '';
 
-        if (selectedBooking.idFrontImage != null &&
-            selectedBooking.idFrontImage!.isNotEmpty &&
-            File(selectedBooking.idFrontImage!).existsSync()) {
-          _idFrontImage = File(selectedBooking.idFrontImage!);
-        }
-        if (selectedBooking.idBackImage != null &&
-            selectedBooking.idBackImage!.isNotEmpty &&
-            File(selectedBooking.idBackImage!).existsSync()) {
-          _idBackImage = File(selectedBooking.idBackImage!);
-        }
+        _prefillStoredIdImage(
+          isFront: true,
+          path: selectedBooking.idFrontImage,
+        );
+        _prefillStoredIdImage(
+          isFront: false,
+          path: selectedBooking.idBackImage,
+        );
       });
     }
   }
@@ -328,7 +424,12 @@ class _AddSummerBookingScreenState
       'checkOutDate': _checkOutDate?.toIso8601String(),
       'paymentMethod': _paymentMethod,
       'commissionType': _commissionType,
-      'selectedApartmentId': _selectedApartmentId,
+      'selectedApartmentId': widget.bookingId == null
+          ? (_selectedApartmentIds.length == 1
+                ? _selectedApartmentIds.first
+                : null)
+          : _selectedApartmentId,
+      'selectedApartmentIds': _selectedApartmentIds.toList(),
       'selectedBuildingId': _selectedBuildingId,
       'selectedBrokerId': _selectedBrokerId,
     };
@@ -383,6 +484,18 @@ class _AddSummerBookingScreenState
       _paymentMethod = draft['paymentMethod']?.toString() ?? 'cash';
       _commissionType = draft['commissionType']?.toString() ?? 'none';
       _selectedApartmentId = draft['selectedApartmentId']?.toString();
+      final rawSelectedApartmentIds = draft['selectedApartmentIds'];
+      if (rawSelectedApartmentIds is List) {
+        _selectedApartmentIds = rawSelectedApartmentIds
+            .map((id) => id.toString())
+            .where((id) => id.isNotEmpty)
+            .toSet();
+      }
+      if (widget.bookingId == null &&
+          _selectedApartmentIds.isEmpty &&
+          _selectedApartmentId != null) {
+        _selectedApartmentIds = {_selectedApartmentId!};
+      }
       _selectedBuildingId = draft['selectedBuildingId']?.toString();
       _selectedBrokerId = draft['selectedBrokerId']?.toString();
     });
@@ -461,6 +574,22 @@ class _AddSummerBookingScreenState
     return total;
   }
 
+  double _parseCurrencyText(String text) {
+    return double.tryParse(text.replaceAll(',', '').trim()) ?? 0;
+  }
+
+  String _splitPreviewText() {
+    final count = _selectedApartmentIds.length;
+    final total = _parseCurrencyText(_totalPriceController.text);
+    final parts = splitAmountExactly(total, count);
+    final firstPart = parts.first.toCurrencyFormat();
+    final lastPart = parts.last.toCurrencyFormat();
+    if (parts.first == parts.last) {
+      return 'هيتقسم على $count شقق - نصيب الشقة $firstPart ج.م';
+    }
+    return 'هيتقسم على $count شقق - نصيب الشقة $firstPart ج.م، وآخر شقة $lastPart ج.م';
+  }
+
   String? _optionalEgyptianPhoneValidator(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) return null;
@@ -480,10 +609,15 @@ class _AddSummerBookingScreenState
   }
 
   Future<void> _submit() async {
+    final isAddMode = widget.bookingId == null;
+    final hasApartment = isAddMode
+        ? _selectedApartmentIds.isNotEmpty
+        : _selectedApartmentId != null;
+
     if (_formKey.currentState!.validate() &&
         _checkInDate != null &&
         _checkOutDate != null &&
-        _selectedApartmentId != null) {
+        hasApartment) {
       String? finalBrokerId = _selectedBrokerId == 'other'
           ? null
           : _selectedBrokerId;
@@ -512,22 +646,10 @@ class _AddSummerBookingScreenState
       double totalPaid = 0;
       String dominantMethod = 'cash';
 
-      if (widget.bookingId == null) {
-        cashAmt =
-            double.tryParse(
-              _amountCashController.text.replaceAll(',', '').trim(),
-            ) ??
-            0;
-        vodaAmt =
-            double.tryParse(
-              _amountVodafoneCashController.text.replaceAll(',', '').trim(),
-            ) ??
-            0;
-        instaAmt =
-            double.tryParse(
-              _amountInstapayController.text.replaceAll(',', '').trim(),
-            ) ??
-            0;
+      if (isAddMode) {
+        cashAmt = _parseCurrencyText(_amountCashController.text);
+        vodaAmt = _parseCurrencyText(_amountVodafoneCashController.text);
+        instaAmt = _parseCurrencyText(_amountInstapayController.text);
         totalPaid = cashAmt + vodaAmt + instaAmt;
 
         if (vodaAmt > cashAmt && vodaAmt >= instaAmt) {
@@ -538,102 +660,80 @@ class _AddSummerBookingScreenState
           dominantMethod = 'cash';
         }
       } else {
-        totalPaid =
-            double.tryParse(
-              _amountPaidController.text.replaceAll(',', '').trim(),
-            ) ??
-            0;
+        totalPaid = _parseCurrencyText(_amountPaidController.text);
         dominantMethod = _paymentMethod;
       }
 
-      final args = (
-        apartmentId: _selectedApartmentId!,
-        guestName: _guestNameController.text.trim(),
-        guestPhone: _guestPhoneController.text.trim(),
-        checkInDate: _checkInDate!,
-        checkOutDate: _checkOutDate!,
-        totalPriceEgp:
-            double.tryParse(
-              _totalPriceController.text.replaceAll(',', '').trim(),
-            ) ??
-            0,
-        amountPaidEgp: totalPaid,
-        paymentMethod: dominantMethod,
-        paymentBreakdown: widget.bookingId == null
-            ? {'cash': cashAmt, 'vodafone_cash': vodaAmt, 'instapay': instaAmt}
-            : const <String, double>{},
-        brokerId: finalBrokerId,
-        brokerName: finalBrokerName,
-        brokerCommissionType: _commissionType,
-        brokerCommissionFixedEgp: _commissionType == 'fixed'
-            ? (double.tryParse(
-                    _commissionController.text.replaceAll(',', ''),
-                  ) ??
-                  0.0)
-            : 0.0,
-        brokerCommissionPercentage: _commissionType == 'percentage'
-            ? (double.tryParse(
-                    _commissionController.text.replaceAll(',', ''),
-                  ) ??
-                  10.0)
-            : 10.0,
-        nationalId: _nationalIdController.text.trim().isEmpty
-            ? null
-            : _nationalIdController.text.trim(),
-        idFrontImage: _idFrontImage?.path,
-        idBackImage: _idBackImage?.path,
-      );
-      if (widget.bookingId == null) {
+      final guestName = _guestNameController.text.trim();
+      final guestPhone = _guestPhoneController.text.trim();
+      final totalPriceEgp = _parseCurrencyText(_totalPriceController.text);
+      final brokerCommissionFixedEgp = _commissionType == 'fixed'
+          ? _parseCurrencyText(_commissionController.text)
+          : 0.0;
+      final brokerCommissionPercentage = _commissionType == 'percentage'
+          ? _parseCurrencyText(_commissionController.text)
+          : 10.0;
+      final nationalId = _nationalIdController.text.trim().isEmpty
+          ? null
+          : _nationalIdController.text.trim();
+
+      if (isAddMode) {
         ref
             .read(bookingsControllerProvider.notifier)
-            .addBooking(
-              apartmentId: args.apartmentId,
-              guestName: args.guestName,
-              guestPhone: args.guestPhone,
-              checkInDate: args.checkInDate,
-              checkOutDate: args.checkOutDate,
-              totalPriceEgp: args.totalPriceEgp,
-              amountPaidEgp: args.amountPaidEgp,
-              paymentMethod: args.paymentMethod,
-              paymentBreakdown: args.paymentBreakdown,
-              brokerId: args.brokerId,
-              brokerName: args.brokerName,
-              brokerCommissionType: args.brokerCommissionType,
-              brokerCommissionFixedEgp: args.brokerCommissionFixedEgp,
-              brokerCommissionPercentage: args.brokerCommissionPercentage,
-              nationalId: args.nationalId,
-              idFrontImage: args.idFrontImage,
-              idBackImage: args.idBackImage,
+            .addBookingsForApartments(
+              apartmentIds: _selectedApartmentIds.toList(),
+              guestName: guestName,
+              guestPhone: guestPhone,
+              checkInDate: _checkInDate!,
+              checkOutDate: _checkOutDate!,
+              totalPriceEgp: totalPriceEgp,
+              amountPaidEgp: totalPaid,
+              paymentMethod: dominantMethod,
+              paymentBreakdown: {
+                'cash': cashAmt,
+                'vodafone_cash': vodaAmt,
+                'instapay': instaAmt,
+              },
+              brokerId: finalBrokerId,
+              brokerName: finalBrokerName,
+              brokerCommissionType: _commissionType,
+              brokerCommissionFixedEgp: brokerCommissionFixedEgp,
+              brokerCommissionPercentage: brokerCommissionPercentage,
+              nationalId: nationalId,
+              idFrontImage: _idFrontImage?.path ?? _existingIdFrontPath,
+              idBackImage: _idBackImage?.path ?? _existingIdBackPath,
             );
       } else {
         ref
             .read(bookingsControllerProvider.notifier)
             .updateBooking(
               id: widget.bookingId!,
-              apartmentId: args.apartmentId,
-              guestName: args.guestName,
-              guestPhone: args.guestPhone,
-              checkInDate: args.checkInDate,
-              checkOutDate: args.checkOutDate,
-              totalPriceEgp: args.totalPriceEgp,
-              amountPaidEgp: args.amountPaidEgp,
-              paymentMethod: args.paymentMethod,
-              brokerId: args.brokerId,
-              brokerName: args.brokerName,
-              brokerCommissionType: args.brokerCommissionType,
-              brokerCommissionFixedEgp: args.brokerCommissionFixedEgp,
-              brokerCommissionPercentage: args.brokerCommissionPercentage,
-              nationalId: args.nationalId,
-              idFrontImage: args.idFrontImage,
-              idBackImage: args.idBackImage,
+              apartmentId: _selectedApartmentId!,
+              guestName: guestName,
+              guestPhone: guestPhone,
+              checkInDate: _checkInDate!,
+              checkOutDate: _checkOutDate!,
+              totalPriceEgp: totalPriceEgp,
+              amountPaidEgp: totalPaid,
+              paymentMethod: dominantMethod,
+              brokerId: finalBrokerId,
+              brokerName: finalBrokerName,
+              brokerCommissionType: _commissionType,
+              brokerCommissionFixedEgp: brokerCommissionFixedEgp,
+              brokerCommissionPercentage: brokerCommissionPercentage,
+              nationalId: nationalId,
+              idFrontImage: _idFrontImage?.path ?? _existingIdFrontPath,
+              idBackImage: _idBackImage?.path ?? _existingIdBackPath,
             );
       }
-    } else if (_checkInDate == null ||
-        _checkOutDate == null ||
-        _selectedApartmentId == null) {
+    } else if (_checkInDate == null || _checkOutDate == null || !hasApartment) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('الرجاء التأكد من التواريخ واختيار الشقة'),
+        SnackBar(
+          content: Text(
+            !hasApartment
+                ? 'اختر شقة واحدة على الأقل'
+                : 'الرجاء التأكد من التواريخ واختيار الشقة',
+          ),
         ),
       );
     }
@@ -734,12 +834,14 @@ class _AddSummerBookingScreenState
                               ? b.brokerCommissionFixedEgp.toString()
                               : b.brokerCommissionPercentage.toString();
                           _nationalIdController.text = b.nationalId ?? '';
-                          if (b.idFrontImage != null) {
-                            _idFrontImage = File(b.idFrontImage!);
-                          }
-                          if (b.idBackImage != null) {
-                            _idBackImage = File(b.idBackImage!);
-                          }
+                          _prefillStoredIdImage(
+                            isFront: true,
+                            path: b.idFrontImage,
+                          );
+                          _prefillStoredIdImage(
+                            isFront: false,
+                            path: b.idBackImage,
+                          );
                         });
                         _refreshOccupiedApartments();
                       });
@@ -774,7 +876,12 @@ class _AddSummerBookingScreenState
                   onChanged: (v) {
                     setState(() {
                       _selectedBuildingId = v;
-                      _selectedApartmentId = null;
+                      if (widget.bookingId == null) {
+                        _selectedApartmentId = null;
+                        _selectedApartmentIds.clear();
+                      } else {
+                        _selectedApartmentId = null;
+                      }
                     });
                   },
                 );
@@ -785,10 +892,18 @@ class _AddSummerBookingScreenState
             const SizedBox(height: 16),
             apartmentsAsync.when(
               data: (apartments) {
-                if (_selectedApartmentId != null &&
+                _applyInitialApartmentSelection(apartments);
+                final isAddMode = widget.bookingId == null;
+                final selectedApartmentForBuilding = isAddMode
+                    ? (_selectedApartmentIds.length == 1
+                          ? _selectedApartmentIds.first
+                          : null)
+                    : _selectedApartmentId;
+
+                if (selectedApartmentForBuilding != null &&
                     _selectedBuildingId == null) {
                   final matches = apartments
-                      .where((a) => a.id == _selectedApartmentId)
+                      .where((a) => a.id == selectedApartmentForBuilding)
                       .toList();
                   if (matches.isNotEmpty) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -807,30 +922,94 @@ class _AddSummerBookingScreenState
 
                 if (_checkInDate != null && _checkOutDate != null) {
                   filteredApts = filteredApts.where((a) {
-                    if (a.id == _selectedApartmentId) return true;
+                    if (!isAddMode && a.id == _selectedApartmentId) {
+                      return true;
+                    }
                     return !_occupiedApartmentIds.contains(a.id);
                   }).toList();
+                }
+
+                if (isAddMode && _selectedApartmentIds.isNotEmpty) {
+                  final filteredIds = filteredApts.map((a) => a.id).toSet();
+                  if (!_selectedApartmentIds.every(filteredIds.contains)) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() {
+                        _selectedApartmentIds.removeWhere(
+                          (id) => !filteredIds.contains(id),
+                        );
+                      });
+                    });
+                  }
                 }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppDropdownField<String>(
-                      label: 'اختر الشقة',
-                      prefixIcon: Icons.door_front_door_outlined,
-                      initialValue: _selectedApartmentId,
-                      items: filteredApts
-                          .map(
-                            (a) => DropdownMenuItem(
-                              value: a.id,
-                              child: Text('شقة ${a.apartmentNumber}'),
+                    if (isAddMode)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'اختر الشقة',
+                            style: AppTextStyles.label.copyWith(
+                              color: colors.ink2,
                             ),
-                          )
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => _selectedApartmentId = v),
-                      validator: (v) => v == null ? 'مطلوب' : null,
-                    ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (filteredApts.isEmpty)
+                            EmptyState(
+                              icon: Icons.door_front_door_outlined,
+                              title:
+                                  _checkInDate == null || _checkOutDate == null
+                                  ? 'اختر التواريخ أولًا'
+                                  : 'لا توجد شقق متاحة',
+                            )
+                          else
+                            AppCard(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Column(
+                                children: filteredApts.map((a) {
+                                  final selected = _selectedApartmentIds
+                                      .contains(a.id);
+                                  return CheckboxListTile(
+                                    value: selected,
+                                    dense: true,
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    title: Text('شقة ${a.apartmentNumber}'),
+                                    onChanged: (checked) {
+                                      setState(() {
+                                        if (checked == true) {
+                                          _selectedApartmentIds.add(a.id);
+                                        } else {
+                                          _selectedApartmentIds.remove(a.id);
+                                        }
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                        ],
+                      )
+                    else
+                      AppDropdownField<String>(
+                        label: 'اختر الشقة',
+                        prefixIcon: Icons.door_front_door_outlined,
+                        initialValue: _selectedApartmentId,
+                        items: filteredApts
+                            .map(
+                              (a) => DropdownMenuItem(
+                                value: a.id,
+                                child: Text('شقة ${a.apartmentNumber}'),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => _selectedApartmentId = v),
+                        validator: (v) => v == null ? 'مطلوب' : null,
+                      ),
                     if (_checkInDate == null || _checkOutDate == null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8, right: 12),
@@ -877,27 +1056,23 @@ class _AddSummerBookingScreenState
               validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
             ),
             const SizedBox(height: 16),
-            Row(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: AppTextField(
-                    label: 'رقم الهاتف',
-                    prefixIcon: Icons.phone_outlined,
-                    controller: _guestPhoneController,
-                    keyboardType: TextInputType.phone,
-                    validator: _optionalEgyptianPhoneValidator,
-                  ),
+                AppTextField(
+                  label: 'رقم الهاتف',
+                  prefixIcon: Icons.phone_outlined,
+                  controller: _guestPhoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: _optionalEgyptianPhoneValidator,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppTextField(
-                    label: 'الرقم القومي (اختياري)',
-                    prefixIcon: Icons.badge_outlined,
-                    controller: _nationalIdController,
-                    keyboardType: TextInputType.number,
-                    validator: _optionalNationalIdValidator,
-                  ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  label: 'الرقم القومي (اختياري)',
+                  prefixIcon: Icons.badge_outlined,
+                  controller: _nationalIdController,
+                  keyboardType: TextInputType.number,
+                  validator: _optionalNationalIdValidator,
                 ),
               ],
             ),
@@ -909,12 +1084,10 @@ class _AddSummerBookingScreenState
                     onPressed: () => _showImageSourceSheet(true),
                     icon: const Icon(Icons.camera_alt),
                     label: Text(
-                      _idFrontImage != null
-                          ? 'تم التقاط الأمام'
-                          : 'بطاقة (أمام)',
+                      _hasIdFrontImage ? 'تم التقاط الأمام' : 'بطاقة (أمام)',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _idFrontImage != null ? colors.ok : null,
+                      foregroundColor: _hasIdFrontImage ? colors.ok : null,
                     ),
                   ),
                 ),
@@ -924,10 +1097,10 @@ class _AddSummerBookingScreenState
                     onPressed: () => _showImageSourceSheet(false),
                     icon: const Icon(Icons.camera_alt),
                     label: Text(
-                      _idBackImage != null ? 'تم التقاط الخلف' : 'بطاقة (خلف)',
+                      _hasIdBackImage ? 'تم التقاط الخلف' : 'بطاقة (خلف)',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _idBackImage != null ? colors.ok : null,
+                      foregroundColor: _hasIdBackImage ? colors.ok : null,
                     ),
                   ),
                 ),
@@ -982,7 +1155,10 @@ class _AddSummerBookingScreenState
                         style: AppTextStyles.bodyS.copyWith(color: colors.ink),
                       ),
                     ),
-                    if (_checkInDate!.isAfter(DateTime.now())) ...[
+                    if (_checkInDate != null &&
+                        _dateOnly(
+                          _checkInDate!,
+                        ).isAfter(_dateOnly(DateTime.now()))) ...[
                       const SizedBox(width: 8),
                       const StatusChip(
                         label: 'حجز مستقبلي',
@@ -1062,158 +1238,158 @@ class _AddSummerBookingScreenState
                       style: AppTextStyles.label.copyWith(color: colors.ink2),
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: AppTextField(
-                            label: 'مدفوع كاش',
-                            controller: _amountCashController,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [CurrencyInputFormatter()],
-                            validator: (v) {
-                              final cash =
-                                  double.tryParse(
-                                    (_amountCashController.text).replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              final voda =
-                                  double.tryParse(
-                                    (_amountVodafoneCashController.text)
-                                        .replaceAll(',', ''),
-                                  ) ??
-                                  0;
-                              final insta =
-                                  double.tryParse(
-                                    (_amountInstapayController.text).replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              final total =
-                                  double.tryParse(
-                                    _totalPriceController.text.replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              if (cash + voda + insta > total) {
-                                return 'العربون أكبر من الإجمالي';
-                              }
-                              return null;
-                            },
-                            onChanged: (_) => setState(() {}),
+                        AppTextField(
+                          label: 'مدفوع كاش',
+                          controller: _amountCashController,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
                           ),
+                          inputFormatters: [CurrencyInputFormatter()],
+                          validator: (v) {
+                            final cash =
+                                double.tryParse(
+                                  (_amountCashController.text).replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            final voda =
+                                double.tryParse(
+                                  (_amountVodafoneCashController.text)
+                                      .replaceAll(',', ''),
+                                ) ??
+                                0;
+                            final insta =
+                                double.tryParse(
+                                  (_amountInstapayController.text).replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            final total =
+                                double.tryParse(
+                                  _totalPriceController.text.replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            if (cash + voda + insta > total) {
+                              return 'العربون أكبر من الإجمالي';
+                            }
+                            return null;
+                          },
+                          onChanged: (_) => setState(() {}),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: AppTextField(
-                            label: 'مدفوع فودافون كاش',
-                            controller: _amountVodafoneCashController,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [CurrencyInputFormatter()],
-                            validator: (v) {
-                              final cash =
-                                  double.tryParse(
-                                    (_amountCashController.text).replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              final voda =
-                                  double.tryParse(
-                                    (_amountVodafoneCashController.text)
-                                        .replaceAll(',', ''),
-                                  ) ??
-                                  0;
-                              final insta =
-                                  double.tryParse(
-                                    (_amountInstapayController.text).replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              final total =
-                                  double.tryParse(
-                                    _totalPriceController.text.replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              if (cash + voda + insta > total) {
-                                return 'العربون أكبر من الإجمالي';
-                              }
-                              return null;
-                            },
-                            onChanged: (_) => setState(() {}),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          label: 'مدفوع فودافون كاش',
+                          controller: _amountVodafoneCashController,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
                           ),
+                          inputFormatters: [CurrencyInputFormatter()],
+                          validator: (v) {
+                            final cash =
+                                double.tryParse(
+                                  (_amountCashController.text).replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            final voda =
+                                double.tryParse(
+                                  (_amountVodafoneCashController.text)
+                                      .replaceAll(',', ''),
+                                ) ??
+                                0;
+                            final insta =
+                                double.tryParse(
+                                  (_amountInstapayController.text).replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            final total =
+                                double.tryParse(
+                                  _totalPriceController.text.replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            if (cash + voda + insta > total) {
+                              return 'العربون أكبر من الإجمالي';
+                            }
+                            return null;
+                          },
+                          onChanged: (_) => setState(() {}),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: AppTextField(
-                            label: 'مدفوع إنستاباي',
-                            controller: _amountInstapayController,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [CurrencyInputFormatter()],
-                            validator: (v) {
-                              final cash =
-                                  double.tryParse(
-                                    (_amountCashController.text).replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              final voda =
-                                  double.tryParse(
-                                    (_amountVodafoneCashController.text)
-                                        .replaceAll(',', ''),
-                                  ) ??
-                                  0;
-                              final insta =
-                                  double.tryParse(
-                                    (_amountInstapayController.text).replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              final total =
-                                  double.tryParse(
-                                    _totalPriceController.text.replaceAll(
-                                      ',',
-                                      '',
-                                    ),
-                                  ) ??
-                                  0;
-                              if (cash + voda + insta > total) {
-                                return 'العربون أكبر من الإجمالي';
-                              }
-                              return null;
-                            },
-                            onChanged: (_) => setState(() {}),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          label: 'مدفوع إنستاباي',
+                          controller: _amountInstapayController,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
                           ),
+                          inputFormatters: [CurrencyInputFormatter()],
+                          validator: (v) {
+                            final cash =
+                                double.tryParse(
+                                  (_amountCashController.text).replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            final voda =
+                                double.tryParse(
+                                  (_amountVodafoneCashController.text)
+                                      .replaceAll(',', ''),
+                                ) ??
+                                0;
+                            final insta =
+                                double.tryParse(
+                                  (_amountInstapayController.text).replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            final total =
+                                double.tryParse(
+                                  _totalPriceController.text.replaceAll(
+                                    ',',
+                                    '',
+                                  ),
+                                ) ??
+                                0;
+                            if (cash + voda + insta > total) {
+                              return 'العربون أكبر من الإجمالي';
+                            }
+                            return null;
+                          },
+                          onChanged: (_) => setState(() {}),
                         ),
+                        if (_selectedApartmentIds.length > 1) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _splitPreviewText(),
+                            style: AppTextStyles.bodyS.copyWith(
+                              color: colors.ink2,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

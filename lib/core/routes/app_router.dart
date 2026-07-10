@@ -231,7 +231,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'add',
-                builder: (context, state) => const AddSummerBookingScreen(),
+                builder: (context, state) => AddSummerBookingScreen(
+                  initialApartmentId: state.uri.queryParameters['apartmentId'],
+                ),
               ),
               GoRoute(
                 path: 'edit/:id',
