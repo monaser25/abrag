@@ -563,10 +563,15 @@ class _ApartmentProfileScreenState
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      booking.guestName,
-                                      style: theme.textTheme.titleMedium,
+                                    Expanded(
+                                      child: Text(
+                                        booking.guestName,
+                                        style: theme.textTheme.titleMedium,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
+                                    const SizedBox(width: 8),
                                     Wrap(
                                       spacing: 6,
                                       children: [

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -113,12 +114,15 @@ class GuestProfileScreen extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  (latestBooking.guestPhone?.trim().isNotEmpty ??
+                                  (latestBooking.guestPhone
+                                              ?.trim()
+                                              .isNotEmpty ??
                                           false)
                                       ? latestBooking.guestPhone!
                                       : 'لا يوجد رقم هاتف',
-                                  style: AppTextStyles.bodyS
-                                      .copyWith(color: colors.ink2),
+                                  style: AppTextStyles.bodyS.copyWith(
+                                    color: colors.ink2,
+                                  ),
                                 ),
                               ),
                               if (latestBooking.guestPhone?.trim().isNotEmpty ??
@@ -230,8 +234,9 @@ class GuestProfileScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               'شقة $apartmentNumber',
-                              style: AppTextStyles.title
-                                  .copyWith(color: colors.ink),
+                              style: AppTextStyles.title.copyWith(
+                                color: colors.ink,
+                              ),
                             ),
                           ),
                           StatusChip(
@@ -318,10 +323,7 @@ class GuestProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _IdImageTile(
-                  title: 'خلف البطاقة',
-                  imagePath: backPath,
-                ),
+                child: _IdImageTile(title: 'خلف البطاقة', imagePath: backPath),
               ),
             ],
           ),
@@ -357,9 +359,7 @@ class GuestProfileScreen extends ConsumerWidget {
           _InfoLine(
             icon: Icons.cake,
             label: 'تاريخ الميلاد',
-            value: birthDate == null
-                ? 'غير متاح'
-                : formatter.format(birthDate),
+            value: birthDate == null ? 'غير متاح' : formatter.format(birthDate),
           ),
           const SizedBox(height: 6),
           _InfoLine(
@@ -417,7 +417,9 @@ class GuestProfileScreen extends ConsumerWidget {
 
   String? _latestExistingImage(Iterable<String?> paths) {
     for (final path in paths) {
-      if (path != null && path.isNotEmpty && File(path).existsSync()) {
+      if (path == null || path.isEmpty) continue;
+      // A synced ID image is a remote URL; a not-yet-synced one is a local file.
+      if (path.startsWith('http') || File(path).existsSync()) {
         return path;
       }
     }
@@ -539,23 +541,36 @@ class _IdImageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final hasImage = imagePath != null && imagePath!.isNotEmpty;
-    final file = hasImage ? File(imagePath!) : null;
-    final fileExists = file?.existsSync() ?? false;
+    final path = imagePath?.trim() ?? '';
+    // A synced image is a remote URL (shown via CachedNetworkImage); a
+    // not-yet-synced one is a local file that must exist on this device.
+    final isRemote = path.startsWith('http');
+    final file = (path.isNotEmpty && !isRemote) ? File(path) : null;
+    final canShow = isRemote || (file?.existsSync() ?? false);
+
+    Widget buildImage(BoxFit fit) {
+      if (isRemote) {
+        return CachedNetworkImage(
+          imageUrl: path,
+          fit: fit,
+          placeholder: (context, url) =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          errorWidget: (context, url, error) => _missingLabel(colors),
+        );
+      }
+      return Image.file(
+        file!,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _missingLabel(colors),
+      );
+    }
+
     return InkWell(
-      onTap: fileExists
+      onTap: canShow
           ? () => showDialog(
               context: context,
               builder: (_) => Dialog(
-                child: InteractiveViewer(
-                  child: Image.file(
-                    file!,
-                    errorBuilder: (context, error, stackTrace) => const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('الصورة غير متاحة'),
-                    ),
-                  ),
-                ),
+                child: InteractiveViewer(child: buildImage(BoxFit.contain)),
               ),
             )
           : null,
@@ -567,18 +582,8 @@ class _IdImageTile extends StatelessWidget {
           border: Border.all(color: colors.border),
         ),
         clipBehavior: Clip.antiAlias,
-        child: fileExists
-            ? Image.file(
-                file!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Center(
-                  child: Text(
-                    'الصورة غير متاحة',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyS.copyWith(color: colors.ink3),
-                  ),
-                ),
-              )
+        child: canShow
+            ? buildImage(BoxFit.cover)
             : Center(
                 child: Text(
                   '$title\nالصورة غير متاحة',
@@ -589,6 +594,14 @@ class _IdImageTile extends StatelessWidget {
       ),
     );
   }
+
+  Widget _missingLabel(AbragColors colors) => Center(
+    child: Text(
+      'الصورة غير متاحة',
+      textAlign: TextAlign.center,
+      style: AppTextStyles.bodyS.copyWith(color: colors.ink3),
+    ),
+  );
 }
 
 class _InfoLine extends StatelessWidget {
@@ -612,10 +625,7 @@ class _InfoLine extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: colors.ink3),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: AppTextStyles.body.copyWith(color: colors.ink2),
-        ),
+        Text(label, style: AppTextStyles.body.copyWith(color: colors.ink2)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

@@ -5,7 +5,6 @@ import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/services/audit_log_service.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
-import 'apartment_occupancy_rules_provider.dart';
 
 final apartmentsProvider = StreamProvider<List<Apartment>>((ref) {
   final db = ref.watch(databaseProvider);
@@ -14,19 +13,14 @@ final apartmentsProvider = StreamProvider<List<Apartment>>((ref) {
 
 final apartmentsControllerProvider =
     StateNotifierProvider<ApartmentsController, AsyncValue<void>>((ref) {
-      return ApartmentsController(
-        ref.watch(databaseProvider),
-        ref.watch(apartmentOccupancyRulesProvider),
-      );
+      return ApartmentsController(ref.watch(databaseProvider));
     });
 
 class ApartmentsController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
-  final ApartmentOccupancyRules _occupancyRules;
   late final AuditLogService _auditLog;
 
-  ApartmentsController(this._db, this._occupancyRules)
-    : super(const AsyncData(null)) {
+  ApartmentsController(this._db) : super(const AsyncData(null)) {
     _auditLog = AuditLogService(_db);
   }
 
@@ -166,12 +160,12 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
   Future<void> deleteApartment(String id) async {
     state = const AsyncLoading();
     try {
-      final hasSummerBookings = await (_db.select(_db.summerBookings)
-            ..where((t) => t.apartmentId.equals(id)))
-          .get();
-      final hasWinterContracts = await (_db.select(_db.winterContracts)
-            ..where((t) => t.apartmentId.equals(id)))
-          .get();
+      final hasSummerBookings = await (_db.select(
+        _db.summerBookings,
+      )..where((t) => t.apartmentId.equals(id))).get();
+      final hasWinterContracts = await (_db.select(
+        _db.winterContracts,
+      )..where((t) => t.apartmentId.equals(id))).get();
       if (hasSummerBookings.isNotEmpty || hasWinterContracts.isNotEmpty) {
         throw Exception(
           'مينفعش حذف الشقة لأن عليها حجوزات أو عقود. ممكن تعديل بياناتها بدل الحذف.',
@@ -305,12 +299,8 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
   Future<void> updateCleaningStatus(String id, String status) async {
     state = const AsyncLoading();
     try {
-      final isOccupied = await _occupancyRules.isApartmentOccupiedNow(id);
-      if (isOccupied) {
-        throw Exception(
-          'مينفعش تغيير حالة النظافة والشقة فيها ساكن. لازم تكون فارغة الأول.',
-        );
-      }
+      // The owner can fix the cleaning status of an occupied unit too (e.g. it
+      // was left as "needs cleaning" after a guest already moved in).
       await (_db.update(_db.apartments)..where((t) => t.id.equals(id))).write(
         ApartmentsCompanion(
           cleaningStatus: Value(status),

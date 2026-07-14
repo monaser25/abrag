@@ -504,6 +504,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   value: _privateValue('${commission.toCurrencyFormat()} ج.م'),
                   icon: Icons.handshake_outlined,
                   color: colors.summer,
+                  onTap: () => _openStatement(
+                    context,
+                    activeFilters.copyWith(
+                      partyType: 'broker',
+                      selectedPartyKey: 'all',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
