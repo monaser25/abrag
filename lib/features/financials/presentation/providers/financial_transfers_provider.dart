@@ -8,6 +8,7 @@ import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/services/audit_log_service.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../core/utils/summer_booking_payment_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 const paymentAccounts = <String, String>{
@@ -65,6 +66,9 @@ final accountBalancesProvider = StreamProvider<Map<String, double>>((ref) {
         db.select(db.summerBookings).watch().listen((_) => scheduleEmit()),
       );
       subscriptions.add(
+        db.select(db.bookingPayments).watch().listen((_) => scheduleEmit()),
+      );
+      subscriptions.add(
         db.select(db.winterPayments).watch().listen((_) => scheduleEmit()),
       );
       subscriptions.add(
@@ -100,11 +104,24 @@ Future<Map<String, double>> buildTreasuryBalances(
   }
 
   final bookings = await db.select(db.summerBookings).get();
+  final bookingPayments = await db.select(db.bookingPayments).get();
+  final paymentsByBookingId = indexActiveBookingPayments(bookingPayments);
   for (final booking in bookings) {
     if (booking.status == 'cancelled' || booking.status == 'deleted') continue;
     if (booking.syncStatus == SyncStatus.pendingDelete) continue;
     if (!seasonMatchesDate(booking.checkInDate, season)) continue;
-    add(booking.paymentMethod, _netSummerBookingPayment(booking));
+    final paymentBreakdown = summerBookingPaymentBreakdown(
+      booking,
+      paymentsByBookingId[booking.id] ?? const <BookingPayment>[],
+    );
+    for (final entry in paymentBreakdown.entries) {
+      add(entry.key, entry.value);
+    }
+    final commission = _summerBookingCommission(booking);
+    final commissionDeduction = commission < booking.amountPaidEgp
+        ? commission
+        : booking.amountPaidEgp;
+    add(booking.paymentMethod, -commissionDeduction);
   }
 
   final payments = await db.select(db.winterPayments).get();
@@ -140,11 +157,6 @@ Future<Map<String, double>> buildTreasuryBalances(
   }
 
   return balances;
-}
-
-double _netSummerBookingPayment(SummerBooking booking) {
-  final netPaid = booking.amountPaidEgp - _summerBookingCommission(booking);
-  return netPaid < 0 ? 0 : netPaid;
 }
 
 double _summerBookingCommission(SummerBooking booking) {

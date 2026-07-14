@@ -926,11 +926,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
     for (final transaction in transactions) {
       if (transaction.isRevenue) {
-        // Cash on hand is net of broker commission — the commission leaves the
-        // same bucket the guest paid into. Keeps this in sync with the treasury
-        // balance in buildTreasuryBalances (financial_transfers_provider).
-        final net = transaction.amount - transaction.brokerCommission;
-        add(transaction.paymentMethod, net < 0 ? 0 : net);
+        if (transaction.paymentBreakdown.isNotEmpty) {
+          for (final entry in transaction.paymentBreakdown.entries) {
+            add(entry.key, entry.value);
+          }
+          final commissionDeduction =
+              transaction.brokerCommission < transaction.amount
+              ? transaction.brokerCommission
+              : transaction.amount;
+          add(transaction.paymentMethod, -commissionDeduction);
+        } else {
+          final net = transaction.amount - transaction.brokerCommission;
+          add(transaction.paymentMethod, net < 0 ? 0 : net);
+        }
       } else {
         add(transaction.paymentMethod, -transaction.amount);
       }

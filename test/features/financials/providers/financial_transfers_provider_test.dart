@@ -147,6 +147,44 @@ void main() {
     },
   );
 
+  test('attributes split summer payments to their actual methods', () async {
+    final now = DateTime(2026, 5, 17);
+    await seedCashRevenue(
+      1500,
+      brokerCommissionType: 'fixed',
+      brokerCommissionFixedEgp: 100,
+    );
+    await db
+        .into(db.bookingPayments)
+        .insert(
+          BookingPaymentsCompanion.insert(
+            id: 'booking-payment-cash',
+            bookingId: 'booking-1',
+            amountEgp: 500,
+            paymentMethod: const Value('cash'),
+            paymentDate: now,
+            createdAt: now,
+          ),
+        );
+    await db
+        .into(db.bookingPayments)
+        .insert(
+          BookingPaymentsCompanion.insert(
+            id: 'booking-payment-vodafone',
+            bookingId: 'booking-1',
+            amountEgp: 1000,
+            paymentMethod: const Value('vodafone_cash'),
+            paymentDate: now,
+            createdAt: now,
+          ),
+        );
+
+    final balances = await buildTreasuryBalances(db, 'summer_2026');
+
+    expect(balances['cash'], closeTo(400, 0.001));
+    expect(balances['vodafone_cash'], closeTo(1000, 0.001));
+  });
+
   test('deletes a transfer and records removal', () async {
     final controller = FinancialTransfersController(db);
     await seedCashRevenue(1000);

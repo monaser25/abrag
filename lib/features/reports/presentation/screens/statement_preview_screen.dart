@@ -238,7 +238,12 @@ class _StatementPreviewScreenState
   }) {
     final totals = <String, double>{};
     for (final t in transactions.where((t) => t.isRevenue == revenue)) {
-      totals[t.paymentMethod] = (totals[t.paymentMethod] ?? 0) + t.amount;
+      final methodAmounts = revenue
+          ? _revenuePaymentBreakdown(t)
+          : {t.paymentMethod: t.amount};
+      for (final entry in methodAmounts.entries) {
+        totals[entry.key] = (totals[entry.key] ?? 0) + entry.value;
+      }
     }
     return [
       for (final m in _methodOrder)
@@ -274,7 +279,9 @@ class _StatementPreviewScreenState
     final comm = <String, double>{};
     for (final t in transactions) {
       if (t.isRevenue) {
-        rev[t.paymentMethod] = (rev[t.paymentMethod] ?? 0) + t.amount;
+        for (final entry in _revenuePaymentBreakdown(t).entries) {
+          rev[entry.key] = (rev[entry.key] ?? 0) + entry.value;
+        }
         comm[t.paymentMethod] =
             (comm[t.paymentMethod] ?? 0) + t.brokerCommission;
       } else {
@@ -286,6 +293,13 @@ class _StatementPreviewScreenState
       for (final m in _methodOrder)
         if (net(m) != 0) [_paymentMethodLabel(m), net(m).toCurrencyFormat()],
     ];
+  }
+
+  Map<String, double> _revenuePaymentBreakdown(Transaction transaction) {
+    if (transaction.paymentBreakdown.isNotEmpty) {
+      return transaction.paymentBreakdown;
+    }
+    return {transaction.paymentMethod: transaction.amount};
   }
 
   String _paymentMethodLabel(String method) {

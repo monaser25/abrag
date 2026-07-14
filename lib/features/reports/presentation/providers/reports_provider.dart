@@ -6,6 +6,7 @@ import '../../../../core/config/app_settings_provider.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/utils/season_utils.dart';
+import '../../../../core/utils/summer_booking_payment_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class FinancialSummary {
@@ -36,6 +37,7 @@ class Transaction {
   final double amount;
   final bool isRevenue;
   final String paymentMethod;
+  final Map<String, double> paymentBreakdown;
   final String? buildingId;
   final String? apartmentId;
   final String? buildingName;
@@ -57,6 +59,7 @@ class Transaction {
     required this.amount,
     required this.isRevenue,
     required this.paymentMethod,
+    this.paymentBreakdown = const {},
     this.buildingId,
     this.apartmentId,
     this.buildingName,
@@ -171,6 +174,9 @@ final financialReportProvider = StreamProvider<FinancialSummary>((ref) {
         db.select(db.summerBookings).watch().listen((_) => scheduleEmit()),
       );
       subscriptions.add(
+        db.select(db.bookingPayments).watch().listen((_) => scheduleEmit()),
+      );
+      subscriptions.add(
         db.select(db.winterContracts).watch().listen((_) => scheduleEmit()),
       );
       subscriptions.add(
@@ -216,6 +222,8 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
               (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
             ))
           .get();
+  final bookingPayments = await db.select(db.bookingPayments).get();
+  final paymentsByBookingId = indexActiveBookingPayments(bookingPayments);
   final buildings = await (db.select(
     db.buildings,
   )..where((t) => t.id.isNotValue(kSettingsBuildingId))).get();
@@ -358,6 +366,10 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
         ? null
         : brokerNameById[booking.brokerId];
     final brokerCommission = _bookingCommission(booking);
+    final paymentBreakdown = summerBookingPaymentBreakdown(
+      booking,
+      paymentsByBookingId[booking.id] ?? const <BookingPayment>[],
+    );
 
     transactions.add(
       Transaction(
@@ -366,6 +378,7 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
         amount: booking.amountPaidEgp,
         isRevenue: true,
         paymentMethod: booking.paymentMethod,
+        paymentBreakdown: paymentBreakdown,
         buildingId: buildingId,
         apartmentId: booking.apartmentId,
         buildingName: buildingId == null ? null : buildingNameById[buildingId],
