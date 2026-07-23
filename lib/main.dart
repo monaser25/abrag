@@ -55,6 +55,18 @@ class AbragApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        // Cap the system font scale so very large device font sizes don't
+        // overflow the Arabic/RTL layouts, while still honoring moderate
+        // accessibility scaling.
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: mq.textScaler.clamp(maxScaleFactor: 1.3),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       locale: locale,
       supportedLocales: const [
         Locale('ar'), // Arabic
