@@ -259,9 +259,8 @@ class _StatementPreviewScreenState
   ) {
     final totals = <String, double>{};
     for (final t in transactions.where((t) => t.isRevenue)) {
-      if (t.brokerCommission > 0) {
-        totals[t.paymentMethod] =
-            (totals[t.paymentMethod] ?? 0) + t.brokerCommission;
+      for (final entry in _commissionPaymentBreakdown(t).entries) {
+        totals[entry.key] = (totals[entry.key] ?? 0) + entry.value;
       }
     }
     return [
@@ -282,8 +281,9 @@ class _StatementPreviewScreenState
         for (final entry in _revenuePaymentBreakdown(t).entries) {
           rev[entry.key] = (rev[entry.key] ?? 0) + entry.value;
         }
-        comm[t.paymentMethod] =
-            (comm[t.paymentMethod] ?? 0) + t.brokerCommission;
+        for (final entry in _commissionPaymentBreakdown(t).entries) {
+          comm[entry.key] = (comm[entry.key] ?? 0) + entry.value;
+        }
       } else {
         exp[t.paymentMethod] = (exp[t.paymentMethod] ?? 0) + t.amount;
       }
@@ -300,6 +300,14 @@ class _StatementPreviewScreenState
       return transaction.paymentBreakdown;
     }
     return {transaction.paymentMethod: transaction.amount};
+  }
+
+  Map<String, double> _commissionPaymentBreakdown(Transaction transaction) {
+    if (transaction.commissionBreakdown.isNotEmpty) {
+      return transaction.commissionBreakdown;
+    }
+    if (transaction.brokerCommission <= 0) return const {};
+    return {transaction.paymentMethod: transaction.brokerCommission};
   }
 
   String _paymentMethodLabel(String method) {

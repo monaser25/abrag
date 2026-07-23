@@ -930,14 +930,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           for (final entry in transaction.paymentBreakdown.entries) {
             add(entry.key, entry.value);
           }
+        } else {
+          add(transaction.paymentMethod, transaction.amount);
+        }
+        if (transaction.commissionBreakdown.isNotEmpty) {
+          for (final entry in transaction.commissionBreakdown.entries) {
+            add(entry.key, -entry.value);
+          }
+        } else {
           final commissionDeduction =
               transaction.brokerCommission < transaction.amount
               ? transaction.brokerCommission
               : transaction.amount;
           add(transaction.paymentMethod, -commissionDeduction);
-        } else {
-          final net = transaction.amount - transaction.brokerCommission;
-          add(transaction.paymentMethod, net < 0 ? 0 : net);
         }
       } else {
         add(transaction.paymentMethod, -transaction.amount);

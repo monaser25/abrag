@@ -38,6 +38,7 @@ class Transaction {
   final bool isRevenue;
   final String paymentMethod;
   final Map<String, double> paymentBreakdown;
+  final Map<String, double> commissionBreakdown;
   final String? buildingId;
   final String? apartmentId;
   final String? buildingName;
@@ -60,6 +61,7 @@ class Transaction {
     required this.isRevenue,
     required this.paymentMethod,
     this.paymentBreakdown = const {},
+    this.commissionBreakdown = const {},
     this.buildingId,
     this.apartmentId,
     this.buildingName,
@@ -379,6 +381,10 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
         isRevenue: true,
         paymentMethod: booking.paymentMethod,
         paymentBreakdown: paymentBreakdown,
+        commissionBreakdown: summerBookingCommissionDeductions(
+          booking,
+          brokerCommission,
+        ),
         buildingId: buildingId,
         apartmentId: booking.apartmentId,
         buildingName: buildingId == null ? null : buildingNameById[buildingId],

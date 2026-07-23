@@ -452,6 +452,11 @@ class SyncEngine {
           'broker_commission_type': item.brokerCommissionType,
           'broker_commission_percentage': item.brokerCommissionPercentage,
           'broker_commission_fixed_egp': item.brokerCommissionFixedEgp,
+          'broker_commission_paid_cash_egp': item.brokerCommissionPaidCashEgp,
+          'broker_commission_paid_vodafone_egp':
+              item.brokerCommissionPaidVodafoneEgp,
+          'broker_commission_paid_instapay_egp':
+              item.brokerCommissionPaidInstapayEgp,
           'early_checkout_date': item.earlyCheckoutDate
               ?.toUtc()
               .toIso8601String(),
@@ -1221,6 +1226,27 @@ class SyncEngine {
                     ? const Value.absent()
                     : Value(
                         (row['broker_commission_amount_egp'] as num).toDouble(),
+                      ),
+                brokerCommissionPaidCashEgp:
+                    row['broker_commission_paid_cash_egp'] == null
+                    ? const Value(0)
+                    : Value(
+                        (row['broker_commission_paid_cash_egp'] as num)
+                            .toDouble(),
+                      ),
+                brokerCommissionPaidVodafoneEgp:
+                    row['broker_commission_paid_vodafone_egp'] == null
+                    ? const Value(0)
+                    : Value(
+                        (row['broker_commission_paid_vodafone_egp'] as num)
+                            .toDouble(),
+                      ),
+                brokerCommissionPaidInstapayEgp:
+                    row['broker_commission_paid_instapay_egp'] == null
+                    ? const Value(0)
+                    : Value(
+                        (row['broker_commission_paid_instapay_egp'] as num)
+                            .toDouble(),
                       ),
                 earlyCheckoutDate: row['early_checkout_date'] == null
                     ? const Value.absent()

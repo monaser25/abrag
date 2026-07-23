@@ -2303,6 +2303,42 @@ class $SummerBookingsTable extends SummerBookings
         type: DriftSqlType.double,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _brokerCommissionPaidCashEgpMeta =
+      const VerificationMeta('brokerCommissionPaidCashEgp');
+  @override
+  late final GeneratedColumn<double> brokerCommissionPaidCashEgp =
+      GeneratedColumn<double>(
+        'broker_commission_paid_cash_egp',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _brokerCommissionPaidVodafoneEgpMeta =
+      const VerificationMeta('brokerCommissionPaidVodafoneEgp');
+  @override
+  late final GeneratedColumn<double> brokerCommissionPaidVodafoneEgp =
+      GeneratedColumn<double>(
+        'broker_commission_paid_vodafone_egp',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
+  static const VerificationMeta _brokerCommissionPaidInstapayEgpMeta =
+      const VerificationMeta('brokerCommissionPaidInstapayEgp');
+  @override
+  late final GeneratedColumn<double> brokerCommissionPaidInstapayEgp =
+      GeneratedColumn<double>(
+        'broker_commission_paid_instapay_egp',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _earlyCheckoutDateMeta = const VerificationMeta(
     'earlyCheckoutDate',
   );
@@ -2414,6 +2450,9 @@ class $SummerBookingsTable extends SummerBookings
     brokerCommissionPercentage,
     brokerCommissionFixedEgp,
     brokerCommissionAmountEgp,
+    brokerCommissionPaidCashEgp,
+    brokerCommissionPaidVodafoneEgp,
+    brokerCommissionPaidInstapayEgp,
     earlyCheckoutDate,
     overstayDays,
     overstayFeeEgp,
@@ -2579,6 +2618,33 @@ class $SummerBookingsTable extends SummerBookings
         ),
       );
     }
+    if (data.containsKey('broker_commission_paid_cash_egp')) {
+      context.handle(
+        _brokerCommissionPaidCashEgpMeta,
+        brokerCommissionPaidCashEgp.isAcceptableOrUnknown(
+          data['broker_commission_paid_cash_egp']!,
+          _brokerCommissionPaidCashEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('broker_commission_paid_vodafone_egp')) {
+      context.handle(
+        _brokerCommissionPaidVodafoneEgpMeta,
+        brokerCommissionPaidVodafoneEgp.isAcceptableOrUnknown(
+          data['broker_commission_paid_vodafone_egp']!,
+          _brokerCommissionPaidVodafoneEgpMeta,
+        ),
+      );
+    }
+    if (data.containsKey('broker_commission_paid_instapay_egp')) {
+      context.handle(
+        _brokerCommissionPaidInstapayEgpMeta,
+        brokerCommissionPaidInstapayEgp.isAcceptableOrUnknown(
+          data['broker_commission_paid_instapay_egp']!,
+          _brokerCommissionPaidInstapayEgpMeta,
+        ),
+      );
+    }
     if (data.containsKey('early_checkout_date')) {
       context.handle(
         _earlyCheckoutDateMeta,
@@ -2729,6 +2795,18 @@ class $SummerBookingsTable extends SummerBookings
         DriftSqlType.double,
         data['${effectivePrefix}broker_commission_amount_egp'],
       ),
+      brokerCommissionPaidCashEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}broker_commission_paid_cash_egp'],
+      )!,
+      brokerCommissionPaidVodafoneEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}broker_commission_paid_vodafone_egp'],
+      )!,
+      brokerCommissionPaidInstapayEgp: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}broker_commission_paid_instapay_egp'],
+      )!,
       earlyCheckoutDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}early_checkout_date'],
@@ -2792,6 +2870,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
   final double brokerCommissionPercentage;
   final double brokerCommissionFixedEgp;
   final double? brokerCommissionAmountEgp;
+  final double brokerCommissionPaidCashEgp;
+  final double brokerCommissionPaidVodafoneEgp;
+  final double brokerCommissionPaidInstapayEgp;
   final DateTime? earlyCheckoutDate;
   final int overstayDays;
   final double overstayFeeEgp;
@@ -2819,6 +2900,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     required this.brokerCommissionPercentage,
     required this.brokerCommissionFixedEgp,
     this.brokerCommissionAmountEgp,
+    required this.brokerCommissionPaidCashEgp,
+    required this.brokerCommissionPaidVodafoneEgp,
+    required this.brokerCommissionPaidInstapayEgp,
     this.earlyCheckoutDate,
     required this.overstayDays,
     required this.overstayFeeEgp,
@@ -2867,6 +2951,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
         brokerCommissionAmountEgp,
       );
     }
+    map['broker_commission_paid_cash_egp'] = Variable<double>(
+      brokerCommissionPaidCashEgp,
+    );
+    map['broker_commission_paid_vodafone_egp'] = Variable<double>(
+      brokerCommissionPaidVodafoneEgp,
+    );
+    map['broker_commission_paid_instapay_egp'] = Variable<double>(
+      brokerCommissionPaidInstapayEgp,
+    );
     if (!nullToAbsent || earlyCheckoutDate != null) {
       map['early_checkout_date'] = Variable<DateTime>(earlyCheckoutDate);
     }
@@ -2915,6 +3008,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           brokerCommissionAmountEgp == null && nullToAbsent
           ? const Value.absent()
           : Value(brokerCommissionAmountEgp),
+      brokerCommissionPaidCashEgp: Value(brokerCommissionPaidCashEgp),
+      brokerCommissionPaidVodafoneEgp: Value(brokerCommissionPaidVodafoneEgp),
+      brokerCommissionPaidInstapayEgp: Value(brokerCommissionPaidInstapayEgp),
       earlyCheckoutDate: earlyCheckoutDate == null && nullToAbsent
           ? const Value.absent()
           : Value(earlyCheckoutDate),
@@ -2970,6 +3066,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       brokerCommissionAmountEgp: serializer.fromJson<double?>(
         json['brokerCommissionAmountEgp'],
       ),
+      brokerCommissionPaidCashEgp: serializer.fromJson<double>(
+        json['brokerCommissionPaidCashEgp'],
+      ),
+      brokerCommissionPaidVodafoneEgp: serializer.fromJson<double>(
+        json['brokerCommissionPaidVodafoneEgp'],
+      ),
+      brokerCommissionPaidInstapayEgp: serializer.fromJson<double>(
+        json['brokerCommissionPaidInstapayEgp'],
+      ),
       earlyCheckoutDate: serializer.fromJson<DateTime?>(
         json['earlyCheckoutDate'],
       ),
@@ -3012,6 +3117,15 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       'brokerCommissionAmountEgp': serializer.toJson<double?>(
         brokerCommissionAmountEgp,
       ),
+      'brokerCommissionPaidCashEgp': serializer.toJson<double>(
+        brokerCommissionPaidCashEgp,
+      ),
+      'brokerCommissionPaidVodafoneEgp': serializer.toJson<double>(
+        brokerCommissionPaidVodafoneEgp,
+      ),
+      'brokerCommissionPaidInstapayEgp': serializer.toJson<double>(
+        brokerCommissionPaidInstapayEgp,
+      ),
       'earlyCheckoutDate': serializer.toJson<DateTime?>(earlyCheckoutDate),
       'overstayDays': serializer.toJson<int>(overstayDays),
       'overstayFeeEgp': serializer.toJson<double>(overstayFeeEgp),
@@ -3042,6 +3156,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     double? brokerCommissionPercentage,
     double? brokerCommissionFixedEgp,
     Value<double?> brokerCommissionAmountEgp = const Value.absent(),
+    double? brokerCommissionPaidCashEgp,
+    double? brokerCommissionPaidVodafoneEgp,
+    double? brokerCommissionPaidInstapayEgp,
     Value<DateTime?> earlyCheckoutDate = const Value.absent(),
     int? overstayDays,
     double? overstayFeeEgp,
@@ -3073,6 +3190,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     brokerCommissionAmountEgp: brokerCommissionAmountEgp.present
         ? brokerCommissionAmountEgp.value
         : this.brokerCommissionAmountEgp,
+    brokerCommissionPaidCashEgp:
+        brokerCommissionPaidCashEgp ?? this.brokerCommissionPaidCashEgp,
+    brokerCommissionPaidVodafoneEgp:
+        brokerCommissionPaidVodafoneEgp ?? this.brokerCommissionPaidVodafoneEgp,
+    brokerCommissionPaidInstapayEgp:
+        brokerCommissionPaidInstapayEgp ?? this.brokerCommissionPaidInstapayEgp,
     earlyCheckoutDate: earlyCheckoutDate.present
         ? earlyCheckoutDate.value
         : this.earlyCheckoutDate,
@@ -3132,6 +3255,17 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       brokerCommissionAmountEgp: data.brokerCommissionAmountEgp.present
           ? data.brokerCommissionAmountEgp.value
           : this.brokerCommissionAmountEgp,
+      brokerCommissionPaidCashEgp: data.brokerCommissionPaidCashEgp.present
+          ? data.brokerCommissionPaidCashEgp.value
+          : this.brokerCommissionPaidCashEgp,
+      brokerCommissionPaidVodafoneEgp:
+          data.brokerCommissionPaidVodafoneEgp.present
+          ? data.brokerCommissionPaidVodafoneEgp.value
+          : this.brokerCommissionPaidVodafoneEgp,
+      brokerCommissionPaidInstapayEgp:
+          data.brokerCommissionPaidInstapayEgp.present
+          ? data.brokerCommissionPaidInstapayEgp.value
+          : this.brokerCommissionPaidInstapayEgp,
       earlyCheckoutDate: data.earlyCheckoutDate.present
           ? data.earlyCheckoutDate.value
           : this.earlyCheckoutDate,
@@ -3176,6 +3310,13 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           ..write('brokerCommissionPercentage: $brokerCommissionPercentage, ')
           ..write('brokerCommissionFixedEgp: $brokerCommissionFixedEgp, ')
           ..write('brokerCommissionAmountEgp: $brokerCommissionAmountEgp, ')
+          ..write('brokerCommissionPaidCashEgp: $brokerCommissionPaidCashEgp, ')
+          ..write(
+            'brokerCommissionPaidVodafoneEgp: $brokerCommissionPaidVodafoneEgp, ',
+          )
+          ..write(
+            'brokerCommissionPaidInstapayEgp: $brokerCommissionPaidInstapayEgp, ',
+          )
           ..write('earlyCheckoutDate: $earlyCheckoutDate, ')
           ..write('overstayDays: $overstayDays, ')
           ..write('overstayFeeEgp: $overstayFeeEgp, ')
@@ -3208,6 +3349,9 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     brokerCommissionPercentage,
     brokerCommissionFixedEgp,
     brokerCommissionAmountEgp,
+    brokerCommissionPaidCashEgp,
+    brokerCommissionPaidVodafoneEgp,
+    brokerCommissionPaidInstapayEgp,
     earlyCheckoutDate,
     overstayDays,
     overstayFeeEgp,
@@ -3239,6 +3383,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           other.brokerCommissionPercentage == this.brokerCommissionPercentage &&
           other.brokerCommissionFixedEgp == this.brokerCommissionFixedEgp &&
           other.brokerCommissionAmountEgp == this.brokerCommissionAmountEgp &&
+          other.brokerCommissionPaidCashEgp ==
+              this.brokerCommissionPaidCashEgp &&
+          other.brokerCommissionPaidVodafoneEgp ==
+              this.brokerCommissionPaidVodafoneEgp &&
+          other.brokerCommissionPaidInstapayEgp ==
+              this.brokerCommissionPaidInstapayEgp &&
           other.earlyCheckoutDate == this.earlyCheckoutDate &&
           other.overstayDays == this.overstayDays &&
           other.overstayFeeEgp == this.overstayFeeEgp &&
@@ -3268,6 +3418,9 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
   final Value<double> brokerCommissionPercentage;
   final Value<double> brokerCommissionFixedEgp;
   final Value<double?> brokerCommissionAmountEgp;
+  final Value<double> brokerCommissionPaidCashEgp;
+  final Value<double> brokerCommissionPaidVodafoneEgp;
+  final Value<double> brokerCommissionPaidInstapayEgp;
   final Value<DateTime?> earlyCheckoutDate;
   final Value<int> overstayDays;
   final Value<double> overstayFeeEgp;
@@ -3296,6 +3449,9 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     this.brokerCommissionPercentage = const Value.absent(),
     this.brokerCommissionFixedEgp = const Value.absent(),
     this.brokerCommissionAmountEgp = const Value.absent(),
+    this.brokerCommissionPaidCashEgp = const Value.absent(),
+    this.brokerCommissionPaidVodafoneEgp = const Value.absent(),
+    this.brokerCommissionPaidInstapayEgp = const Value.absent(),
     this.earlyCheckoutDate = const Value.absent(),
     this.overstayDays = const Value.absent(),
     this.overstayFeeEgp = const Value.absent(),
@@ -3325,6 +3481,9 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     this.brokerCommissionPercentage = const Value.absent(),
     this.brokerCommissionFixedEgp = const Value.absent(),
     this.brokerCommissionAmountEgp = const Value.absent(),
+    this.brokerCommissionPaidCashEgp = const Value.absent(),
+    this.brokerCommissionPaidVodafoneEgp = const Value.absent(),
+    this.brokerCommissionPaidInstapayEgp = const Value.absent(),
     this.earlyCheckoutDate = const Value.absent(),
     this.overstayDays = const Value.absent(),
     this.overstayFeeEgp = const Value.absent(),
@@ -3361,6 +3520,9 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     Expression<double>? brokerCommissionPercentage,
     Expression<double>? brokerCommissionFixedEgp,
     Expression<double>? brokerCommissionAmountEgp,
+    Expression<double>? brokerCommissionPaidCashEgp,
+    Expression<double>? brokerCommissionPaidVodafoneEgp,
+    Expression<double>? brokerCommissionPaidInstapayEgp,
     Expression<DateTime>? earlyCheckoutDate,
     Expression<int>? overstayDays,
     Expression<double>? overstayFeeEgp,
@@ -3394,6 +3556,12 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
         'broker_commission_fixed_egp': brokerCommissionFixedEgp,
       if (brokerCommissionAmountEgp != null)
         'broker_commission_amount_egp': brokerCommissionAmountEgp,
+      if (brokerCommissionPaidCashEgp != null)
+        'broker_commission_paid_cash_egp': brokerCommissionPaidCashEgp,
+      if (brokerCommissionPaidVodafoneEgp != null)
+        'broker_commission_paid_vodafone_egp': brokerCommissionPaidVodafoneEgp,
+      if (brokerCommissionPaidInstapayEgp != null)
+        'broker_commission_paid_instapay_egp': brokerCommissionPaidInstapayEgp,
       if (earlyCheckoutDate != null) 'early_checkout_date': earlyCheckoutDate,
       if (overstayDays != null) 'overstay_days': overstayDays,
       if (overstayFeeEgp != null) 'overstay_fee_egp': overstayFeeEgp,
@@ -3425,6 +3593,9 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     Value<double>? brokerCommissionPercentage,
     Value<double>? brokerCommissionFixedEgp,
     Value<double?>? brokerCommissionAmountEgp,
+    Value<double>? brokerCommissionPaidCashEgp,
+    Value<double>? brokerCommissionPaidVodafoneEgp,
+    Value<double>? brokerCommissionPaidInstapayEgp,
     Value<DateTime?>? earlyCheckoutDate,
     Value<int>? overstayDays,
     Value<double>? overstayFeeEgp,
@@ -3457,6 +3628,14 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
           brokerCommissionFixedEgp ?? this.brokerCommissionFixedEgp,
       brokerCommissionAmountEgp:
           brokerCommissionAmountEgp ?? this.brokerCommissionAmountEgp,
+      brokerCommissionPaidCashEgp:
+          brokerCommissionPaidCashEgp ?? this.brokerCommissionPaidCashEgp,
+      brokerCommissionPaidVodafoneEgp:
+          brokerCommissionPaidVodafoneEgp ??
+          this.brokerCommissionPaidVodafoneEgp,
+      brokerCommissionPaidInstapayEgp:
+          brokerCommissionPaidInstapayEgp ??
+          this.brokerCommissionPaidInstapayEgp,
       earlyCheckoutDate: earlyCheckoutDate ?? this.earlyCheckoutDate,
       overstayDays: overstayDays ?? this.overstayDays,
       overstayFeeEgp: overstayFeeEgp ?? this.overstayFeeEgp,
@@ -3536,6 +3715,21 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
         brokerCommissionAmountEgp.value,
       );
     }
+    if (brokerCommissionPaidCashEgp.present) {
+      map['broker_commission_paid_cash_egp'] = Variable<double>(
+        brokerCommissionPaidCashEgp.value,
+      );
+    }
+    if (brokerCommissionPaidVodafoneEgp.present) {
+      map['broker_commission_paid_vodafone_egp'] = Variable<double>(
+        brokerCommissionPaidVodafoneEgp.value,
+      );
+    }
+    if (brokerCommissionPaidInstapayEgp.present) {
+      map['broker_commission_paid_instapay_egp'] = Variable<double>(
+        brokerCommissionPaidInstapayEgp.value,
+      );
+    }
     if (earlyCheckoutDate.present) {
       map['early_checkout_date'] = Variable<DateTime>(earlyCheckoutDate.value);
     }
@@ -3587,6 +3781,13 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
           ..write('brokerCommissionPercentage: $brokerCommissionPercentage, ')
           ..write('brokerCommissionFixedEgp: $brokerCommissionFixedEgp, ')
           ..write('brokerCommissionAmountEgp: $brokerCommissionAmountEgp, ')
+          ..write('brokerCommissionPaidCashEgp: $brokerCommissionPaidCashEgp, ')
+          ..write(
+            'brokerCommissionPaidVodafoneEgp: $brokerCommissionPaidVodafoneEgp, ',
+          )
+          ..write(
+            'brokerCommissionPaidInstapayEgp: $brokerCommissionPaidInstapayEgp, ',
+          )
           ..write('earlyCheckoutDate: $earlyCheckoutDate, ')
           ..write('overstayDays: $overstayDays, ')
           ..write('overstayFeeEgp: $overstayFeeEgp, ')
@@ -14861,6 +15062,9 @@ typedef $$SummerBookingsTableCreateCompanionBuilder =
       Value<double> brokerCommissionPercentage,
       Value<double> brokerCommissionFixedEgp,
       Value<double?> brokerCommissionAmountEgp,
+      Value<double> brokerCommissionPaidCashEgp,
+      Value<double> brokerCommissionPaidVodafoneEgp,
+      Value<double> brokerCommissionPaidInstapayEgp,
       Value<DateTime?> earlyCheckoutDate,
       Value<int> overstayDays,
       Value<double> overstayFeeEgp,
@@ -14891,6 +15095,9 @@ typedef $$SummerBookingsTableUpdateCompanionBuilder =
       Value<double> brokerCommissionPercentage,
       Value<double> brokerCommissionFixedEgp,
       Value<double?> brokerCommissionAmountEgp,
+      Value<double> brokerCommissionPaidCashEgp,
+      Value<double> brokerCommissionPaidVodafoneEgp,
+      Value<double> brokerCommissionPaidInstapayEgp,
       Value<DateTime?> earlyCheckoutDate,
       Value<int> overstayDays,
       Value<double> overstayFeeEgp,
@@ -15047,6 +15254,23 @@ class $$SummerBookingsTableFilterComposer
     column: $table.brokerCommissionAmountEgp,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<double> get brokerCommissionPaidCashEgp => $composableBuilder(
+    column: $table.brokerCommissionPaidCashEgp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get brokerCommissionPaidVodafoneEgp =>
+      $composableBuilder(
+        column: $table.brokerCommissionPaidVodafoneEgp,
+        builder: (column) => ColumnFilters(column),
+      );
+
+  ColumnFilters<double> get brokerCommissionPaidInstapayEgp =>
+      $composableBuilder(
+        column: $table.brokerCommissionPaidInstapayEgp,
+        builder: (column) => ColumnFilters(column),
+      );
 
   ColumnFilters<DateTime> get earlyCheckoutDate => $composableBuilder(
     column: $table.earlyCheckoutDate,
@@ -15231,6 +15455,23 @@ class $$SummerBookingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get brokerCommissionPaidCashEgp => $composableBuilder(
+    column: $table.brokerCommissionPaidCashEgp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get brokerCommissionPaidVodafoneEgp =>
+      $composableBuilder(
+        column: $table.brokerCommissionPaidVodafoneEgp,
+        builder: (column) => ColumnOrderings(column),
+      );
+
+  ColumnOrderings<double> get brokerCommissionPaidInstapayEgp =>
+      $composableBuilder(
+        column: $table.brokerCommissionPaidInstapayEgp,
+        builder: (column) => ColumnOrderings(column),
+      );
+
   ColumnOrderings<DateTime> get earlyCheckoutDate => $composableBuilder(
     column: $table.earlyCheckoutDate,
     builder: (column) => ColumnOrderings(column),
@@ -15382,6 +15623,23 @@ class $$SummerBookingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get brokerCommissionPaidCashEgp => $composableBuilder(
+    column: $table.brokerCommissionPaidCashEgp,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get brokerCommissionPaidVodafoneEgp =>
+      $composableBuilder(
+        column: $table.brokerCommissionPaidVodafoneEgp,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<double> get brokerCommissionPaidInstapayEgp =>
+      $composableBuilder(
+        column: $table.brokerCommissionPaidInstapayEgp,
+        builder: (column) => column,
+      );
+
   GeneratedColumn<DateTime> get earlyCheckoutDate => $composableBuilder(
     column: $table.earlyCheckoutDate,
     builder: (column) => column,
@@ -15515,6 +15773,12 @@ class $$SummerBookingsTableTableManager
                 Value<double> brokerCommissionPercentage = const Value.absent(),
                 Value<double> brokerCommissionFixedEgp = const Value.absent(),
                 Value<double?> brokerCommissionAmountEgp = const Value.absent(),
+                Value<double> brokerCommissionPaidCashEgp =
+                    const Value.absent(),
+                Value<double> brokerCommissionPaidVodafoneEgp =
+                    const Value.absent(),
+                Value<double> brokerCommissionPaidInstapayEgp =
+                    const Value.absent(),
                 Value<DateTime?> earlyCheckoutDate = const Value.absent(),
                 Value<int> overstayDays = const Value.absent(),
                 Value<double> overstayFeeEgp = const Value.absent(),
@@ -15543,6 +15807,11 @@ class $$SummerBookingsTableTableManager
                 brokerCommissionPercentage: brokerCommissionPercentage,
                 brokerCommissionFixedEgp: brokerCommissionFixedEgp,
                 brokerCommissionAmountEgp: brokerCommissionAmountEgp,
+                brokerCommissionPaidCashEgp: brokerCommissionPaidCashEgp,
+                brokerCommissionPaidVodafoneEgp:
+                    brokerCommissionPaidVodafoneEgp,
+                brokerCommissionPaidInstapayEgp:
+                    brokerCommissionPaidInstapayEgp,
                 earlyCheckoutDate: earlyCheckoutDate,
                 overstayDays: overstayDays,
                 overstayFeeEgp: overstayFeeEgp,
@@ -15573,6 +15842,12 @@ class $$SummerBookingsTableTableManager
                 Value<double> brokerCommissionPercentage = const Value.absent(),
                 Value<double> brokerCommissionFixedEgp = const Value.absent(),
                 Value<double?> brokerCommissionAmountEgp = const Value.absent(),
+                Value<double> brokerCommissionPaidCashEgp =
+                    const Value.absent(),
+                Value<double> brokerCommissionPaidVodafoneEgp =
+                    const Value.absent(),
+                Value<double> brokerCommissionPaidInstapayEgp =
+                    const Value.absent(),
                 Value<DateTime?> earlyCheckoutDate = const Value.absent(),
                 Value<int> overstayDays = const Value.absent(),
                 Value<double> overstayFeeEgp = const Value.absent(),
@@ -15601,6 +15876,11 @@ class $$SummerBookingsTableTableManager
                 brokerCommissionPercentage: brokerCommissionPercentage,
                 brokerCommissionFixedEgp: brokerCommissionFixedEgp,
                 brokerCommissionAmountEgp: brokerCommissionAmountEgp,
+                brokerCommissionPaidCashEgp: brokerCommissionPaidCashEgp,
+                brokerCommissionPaidVodafoneEgp:
+                    brokerCommissionPaidVodafoneEgp,
+                brokerCommissionPaidInstapayEgp:
+                    brokerCommissionPaidInstapayEgp,
                 earlyCheckoutDate: earlyCheckoutDate,
                 overstayDays: overstayDays,
                 overstayFeeEgp: overstayFeeEgp,

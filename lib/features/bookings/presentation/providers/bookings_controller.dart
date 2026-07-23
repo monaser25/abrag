@@ -101,6 +101,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     required String brokerCommissionType,
     required double brokerCommissionFixedEgp,
     required double brokerCommissionPercentage,
+    double brokerCommissionPaidCashEgp = 0,
+    double brokerCommissionPaidVodafoneEgp = 0,
+    double brokerCommissionPaidInstapayEgp = 0,
     String? nationalId,
     String? idFrontImage,
     String? idBackImage,
@@ -131,6 +134,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         brokerCommissionType: brokerCommissionType,
         brokerCommissionFixedEgp: brokerCommissionFixedEgp,
         brokerCommissionPercentage: brokerCommissionPercentage,
+        brokerCommissionPaidCashEgp: brokerCommissionPaidCashEgp,
+        brokerCommissionPaidVodafoneEgp: brokerCommissionPaidVodafoneEgp,
+        brokerCommissionPaidInstapayEgp: brokerCommissionPaidInstapayEgp,
         nationalId: nationalId,
         idFrontImage: idFrontImage,
         idBackImage: idBackImage,
@@ -156,6 +162,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     required String brokerCommissionType,
     required double brokerCommissionFixedEgp,
     required double brokerCommissionPercentage,
+    double brokerCommissionPaidCashEgp = 0,
+    double brokerCommissionPaidVodafoneEgp = 0,
+    double brokerCommissionPaidInstapayEgp = 0,
     String? nationalId,
     String? idFrontImage,
     String? idBackImage,
@@ -180,6 +189,18 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       final fixedCommissionParts = brokerCommissionType == 'fixed'
           ? splitAmountExactly(brokerCommissionFixedEgp, count)
           : List<double>.filled(count, 0);
+      final commissionPaidCashParts = splitAmountExactly(
+        brokerCommissionPaidCashEgp,
+        count,
+      );
+      final commissionPaidVodafoneParts = splitAmountExactly(
+        brokerCommissionPaidVodafoneEgp,
+        count,
+      );
+      final commissionPaidInstapayParts = splitAmountExactly(
+        brokerCommissionPaidInstapayEgp,
+        count,
+      );
 
       await _db.transaction(() async {
         for (final apartmentId in uniqueApartmentIds) {
@@ -206,6 +227,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
             brokerCommissionType: brokerCommissionType,
             brokerCommissionFixedEgp: fixedCommissionParts[i],
             brokerCommissionPercentage: brokerCommissionPercentage,
+            brokerCommissionPaidCashEgp: commissionPaidCashParts[i],
+            brokerCommissionPaidVodafoneEgp: commissionPaidVodafoneParts[i],
+            brokerCommissionPaidInstapayEgp: commissionPaidInstapayParts[i],
             nationalId: nationalId,
             idFrontImage: idFrontImage,
             idBackImage: idBackImage,
@@ -234,6 +258,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     required String brokerCommissionType,
     required double brokerCommissionFixedEgp,
     required double brokerCommissionPercentage,
+    double brokerCommissionPaidCashEgp = 0,
+    double brokerCommissionPaidVodafoneEgp = 0,
+    double brokerCommissionPaidInstapayEgp = 0,
     String? nationalId,
     String? idFrontImage,
     String? idBackImage,
@@ -267,6 +294,13 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
             brokerCommissionType: Value(brokerCommissionType),
             brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
             brokerCommissionPercentage: Value(brokerCommissionPercentage),
+            brokerCommissionPaidCashEgp: Value(brokerCommissionPaidCashEgp),
+            brokerCommissionPaidVodafoneEgp: Value(
+              brokerCommissionPaidVodafoneEgp,
+            ),
+            brokerCommissionPaidInstapayEgp: Value(
+              brokerCommissionPaidInstapayEgp,
+            ),
             nationalId: Value(nationalId),
             idFrontImage: Value(idFrontImage),
             idBackImage: Value(idBackImage),
@@ -330,6 +364,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     required String brokerCommissionType,
     required double brokerCommissionFixedEgp,
     required double brokerCommissionPercentage,
+    double brokerCommissionPaidCashEgp = 0,
+    double brokerCommissionPaidVodafoneEgp = 0,
+    double brokerCommissionPaidInstapayEgp = 0,
     String? nationalId,
     String? idFrontImage,
     String? idBackImage,
@@ -370,6 +407,13 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           brokerCommissionType: Value(brokerCommissionType),
           brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
           brokerCommissionPercentage: Value(brokerCommissionPercentage),
+          brokerCommissionPaidCashEgp: Value(brokerCommissionPaidCashEgp),
+          brokerCommissionPaidVodafoneEgp: Value(
+            brokerCommissionPaidVodafoneEgp,
+          ),
+          brokerCommissionPaidInstapayEgp: Value(
+            brokerCommissionPaidInstapayEgp,
+          ),
           nationalId: Value(nationalId),
           idFrontImage: Value(idFrontImage),
           idBackImage: Value(idBackImage),

@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration {
@@ -191,7 +191,10 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 18) {
           try {
-            await m.addColumn(financialTransfers, financialTransfers.transferType);
+            await m.addColumn(
+              financialTransfers,
+              financialTransfers.transferType,
+            );
             await m.addColumn(financialTransfers, financialTransfers.season);
           } catch (_) {
             // Ignore if this legacy migration was already applied.
@@ -224,6 +227,20 @@ class AppDatabase extends _$AppDatabase {
           } catch (_) {
             // Ignore if this legacy migration was already applied.
           }
+        }
+        if (from < 23) {
+          await m.addColumn(
+            summerBookings,
+            summerBookings.brokerCommissionPaidCashEgp,
+          );
+          await m.addColumn(
+            summerBookings,
+            summerBookings.brokerCommissionPaidVodafoneEgp,
+          );
+          await m.addColumn(
+            summerBookings,
+            summerBookings.brokerCommissionPaidInstapayEgp,
+          );
         }
       },
     );

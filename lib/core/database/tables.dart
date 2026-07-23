@@ -77,6 +77,12 @@ class SummerBookings extends Table with SyncableTable {
       real().withDefault(const Constant(0))();
   RealColumn get brokerCommissionAmountEgp =>
       real().nullable()(); // Computed in Supabase
+  RealColumn get brokerCommissionPaidCashEgp =>
+      real().withDefault(const Constant(0))();
+  RealColumn get brokerCommissionPaidVodafoneEgp =>
+      real().withDefault(const Constant(0))();
+  RealColumn get brokerCommissionPaidInstapayEgp =>
+      real().withDefault(const Constant(0))();
   DateTimeColumn get earlyCheckoutDate => dateTime().nullable()();
   IntColumn get overstayDays => integer().withDefault(const Constant(0))();
   RealColumn get overstayFeeEgp => real().withDefault(const Constant(0))();
@@ -143,8 +149,9 @@ class BookingPayments extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get bookingId => text().references(SummerBookings, #id)();
   RealColumn get amountEgp => real()();
-  TextColumn get paymentMethod =>
-      text().withDefault(const Constant('cash'))(); // cash, vodafone_cash, instapay
+  TextColumn get paymentMethod => text().withDefault(
+    const Constant('cash'),
+  )(); // cash, vodafone_cash, instapay
   DateTimeColumn get paymentDate => dateTime()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
@@ -193,7 +200,8 @@ class FinancialTransfers extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get fromAccount => text()();
   TextColumn get toAccount => text()();
-  TextColumn get transferType => text().withDefault(const Constant('internal'))();
+  TextColumn get transferType =>
+      text().withDefault(const Constant('internal'))();
   TextColumn get season => text().withDefault(const Constant('all'))();
   RealColumn get amountEgp => real()();
   DateTimeColumn get transferDate => dateTime()();

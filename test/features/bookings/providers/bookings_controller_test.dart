@@ -151,6 +151,9 @@ void main() {
       brokerCommissionType: 'fixed',
       brokerCommissionFixedEgp: 1000,
       brokerCommissionPercentage: 10,
+      brokerCommissionPaidCashEgp: 100,
+      brokerCommissionPaidVodafoneEgp: 200,
+      brokerCommissionPaidInstapayEgp: 10,
     );
 
     final bookings = await db.select(db.summerBookings).get();
@@ -183,6 +186,39 @@ void main() {
     expect(
       bookingByApartment[apartmentIds[2]]!.brokerCommissionFixedEgp,
       closeTo(333.34, 0.001),
+    );
+    expect(
+      bookings.fold<double>(
+        0,
+        (sum, booking) => sum + booking.brokerCommissionPaidCashEgp,
+      ),
+      closeTo(100, 0.001),
+    );
+    expect(
+      bookings.fold<double>(
+        0,
+        (sum, booking) => sum + booking.brokerCommissionPaidVodafoneEgp,
+      ),
+      closeTo(200, 0.001),
+    );
+    expect(
+      bookings.fold<double>(
+        0,
+        (sum, booking) => sum + booking.brokerCommissionPaidInstapayEgp,
+      ),
+      closeTo(10, 0.001),
+    );
+    expect(
+      bookingByApartment[apartmentIds[2]]!.brokerCommissionPaidCashEgp,
+      closeTo(33.34, 0.001),
+    );
+    expect(
+      bookingByApartment[apartmentIds[2]]!.brokerCommissionPaidVodafoneEgp,
+      closeTo(66.66, 0.001),
+    );
+    expect(
+      bookingByApartment[apartmentIds[2]]!.brokerCommissionPaidInstapayEgp,
+      closeTo(3.34, 0.001),
     );
 
     final payments = await db.select(db.bookingPayments).get();

@@ -51,6 +51,9 @@ class _AddSummerBookingScreenState
   final _amountCashController = TextEditingController();
   final _amountVodafoneCashController = TextEditingController();
   final _amountInstapayController = TextEditingController();
+  final _commissionPaidCashController = TextEditingController();
+  final _commissionPaidVodafoneController = TextEditingController();
+  final _commissionPaidInstapayController = TextEditingController();
   final _daysController = TextEditingController();
   final _commissionController = TextEditingController();
   final _nationalIdController = TextEditingController();
@@ -69,6 +72,8 @@ class _AddSummerBookingScreenState
   String? _selectedBuildingId;
   String? _selectedBrokerId;
   bool _prefilled = false;
+  bool _commissionPaymentEdited = false;
+  bool _commissionPaymentPrefillScheduled = false;
   bool _initialApartmentSelectionApplied = false;
   Set<String> _occupiedApartmentIds = {};
   static const _draftKey = 'summer_booking_draft_v1';
@@ -119,6 +124,9 @@ class _AddSummerBookingScreenState
     _amountCashController.dispose();
     _amountVodafoneCashController.dispose();
     _amountInstapayController.dispose();
+    _commissionPaidCashController.dispose();
+    _commissionPaidVodafoneController.dispose();
+    _commissionPaidInstapayController.dispose();
     _daysController.dispose();
     _commissionController.dispose();
     _nationalIdController.dispose();
@@ -416,6 +424,9 @@ class _AddSummerBookingScreenState
       'amountCash': _amountCashController.text,
       'amountVodafoneCash': _amountVodafoneCashController.text,
       'amountInstapay': _amountInstapayController.text,
+      'commissionPaidCash': _commissionPaidCashController.text,
+      'commissionPaidVodafone': _commissionPaidVodafoneController.text,
+      'commissionPaidInstapay': _commissionPaidInstapayController.text,
       'days': _daysController.text,
       'commission': _commissionController.text,
       'nationalId': _nationalIdController.text,
@@ -473,6 +484,13 @@ class _AddSummerBookingScreenState
           draft['amountVodafoneCash']?.toString() ?? '';
       _amountInstapayController.text =
           draft['amountInstapay']?.toString() ?? '';
+      _commissionPaidCashController.text =
+          draft['commissionPaidCash']?.toString() ?? '';
+      _commissionPaidVodafoneController.text =
+          draft['commissionPaidVodafone']?.toString() ?? '';
+      _commissionPaidInstapayController.text =
+          draft['commissionPaidInstapay']?.toString() ?? '';
+      _commissionPaymentEdited = draft.containsKey('commissionPaidCash');
       _daysController.text = draft['days']?.toString() ?? '';
       _commissionController.text = draft['commission']?.toString() ?? '';
       _nationalIdController.text = draft['nationalId']?.toString() ?? '';
@@ -528,7 +546,7 @@ class _AddSummerBookingScreenState
       if (isCheckIn) {
         defaultTime = _checkInDate != null
             ? TimeOfDay.fromDateTime(_checkInDate!)
-            : const TimeOfDay(hour: 14, minute: 0);
+            : TimeOfDay.now();
       } else {
         defaultTime = _checkOutDate != null
             ? TimeOfDay.fromDateTime(_checkOutDate!)
@@ -576,6 +594,56 @@ class _AddSummerBookingScreenState
 
   double _parseCurrencyText(String text) {
     return double.tryParse(text.replaceAll(',', '').trim()) ?? 0;
+  }
+
+  double _commissionAmountValue() {
+    final total = _parseCurrencyText(_totalPriceController.text);
+    final val = _parseCurrencyText(_commissionController.text);
+    if (_commissionType == 'fixed') return val;
+    if (_commissionType == 'percentage') return total * val / 100;
+    return 0;
+  }
+
+  bool get _commissionPaymentFieldsAreEmpty =>
+      _commissionPaidCashController.text.trim().isEmpty &&
+      _commissionPaidVodafoneController.text.trim().isEmpty &&
+      _commissionPaidInstapayController.text.trim().isEmpty;
+
+  bool get _canPrefillCommissionPayment =>
+      // Only auto-fill on NEW bookings. On edit, legacy bookings (created before
+      // this feature) have empty paid fields on purpose; prefilling cash there
+      // would silently move the commission out of its real payment-method pool
+      // on save. Empty fields fall back to the booking's primary method.
+      widget.bookingId == null &&
+      !_commissionPaymentEdited &&
+      !_commissionPaymentPrefillScheduled &&
+      _selectedBrokerId != null &&
+      _commissionType != 'none' &&
+      _commissionPaymentFieldsAreEmpty &&
+      _commissionAmountValue() > 0;
+
+  void _scheduleCommissionPaymentPrefill() {
+    if (!_canPrefillCommissionPayment) return;
+    _commissionPaymentPrefillScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _applyCommissionPaymentPrefill(),
+    );
+  }
+
+  void _applyCommissionPaymentPrefill() {
+    _commissionPaymentPrefillScheduled = false;
+    if (!mounted || !_canPrefillCommissionPayment) return;
+    setState(() {
+      _commissionPaidCashController.text = _commissionAmountValue()
+          .toCurrencyFormat();
+    });
+  }
+
+  void _clearCommissionPaymentFields() {
+    _commissionPaidCashController.clear();
+    _commissionPaidVodafoneController.clear();
+    _commissionPaidInstapayController.clear();
+    _commissionPaymentEdited = false;
   }
 
   String _splitPreviewText() {
@@ -673,6 +741,17 @@ class _AddSummerBookingScreenState
       final brokerCommissionPercentage = _commissionType == 'percentage'
           ? _parseCurrencyText(_commissionController.text)
           : 10.0;
+      final hasBrokerCommission =
+          _commissionType != 'none' && _selectedBrokerId != null;
+      final brokerCommissionPaidCashEgp = hasBrokerCommission
+          ? _parseCurrencyText(_commissionPaidCashController.text)
+          : 0.0;
+      final brokerCommissionPaidVodafoneEgp = hasBrokerCommission
+          ? _parseCurrencyText(_commissionPaidVodafoneController.text)
+          : 0.0;
+      final brokerCommissionPaidInstapayEgp = hasBrokerCommission
+          ? _parseCurrencyText(_commissionPaidInstapayController.text)
+          : 0.0;
       final nationalId = _nationalIdController.text.trim().isEmpty
           ? null
           : _nationalIdController.text.trim();
@@ -699,6 +778,9 @@ class _AddSummerBookingScreenState
               brokerCommissionType: _commissionType,
               brokerCommissionFixedEgp: brokerCommissionFixedEgp,
               brokerCommissionPercentage: brokerCommissionPercentage,
+              brokerCommissionPaidCashEgp: brokerCommissionPaidCashEgp,
+              brokerCommissionPaidVodafoneEgp: brokerCommissionPaidVodafoneEgp,
+              brokerCommissionPaidInstapayEgp: brokerCommissionPaidInstapayEgp,
               nationalId: nationalId,
               idFrontImage: _idFrontImage?.path ?? _existingIdFrontPath,
               idBackImage: _idBackImage?.path ?? _existingIdBackPath,
@@ -721,6 +803,9 @@ class _AddSummerBookingScreenState
               brokerCommissionType: _commissionType,
               brokerCommissionFixedEgp: brokerCommissionFixedEgp,
               brokerCommissionPercentage: brokerCommissionPercentage,
+              brokerCommissionPaidCashEgp: brokerCommissionPaidCashEgp,
+              brokerCommissionPaidVodafoneEgp: brokerCommissionPaidVodafoneEgp,
+              brokerCommissionPaidInstapayEgp: brokerCommissionPaidInstapayEgp,
               nationalId: nationalId,
               idFrontImage: _idFrontImage?.path ?? _existingIdFrontPath,
               idBackImage: _idBackImage?.path ?? _existingIdBackPath,
@@ -747,6 +832,19 @@ class _AddSummerBookingScreenState
     final brokersAsync = ref.watch(brokersProvider);
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final colors = context.colors;
+    final totalPriceValue = _parseCurrencyText(_totalPriceController.text);
+    final stayDays = int.tryParse(_daysController.text) ?? 0;
+    final perDayPrice = totalPriceValue > 0 && stayDays > 0
+        ? totalPriceValue / stayDays
+        : null;
+    final commissionAmount = _commissionAmountValue();
+    final enteredCommissionPaid =
+        _parseCurrencyText(_commissionPaidCashController.text) +
+        _parseCurrencyText(_commissionPaidVodafoneController.text) +
+        _parseCurrencyText(_commissionPaidInstapayController.text);
+    final commissionPaymentMismatch =
+        (enteredCommissionPaid - commissionAmount).abs() > 1;
+    _scheduleCommissionPaymentPrefill();
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
@@ -833,6 +931,20 @@ class _AddSummerBookingScreenState
                               b.brokerCommissionType == 'fixed'
                               ? b.brokerCommissionFixedEgp.toString()
                               : b.brokerCommissionPercentage.toString();
+                          _commissionPaidCashController.text =
+                              b.brokerCommissionPaidCashEgp > 0
+                              ? b.brokerCommissionPaidCashEgp.toCurrencyFormat()
+                              : '';
+                          _commissionPaidVodafoneController.text =
+                              b.brokerCommissionPaidVodafoneEgp > 0
+                              ? b.brokerCommissionPaidVodafoneEgp
+                                    .toCurrencyFormat()
+                              : '';
+                          _commissionPaidInstapayController.text =
+                              b.brokerCommissionPaidInstapayEgp > 0
+                              ? b.brokerCommissionPaidInstapayEgp
+                                    .toCurrencyFormat()
+                              : '';
                           _nationalIdController.text = b.nationalId ?? '';
                           _prefillStoredIdImage(
                             isFront: true,
@@ -1131,7 +1243,10 @@ class _AddSummerBookingScreenState
                     label: 'عدد الأيام',
                     controller: _daysController,
                     keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateCheckoutDate(),
+                    onChanged: (_) {
+                      setState(() {});
+                      _calculateCheckoutDate();
+                    },
                     validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
                   ),
                 ),
@@ -1231,6 +1346,13 @@ class _AddSummerBookingScreenState
                         ),
                     ],
                   ),
+                  if (perDayPrice != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'سعر اليوم: ${perDayPrice.toCurrencyFormat()} ج.م',
+                      style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                    ),
+                  ],
                   if (widget.bookingId == null) ...[
                     const SizedBox(height: 16),
                     Text(
@@ -1445,7 +1567,11 @@ class _AddSummerBookingScreenState
                   onChanged: (v) {
                     setState(() {
                       _selectedBrokerId = v;
-                      if (v == null) _commissionType = 'none';
+                      if (v == null) {
+                        _commissionType = 'none';
+                        _commissionController.clear();
+                        _clearCommissionPaymentFields();
+                      }
                     });
                   },
                 );
@@ -1491,6 +1617,7 @@ class _AddSummerBookingScreenState
                       onChanged: (v) => setState(() {
                         _commissionType = v!;
                         _commissionController.clear();
+                        _clearCommissionPaymentFields();
                       }),
                     ),
                   ),
@@ -1535,6 +1662,54 @@ class _AddSummerBookingScreenState
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'طريقة دفع العمولة للسمسار',
+                style: AppTextStyles.label.copyWith(color: colors.ink2),
+              ),
+              const SizedBox(height: 8),
+              AppTextField(
+                label: 'كاش',
+                controller: _commissionPaidCashController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [CurrencyInputFormatter()],
+                onChanged: (_) => setState(() {
+                  _commissionPaymentEdited = true;
+                }),
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'فودافون كاش',
+                controller: _commissionPaidVodafoneController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [CurrencyInputFormatter()],
+                onChanged: (_) => setState(() {
+                  _commissionPaymentEdited = true;
+                }),
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'إنستاباي',
+                controller: _commissionPaidInstapayController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [CurrencyInputFormatter()],
+                onChanged: (_) => setState(() {
+                  _commissionPaymentEdited = true;
+                }),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'العمولة: ${commissionAmount.toCurrencyFormat()} ج.م · المُدخل: ${enteredCommissionPaid.toCurrencyFormat()} ج.م',
+                style: AppTextStyles.bodyS.copyWith(
+                  color: commissionPaymentMismatch ? colors.warn : colors.ink2,
                 ),
               ),
             ],

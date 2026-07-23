@@ -118,10 +118,12 @@ Future<Map<String, double>> buildTreasuryBalances(
       add(entry.key, entry.value);
     }
     final commission = _summerBookingCommission(booking);
-    final commissionDeduction = commission < booking.amountPaidEgp
-        ? commission
-        : booking.amountPaidEgp;
-    add(booking.paymentMethod, -commissionDeduction);
+    for (final entry in summerBookingCommissionDeductions(
+      booking,
+      commission,
+    ).entries) {
+      add(entry.key, -entry.value);
+    }
   }
 
   final payments = await db.select(db.winterPayments).get();

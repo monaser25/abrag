@@ -22,6 +22,9 @@ void main() {
     double brokerCommissionFixedEgp = 0,
     double brokerCommissionPercentage = 10,
     double? brokerCommissionAmountEgp,
+    double brokerCommissionPaidCashEgp = 0,
+    double brokerCommissionPaidVodafoneEgp = 0,
+    double brokerCommissionPaidInstapayEgp = 0,
   }) async {
     final now = DateTime(2026, 5, 17);
     await db
@@ -60,6 +63,13 @@ void main() {
             brokerCommissionFixedEgp: Value(brokerCommissionFixedEgp),
             brokerCommissionPercentage: Value(brokerCommissionPercentage),
             brokerCommissionAmountEgp: Value(brokerCommissionAmountEgp),
+            brokerCommissionPaidCashEgp: Value(brokerCommissionPaidCashEgp),
+            brokerCommissionPaidVodafoneEgp: Value(
+              brokerCommissionPaidVodafoneEgp,
+            ),
+            brokerCommissionPaidInstapayEgp: Value(
+              brokerCommissionPaidInstapayEgp,
+            ),
             createdAt: now,
             updatedAt: now,
           ),
@@ -153,6 +163,9 @@ void main() {
       1500,
       brokerCommissionType: 'fixed',
       brokerCommissionFixedEgp: 100,
+      brokerCommissionPaidCashEgp: 20,
+      brokerCommissionPaidVodafoneEgp: 30,
+      brokerCommissionPaidInstapayEgp: 50,
     );
     await db
         .into(db.bookingPayments)
@@ -181,8 +194,9 @@ void main() {
 
     final balances = await buildTreasuryBalances(db, 'summer_2026');
 
-    expect(balances['cash'], closeTo(400, 0.001));
-    expect(balances['vodafone_cash'], closeTo(1000, 0.001));
+    expect(balances['cash'], closeTo(480, 0.001));
+    expect(balances['vodafone_cash'], closeTo(970, 0.001));
+    expect(balances['instapay'], closeTo(-50, 0.001));
   });
 
   test('deletes a transfer and records removal', () async {
