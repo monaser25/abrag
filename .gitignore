@@ -58,3 +58,7 @@ ios/Runner/GoogleService-Info.plist
 firebase-service-account*.json
 abrag_supabase.txtabrag_supabase.txt
 abrag_supabase.txt
+
+# Build artifacts from compiling the drift web worker
+web/drift_worker.dart.js.deps
+web/drift_worker.dart.js.map
