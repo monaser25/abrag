@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -8,10 +9,13 @@ import '../database/database.dart';
 import '../database/tables.dart';
 
 class SyncEngine {
+  static const _lastPullAtKey = 'sync_last_pull_at';
+
   final AppDatabase db;
   final SupabaseClient supabase;
+  final SharedPreferences preferences;
 
-  SyncEngine(this.db, this.supabase);
+  SyncEngine(this.db, this.supabase, this.preferences);
 
   Future<String?> _uploadFileIfLocal(
     String? path,
@@ -1050,743 +1054,853 @@ class SyncEngine {
     ).hasMatch(value);
   }
 
+  Future<List<Map<String, dynamic>>> _selectRemoteRows(
+    String table,
+    String? cutoffIso,
+  ) async {
+    final query = supabase.from(table).select();
+    return cutoffIso == null
+        ? await query
+        : await query.gt('updated_at', cutoffIso);
+  }
+
+  Future<List<Map<String, dynamic>>> _selectAuditLogs(String? cutoffIso) async {
+    final query = supabase.from('audit_logs').select();
+    final filteredQuery = cutoffIso == null
+        ? query
+        : query.gt('updated_at', cutoffIso);
+    return filteredQuery.order('created_at', ascending: false).limit(200);
+  }
+
   Future<void> _pullRemoteChanges() async {
+    final pullStartedAt = DateTime.now().toUtc();
+    final lastPullAt = preferences.getString(_lastPullAtKey);
+    final localApartmentsAreEmpty =
+        lastPullAt != null && (await db.select(db.apartments).get()).isEmpty;
+    final cutoffIso = lastPullAt == null || localApartmentsAreEmpty
+        ? null
+        : DateTime.parse(
+            lastPullAt,
+          ).toUtc().subtract(const Duration(minutes: 2)).toIso8601String();
+
     try {
       // Sync UserProfiles
-      final userProfilesData = await supabase.from('user_profiles').select();
-      for (final row in userProfilesData) {
-        await db
-            .into(db.userProfiles)
-            .insertOnConflictUpdate(
-              UserProfilesCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                email: row['email'] == null
-                    ? const Value.absent()
-                    : Value(row['email']),
-                fullName: row['full_name'] == null
-                    ? const Value.absent()
-                    : Value(row['full_name']),
-                phoneNumber: row['phone_number'] == null
-                    ? const Value.absent()
-                    : Value(row['phone_number']),
-                secondaryPhone: row['secondary_phone'] == null
-                    ? const Value.absent()
-                    : Value(row['secondary_phone']),
-                role: row['role'] == null
-                    ? const Value.absent()
-                    : Value(row['role']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final userProfilesData = await _selectRemoteRows(
+        'user_profiles',
+        cutoffIso,
+      );
+      final userProfileRows = [
+        for (final row in userProfilesData)
+          UserProfilesCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            email: row['email'] == null
+                ? const Value.absent()
+                : Value(row['email']),
+            fullName: row['full_name'] == null
+                ? const Value.absent()
+                : Value(row['full_name']),
+            phoneNumber: row['phone_number'] == null
+                ? const Value.absent()
+                : Value(row['phone_number']),
+            secondaryPhone: row['secondary_phone'] == null
+                ? const Value.absent()
+                : Value(row['secondary_phone']),
+            role: row['role'] == null
+                ? const Value.absent()
+                : Value(row['role']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (userProfileRows.isNotEmpty) {
+        await db.batch(
+          (batch) =>
+              batch.insertAllOnConflictUpdate(db.userProfiles, userProfileRows),
+        );
       }
 
       // Sync Buildings
-      final buildingsData = await supabase.from('buildings').select();
-      for (final row in buildingsData) {
-        await db
-            .into(db.buildings)
-            .insertOnConflictUpdate(
-              BuildingsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                name: row['name'] == null
-                    ? const Value.absent()
-                    : Value(row['name']),
-                address: row['address'] == null
-                    ? const Value.absent()
-                    : Value(row['address']),
-                annualRentEgp: row['annual_rent_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['annual_rent_egp'] as num).toDouble()),
-                rentInstallmentsDates: row['rent_installments_dates'] == null
-                    ? const Value.absent()
-                    : Value(row['rent_installments_dates']),
-                totalApartments: row['total_apartments'] == null
-                    ? const Value.absent()
-                    : Value((row['total_apartments'] as num).toInt()),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final buildingsData = await _selectRemoteRows('buildings', cutoffIso);
+      final buildingRows = [
+        for (final row in buildingsData)
+          BuildingsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            name: row['name'] == null
+                ? const Value.absent()
+                : Value(row['name']),
+            address: row['address'] == null
+                ? const Value.absent()
+                : Value(row['address']),
+            annualRentEgp: row['annual_rent_egp'] == null
+                ? const Value.absent()
+                : Value((row['annual_rent_egp'] as num).toDouble()),
+            rentInstallmentsDates: row['rent_installments_dates'] == null
+                ? const Value.absent()
+                : Value(row['rent_installments_dates']),
+            totalApartments: row['total_apartments'] == null
+                ? const Value.absent()
+                : Value((row['total_apartments'] as num).toInt()),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (buildingRows.isNotEmpty) {
+        await db.batch(
+          (batch) =>
+              batch.insertAllOnConflictUpdate(db.buildings, buildingRows),
+        );
       }
 
       // Sync Apartments
-      final apartmentsData = await supabase.from('apartments').select();
-      for (final row in apartmentsData) {
-        await db
-            .into(db.apartments)
-            .insertOnConflictUpdate(
-              ApartmentsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                buildingId: row['building_id'] == null
-                    ? const Value.absent()
-                    : Value(row['building_id']),
-                apartmentNumber: row['apartment_number'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_number']),
-                floorNumber: row['floor_number'] == null
-                    ? const Value.absent()
-                    : Value((row['floor_number'] as num).toInt()),
-                cleaningStatus: row['cleaning_status'] == null
-                    ? const Value.absent()
-                    : Value(row['cleaning_status']),
-                brokerVisibility: row['broker_visibility'] == null
-                    ? const Value.absent()
-                    : Value(row['broker_visibility']),
-                inventory: row['inventory'] == null
-                    ? const Value.absent()
-                    : Value(row['inventory']),
-                landlineNumber: row['landline_number'] == null
-                    ? const Value.absent()
-                    : Value(row['landline_number']),
-                landlineOwnerName: row['landline_owner_name'] == null
-                    ? const Value.absent()
-                    : Value(row['landline_owner_name']),
-                landlineNotes: row['landline_notes'] == null
-                    ? const Value.absent()
-                    : Value(row['landline_notes']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final apartmentsData = await _selectRemoteRows('apartments', cutoffIso);
+      final apartmentRows = [
+        for (final row in apartmentsData)
+          ApartmentsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            buildingId: row['building_id'] == null
+                ? const Value.absent()
+                : Value(row['building_id']),
+            apartmentNumber: row['apartment_number'] == null
+                ? const Value.absent()
+                : Value(row['apartment_number']),
+            floorNumber: row['floor_number'] == null
+                ? const Value.absent()
+                : Value((row['floor_number'] as num).toInt()),
+            cleaningStatus: row['cleaning_status'] == null
+                ? const Value.absent()
+                : Value(row['cleaning_status']),
+            brokerVisibility: row['broker_visibility'] == null
+                ? const Value.absent()
+                : Value(row['broker_visibility']),
+            inventory: row['inventory'] == null
+                ? const Value.absent()
+                : Value(row['inventory']),
+            landlineNumber: row['landline_number'] == null
+                ? const Value.absent()
+                : Value(row['landline_number']),
+            landlineOwnerName: row['landline_owner_name'] == null
+                ? const Value.absent()
+                : Value(row['landline_owner_name']),
+            landlineNotes: row['landline_notes'] == null
+                ? const Value.absent()
+                : Value(row['landline_notes']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (apartmentRows.isNotEmpty) {
+        await db.batch(
+          (batch) =>
+              batch.insertAllOnConflictUpdate(db.apartments, apartmentRows),
+        );
       }
 
       // Sync SummerBookings
-      final summerBookingsData = await supabase
-          .from('summer_bookings')
-          .select();
-      for (final row in summerBookingsData) {
-        await db
-            .into(db.summerBookings)
-            .insertOnConflictUpdate(
-              SummerBookingsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                apartmentId: row['apartment_id'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_id']),
-                guestName: row['guest_name'] == null
-                    ? const Value.absent()
-                    : Value(row['guest_name']),
-                guestPhone: row['guest_phone'] == null
-                    ? const Value.absent()
-                    : Value(row['guest_phone']),
-                checkInDate: row['check_in_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['check_in_date'])),
-                checkOutDate: row['check_out_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['check_out_date'])),
-                status: row['status'] == null
-                    ? const Value.absent()
-                    : Value(row['status']),
-                totalPriceEgp: row['total_price_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['total_price_egp'] as num).toDouble()),
-                amountPaidEgp: row['amount_paid_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['amount_paid_egp'] as num).toDouble()),
-                paymentMethod: row['payment_method'] == null
-                    ? const Value.absent()
-                    : Value(row['payment_method']),
-                brokerId: row['broker_id'] == null
-                    ? const Value.absent()
-                    : Value(row['broker_id']),
-                brokerName: row['broker_name'] == null
-                    ? const Value.absent()
-                    : Value(row['broker_name']),
-                brokerCommissionType: row['broker_commission_type'] == null
-                    ? const Value.absent()
-                    : Value(row['broker_commission_type']),
-                brokerCommissionPercentage:
-                    row['broker_commission_percentage'] == null
-                    ? const Value.absent()
-                    : Value(
-                        (row['broker_commission_percentage'] as num).toDouble(),
-                      ),
-                brokerCommissionFixedEgp:
-                    row['broker_commission_fixed_egp'] == null
-                    ? const Value.absent()
-                    : Value(
-                        (row['broker_commission_fixed_egp'] as num).toDouble(),
-                      ),
-                brokerCommissionAmountEgp:
-                    row['broker_commission_amount_egp'] == null
-                    ? const Value.absent()
-                    : Value(
-                        (row['broker_commission_amount_egp'] as num).toDouble(),
-                      ),
-                brokerCommissionPaidCashEgp:
-                    row['broker_commission_paid_cash_egp'] == null
-                    ? const Value(0)
-                    : Value(
-                        (row['broker_commission_paid_cash_egp'] as num)
-                            .toDouble(),
-                      ),
-                brokerCommissionPaidVodafoneEgp:
-                    row['broker_commission_paid_vodafone_egp'] == null
-                    ? const Value(0)
-                    : Value(
-                        (row['broker_commission_paid_vodafone_egp'] as num)
-                            .toDouble(),
-                      ),
-                brokerCommissionPaidInstapayEgp:
-                    row['broker_commission_paid_instapay_egp'] == null
-                    ? const Value(0)
-                    : Value(
-                        (row['broker_commission_paid_instapay_egp'] as num)
-                            .toDouble(),
-                      ),
-                earlyCheckoutDate: row['early_checkout_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['early_checkout_date'])),
-                overstayDays: row['overstay_days'] == null
-                    ? const Value.absent()
-                    : Value((row['overstay_days'] as num).toInt()),
-                overstayFeeEgp: row['overstay_fee_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['overstay_fee_egp'] as num).toDouble()),
-                nationalId: row['national_id'] == null
-                    ? const Value.absent()
-                    : Value(row['national_id']),
-                idFrontImage: row['id_front_image'] == null
-                    ? const Value.absent()
-                    : Value(row['id_front_image']),
-                idBackImage: row['id_back_image'] == null
-                    ? const Value.absent()
-                    : Value(row['id_back_image']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final summerBookingsData = await _selectRemoteRows(
+        'summer_bookings',
+        cutoffIso,
+      );
+      final summerBookingRows = [
+        for (final row in summerBookingsData)
+          SummerBookingsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            apartmentId: row['apartment_id'] == null
+                ? const Value.absent()
+                : Value(row['apartment_id']),
+            guestName: row['guest_name'] == null
+                ? const Value.absent()
+                : Value(row['guest_name']),
+            guestPhone: row['guest_phone'] == null
+                ? const Value.absent()
+                : Value(row['guest_phone']),
+            checkInDate: row['check_in_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['check_in_date'])),
+            checkOutDate: row['check_out_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['check_out_date'])),
+            status: row['status'] == null
+                ? const Value.absent()
+                : Value(row['status']),
+            totalPriceEgp: row['total_price_egp'] == null
+                ? const Value.absent()
+                : Value((row['total_price_egp'] as num).toDouble()),
+            amountPaidEgp: row['amount_paid_egp'] == null
+                ? const Value.absent()
+                : Value((row['amount_paid_egp'] as num).toDouble()),
+            paymentMethod: row['payment_method'] == null
+                ? const Value.absent()
+                : Value(row['payment_method']),
+            brokerId: row['broker_id'] == null
+                ? const Value.absent()
+                : Value(row['broker_id']),
+            brokerName: row['broker_name'] == null
+                ? const Value.absent()
+                : Value(row['broker_name']),
+            brokerCommissionType: row['broker_commission_type'] == null
+                ? const Value.absent()
+                : Value(row['broker_commission_type']),
+            brokerCommissionPercentage:
+                row['broker_commission_percentage'] == null
+                ? const Value.absent()
+                : Value(
+                    (row['broker_commission_percentage'] as num).toDouble(),
+                  ),
+            brokerCommissionFixedEgp: row['broker_commission_fixed_egp'] == null
+                ? const Value.absent()
+                : Value((row['broker_commission_fixed_egp'] as num).toDouble()),
+            brokerCommissionAmountEgp:
+                row['broker_commission_amount_egp'] == null
+                ? const Value.absent()
+                : Value(
+                    (row['broker_commission_amount_egp'] as num).toDouble(),
+                  ),
+            brokerCommissionPaidCashEgp:
+                row['broker_commission_paid_cash_egp'] == null
+                ? const Value(0)
+                : Value(
+                    (row['broker_commission_paid_cash_egp'] as num).toDouble(),
+                  ),
+            brokerCommissionPaidVodafoneEgp:
+                row['broker_commission_paid_vodafone_egp'] == null
+                ? const Value(0)
+                : Value(
+                    (row['broker_commission_paid_vodafone_egp'] as num)
+                        .toDouble(),
+                  ),
+            brokerCommissionPaidInstapayEgp:
+                row['broker_commission_paid_instapay_egp'] == null
+                ? const Value(0)
+                : Value(
+                    (row['broker_commission_paid_instapay_egp'] as num)
+                        .toDouble(),
+                  ),
+            earlyCheckoutDate: row['early_checkout_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['early_checkout_date'])),
+            overstayDays: row['overstay_days'] == null
+                ? const Value.absent()
+                : Value((row['overstay_days'] as num).toInt()),
+            overstayFeeEgp: row['overstay_fee_egp'] == null
+                ? const Value.absent()
+                : Value((row['overstay_fee_egp'] as num).toDouble()),
+            nationalId: row['national_id'] == null
+                ? const Value.absent()
+                : Value(row['national_id']),
+            idFrontImage: row['id_front_image'] == null
+                ? const Value.absent()
+                : Value(row['id_front_image']),
+            idBackImage: row['id_back_image'] == null
+                ? const Value.absent()
+                : Value(row['id_back_image']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (summerBookingRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.summerBookings,
+            summerBookingRows,
+          ),
+        );
       }
 
       // Sync WinterContracts
-      final winterContractsData = await supabase
-          .from('winter_contracts')
-          .select();
-      for (final row in winterContractsData) {
-        await db
-            .into(db.winterContracts)
-            .insertOnConflictUpdate(
-              WinterContractsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                apartmentId: row['apartment_id'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_id']),
-                contractType: row['contract_type'] == null
-                    ? const Value.absent()
-                    : Value(row['contract_type']),
-                studentName: row['student_name'] == null
-                    ? const Value.absent()
-                    : Value(row['student_name']),
-                university: row['university'] == null
-                    ? const Value.absent()
-                    : Value(row['university']),
-                parentName: row['parent_name'] == null
-                    ? const Value.absent()
-                    : Value(row['parent_name']),
-                parentPhone: row['parent_phone'] == null
-                    ? const Value.absent()
-                    : Value(row['parent_phone']),
-                viewerUserId: row['viewer_user_id'] == null
-                    ? const Value.absent()
-                    : Value(row['viewer_user_id']),
-                startDate: row['start_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['start_date'])),
-                endDate: row['end_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['end_date'])),
-                monthlyRentEgp: row['monthly_rent_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['monthly_rent_egp'] as num).toDouble()),
-                depositEgp: row['deposit_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['deposit_egp'] as num).toDouble()),
-                isActive: row['is_active'] == null
-                    ? const Value.absent()
-                    : Value(row['is_active']),
-                isElectricityOnStudent: row['is_electricity_on_student'] == null
-                    ? const Value.absent()
-                    : Value(row['is_electricity_on_student']),
-                isGasOnStudent: row['is_gas_on_student'] == null
-                    ? const Value.absent()
-                    : Value(row['is_gas_on_student']),
-                isWaterOnStudent: row['is_water_on_student'] == null
-                    ? const Value.absent()
-                    : Value(row['is_water_on_student']),
-                roommates: row['roommates'] == null
-                    ? const Value.absent()
-                    : Value(row['roommates']),
-                nationalId: row['national_id'] == null
-                    ? const Value.absent()
-                    : Value(row['national_id']),
-                idFrontImage: row['id_front_image'] == null
-                    ? const Value.absent()
-                    : Value(row['id_front_image']),
-                idBackImage: row['id_back_image'] == null
-                    ? const Value.absent()
-                    : Value(row['id_back_image']),
-                contractFrontImage: row['contract_front_image'] == null
-                    ? const Value.absent()
-                    : Value(row['contract_front_image']),
-                contractBackImage: row['contract_back_image'] == null
-                    ? const Value.absent()
-                    : Value(row['contract_back_image']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final winterContractsData = await _selectRemoteRows(
+        'winter_contracts',
+        cutoffIso,
+      );
+      final winterContractRows = [
+        for (final row in winterContractsData)
+          WinterContractsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            apartmentId: row['apartment_id'] == null
+                ? const Value.absent()
+                : Value(row['apartment_id']),
+            contractType: row['contract_type'] == null
+                ? const Value.absent()
+                : Value(row['contract_type']),
+            studentName: row['student_name'] == null
+                ? const Value.absent()
+                : Value(row['student_name']),
+            university: row['university'] == null
+                ? const Value.absent()
+                : Value(row['university']),
+            parentName: row['parent_name'] == null
+                ? const Value.absent()
+                : Value(row['parent_name']),
+            parentPhone: row['parent_phone'] == null
+                ? const Value.absent()
+                : Value(row['parent_phone']),
+            viewerUserId: row['viewer_user_id'] == null
+                ? const Value.absent()
+                : Value(row['viewer_user_id']),
+            startDate: row['start_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['start_date'])),
+            endDate: row['end_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['end_date'])),
+            monthlyRentEgp: row['monthly_rent_egp'] == null
+                ? const Value.absent()
+                : Value((row['monthly_rent_egp'] as num).toDouble()),
+            depositEgp: row['deposit_egp'] == null
+                ? const Value.absent()
+                : Value((row['deposit_egp'] as num).toDouble()),
+            isActive: row['is_active'] == null
+                ? const Value.absent()
+                : Value(row['is_active']),
+            isElectricityOnStudent: row['is_electricity_on_student'] == null
+                ? const Value.absent()
+                : Value(row['is_electricity_on_student']),
+            isGasOnStudent: row['is_gas_on_student'] == null
+                ? const Value.absent()
+                : Value(row['is_gas_on_student']),
+            isWaterOnStudent: row['is_water_on_student'] == null
+                ? const Value.absent()
+                : Value(row['is_water_on_student']),
+            roommates: row['roommates'] == null
+                ? const Value.absent()
+                : Value(row['roommates']),
+            nationalId: row['national_id'] == null
+                ? const Value.absent()
+                : Value(row['national_id']),
+            idFrontImage: row['id_front_image'] == null
+                ? const Value.absent()
+                : Value(row['id_front_image']),
+            idBackImage: row['id_back_image'] == null
+                ? const Value.absent()
+                : Value(row['id_back_image']),
+            contractFrontImage: row['contract_front_image'] == null
+                ? const Value.absent()
+                : Value(row['contract_front_image']),
+            contractBackImage: row['contract_back_image'] == null
+                ? const Value.absent()
+                : Value(row['contract_back_image']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (winterContractRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.winterContracts,
+            winterContractRows,
+          ),
+        );
       }
 
       // Sync WinterPayments
-      final winterPaymentsData = await supabase
-          .from('winter_payments')
-          .select();
-      for (final row in winterPaymentsData) {
-        await db
-            .into(db.winterPayments)
-            .insertOnConflictUpdate(
-              WinterPaymentsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                contractId: row['contract_id'] == null
-                    ? const Value.absent()
-                    : Value(row['contract_id']),
-                amountEgp: row['amount_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['amount_egp'] as num).toDouble()),
-                paymentDate: row['payment_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['payment_date'])),
-                paymentMethod: row['payment_method'] == null
-                    ? const Value.absent()
-                    : Value(row['payment_method']),
-                receiptUrl: row['receipt_url'] == null
-                    ? const Value.absent()
-                    : Value(row['receipt_url']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final winterPaymentsData = await _selectRemoteRows(
+        'winter_payments',
+        cutoffIso,
+      );
+      final winterPaymentRows = [
+        for (final row in winterPaymentsData)
+          WinterPaymentsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            contractId: row['contract_id'] == null
+                ? const Value.absent()
+                : Value(row['contract_id']),
+            amountEgp: row['amount_egp'] == null
+                ? const Value.absent()
+                : Value((row['amount_egp'] as num).toDouble()),
+            paymentDate: row['payment_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['payment_date'])),
+            paymentMethod: row['payment_method'] == null
+                ? const Value.absent()
+                : Value(row['payment_method']),
+            receiptUrl: row['receipt_url'] == null
+                ? const Value.absent()
+                : Value(row['receipt_url']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (winterPaymentRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.winterPayments,
+            winterPaymentRows,
+          ),
+        );
       }
 
       // Sync BookingPayments
-      final bookingPaymentsData = await supabase
-          .from('booking_payments')
-          .select();
-      for (final row in bookingPaymentsData) {
-        await db
-            .into(db.bookingPayments)
-            .insertOnConflictUpdate(
-              BookingPaymentsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                bookingId: row['booking_id'] == null
-                    ? const Value.absent()
-                    : Value(row['booking_id']),
-                amountEgp: row['amount_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['amount_egp'] as num).toDouble()),
-                paymentMethod: row['payment_method'] == null
-                    ? const Value.absent()
-                    : Value(row['payment_method']),
-                paymentDate: row['payment_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['payment_date'])),
-                notes: row['notes'] == null
-                    ? const Value.absent()
-                    : Value(row['notes']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final bookingPaymentsData = await _selectRemoteRows(
+        'booking_payments',
+        cutoffIso,
+      );
+      final bookingPaymentRows = [
+        for (final row in bookingPaymentsData)
+          BookingPaymentsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            bookingId: row['booking_id'] == null
+                ? const Value.absent()
+                : Value(row['booking_id']),
+            amountEgp: row['amount_egp'] == null
+                ? const Value.absent()
+                : Value((row['amount_egp'] as num).toDouble()),
+            paymentMethod: row['payment_method'] == null
+                ? const Value.absent()
+                : Value(row['payment_method']),
+            paymentDate: row['payment_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['payment_date'])),
+            notes: row['notes'] == null
+                ? const Value.absent()
+                : Value(row['notes']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (bookingPaymentRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.bookingPayments,
+            bookingPaymentRows,
+          ),
+        );
       }
 
       // Sync MeterReadings
-      final meterReadingsData = await supabase.from('meter_readings').select();
-      for (final row in meterReadingsData) {
-        await db
-            .into(db.meterReadings)
-            .insertOnConflictUpdate(
-              MeterReadingsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                apartmentId: row['apartment_id'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_id']),
-                buildingId: row['building_id'] == null
-                    ? const Value.absent()
-                    : Value(row['building_id']),
-                readingDate: row['reading_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['reading_date'])),
-                previousReading: row['previous_reading'] == null
-                    ? const Value.absent()
-                    : Value((row['previous_reading'] as num).toDouble()),
-                currentReading: row['current_reading'] == null
-                    ? const Value.absent()
-                    : Value((row['current_reading'] as num).toDouble()),
-                amountEgp: row['amount_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['amount_egp'] as num).toDouble()),
-                isSharedExpense: row['is_shared_expense'] == null
-                    ? const Value.absent()
-                    : Value(row['is_shared_expense']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final meterReadingsData = await _selectRemoteRows(
+        'meter_readings',
+        cutoffIso,
+      );
+      final meterReadingRows = [
+        for (final row in meterReadingsData)
+          MeterReadingsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            apartmentId: row['apartment_id'] == null
+                ? const Value.absent()
+                : Value(row['apartment_id']),
+            buildingId: row['building_id'] == null
+                ? const Value.absent()
+                : Value(row['building_id']),
+            readingDate: row['reading_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['reading_date'])),
+            previousReading: row['previous_reading'] == null
+                ? const Value.absent()
+                : Value((row['previous_reading'] as num).toDouble()),
+            currentReading: row['current_reading'] == null
+                ? const Value.absent()
+                : Value((row['current_reading'] as num).toDouble()),
+            amountEgp: row['amount_egp'] == null
+                ? const Value.absent()
+                : Value((row['amount_egp'] as num).toDouble()),
+            isSharedExpense: row['is_shared_expense'] == null
+                ? const Value.absent()
+                : Value(row['is_shared_expense']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (meterReadingRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.meterReadings,
+            meterReadingRows,
+          ),
+        );
       }
 
       // Sync Expenses
-      final expensesData = await supabase.from('expenses').select();
-      for (final row in expensesData) {
-        await db
-            .into(db.expenses)
-            .insertOnConflictUpdate(
-              ExpensesCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                buildingId: row['building_id'] == null
-                    ? const Value.absent()
-                    : Value(row['building_id']),
-                apartmentId: row['apartment_id'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_id']),
-                expenseType: row['expense_type'] == null
-                    ? const Value.absent()
-                    : Value(row['expense_type']),
-                amountEgp: row['amount_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['amount_egp'] as num).toDouble()),
-                paymentMethod: row['payment_method'] == null
-                    ? const Value.absent()
-                    : Value(row['payment_method']),
-                season: row['season'] == null
-                    ? const Value.absent()
-                    : Value(row['season']),
-                discountEgp: row['discount_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['discount_egp'] as num).toDouble()),
-                discountReason: row['discount_reason'] == null
-                    ? const Value.absent()
-                    : Value(row['discount_reason']),
-                expenseDate: row['expense_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['expense_date'])),
-                installmentNumber: row['installment_number'] == null
-                    ? const Value.absent()
-                    : Value((row['installment_number'] as num).toInt()),
-                description: row['description'] == null
-                    ? const Value.absent()
-                    : Value(row['description']),
-                receiptUrl: row['receipt_url'] == null
-                    ? const Value.absent()
-                    : Value(row['receipt_url']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final expensesData = await _selectRemoteRows('expenses', cutoffIso);
+      final expenseRows = [
+        for (final row in expensesData)
+          ExpensesCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            buildingId: row['building_id'] == null
+                ? const Value.absent()
+                : Value(row['building_id']),
+            apartmentId: row['apartment_id'] == null
+                ? const Value.absent()
+                : Value(row['apartment_id']),
+            expenseType: row['expense_type'] == null
+                ? const Value.absent()
+                : Value(row['expense_type']),
+            amountEgp: row['amount_egp'] == null
+                ? const Value.absent()
+                : Value((row['amount_egp'] as num).toDouble()),
+            paymentMethod: row['payment_method'] == null
+                ? const Value.absent()
+                : Value(row['payment_method']),
+            season: row['season'] == null
+                ? const Value.absent()
+                : Value(row['season']),
+            discountEgp: row['discount_egp'] == null
+                ? const Value.absent()
+                : Value((row['discount_egp'] as num).toDouble()),
+            discountReason: row['discount_reason'] == null
+                ? const Value.absent()
+                : Value(row['discount_reason']),
+            expenseDate: row['expense_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['expense_date'])),
+            installmentNumber: row['installment_number'] == null
+                ? const Value.absent()
+                : Value((row['installment_number'] as num).toInt()),
+            description: row['description'] == null
+                ? const Value.absent()
+                : Value(row['description']),
+            receiptUrl: row['receipt_url'] == null
+                ? const Value.absent()
+                : Value(row['receipt_url']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (expenseRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(db.expenses, expenseRows),
+        );
       }
 
       // Sync FinancialTransfers
-      final financialTransfersData = await supabase
-          .from('financial_transfers')
-          .select();
-      for (final row in financialTransfersData) {
-        await db
-            .into(db.financialTransfers)
-            .insertOnConflictUpdate(
-              FinancialTransfersCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                fromAccount: row['from_account'] == null
-                    ? const Value.absent()
-                    : Value(row['from_account']),
-                toAccount: row['to_account'] == null
-                    ? const Value.absent()
-                    : Value(row['to_account']),
-                transferType: row['transfer_type'] == null
-                    ? const Value.absent()
-                    : Value(row['transfer_type']),
-                season: row['season'] == null
-                    ? const Value.absent()
-                    : Value(row['season']),
-                amountEgp: row['amount_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['amount_egp'] as num).toDouble()),
-                transferDate: row['transfer_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['transfer_date'])),
-                notes: row['notes'] == null
-                    ? const Value.absent()
-                    : Value(row['notes']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final financialTransfersData = await _selectRemoteRows(
+        'financial_transfers',
+        cutoffIso,
+      );
+      final financialTransferRows = [
+        for (final row in financialTransfersData)
+          FinancialTransfersCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            fromAccount: row['from_account'] == null
+                ? const Value.absent()
+                : Value(row['from_account']),
+            toAccount: row['to_account'] == null
+                ? const Value.absent()
+                : Value(row['to_account']),
+            transferType: row['transfer_type'] == null
+                ? const Value.absent()
+                : Value(row['transfer_type']),
+            season: row['season'] == null
+                ? const Value.absent()
+                : Value(row['season']),
+            amountEgp: row['amount_egp'] == null
+                ? const Value.absent()
+                : Value((row['amount_egp'] as num).toDouble()),
+            transferDate: row['transfer_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['transfer_date'])),
+            notes: row['notes'] == null
+                ? const Value.absent()
+                : Value(row['notes']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (financialTransferRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.financialTransfers,
+            financialTransferRows,
+          ),
+        );
       }
 
       // Sync Technicians
-      final techniciansData = await supabase.from('technicians').select();
-      for (final row in techniciansData) {
-        await db
-            .into(db.technicians)
-            .insertOnConflictUpdate(
-              TechniciansCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                name: row['name'] == null
-                    ? const Value.absent()
-                    : Value(row['name']),
-                phone: row['phone'] == null
-                    ? const Value.absent()
-                    : Value(row['phone']),
-                secondaryPhone: row['secondary_phone'] == null
-                    ? const Value.absent()
-                    : Value(row['secondary_phone']),
-                specialty: row['specialty'] == null
-                    ? const Value.absent()
-                    : Value(row['specialty']),
-                notes: row['notes'] == null
-                    ? const Value.absent()
-                    : Value(row['notes']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final techniciansData = await _selectRemoteRows('technicians', cutoffIso);
+      final technicianRows = [
+        for (final row in techniciansData)
+          TechniciansCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            name: row['name'] == null
+                ? const Value.absent()
+                : Value(row['name']),
+            phone: row['phone'] == null
+                ? const Value.absent()
+                : Value(row['phone']),
+            secondaryPhone: row['secondary_phone'] == null
+                ? const Value.absent()
+                : Value(row['secondary_phone']),
+            specialty: row['specialty'] == null
+                ? const Value.absent()
+                : Value(row['specialty']),
+            notes: row['notes'] == null
+                ? const Value.absent()
+                : Value(row['notes']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (technicianRows.isNotEmpty) {
+        await db.batch(
+          (batch) =>
+              batch.insertAllOnConflictUpdate(db.technicians, technicianRows),
+        );
       }
 
       // Sync CleaningSupplies
-      final cleaningSuppliesData = await supabase
-          .from('cleaning_supplies')
-          .select();
-      for (final row in cleaningSuppliesData) {
-        await db
-            .into(db.cleaningSupplies)
-            .insertOnConflictUpdate(
-              CleaningSuppliesCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                name: row['name'] == null
-                    ? const Value.absent()
-                    : Value(row['name']),
-                stockQuantity: row['stock_quantity'] == null
-                    ? const Value.absent()
-                    : Value((row['stock_quantity'] as num).toDouble()),
-                unit: row['unit'] == null
-                    ? const Value.absent()
-                    : Value(row['unit']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final cleaningSuppliesData = await _selectRemoteRows(
+        'cleaning_supplies',
+        cutoffIso,
+      );
+      final cleaningSupplyRows = [
+        for (final row in cleaningSuppliesData)
+          CleaningSuppliesCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            name: row['name'] == null
+                ? const Value.absent()
+                : Value(row['name']),
+            stockQuantity: row['stock_quantity'] == null
+                ? const Value.absent()
+                : Value((row['stock_quantity'] as num).toDouble()),
+            unit: row['unit'] == null
+                ? const Value.absent()
+                : Value(row['unit']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (cleaningSupplyRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.cleaningSupplies,
+            cleaningSupplyRows,
+          ),
+        );
       }
 
       // Sync CleaningTransactions
-      final cleaningTransactionsData = await supabase
-          .from('cleaning_transactions')
-          .select();
-      for (final row in cleaningTransactionsData) {
-        await db
-            .into(db.cleaningTransactions)
-            .insertOnConflictUpdate(
-              CleaningTransactionsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                supplyId: row['supply_id'] == null
-                    ? const Value.absent()
-                    : Value(row['supply_id']),
-                transactionType: row['transaction_type'] == null
-                    ? const Value.absent()
-                    : Value(row['transaction_type']),
-                quantity: row['quantity'] == null
-                    ? const Value.absent()
-                    : Value((row['quantity'] as num).toDouble()),
-                costEgp: row['cost_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['cost_egp'] as num).toDouble()),
-                transactionDate: row['transaction_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['transaction_date'])),
-                notes: row['notes'] == null
-                    ? const Value.absent()
-                    : Value(row['notes']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final cleaningTransactionsData = await _selectRemoteRows(
+        'cleaning_transactions',
+        cutoffIso,
+      );
+      final cleaningTransactionRows = [
+        for (final row in cleaningTransactionsData)
+          CleaningTransactionsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            supplyId: row['supply_id'] == null
+                ? const Value.absent()
+                : Value(row['supply_id']),
+            transactionType: row['transaction_type'] == null
+                ? const Value.absent()
+                : Value(row['transaction_type']),
+            quantity: row['quantity'] == null
+                ? const Value.absent()
+                : Value((row['quantity'] as num).toDouble()),
+            costEgp: row['cost_egp'] == null
+                ? const Value.absent()
+                : Value((row['cost_egp'] as num).toDouble()),
+            transactionDate: row['transaction_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['transaction_date'])),
+            notes: row['notes'] == null
+                ? const Value.absent()
+                : Value(row['notes']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (cleaningTransactionRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.cleaningTransactions,
+            cleaningTransactionRows,
+          ),
+        );
       }
 
       // Sync ApartmentInspections
-      final apartmentInspectionsData = await supabase
-          .from('apartment_inspections')
-          .select();
-      for (final row in apartmentInspectionsData) {
-        await db
-            .into(db.apartmentInspections)
-            .insertOnConflictUpdate(
-              ApartmentInspectionsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                apartmentId: row['apartment_id'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_id']),
-                inspectionDate: row['inspection_date'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['inspection_date'])),
-                isClean: row['is_clean'] == null
-                    ? const Value.absent()
-                    : Value(row['is_clean']),
-                hasDamages: row['has_damages'] == null
-                    ? const Value.absent()
-                    : Value(row['has_damages']),
-                damagesDescription: row['damages_description'] == null
-                    ? const Value.absent()
-                    : Value(row['damages_description']),
-                tenantFineEgp: row['tenant_fine_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['tenant_fine_egp'] as num).toDouble()),
-                ownerRepairCostEgp: row['owner_repair_cost_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['owner_repair_cost_egp'] as num).toDouble()),
-                inspectorName: row['inspector_name'] == null
-                    ? const Value.absent()
-                    : Value(row['inspector_name']),
-                notes: row['notes'] == null
-                    ? const Value.absent()
-                    : Value(row['notes']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final apartmentInspectionsData = await _selectRemoteRows(
+        'apartment_inspections',
+        cutoffIso,
+      );
+      final apartmentInspectionRows = [
+        for (final row in apartmentInspectionsData)
+          ApartmentInspectionsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            apartmentId: row['apartment_id'] == null
+                ? const Value.absent()
+                : Value(row['apartment_id']),
+            inspectionDate: row['inspection_date'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['inspection_date'])),
+            isClean: row['is_clean'] == null
+                ? const Value.absent()
+                : Value(row['is_clean']),
+            hasDamages: row['has_damages'] == null
+                ? const Value.absent()
+                : Value(row['has_damages']),
+            damagesDescription: row['damages_description'] == null
+                ? const Value.absent()
+                : Value(row['damages_description']),
+            tenantFineEgp: row['tenant_fine_egp'] == null
+                ? const Value.absent()
+                : Value((row['tenant_fine_egp'] as num).toDouble()),
+            ownerRepairCostEgp: row['owner_repair_cost_egp'] == null
+                ? const Value.absent()
+                : Value((row['owner_repair_cost_egp'] as num).toDouble()),
+            inspectorName: row['inspector_name'] == null
+                ? const Value.absent()
+                : Value(row['inspector_name']),
+            notes: row['notes'] == null
+                ? const Value.absent()
+                : Value(row['notes']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (apartmentInspectionRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.apartmentInspections,
+            apartmentInspectionRows,
+          ),
+        );
       }
 
       // Sync MaintenanceRequests
-      final maintenanceRequestsData = await supabase
-          .from('maintenance_requests')
-          .select();
-      for (final row in maintenanceRequestsData) {
-        await db
-            .into(db.maintenanceRequests)
-            .insertOnConflictUpdate(
-              MaintenanceRequestsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                apartmentId: row['apartment_id'] == null
-                    ? const Value.absent()
-                    : Value(row['apartment_id']),
-                technicianId: row['technician_id'] == null
-                    ? const Value.absent()
-                    : Value(row['technician_id']),
-                reportedBy: row['reported_by'] == null
-                    ? const Value.absent()
-                    : Value(row['reported_by']),
-                issueDescription: row['issue_description'] == null
-                    ? const Value.absent()
-                    : Value(row['issue_description']),
-                status: row['status'] == null
-                    ? const Value.absent()
-                    : Value(row['status']),
-                costEgp: row['cost_egp'] == null
-                    ? const Value.absent()
-                    : Value((row['cost_egp'] as num).toDouble()),
-                resolvedAt: row['resolved_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['resolved_at'])),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                updatedAt: row['updated_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['updated_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final maintenanceRequestsData = await _selectRemoteRows(
+        'maintenance_requests',
+        cutoffIso,
+      );
+      final maintenanceRequestRows = [
+        for (final row in maintenanceRequestsData)
+          MaintenanceRequestsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            apartmentId: row['apartment_id'] == null
+                ? const Value.absent()
+                : Value(row['apartment_id']),
+            technicianId: row['technician_id'] == null
+                ? const Value.absent()
+                : Value(row['technician_id']),
+            reportedBy: row['reported_by'] == null
+                ? const Value.absent()
+                : Value(row['reported_by']),
+            issueDescription: row['issue_description'] == null
+                ? const Value.absent()
+                : Value(row['issue_description']),
+            status: row['status'] == null
+                ? const Value.absent()
+                : Value(row['status']),
+            costEgp: row['cost_egp'] == null
+                ? const Value.absent()
+                : Value((row['cost_egp'] as num).toDouble()),
+            resolvedAt: row['resolved_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['resolved_at'])),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            updatedAt: row['updated_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['updated_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (maintenanceRequestRows.isNotEmpty) {
+        await db.batch(
+          (batch) => batch.insertAllOnConflictUpdate(
+            db.maintenanceRequests,
+            maintenanceRequestRows,
+          ),
+        );
       }
 
       // Sync AuditLogs
-      final auditLogsData = await supabase.from('audit_logs').select();
-      for (final row in auditLogsData) {
-        await db
-            .into(db.auditLogs)
-            .insertOnConflictUpdate(
-              AuditLogsCompanion(
-                id: row['id'] == null ? const Value.absent() : Value(row['id']),
-                actorUserId: row['actor_user_id'] == null
-                    ? const Value.absent()
-                    : Value(row['actor_user_id']),
-                actorName: row['actor_name'] == null
-                    ? const Value.absent()
-                    : Value(row['actor_name']),
-                action: row['action'] == null
-                    ? const Value.absent()
-                    : Value(row['action']),
-                entityType: row['entity_type'] == null
-                    ? const Value.absent()
-                    : Value(row['entity_type']),
-                entityId: row['entity_id'] == null
-                    ? const Value.absent()
-                    : Value(row['entity_id']),
-                title: row['title'] == null
-                    ? const Value.absent()
-                    : Value(row['title']),
-                description: row['description'] == null
-                    ? const Value.absent()
-                    : Value(row['description']),
-                route: row['route'] == null
-                    ? const Value.absent()
-                    : Value(row['route']),
-                oldValuesJson: row['old_values_json'] == null
-                    ? const Value.absent()
-                    : Value(row['old_values_json']),
-                newValuesJson: row['new_values_json'] == null
-                    ? const Value.absent()
-                    : Value(row['new_values_json']),
-                createdAt: row['created_at'] == null
-                    ? const Value.absent()
-                    : Value(DateTime.parse(row['created_at'])),
-                syncStatus: const Value(SyncStatus.synced),
-              ),
-            );
+      final auditLogsData = await _selectAuditLogs(cutoffIso);
+      final auditLogRows = [
+        for (final row in auditLogsData)
+          AuditLogsCompanion(
+            id: row['id'] == null ? const Value.absent() : Value(row['id']),
+            actorUserId: row['actor_user_id'] == null
+                ? const Value.absent()
+                : Value(row['actor_user_id']),
+            actorName: row['actor_name'] == null
+                ? const Value.absent()
+                : Value(row['actor_name']),
+            action: row['action'] == null
+                ? const Value.absent()
+                : Value(row['action']),
+            entityType: row['entity_type'] == null
+                ? const Value.absent()
+                : Value(row['entity_type']),
+            entityId: row['entity_id'] == null
+                ? const Value.absent()
+                : Value(row['entity_id']),
+            title: row['title'] == null
+                ? const Value.absent()
+                : Value(row['title']),
+            description: row['description'] == null
+                ? const Value.absent()
+                : Value(row['description']),
+            route: row['route'] == null
+                ? const Value.absent()
+                : Value(row['route']),
+            oldValuesJson: row['old_values_json'] == null
+                ? const Value.absent()
+                : Value(row['old_values_json']),
+            newValuesJson: row['new_values_json'] == null
+                ? const Value.absent()
+                : Value(row['new_values_json']),
+            createdAt: row['created_at'] == null
+                ? const Value.absent()
+                : Value(DateTime.parse(row['created_at'])),
+            syncStatus: const Value(SyncStatus.synced),
+          ),
+      ];
+      if (auditLogRows.isNotEmpty) {
+        await db.batch(
+          (batch) =>
+              batch.insertAllOnConflictUpdate(db.auditLogs, auditLogRows),
+        );
       }
+      await preferences.setString(
+        _lastPullAtKey,
+        pullStartedAt.toIso8601String(),
+      );
     } catch (e) {
       rethrow;
     }

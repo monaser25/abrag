@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
@@ -74,43 +76,93 @@ class ApartmentProfileData {
 final apartmentProfileProvider =
     StreamProvider.family<ApartmentProfileData, String>((ref, id) {
       final db = ref.watch(databaseProvider);
+      late final StreamController<ApartmentProfileData> controller;
+      final subscriptions = <StreamSubscription<dynamic>>[];
+      Timer? debounce;
 
-      return Stream.periodic(const Duration(milliseconds: 500)).asyncMap((
-        _,
-      ) async {
-        final apt = await (db.select(
-          db.apartments,
-        )..where((t) => t.id.equals(id))).getSingle();
-
-        Building? building;
+      Future<void> emitProfile() async {
         try {
-          building = await (db.select(
-            db.buildings,
-          )..where((t) => t.id.equals(apt.buildingId))).getSingle();
-        } catch (_) {}
+          final profile = await _buildApartmentProfile(db, id);
+          if (!controller.isClosed) {
+            controller.add(profile);
+          }
+        } catch (error, stackTrace) {
+          if (!controller.isClosed) {
+            controller.addError(error, stackTrace);
+          }
+        }
+      }
 
-        final bookings =
-            await (db.select(db.summerBookings)
-                  ..where((t) => t.apartmentId.equals(id))
-                  ..where((t) => t.status.isNotIn(['deleted']))
-                  ..where(
-                    (t) =>
-                        t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
-                  ))
-                .get();
-        final contracts = await (db.select(
-          db.winterContracts,
-        )..where((t) => t.apartmentId.equals(id))).get();
-        final expenses = await (db.select(
-          db.expenses,
-        )..where((t) => t.apartmentId.equals(id))).get();
+      void scheduleEmit() {
+        debounce?.cancel();
+        debounce = Timer(const Duration(milliseconds: 80), emitProfile);
+      }
 
-        return ApartmentProfileData(
-          apartment: apt,
-          building: building,
-          bookings: bookings,
-          contracts: contracts,
-          expenses: expenses,
-        );
-      });
+      controller = StreamController<ApartmentProfileData>(
+        onListen: () {
+          subscriptions.add(
+            db.select(db.apartments).watch().listen((_) => scheduleEmit()),
+          );
+          subscriptions.add(
+            db.select(db.buildings).watch().listen((_) => scheduleEmit()),
+          );
+          subscriptions.add(
+            db.select(db.summerBookings).watch().listen((_) => scheduleEmit()),
+          );
+          subscriptions.add(
+            db.select(db.winterContracts).watch().listen((_) => scheduleEmit()),
+          );
+          subscriptions.add(
+            db.select(db.expenses).watch().listen((_) => scheduleEmit()),
+          );
+          unawaited(emitProfile());
+        },
+        onCancel: () async {
+          debounce?.cancel();
+          for (final subscription in subscriptions) {
+            await subscription.cancel();
+          }
+        },
+      );
+
+      return controller.stream;
     });
+
+Future<ApartmentProfileData> _buildApartmentProfile(
+  AppDatabase db,
+  String id,
+) async {
+  final apt = await (db.select(
+    db.apartments,
+  )..where((t) => t.id.equals(id))).getSingle();
+
+  Building? building;
+  try {
+    building = await (db.select(
+      db.buildings,
+    )..where((t) => t.id.equals(apt.buildingId))).getSingle();
+  } catch (_) {}
+
+  final bookings =
+      await (db.select(db.summerBookings)
+            ..where((t) => t.apartmentId.equals(id))
+            ..where((t) => t.status.isNotIn(['deleted']))
+            ..where(
+              (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+            ))
+          .get();
+  final contracts = await (db.select(
+    db.winterContracts,
+  )..where((t) => t.apartmentId.equals(id))).get();
+  final expenses = await (db.select(
+    db.expenses,
+  )..where((t) => t.apartmentId.equals(id))).get();
+
+  return ApartmentProfileData(
+    apartment: apt,
+    building: building,
+    bookings: bookings,
+    contracts: contracts,
+    expenses: expenses,
+  );
+}

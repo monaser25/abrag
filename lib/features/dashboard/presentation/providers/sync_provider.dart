@@ -4,13 +4,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import '../../../../core/config/app_settings_provider.dart';
+import '../../../../core/config/shared_prefs_provider.dart';
 import '../../../../core/sync/sync_engine.dart';
 import '../../../../core/services/notification_service.dart';
 import 'database_provider.dart';
 
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final db = ref.watch(databaseProvider);
-  return SyncEngine(db, Supabase.instance.client);
+  final preferences = ref.watch(sharedPreferencesProvider);
+  return SyncEngine(db, Supabase.instance.client, preferences);
 });
 
 final syncControllerProvider =
@@ -32,7 +34,7 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
 
   SyncController(this._syncEngine, this._ref) : super(const AsyncData(null)) {
     syncData(silent: true);
-    _periodicSyncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) syncData(silent: true);
     });
     _initRealtime();

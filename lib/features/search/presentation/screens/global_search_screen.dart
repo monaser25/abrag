@@ -16,7 +16,7 @@ final searchResultsProvider = StreamProvider.autoDispose<List<dynamic>>((ref) {
 
   // This is a simplified search across tables.
   // In a real app, use drift's text search or custom async mapping.
-  return Stream.periodic(const Duration(milliseconds: 500)).asyncMap((_) async {
+  return Stream.fromFuture(() async {
     final results = [];
 
     // Search Summer Bookings
@@ -46,7 +46,7 @@ final searchResultsProvider = StreamProvider.autoDispose<List<dynamic>>((ref) {
     );
 
     return results;
-  });
+  }());
 });
 
 class GlobalSearchScreen extends ConsumerWidget {

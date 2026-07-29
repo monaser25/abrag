@@ -832,19 +832,6 @@ class _AddSummerBookingScreenState
     final brokersAsync = ref.watch(brokersProvider);
     final bookingsAsync = ref.watch(allSummerBookingsProvider);
     final colors = context.colors;
-    final totalPriceValue = _parseCurrencyText(_totalPriceController.text);
-    final stayDays = int.tryParse(_daysController.text) ?? 0;
-    final perDayPrice = totalPriceValue > 0 && stayDays > 0
-        ? totalPriceValue / stayDays
-        : null;
-    final commissionAmount = _commissionAmountValue();
-    final enteredCommissionPaid =
-        _parseCurrencyText(_commissionPaidCashController.text) +
-        _parseCurrencyText(_commissionPaidVodafoneController.text) +
-        _parseCurrencyText(_commissionPaidInstapayController.text);
-    final commissionPaymentMismatch =
-        (enteredCommissionPaid - commissionAmount).abs() > 1;
-    _scheduleCommissionPaymentPrefill();
 
     ref.listen<AsyncValue<void>>(bookingsControllerProvider, (_, state) {
       state.whenOrNull(
@@ -1243,10 +1230,7 @@ class _AddSummerBookingScreenState
                     label: 'عدد الأيام',
                     controller: _daysController,
                     keyboardType: TextInputType.number,
-                    onChanged: (_) {
-                      setState(() {});
-                      _calculateCheckoutDate();
-                    },
+                    onChanged: (_) => _calculateCheckoutDate(),
                     validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
                   ),
                 ),
@@ -1304,20 +1288,108 @@ class _AddSummerBookingScreenState
                             if (v == null || v.isEmpty) return 'مطلوب';
                             return null;
                           },
-                          onChanged: (_) => setState(() {}),
                         ),
                       ),
                       const SizedBox(width: 12),
                       if (widget.bookingId != null)
                         Expanded(
-                          child: AppTextField(
-                            label:
-                                _totalPriceController.text.isNotEmpty &&
-                                    _amountPaidController.text ==
-                                        _totalPriceController.text
-                                ? 'المبلغ المدفوع بالكامل'
-                                : 'المبلغ المدفوع (العربون)',
-                            controller: _amountPaidController,
+                          child: AnimatedBuilder(
+                            animation: Listenable.merge([
+                              _totalPriceController,
+                              _amountPaidController,
+                            ]),
+                            builder: (context, _) => AppTextField(
+                              label:
+                                  _totalPriceController.text.isNotEmpty &&
+                                      _amountPaidController.text ==
+                                          _totalPriceController.text
+                                  ? 'المبلغ المدفوع بالكامل'
+                                  : 'المبلغ المدفوع (العربون)',
+                              controller: _amountPaidController,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              inputFormatters: [CurrencyInputFormatter()],
+                              validator: (v) {
+                                if (v == null || v.isEmpty) return 'مطلوب';
+                                final paid =
+                                    double.tryParse(v.replaceAll(',', '')) ?? 0;
+                                final total =
+                                    double.tryParse(
+                                      _totalPriceController.text.replaceAll(
+                                        ',',
+                                        '',
+                                      ),
+                                    ) ??
+                                    0;
+                                if (paid > total) {
+                                  return 'العربون أكبر من الإجمالي';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  AnimatedBuilder(
+                    animation: Listenable.merge([
+                      _totalPriceController,
+                      _daysController,
+                    ]),
+                    builder: (context, _) {
+                      final totalPriceValue = _parseCurrencyText(
+                        _totalPriceController.text,
+                      );
+                      final stayDays = int.tryParse(_daysController.text) ?? 0;
+                      final perDayPrice = totalPriceValue > 0 && stayDays > 0
+                          ? totalPriceValue / stayDays
+                          : null;
+                      if (perDayPrice == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          Text(
+                            'سعر اليوم: ${perDayPrice.toCurrencyFormat()} ج.م',
+                            style: AppTextStyles.bodyS.copyWith(
+                              color: colors.ink2,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  if (widget.bookingId == null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'المبلغ المدفوع (العربون)',
+                      style: AppTextStyles.label.copyWith(color: colors.ink2),
+                    ),
+                    const SizedBox(height: 8),
+                    AnimatedBuilder(
+                      // All three validators check the SUM of the three fields
+                      // against the total, so they have to re-validate together:
+                      // lowering the amount in one field must clear a stale
+                      // "العربون أكبر من الإجمالي" left on another.
+                      animation: Listenable.merge([
+                        _amountCashController,
+                        _amountVodafoneCashController,
+                        _amountInstapayController,
+                        _totalPriceController,
+                      ]),
+                      builder: (context, _) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppTextField(
+                            label: 'مدفوع كاش',
+                            controller: _amountCashController,
                             autovalidateMode:
                                 AutovalidateMode.onUserInteraction,
                             keyboardType: const TextInputType.numberWithOptions(
@@ -1325,9 +1397,28 @@ class _AddSummerBookingScreenState
                             ),
                             inputFormatters: [CurrencyInputFormatter()],
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'مطلوب';
-                              final paid =
-                                  double.tryParse(v.replaceAll(',', '')) ?? 0;
+                              final cash =
+                                  double.tryParse(
+                                    (_amountCashController.text).replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              final voda =
+                                  double.tryParse(
+                                    (_amountVodafoneCashController.text)
+                                        .replaceAll(',', ''),
+                                  ) ??
+                                  0;
+                              final insta =
+                                  double.tryParse(
+                                    (_amountInstapayController.text).replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
                               final total =
                                   double.tryParse(
                                     _totalPriceController.text.replaceAll(
@@ -1336,183 +1427,120 @@ class _AddSummerBookingScreenState
                                     ),
                                   ) ??
                                   0;
-                              if (paid > total) {
+                              if (cash + voda + insta > total) {
                                 return 'العربون أكبر من الإجمالي';
                               }
                               return null;
                             },
-                            onChanged: (_) => setState(() {}),
                           ),
-                        ),
-                    ],
-                  ),
-                  if (perDayPrice != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'سعر اليوم: ${perDayPrice.toCurrencyFormat()} ج.م',
-                      style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
-                    ),
-                  ],
-                  if (widget.bookingId == null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'المبلغ المدفوع (العربون)',
-                      style: AppTextStyles.label.copyWith(color: colors.ink2),
-                    ),
-                    const SizedBox(height: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppTextField(
-                          label: 'مدفوع كاش',
-                          controller: _amountCashController,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [CurrencyInputFormatter()],
-                          validator: (v) {
-                            final cash =
-                                double.tryParse(
-                                  (_amountCashController.text).replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            final voda =
-                                double.tryParse(
-                                  (_amountVodafoneCashController.text)
-                                      .replaceAll(',', ''),
-                                ) ??
-                                0;
-                            final insta =
-                                double.tryParse(
-                                  (_amountInstapayController.text).replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            final total =
-                                double.tryParse(
-                                  _totalPriceController.text.replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            if (cash + voda + insta > total) {
-                              return 'العربون أكبر من الإجمالي';
-                            }
-                            return null;
-                          },
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'مدفوع فودافون كاش',
-                          controller: _amountVodafoneCashController,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [CurrencyInputFormatter()],
-                          validator: (v) {
-                            final cash =
-                                double.tryParse(
-                                  (_amountCashController.text).replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            final voda =
-                                double.tryParse(
-                                  (_amountVodafoneCashController.text)
-                                      .replaceAll(',', ''),
-                                ) ??
-                                0;
-                            final insta =
-                                double.tryParse(
-                                  (_amountInstapayController.text).replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            final total =
-                                double.tryParse(
-                                  _totalPriceController.text.replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            if (cash + voda + insta > total) {
-                              return 'العربون أكبر من الإجمالي';
-                            }
-                            return null;
-                          },
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'مدفوع إنستاباي',
-                          controller: _amountInstapayController,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [CurrencyInputFormatter()],
-                          validator: (v) {
-                            final cash =
-                                double.tryParse(
-                                  (_amountCashController.text).replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            final voda =
-                                double.tryParse(
-                                  (_amountVodafoneCashController.text)
-                                      .replaceAll(',', ''),
-                                ) ??
-                                0;
-                            final insta =
-                                double.tryParse(
-                                  (_amountInstapayController.text).replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            final total =
-                                double.tryParse(
-                                  _totalPriceController.text.replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ) ??
-                                0;
-                            if (cash + voda + insta > total) {
-                              return 'العربون أكبر من الإجمالي';
-                            }
-                            return null;
-                          },
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        if (_selectedApartmentIds.length > 1) ...[
                           const SizedBox(height: 12),
-                          Text(
-                            _splitPreviewText(),
-                            style: AppTextStyles.bodyS.copyWith(
-                              color: colors.ink2,
+                          AppTextField(
+                            label: 'مدفوع فودافون كاش',
+                            controller: _amountVodafoneCashController,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
                             ),
+                            inputFormatters: [CurrencyInputFormatter()],
+                            validator: (v) {
+                              final cash =
+                                  double.tryParse(
+                                    (_amountCashController.text).replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              final voda =
+                                  double.tryParse(
+                                    (_amountVodafoneCashController.text)
+                                        .replaceAll(',', ''),
+                                  ) ??
+                                  0;
+                              final insta =
+                                  double.tryParse(
+                                    (_amountInstapayController.text).replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              final total =
+                                  double.tryParse(
+                                    _totalPriceController.text.replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              if (cash + voda + insta > total) {
+                                return 'العربون أكبر من الإجمالي';
+                              }
+                              return null;
+                            },
                           ),
+                          const SizedBox(height: 12),
+                          AppTextField(
+                            label: 'مدفوع إنستاباي',
+                            controller: _amountInstapayController,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [CurrencyInputFormatter()],
+                            validator: (v) {
+                              final cash =
+                                  double.tryParse(
+                                    (_amountCashController.text).replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              final voda =
+                                  double.tryParse(
+                                    (_amountVodafoneCashController.text)
+                                        .replaceAll(',', ''),
+                                  ) ??
+                                  0;
+                              final insta =
+                                  double.tryParse(
+                                    (_amountInstapayController.text).replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              final total =
+                                  double.tryParse(
+                                    _totalPriceController.text.replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ) ??
+                                  0;
+                              if (cash + voda + insta > total) {
+                                return 'العربون أكبر من الإجمالي';
+                              }
+                              return null;
+                            },
+                          ),
+                          if (_selectedApartmentIds.length > 1) ...[
+                            const SizedBox(height: 12),
+                            AnimatedBuilder(
+                              animation: _totalPriceController,
+                              builder: (context, _) => Text(
+                                _splitPreviewText(),
+                                style: AppTextStyles.bodyS.copyWith(
+                                  color: colors.ink2,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ],
                   if (widget.bookingId != null) ...[
@@ -1635,7 +1663,6 @@ class _AddSummerBookingScreenState
                         inputFormatters: _commissionType == 'fixed'
                             ? [CurrencyInputFormatter()]
                             : [],
-                        onChanged: (_) => setState(() {}),
                         validator: (v) =>
                             v == null || v.isEmpty ? 'مطلوب' : null,
                       ),
@@ -1646,22 +1673,28 @@ class _AddSummerBookingScreenState
             ],
             if (_commissionType != 'none' && _selectedBrokerId != null) ...[
               const SizedBox(height: 16),
-              AppCard(
-                color: colors.accentSoft,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'الصافي بعد العمولة:',
-                      style: AppTextStyles.title.copyWith(color: colors.ink),
-                    ),
-                    Text(
-                      '${_calculateNetAmount().toCurrencyFormat()} ج.م',
-                      style: AppTextStyles.tabular(
-                        AppTextStyles.h2.copyWith(color: colors.accent),
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _totalPriceController,
+                  _commissionController,
+                ]),
+                builder: (context, _) => AppCard(
+                  color: colors.accentSoft,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'الصافي بعد العمولة:',
+                        style: AppTextStyles.title.copyWith(color: colors.ink),
                       ),
-                    ),
-                  ],
+                      Text(
+                        '${_calculateNetAmount().toCurrencyFormat()} ج.م',
+                        style: AppTextStyles.tabular(
+                          AppTextStyles.h2.copyWith(color: colors.accent),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1706,11 +1739,36 @@ class _AddSummerBookingScreenState
                 }),
               ),
               const SizedBox(height: 8),
-              Text(
-                'العمولة: ${commissionAmount.toCurrencyFormat()} ج.م · المُدخل: ${enteredCommissionPaid.toCurrencyFormat()} ج.م',
-                style: AppTextStyles.bodyS.copyWith(
-                  color: commissionPaymentMismatch ? colors.warn : colors.ink2,
-                ),
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _totalPriceController,
+                  _commissionController,
+                  _commissionPaidCashController,
+                  _commissionPaidVodafoneController,
+                  _commissionPaidInstapayController,
+                ]),
+                builder: (context, _) {
+                  _scheduleCommissionPaymentPrefill();
+                  final commissionAmount = _commissionAmountValue();
+                  final enteredCommissionPaid =
+                      _parseCurrencyText(_commissionPaidCashController.text) +
+                      _parseCurrencyText(
+                        _commissionPaidVodafoneController.text,
+                      ) +
+                      _parseCurrencyText(
+                        _commissionPaidInstapayController.text,
+                      );
+                  final commissionPaymentMismatch =
+                      (enteredCommissionPaid - commissionAmount).abs() > 1;
+                  return Text(
+                    'العمولة: ${commissionAmount.toCurrencyFormat()} ج.م · المُدخل: ${enteredCommissionPaid.toCurrencyFormat()} ج.م',
+                    style: AppTextStyles.bodyS.copyWith(
+                      color: commissionPaymentMismatch
+                          ? colors.warn
+                          : colors.ink2,
+                    ),
+                  );
+                },
               ),
             ],
           ],
