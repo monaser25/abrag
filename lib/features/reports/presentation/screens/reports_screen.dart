@@ -925,6 +925,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
 
     for (final transaction in transactions) {
+      if (!transaction.affectsCash) continue;
       if (transaction.isRevenue) {
         if (transaction.paymentBreakdown.isNotEmpty) {
           for (final entry in transaction.paymentBreakdown.entries) {

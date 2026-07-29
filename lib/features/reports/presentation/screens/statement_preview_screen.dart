@@ -296,6 +296,7 @@ class _StatementPreviewScreenState
   }
 
   Map<String, double> _revenuePaymentBreakdown(Transaction transaction) {
+    if (!transaction.affectsCash) return const {};
     if (transaction.paymentBreakdown.isNotEmpty) {
       return transaction.paymentBreakdown;
     }
@@ -303,6 +304,7 @@ class _StatementPreviewScreenState
   }
 
   Map<String, double> _commissionPaymentBreakdown(Transaction transaction) {
+    if (!transaction.affectsCash) return const {};
     if (transaction.commissionBreakdown.isNotEmpty) {
       return transaction.commissionBreakdown;
     }

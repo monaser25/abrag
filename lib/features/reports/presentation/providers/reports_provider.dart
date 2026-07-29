@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_settings_provider.dart';
@@ -54,6 +56,12 @@ class Transaction {
   final double rentalValue;
   final double brokerCommission;
 
+  /// False for the continuation slices of a stay that spans several months.
+  /// Those slices carry ONLY earned revenue; all of the booking's cash and
+  /// broker commission stay on the first slice (the check-in month), so the
+  /// treasury/wallet figures are unchanged by the monthly split.
+  final bool affectsCash;
+
   Transaction({
     required this.date,
     required this.description,
@@ -76,7 +84,165 @@ class Transaction {
     this.technicianName,
     this.rentalValue = 0,
     this.brokerCommission = 0,
+    this.affectsCash = true,
   });
+}
+
+/// Splits a summer booking transaction by the calendar months of its nights.
+///
+/// The input transaction is returned unchanged when all nights are in one
+/// month. This keeps the common case identical to the original report data.
+List<Transaction> allocateSummerBookingTransactions(
+  Transaction bookingTransaction,
+  DateTime checkOutDate,
+) {
+  final monthlySlices = _monthlyRevenueSlices(
+    checkInDate: bookingTransaction.date,
+    checkOutDate: checkOutDate,
+    amountPaidEgp: bookingTransaction.amount,
+  );
+  if (monthlySlices.length == 1) return [bookingTransaction];
+
+  return [
+    for (var index = 0; index < monthlySlices.length; index++)
+      _transactionForMonthlySlice(
+        bookingTransaction,
+        monthlySlices[index],
+        isFirstSlice: index == 0,
+      ),
+  ];
+}
+
+class _MonthlyRevenueSlice {
+  final DateTime firstNight;
+  final double amount;
+
+  const _MonthlyRevenueSlice({required this.firstNight, required this.amount});
+}
+
+class _NightGroup {
+  final DateTime firstNight;
+  int nightCount = 0;
+
+  _NightGroup(this.firstNight);
+}
+
+List<_MonthlyRevenueSlice> _monthlyRevenueSlices({
+  required DateTime checkInDate,
+  required DateTime checkOutDate,
+  required double amountPaidEgp,
+}) {
+  final groups = _groupBookingNightsByMonth(checkInDate, checkOutDate);
+  final nights = groups.fold<int>(0, (sum, group) => sum + group.nightCount);
+  final paidCents = (amountPaidEgp * 100).round();
+  var allocatedCents = 0;
+  final slices = <_MonthlyRevenueSlice>[];
+
+  for (var index = 0; index < groups.length; index++) {
+    final group = groups[index];
+    final sliceCents = index == groups.length - 1
+        ? paidCents - allocatedCents
+        : _roundDivision(paidCents * group.nightCount, nights);
+    allocatedCents += sliceCents;
+    slices.add(
+      _MonthlyRevenueSlice(
+        firstNight: group.firstNight,
+        amount: sliceCents / 100,
+      ),
+    );
+  }
+  return slices;
+}
+
+List<_NightGroup> _groupBookingNightsByMonth(
+  DateTime checkInDate,
+  DateTime checkOutDate,
+) {
+  final checkInDay = _dateOnly(checkInDate);
+  final checkOutDay = _dateOnly(checkOutDate);
+  final nights = math.max(1, checkOutDay.difference(checkInDay).inDays);
+  final nightsByMonth = <DateTime, _NightGroup>{};
+
+  for (var index = 0; index < nights; index++) {
+    final night = checkInDay.add(Duration(days: index));
+    final month = _dateOnly(DateTime(night.year, night.month));
+    final group = nightsByMonth.putIfAbsent(month, () => _NightGroup(night));
+    group.nightCount++;
+  }
+  return nightsByMonth.values.toList();
+}
+
+int _roundDivision(int numerator, int denominator) {
+  final magnitude = numerator.abs();
+  final roundedMagnitude = (magnitude + denominator ~/ 2) ~/ denominator;
+  return numerator.isNegative ? -roundedMagnitude : roundedMagnitude;
+}
+
+Transaction _transactionForMonthlySlice(
+  Transaction bookingTransaction,
+  _MonthlyRevenueSlice slice, {
+  required bool isFirstSlice,
+}) {
+  return Transaction(
+    date: isFirstSlice
+        ? bookingTransaction.date
+        : _withTimeOfDay(slice.firstNight, bookingTransaction.date),
+    description: bookingTransaction.description,
+    amount: slice.amount,
+    isRevenue: bookingTransaction.isRevenue,
+    paymentMethod: bookingTransaction.paymentMethod,
+    paymentBreakdown: isFirstSlice
+        ? bookingTransaction.paymentBreakdown
+        : const {},
+    commissionBreakdown: isFirstSlice
+        ? bookingTransaction.commissionBreakdown
+        : const {},
+    buildingId: bookingTransaction.buildingId,
+    apartmentId: bookingTransaction.apartmentId,
+    buildingName: bookingTransaction.buildingName,
+    apartmentNumber: bookingTransaction.apartmentNumber,
+    floorNumber: bookingTransaction.floorNumber,
+    season: bookingTransaction.season,
+    expenseType: bookingTransaction.expenseType,
+    customerName: bookingTransaction.customerName,
+    brokerId: bookingTransaction.brokerId,
+    brokerName: bookingTransaction.brokerName,
+    technicianId: bookingTransaction.technicianId,
+    technicianName: bookingTransaction.technicianName,
+    rentalValue: isFirstSlice ? bookingTransaction.rentalValue : 0,
+    brokerCommission: isFirstSlice ? bookingTransaction.brokerCommission : 0,
+    affectsCash: isFirstSlice,
+  );
+}
+
+DateTime _dateOnly(DateTime value) {
+  if (value.isUtc) return DateTime.utc(value.year, value.month, value.day);
+  return DateTime(value.year, value.month, value.day);
+}
+
+DateTime _withTimeOfDay(DateTime date, DateTime timeSource) {
+  if (timeSource.isUtc) {
+    return DateTime.utc(
+      date.year,
+      date.month,
+      date.day,
+      timeSource.hour,
+      timeSource.minute,
+      timeSource.second,
+      timeSource.millisecond,
+      timeSource.microsecond,
+    );
+  }
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+    timeSource.hour,
+    timeSource.minute,
+    timeSource.second,
+    timeSource.millisecond,
+    timeSource.microsecond,
+  );
 }
 
 class RentalRecord {
@@ -373,29 +539,34 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
       paymentsByBookingId[booking.id] ?? const <BookingPayment>[],
     );
 
-    transactions.add(
-      Transaction(
-        date: booking.checkInDate,
-        description: 'حجز صيفي: ${booking.guestName}',
-        amount: booking.amountPaidEgp,
-        isRevenue: true,
-        paymentMethod: booking.paymentMethod,
-        paymentBreakdown: paymentBreakdown,
-        commissionBreakdown: summerBookingCommissionDeductions(
-          booking,
-          brokerCommission,
-        ),
-        buildingId: buildingId,
-        apartmentId: booking.apartmentId,
-        buildingName: buildingId == null ? null : buildingNameById[buildingId],
-        apartmentNumber: apartmentNumberById[booking.apartmentId],
-        floorNumber: apartment?.floorNumber,
-        season: seasonKeyForDate(booking.checkInDate),
-        customerName: booking.guestName,
-        brokerId: booking.brokerId,
-        brokerName: brokerName,
-        rentalValue: booking.totalPriceEgp,
-        brokerCommission: brokerCommission,
+    final bookingTransaction = Transaction(
+      date: booking.checkInDate,
+      description: 'حجز صيفي: ${booking.guestName}',
+      amount: booking.amountPaidEgp,
+      isRevenue: true,
+      paymentMethod: booking.paymentMethod,
+      paymentBreakdown: paymentBreakdown,
+      commissionBreakdown: summerBookingCommissionDeductions(
+        booking,
+        brokerCommission,
+      ),
+      buildingId: buildingId,
+      apartmentId: booking.apartmentId,
+      buildingName: buildingId == null ? null : buildingNameById[buildingId],
+      apartmentNumber: apartmentNumberById[booking.apartmentId],
+      floorNumber: apartment?.floorNumber,
+      season: seasonKeyForDate(booking.checkInDate),
+      customerName: booking.guestName,
+      brokerId: booking.brokerId,
+      brokerName: brokerName,
+      rentalValue: booking.totalPriceEgp,
+      brokerCommission: brokerCommission,
+      affectsCash: true,
+    );
+    transactions.addAll(
+      allocateSummerBookingTransactions(
+        bookingTransaction,
+        booking.checkOutDate,
       ),
     );
 
