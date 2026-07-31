@@ -8,6 +8,24 @@ import 'package:uuid/uuid.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 
+/// Formats a value for a Postgres `date` column as a plain LOCAL calendar date.
+///
+/// These columns hold a day, not an instant, and Postgres discards any time
+/// part on write. Sending `.toUtc().toIso8601String()` therefore moved the day
+/// backwards whenever the local clock was inside the UTC offset — a booking
+/// made at 01:00 in Cairo (UTC+3) was stored as the previous day. It also
+/// compounded: a pulled date comes back as local midnight, so every subsequent
+/// edit shifted it back another day.
+///
+/// Formatting the local Y-M-D keeps the calendar day the user picked, and makes
+/// the round trip stable no matter how many times a row is edited.
+String formatLocalDateOnly(DateTime value) {
+  final local = value.isUtc ? value.toLocal() : value;
+  final month = local.month.toString().padLeft(2, '0');
+  final day = local.day.toString().padLeft(2, '0');
+  return '${local.year}-$month-$day';
+}
+
 class SyncEngine {
   static const _lastPullAtKey = 'sync_last_pull_at';
 
@@ -445,8 +463,8 @@ class SyncEngine {
           'apartment_id': item.apartmentId,
           'guest_name': item.guestName,
           'guest_phone': item.guestPhone,
-          'check_in_date': item.checkInDate.toUtc().toIso8601String(),
-          'check_out_date': item.checkOutDate.toUtc().toIso8601String(),
+          'check_in_date': formatLocalDateOnly(item.checkInDate),
+          'check_out_date': formatLocalDateOnly(item.checkOutDate),
           'status': item.status,
           'total_price_egp': item.totalPriceEgp,
           'amount_paid_egp': item.amountPaidEgp,
@@ -461,9 +479,9 @@ class SyncEngine {
               item.brokerCommissionPaidVodafoneEgp,
           'broker_commission_paid_instapay_egp':
               item.brokerCommissionPaidInstapayEgp,
-          'early_checkout_date': item.earlyCheckoutDate
-              ?.toUtc()
-              .toIso8601String(),
+          'early_checkout_date': item.earlyCheckoutDate == null
+              ? null
+              : formatLocalDateOnly(item.earlyCheckoutDate!),
           'overstay_days': item.overstayDays,
           'overstay_fee_egp': item.overstayFeeEgp,
           'national_id': item.nationalId,
@@ -537,8 +555,8 @@ class SyncEngine {
           'parent_name': item.parentName,
           'parent_phone': item.parentPhone,
           'viewer_user_id': item.viewerUserId,
-          'start_date': item.startDate.toUtc().toIso8601String(),
-          'end_date': item.endDate.toUtc().toIso8601String(),
+          'start_date': formatLocalDateOnly(item.startDate),
+          'end_date': formatLocalDateOnly(item.endDate),
           'monthly_rent_egp': item.monthlyRentEgp,
           'deposit_egp': item.depositEgp,
           'is_active': item.isActive,
@@ -596,7 +614,7 @@ class SyncEngine {
           'id': item.id,
           'contract_id': item.contractId,
           'amount_egp': item.amountEgp,
-          'payment_date': item.paymentDate.toUtc().toIso8601String(),
+          'payment_date': formatLocalDateOnly(item.paymentDate),
           'payment_method': item.paymentMethod,
           'receipt_url': uploadedReceipturl,
           'created_at': item.createdAt.toUtc().toIso8601String(),
@@ -670,7 +688,7 @@ class SyncEngine {
           'id': item.id,
           'apartment_id': item.apartmentId,
           'building_id': item.buildingId,
-          'reading_date': item.readingDate.toUtc().toIso8601String(),
+          'reading_date': formatLocalDateOnly(item.readingDate),
           'previous_reading': item.previousReading,
           'current_reading': item.currentReading,
           'amount_egp': item.amountEgp,
@@ -721,7 +739,7 @@ class SyncEngine {
           'season': item.season,
           'discount_egp': item.discountEgp,
           'discount_reason': item.discountReason,
-          'expense_date': item.expenseDate.toUtc().toIso8601String(),
+          'expense_date': formatLocalDateOnly(item.expenseDate),
           'installment_number': item.installmentNumber,
           'description': item.description,
           'receipt_url': uploadedReceipturl,
@@ -869,7 +887,7 @@ class SyncEngine {
           'transaction_type': item.transactionType,
           'quantity': item.quantity,
           'cost_egp': item.costEgp,
-          'transaction_date': item.transactionDate.toUtc().toIso8601String(),
+          'transaction_date': formatLocalDateOnly(item.transactionDate),
           'notes': item.notes,
           'created_at': item.createdAt.toUtc().toIso8601String(),
         };
@@ -908,7 +926,7 @@ class SyncEngine {
         final payload = {
           'id': item.id,
           'apartment_id': item.apartmentId,
-          'inspection_date': item.inspectionDate.toUtc().toIso8601String(),
+          'inspection_date': formatLocalDateOnly(item.inspectionDate),
           'is_clean': item.isClean,
           'has_damages': item.hasDamages,
           'damages_description': item.damagesDescription,
