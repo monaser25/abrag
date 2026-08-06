@@ -260,8 +260,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         case _CalendarFilter.occupied:
           return _isBookingActiveOnDay(booking, _selectedDay);
         case _CalendarFilter.upcoming:
-          return _isCheckInOnDay(booking, _selectedDay) ||
-              booking.checkInDate.isAfter(_selectedDay);
+          return _isFutureCheckIn(booking, after: _selectedDay);
         case _CalendarFilter.available:
           return false;
         case _CalendarFilter.all:
@@ -317,6 +316,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         context,
         selectedBookings,
         apartments,
+        bookings,
       );
     }
 
@@ -373,6 +373,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     BuildContext context,
     List<SummerBooking> bookings,
     List<Apartment> apartments,
+    List<SummerBooking> allBookings,
   ) {
     final grouped = <DateTime, List<SummerBooking>>{};
     for (final booking in bookings) {
@@ -421,17 +422,38 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                     apartments,
                     booking,
                   );
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      backgroundColor: context.colors.errSoft,
-                      child: Icon(Icons.logout, color: context.colors.err),
-                    ),
-                    title: Text('شقة $apartmentNumber'),
-                    subtitle: Text(booking.guestName),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () =>
-                        context.push('/summer_bookings/details/${booking.id}'),
+                  final nextBooking = _nextBookingForApartment(
+                    allBookings,
+                    booking,
+                    from: day,
+                  );
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: context.colors.errSoft,
+                          child: Icon(Icons.logout, color: context.colors.err),
+                        ),
+                        title: Text('شقة $apartmentNumber'),
+                        subtitle: Text(booking.guestName),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () => context.push(
+                          '/summer_bookings/details/${booking.id}',
+                        ),
+                      ),
+                      _NextBookingBanner(
+                        checkoutDay: day,
+                        nextBooking: nextBooking,
+                        onTap: nextBooking == null
+                            ? null
+                            : () => context.push(
+                                '/summer_bookings/details/${nextBooking.id}',
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   );
                 }),
               ],
@@ -440,6 +462,24 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         );
       }).toList(),
     );
+  }
+
+  /// أقرب حجز جاي على نفس الشقة بعد (أو في) يوم الخروج ده — عشان نعرف
+  /// إن الشقة محجوزة تاني قبل ما نحجزها لعميل جديد.
+  SummerBooking? _nextBookingForApartment(
+    List<SummerBooking> allBookings,
+    SummerBooking booking, {
+    required DateTime from,
+  }) {
+    final candidates = allBookings.where((other) {
+      if (other.id == booking.id) return false;
+      if (other.apartmentId != booking.apartmentId) return false;
+      if (other.status == 'cancelled' || other.status == 'checked_out') {
+        return false;
+      }
+      return !_dateOnly(other.checkInDate).isBefore(_dateOnly(from));
+    }).toList()..sort((a, b) => a.checkInDate.compareTo(b.checkInDate));
+    return candidates.isEmpty ? null : candidates.first;
   }
 
   String _apartmentNumberFor(
@@ -486,9 +526,9 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     final checkouts = bookings
         .where((booking) => _isUpcomingCheckout(booking, from: DateTime.now()))
         .toList();
-    final futureBookings = bookings.where((booking) {
-      return booking.checkInDate.isAfter(day) && booking.status != 'cancelled';
-    }).toList();
+    final futureBookings = bookings
+        .where((booking) => _isFutureCheckIn(booking, after: day))
+        .toList();
     final availableApartments = apartments
         .where((apartment) => !occupiedIds.contains(apartment.id))
         .toList();
@@ -539,8 +579,9 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
           return _isCheckoutOnDay(booking, day) &&
               !_dateOnly(day).isBefore(_dateOnly(DateTime.now()));
         case _CalendarFilter.upcoming:
-          return _isCheckInOnDay(booking, day) ||
-              booking.checkInDate.isAfter(day);
+          // علّم على أيام الدخول الجاية بس، مش كل يوم قبل الحجز.
+          return _isCheckInOnDay(booking, day) &&
+              _dateOnly(day).isAfter(_dateOnly(DateTime.now()));
         case _CalendarFilter.available:
           return false;
         case _CalendarFilter.occupied:
@@ -556,6 +597,16 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
   bool _isCheckInOnDay(SummerBooking booking, DateTime day) {
     return _isSameDate(booking.checkInDate, day) &&
         booking.status != 'cancelled';
+  }
+
+  /// حجز مستقبلي = يدخل في يوم **بعد** اليوم المحدد.
+  /// المقارنة باليوم مش بالساعة، عشان حجز داخل النهاردة الساعة ٢ الضهر
+  /// يتحسب "مؤجرة اليوم" مش "حجز مستقبلي".
+  bool _isFutureCheckIn(SummerBooking booking, {required DateTime after}) {
+    if (booking.status == 'cancelled' || booking.status == 'checked_out') {
+      return false;
+    }
+    return _dateOnly(booking.checkInDate).isAfter(_dateOnly(after));
   }
 
   DateTime _dateOnly(DateTime date) =>
@@ -648,6 +699,117 @@ class _SelectedDaySummary extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// بيوضّح تحت كل خروج قادم: الشقة دي محجوزة بعد كده ولا لأ، والحجز الجاي
+/// بيدخل إمتى وقاعد كام ليلة — عشان محدش يحجزها لعميل تاني بالغلط.
+class _NextBookingBanner extends StatelessWidget {
+  final DateTime checkoutDay;
+  final SummerBooking? nextBooking;
+  final VoidCallback? onTap;
+
+  const _NextBookingBanner({
+    required this.checkoutDay,
+    required this.nextBooking,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final booking = nextBooking;
+
+    if (booking == null) {
+      return _banner(
+        context,
+        icon: Icons.event_available_outlined,
+        tint: colors.ok,
+        background: colors.okSoft,
+        text: 'مفيش حجز بعد الخروج — الشقة متاحة',
+      );
+    }
+
+    final checkIn = DateTime(
+      booking.checkInDate.year,
+      booking.checkInDate.month,
+      booking.checkInDate.day,
+    );
+    final checkOutSource = booking.earlyCheckoutDate ?? booking.checkOutDate;
+    final checkOut = DateTime(
+      checkOutSource.year,
+      checkOutSource.month,
+      checkOutSource.day,
+    );
+    final nights = checkOut.difference(checkIn).inDays;
+    final gapDays = checkIn.difference(checkoutDay).inDays;
+    final formatter = DateFormat('EEEE d MMMM', 'ar');
+
+    final gapText = gapDays <= 0
+        ? 'نفس يوم الخروج'
+        : gapDays == 1
+        ? 'تاني يوم'
+        : gapDays == 2
+        ? 'بعد يومين'
+        : 'بعد $gapDays أيام';
+    final nightsText = nights <= 0
+        ? ''
+        : nights == 1
+        ? ' · ليلة واحدة'
+        : nights == 2
+        ? ' · ليلتين'
+        : ' · $nights ليالي';
+
+    return _banner(
+      context,
+      icon: Icons.event_repeat,
+      tint: colors.warn,
+      background: colors.warnSoft,
+      text:
+          'محجوزة بعدها: ${booking.guestName} · دخول ${formatter.format(checkIn)} ($gapText)$nightsText',
+      onTap: onTap,
+    );
+  }
+
+  Widget _banner(
+    BuildContext context, {
+    required IconData icon,
+    required Color tint,
+    required Color background,
+    required String text,
+    VoidCallback? onTap,
+  }) {
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tint.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: tint),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.colors.ink),
+            ),
+          ),
+          if (onTap != null)
+            Icon(Icons.arrow_forward_ios, size: 12, color: tint),
+        ],
+      ),
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: content,
     );
   }
 }
