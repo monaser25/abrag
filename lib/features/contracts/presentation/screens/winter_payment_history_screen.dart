@@ -39,10 +39,14 @@ class _WinterPaymentHistoryScreenState
       _paymentMethod = 'cash';
     }
 
+    // يمنع تسجيل نفس الدفعة مرتين لو المستخدم داس "تسجيل" بسرعة مرتين
+    // (نفس حماية شاشة تسديد الحجز الصيفي).
+    var isSubmitting = false;
+    final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
@@ -96,46 +100,78 @@ class _WinterPaymentHistoryScreenState
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () {
-                      final amount = double.tryParse(
-                        _amountController.text.replaceAll(',', '').trim(),
-                      );
-                      if (amount == null || amount <= 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('الرجاء إدخال مبلغ صحيح'),
-                          ),
-                        );
-                        return;
-                      }
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final amount = double.tryParse(
+                              _amountController.text.replaceAll(',', '').trim(),
+                            );
+                            if (amount == null || amount <= 0) {
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('الرجاء إدخال مبلغ صحيح'),
+                                ),
+                              );
+                              return;
+                            }
 
-                      if (payment == null) {
-                        ref
-                            .read(contractPaymentControllerProvider.notifier)
-                            .addPayment(
-                              contractId: widget.contractId,
-                              amount: amount,
-                              date: DateTime.now(),
-                              paymentMethod: _paymentMethod,
+                            setModalState(() => isSubmitting = true);
+                            final controller = ref.read(
+                              contractPaymentControllerProvider.notifier,
                             );
-                      } else {
-                        ref
-                            .read(contractPaymentControllerProvider.notifier)
-                            .updatePayment(
-                              id: payment.id,
-                              amount: amount,
-                              paymentMethod: _paymentMethod,
+                            if (payment == null) {
+                              await controller.addPayment(
+                                contractId: widget.contractId,
+                                amount: amount,
+                                date: DateTime.now(),
+                                paymentMethod: _paymentMethod,
+                              );
+                            } else {
+                              await controller.updatePayment(
+                                id: payment.id,
+                                amount: amount,
+                                paymentMethod: _paymentMethod,
+                              );
+                            }
+                            if (!sheetContext.mounted) return;
+                            final result = ref.read(
+                              contractPaymentControllerProvider,
                             );
-                      }
-                      _amountController.clear();
-                      Navigator.of(context).pop();
-                    },
+                            if (result.hasError) {
+                              setModalState(() => isSubmitting = false);
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'تعذر حفظ الدفعة: ${result.error.toString().replaceFirst('Exception: ', '')}',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            _amountController.clear();
+                            Navigator.of(sheetContext).pop();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  payment == null
+                                      ? 'تم تسجيل الدفعة بنجاح'
+                                      : 'تم حفظ التعديل بنجاح',
+                                ),
+                              ),
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                     ),
-                    child: Text(
-                      payment == null ? 'تسجيل الدفعة' : 'حفظ التعديل',
-                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            payment == null ? 'تسجيل الدفعة' : 'حفظ التعديل',
+                          ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -276,10 +312,13 @@ class _WinterPaymentHistoryScreenState
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                  Text(
-                                    'إيجار شهر ${installment.dueDate.month}',
-                                    style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
+                                    Text(
+                                      'إيجار شهر ${installment.dueDate.month}',
+                                      style: theme.textTheme.labelMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
                                     Text(
                                       installment.isLate
                                           ? 'متأخر ${installment.daysLate} يوم'
@@ -342,8 +381,7 @@ class _WinterPaymentHistoryScreenState
 
                 final colors = context.colors;
                 return ListView(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 90),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 90),
                   children: [
                     PaymentTimeline(
                       entries: [
@@ -352,7 +390,10 @@ class _WinterPaymentHistoryScreenState
                             final lateInfo = contract == null
                                 ? null
                                 : lateInfoForWinterPayment(
-                                    contract, payments, payment);
+                                    contract,
+                                    payments,
+                                    payment,
+                                  );
                             final dateText = payment.paymentDate
                                 .toLocal()
                                 .toString()
@@ -377,8 +418,8 @@ class _WinterPaymentHistoryScreenState
                                   ),
                                   AppIconButton(
                                     icon: Icons.edit_outlined,
-                                    onPressed: () => _showAddPaymentDialog(
-                                        payment: payment),
+                                    onPressed: () =>
+                                        _showAddPaymentDialog(payment: payment),
                                   ),
                                 ],
                               ),
@@ -392,8 +433,9 @@ class _WinterPaymentHistoryScreenState
                         child: Text(
                           '${sortedPayments.length} دفعة مسجلة',
                           textAlign: TextAlign.center,
-                          style: AppTextStyles.caption
-                              .copyWith(color: colors.ink3),
+                          style: AppTextStyles.caption.copyWith(
+                            color: colors.ink3,
+                          ),
                         ),
                       ),
                   ],
@@ -404,8 +446,8 @@ class _WinterPaymentHistoryScreenState
                 title: 'تعذّر تحميل البيانات',
                 message: '$err',
                 retryLabel: 'إعادة المحاولة',
-                onRetry: () => ref
-                    .invalidate(contractPaymentsProvider(widget.contractId)),
+                onRetry: () =>
+                    ref.invalidate(contractPaymentsProvider(widget.contractId)),
               ),
             ),
           ),
@@ -445,8 +487,10 @@ class _InfoChip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label,
-              style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
+          ),
           Text(
             value,
             style: AppTextStyles.tabular(

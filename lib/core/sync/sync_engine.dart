@@ -310,6 +310,10 @@ class SyncEngine {
     }
   }
 
+  // ملحوظة مهمة: مفيش أي payload هنا بيبعت updated_at — السيرفر هو اللي بيملكه
+  // (DEFAULT now() عند الإدراج + trigger trg_set_updated_at عند التعديل، ملف
+  // supabase/16). لو بعتنا قيمة الجهاز، صف اتعمل وهو أوفلاين هيتسجل بتوقيت قديم
+  // والأجهزة التانية مش هتشوفه في الـ incremental pull (اللي بيفلتر على updated_at).
   Future<void> _pushLocalChanges() async {
     final pendingUserProfiles = await (db.select(
       db.userProfiles,
@@ -331,7 +335,6 @@ class SyncEngine {
           'secondary_phone': item.secondaryPhone,
           'role': item.role,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -404,7 +407,6 @@ class SyncEngine {
           'landline_owner_name': item.landlineOwnerName,
           'landline_notes': item.landlineNotes,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -488,7 +490,6 @@ class SyncEngine {
           'id_front_image': uploadedIdfrontimage,
           'id_back_image': uploadedIdbackimage,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         await supabase.from('summer_bookings').upsert(payload);
@@ -570,7 +571,6 @@ class SyncEngine {
           'contract_front_image': uploadedContractfrontimage,
           'contract_back_image': uploadedContractbackimage,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -850,7 +850,6 @@ class SyncEngine {
           'stock_quantity': item.stockQuantity,
           'unit': item.unit,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -935,7 +934,6 @@ class SyncEngine {
           'inspector_name': item.inspectorName,
           'notes': item.notes,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -979,7 +977,6 @@ class SyncEngine {
           'cost_egp': item.costEgp,
           'resolved_at': item.resolvedAt?.toUtc().toIso8601String(),
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {

@@ -28,6 +28,7 @@ final financialTransfersProvider = StreamProvider<List<FinancialTransfer>>((
   final db = ref.watch(databaseProvider);
   final selectedSeason = ref.watch(selectedFinancialSeasonProvider);
   final query = db.select(db.financialTransfers)
+    ..where((t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]))
     ..orderBy([(t) => OrderingTerm.desc(t.transferDate)]);
   if (selectedSeason != 'all') {
     query.where((t) => t.season.equals(selectedSeason));
@@ -134,6 +135,7 @@ Future<Map<String, double>> buildTreasuryBalances(
 
   final expenses = await db.select(db.expenses).get();
   for (final expense in expenses) {
+    if (expense.syncStatus == SyncStatus.pendingDelete) continue;
     final normalizedSeason = normalizeStoredSeason(
       expense.season,
       expense.expenseDate,
@@ -144,6 +146,7 @@ Future<Map<String, double>> buildTreasuryBalances(
 
   final transfers = await db.select(db.financialTransfers).get();
   for (final transfer in transfers) {
+    if (transfer.syncStatus == SyncStatus.pendingDelete) continue;
     if (transfer.id == excludingTransferId) continue;
     final normalizedSeason = normalizeStoredSeason(
       transfer.season,
@@ -340,9 +343,16 @@ class FinancialTransfersController extends StateNotifier<AsyncValue<void>> {
         _db.financialTransfers,
       )..where((t) => t.id.equals(id))).getSingle();
 
-      await (_db.delete(
+      // Soft-delete (كان delete نهائي محلي فقط): علشان المزامنة تمسح الصف من
+      // السيرفر كمان، وإلا كان بيرجع تاني بعد إعادة التنزيل وبيفضل محسوب
+      // على باقي الأجهزة.
+      await (_db.update(
         _db.financialTransfers,
-      )..where((t) => t.id.equals(id))).go();
+      )..where((t) => t.id.equals(id))).write(
+        const FinancialTransfersCompanion(
+          syncStatus: Value(SyncStatus.pendingDelete),
+        ),
+      );
 
       await _auditLog.log(
         action: old.transferType == 'cash_deposit'
