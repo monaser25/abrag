@@ -129,6 +129,7 @@ Future<Map<String, double>> buildTreasuryBalances(
 
   final payments = await db.select(db.winterPayments).get();
   for (final payment in payments) {
+    if (payment.syncStatus == SyncStatus.pendingDelete) continue;
     if (!seasonMatchesDate(payment.paymentDate, season)) continue;
     add(payment.paymentMethod, payment.amountEgp);
   }

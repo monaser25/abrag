@@ -403,7 +403,11 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
   )..where((t) => t.id.isNotValue(kSettingsBuildingId))).get();
   final apartments = await db.select(db.apartments).get();
   final winterContracts = await db.select(db.winterContracts).get();
-  final winterPayments = await db.select(db.winterPayments).get();
+  final winterPayments =
+      await (db.select(db.winterPayments)..where(
+            (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+          ))
+          .get();
   final technicians = await db.select(db.technicians).get();
   final maintenanceRequests = await db.select(db.maintenanceRequests).get();
   final users = await db.select(db.userProfiles).get();
