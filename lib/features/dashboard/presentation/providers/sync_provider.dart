@@ -72,10 +72,14 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
               }
             }
 
+            // الـ pull العادي بيجيب اللي اتغيّر بس، والصف المحذوف مش هيرجع
+            // فيه — فأي حدث DELETE بنجبر معاه كشف الحذف عشان الجهاز ده يمسح
+            // الصف بدل ما يفضل شايفه (وممكن يرجّعه للسيرفر لو اتعدّل).
+            final wasDelete = payload.eventType == PostgresChangeEvent.delete;
             _realtimeDebounceTimer?.cancel();
             _realtimeDebounceTimer = Timer(const Duration(seconds: 2), () {
               if (mounted) {
-                syncData(silent: true);
+                syncData(silent: true, reconcileDeletions: wasDelete);
               }
             });
           },
@@ -91,13 +95,21 @@ class SyncController extends StateNotifier<AsyncValue<void>> {
     super.dispose();
   }
 
-  Future<void> syncData({bool silent = false}) async {
+  /// [reconcileDeletions] بيجبر كشف الصفوف المحذوفة فورًا بدل ما يستنى ميعاده
+  /// (كل ١٥ دقيقة) — بنستخدمه لما ييجي حدث حذف لحظي أو لما المستخدم يزامن يدوي.
+  Future<void> syncData({
+    bool silent = false,
+    bool reconcileDeletions = false,
+  }) async {
     if (_isSyncing) return;
     _isSyncing = true;
     if (!silent) state = const AsyncLoading();
     try {
       final previousSync = _ref.read(lastSuccessfulSyncProvider);
       await _syncEngine.syncAll();
+      if (reconcileDeletions || !silent) {
+        await _syncEngine.reconcileRemoteDeletions(force: true);
+      }
       await _notifyNewRemoteActivity(previousSync ?? _startedAt);
       _ref.read(lastSuccessfulSyncProvider.notifier).state = DateTime.now();
       if (!silent) state = const AsyncData(null);

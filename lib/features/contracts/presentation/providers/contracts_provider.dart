@@ -13,10 +13,13 @@ final winterContractsProvider = StreamProvider<List<WinterContract>>((ref) {
   final db = ref.watch(databaseProvider);
   final activeSeason = ref.watch(activeSeasonKeyProvider);
   return db.select(db.winterContracts).watch().map((contracts) {
-    final filtered = contracts
-        .where((contract) => seasonMatchesDate(contract.startDate, activeSeason))
-        .toList()
-      ..sort((a, b) => b.startDate.compareTo(a.startDate));
+    final filtered =
+        contracts
+            .where(
+              (contract) => seasonMatchesDate(contract.startDate, activeSeason),
+            )
+            .toList()
+          ..sort((a, b) => b.startDate.compareTo(a.startDate));
     return filtered;
   });
 });

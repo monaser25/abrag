@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import 'package:drift/drift.dart' as drift;
-import '../../../../core/database/database.dart';
-import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/widgets.dart';
@@ -56,15 +53,15 @@ class CleanerWebScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'بحاجة تنظيف',
-                          style: AppTextStyles.caption
-                              .copyWith(color: colors.ink3),
+                          style: AppTextStyles.caption.copyWith(
+                            color: colors.ink3,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${dirtyApartments.length}',
                           style: AppTextStyles.tabular(
-                            AppTextStyles.display
-                                .copyWith(color: colors.warn),
+                            AppTextStyles.display.copyWith(color: colors.warn),
                           ),
                         ),
                       ],
@@ -100,15 +97,15 @@ class CleanerWebScreen extends ConsumerWidget {
                               Text(
                                 'شقة ${apt.apartmentNumber}',
                                 style: AppTextStyles.tabular(
-                                  AppTextStyles.h3
-                                      .copyWith(color: colors.ink),
+                                  AppTextStyles.h3.copyWith(color: colors.ink),
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'بحاجة تنظيف',
-                                style: AppTextStyles.caption
-                                    .copyWith(color: colors.ink3),
+                                style: AppTextStyles.caption.copyWith(
+                                  color: colors.ink3,
+                                ),
                               ),
                             ],
                           ),
@@ -120,15 +117,9 @@ class CleanerWebScreen extends ConsumerWidget {
                         icon: Icons.check,
                         variant: AppButtonVariant.royal,
                         expand: true,
-                        onPressed: () {
-                          // Mark as clean
-                          ref
-                              .read(databaseProvider)
-                              .update(ref.read(databaseProvider).apartments)
-                            ..where((t) => t.id.equals(apt.id))
-                            ..write(const ApartmentsCompanion(
-                                cleaningStatus: drift.Value('clean')));
-                        },
+                        onPressed: () => ref
+                            .read(apartmentsControllerProvider.notifier)
+                            .updateCleaningStatus(apt.id, 'clean'),
                       ),
                     ],
                   ),

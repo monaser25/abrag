@@ -58,14 +58,16 @@ class _CheckoutSettingsScreenState
                             children: [
                               Text(
                                 'ميعاد خروج حجوزات الصيف',
-                                style: AppTextStyles.title
-                                    .copyWith(color: colors.ink),
+                                style: AppTextStyles.title.copyWith(
+                                  color: colors.ink,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'هيتطبّق تلقائياً عند حساب تاريخ الخروج في الحجز الجديد.',
-                                style: AppTextStyles.bodyS
-                                    .copyWith(color: colors.ink2),
+                                style: AppTextStyles.bodyS.copyWith(
+                                  color: colors.ink2,
+                                ),
                               ),
                             ],
                           ),

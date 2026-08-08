@@ -183,6 +183,49 @@ class _WinterPaymentHistoryScreenState
     );
   }
 
+  /// حذف دفعة اتسجلت بالغلط (تسديد مكرر مثلاً).
+  void _confirmDeletePayment(WinterPayment payment) {
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('حذف الدفعة'),
+        content: Text(
+          'سيتم حذف دفعة بقيمة ${payment.amountEgp.toCurrencyFormat()} ج.م '
+          'من سجل مدفوعات العقد. هل أنت متأكد؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await ref
+                  .read(contractPaymentControllerProvider.notifier)
+                  .deletePayment(payment.id);
+              final result = ref.read(contractPaymentControllerProvider);
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result.hasError
+                        ? 'تعذر حذف الدفعة: ${result.error.toString().replaceFirst('Exception: ', '')}'
+                        : 'تم حذف الدفعة',
+                  ),
+                ),
+              );
+            },
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final paymentsAsync = ref.watch(
@@ -420,6 +463,12 @@ class _WinterPaymentHistoryScreenState
                                     icon: Icons.edit_outlined,
                                     onPressed: () =>
                                         _showAddPaymentDialog(payment: payment),
+                                  ),
+                                  AppIconButton(
+                                    icon: Icons.delete_outline,
+                                    tooltip: 'حذف الدفعة',
+                                    onPressed: () =>
+                                        _confirmDeletePayment(payment),
                                   ),
                                 ],
                               ),

@@ -8,7 +8,9 @@ import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final apartmentsProvider = StreamProvider<List<Apartment>>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.select(db.apartments).watch();
+  return (db.select(db.apartments)
+        ..where((t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index])))
+      .watch();
 });
 
 final apartmentsControllerProvider =
@@ -171,7 +173,11 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
           'مينفعش حذف الشقة لأن عليها حجوزات أو عقود. ممكن تعديل بياناتها بدل الحذف.',
         );
       }
-      await (_db.delete(_db.apartments)..where((t) => t.id.equals(id))).go();
+      // soft-delete عشان المزامنة تمسحها من السيرفر كمان؛ الحذف المحلي لوحده
+      // كان بيخلي الشقة ترجع تاني مع أول مزامنة كاملة.
+      await (_db.update(_db.apartments)..where((t) => t.id.equals(id))).write(
+        const ApartmentsCompanion(syncStatus: Value(SyncStatus.pendingDelete)),
+      );
       await _auditLog.log(
         action: 'delete',
         entityType: 'apartment',
@@ -290,6 +296,36 @@ class ApartmentsController extends StateNotifier<AsyncValue<void>> {
           );
         }
       });
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  /// إظهار/إخفاء الشقة للوسطاء. كان الـ switch بيكتب في الداتابيز مباشرة من
+  /// الشاشة من غير syncStatus — يعني التغيير عمره ما كان بيوصل لباقي الأجهزة
+  /// وكان بيترجع تاني مع أول مزامنة، ومن غير أي أثر في سجل النظام.
+  Future<void> setBrokerVisibility(String id, bool isVisible) async {
+    state = const AsyncLoading();
+    try {
+      await (_db.update(_db.apartments)..where((t) => t.id.equals(id))).write(
+        ApartmentsCompanion(
+          brokerVisibility: Value(isVisible),
+          syncStatus: const Value(SyncStatus.pendingUpdate),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      await _auditLog.log(
+        action: 'update_broker_visibility',
+        entityType: 'apartment',
+        entityId: id,
+        title: 'تغيير ظهور الشقة للوسطاء',
+        description: isVisible
+            ? 'تم إظهار الشقة للوسطاء'
+            : 'تم إخفاء الشقة عن الوسطاء',
+        route: '/apartments/profile/$id',
+        newValues: {'brokerVisibility': isVisible},
+      );
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

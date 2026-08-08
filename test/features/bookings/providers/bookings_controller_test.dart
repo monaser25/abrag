@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show AsyncError;
 import 'package:abrag/core/database/database.dart';
 import 'package:abrag/core/database/tables.dart';
 import 'package:abrag/features/bookings/presentation/providers/bookings_controller.dart';
@@ -448,4 +449,100 @@ void main() {
     expect(payments, hasLength(1));
     expect(payments.single.syncStatus, SyncStatus.pendingDelete);
   });
+
+  test('deleting a payment subtracts it from the booking paid total', () async {
+    final apartmentId = await seedApartment();
+
+    await controller.addBooking(
+      apartmentId: apartmentId,
+      guestName: 'أحمد',
+      guestPhone: '01000000000',
+      checkInDate: DateTime(2026, 7, 1, 12),
+      checkOutDate: DateTime(2026, 7, 5, 8),
+      totalPriceEgp: 5000,
+      amountPaidEgp: 1000,
+      paymentMethod: 'cash',
+      brokerCommissionType: 'none',
+      brokerCommissionFixedEgp: 0,
+      brokerCommissionPercentage: 10,
+    );
+    final booking = (await db.select(db.summerBookings).get()).single;
+
+    await controller.addBookingPayment(
+      bookingId: booking.id,
+      amount: 1500,
+      paymentMethod: 'cash',
+    );
+    expect(
+      (await db.select(db.summerBookings).get()).single.amountPaidEgp,
+      2500,
+    );
+
+    final payment = (await db.select(db.bookingPayments).get()).single;
+    await controller.deleteBookingPayment(paymentId: payment.id);
+
+    expect(
+      (await db.select(db.summerBookings).get()).single.amountPaidEgp,
+      1000,
+    );
+    expect(
+      (await db.select(db.bookingPayments).get()).single.syncStatus,
+      SyncStatus.pendingDelete,
+    );
+  });
+
+  test(
+    'refuses an edit that would drop paid below recorded payments',
+    () async {
+      final apartmentId = await seedApartment();
+
+      await controller.addBooking(
+        apartmentId: apartmentId,
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 7, 1, 12),
+        checkOutDate: DateTime(2026, 7, 5, 8),
+        totalPriceEgp: 5000,
+        amountPaidEgp: 0,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      final booking = (await db.select(db.summerBookings).get()).single;
+
+      // تسديد اتسجل (يمكن من جهاز تاني) بـ 2400.
+      await controller.addBookingPayment(
+        bookingId: booking.id,
+        amount: 2400,
+        paymentMethod: 'cash',
+      );
+
+      // تعديل بينزّل المدفوع لـ 1800 — ده كان بيسيب صف دفعة بـ 2400 على حجز
+      // مدفوعه 1800 (وده اللي حصل فعلاً في الداتا الحقيقية).
+      await controller.updateBooking(
+        id: booking.id,
+        apartmentId: apartmentId,
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 7, 1, 12),
+        checkOutDate: DateTime(2026, 7, 5, 8),
+        totalPriceEgp: 1800,
+        amountPaidEgp: 1800,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+
+      expect(controller.state, isA<AsyncError<void>>());
+      final unchanged = (await db.select(db.summerBookings).get()).single;
+      expect(
+        unchanged.amountPaidEgp,
+        2400,
+        reason: 'التعديل اترفض فالمدفوع زي ما هو',
+      );
+      expect(unchanged.totalPriceEgp, 5000);
+    },
+  );
 }

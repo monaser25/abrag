@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' as drift;
 import '../../../apartments/presentation/providers/apartments_controller.dart';
-import '../../../../core/database/database.dart';
-import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/widgets.dart';
@@ -50,13 +47,16 @@ class BrokerVisibilityControlScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'شقة ${apt.apartmentNumber}',
-                            style: AppTextStyles.title.copyWith(color: colors.ink),
+                            style: AppTextStyles.title.copyWith(
+                              color: colors.ink,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'الدور: ${apt.floorNumber ?? "-"}',
-                            style: AppTextStyles.caption
-                                .copyWith(color: colors.ink3),
+                            style: AppTextStyles.caption.copyWith(
+                              color: colors.ink3,
+                            ),
                           ),
                         ],
                       ),
@@ -70,13 +70,9 @@ class BrokerVisibilityControlScreen extends ConsumerWidget {
                     ),
                     Switch(
                       value: apt.brokerVisibility,
-                      onChanged: (val) {
-                        // Directly updating DB for toggle
-                        // In real app, create a controller method
-                        ref.read(databaseProvider).update(ref.read(databaseProvider).apartments)
-                          ..where((t) => t.id.equals(apt.id))
-                          ..write(ApartmentsCompanion(brokerVisibility: drift.Value(val)));
-                      },
+                      onChanged: (val) => ref
+                          .read(apartmentsControllerProvider.notifier)
+                          .setBrokerVisibility(apt.id, val),
                     ),
                   ],
                 ),

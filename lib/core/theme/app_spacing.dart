@@ -15,8 +15,12 @@ class AppSpacing {
   static const double s9 = 56;
 
   /// Screen body padding (`.body` in the prototype: 0 16px 28px).
-  static const EdgeInsetsDirectional body =
-      EdgeInsetsDirectional.fromSTEB(s4, 0, s4, 28);
+  static const EdgeInsetsDirectional body = EdgeInsetsDirectional.fromSTEB(
+    s4,
+    0,
+    s4,
+    28,
+  );
 
   /// App bar horizontal padding (`.appbar`: 18px).
   static const double appBarH = 18;

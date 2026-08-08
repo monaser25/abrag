@@ -143,13 +143,13 @@ class _OverstayExtensionScreenState
                         children: [
                           Text(
                             'النزيل الحالي',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ink2),
+                            style: AppTextStyles.label.copyWith(
+                              color: colors.ink2,
+                            ),
                           ),
                           Text(
                             booking.guestName,
-                            style:
-                                AppTextStyles.h2.copyWith(color: colors.ink),
+                            style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
                           const SizedBox(height: 12),
                           _InfoLine(
@@ -177,93 +177,93 @@ class _OverstayExtensionScreenState
                   vertical: 8,
                 ),
                 child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppIconButton(
-                        onPressed: () => setState(() {
-                          _extraDays++;
-                          _customCheckoutDate = null;
-                        }),
-                        icon: Icons.add,
-                      ),
-                      Column(
-                        children: [
-                          Text(
-                            '$_extraDays',
-                            style: AppTextStyles.tabular(
-                              AppTextStyles.h1.copyWith(color: colors.ink),
-                            ),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppIconButton(
+                      onPressed: () => setState(() {
+                        _extraDays++;
+                        _customCheckoutDate = null;
+                      }),
+                      icon: Icons.add,
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          '$_extraDays',
+                          style: AppTextStyles.tabular(
+                            AppTextStyles.h1.copyWith(color: colors.ink),
                           ),
-                          Text(
-                            'أيام',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ink2),
+                        ),
+                        Text(
+                          'أيام',
+                          style: AppTextStyles.label.copyWith(
+                            color: colors.ink2,
                           ),
-                        ],
-                      ),
-                      AppIconButton(
-                        onPressed: _extraDays > 1
-                            ? () => setState(() {
-                                _extraDays--;
-                                _customCheckoutDate = null;
-                              })
-                            : null,
-                        icon: Icons.remove,
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                    AppIconButton(
+                      onPressed: _extraDays > 1
+                          ? () => setState(() {
+                              _extraDays--;
+                              _customCheckoutDate = null;
+                            })
+                          : null,
+                      icon: Icons.remove,
+                    ),
+                  ],
                 ),
               ),
               const SectionTitle(title: 'السعر والحساب'),
               AppCard(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AppSwitchRow(
-                        title: 'تخصيص سعر الليلة',
-                        subtitle:
-                            'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
-                        icon: Icons.tune,
-                        value: _useCustomPrice,
-                        onChanged: (val) =>
-                            setState(() => _useCustomPrice = val),
-                      ),
-                      if (_useCustomPrice) ...[
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'سعر الليلة (ج.م)',
-                          prefixIcon: Icons.payments_outlined,
-                          controller: _customPriceController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      _InfoLine(
-                        icon: Icons.calculate,
-                        label: 'حساب التمديد',
-                        value:
-                            '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
-                      ),
-                      Divider(color: colors.border),
-                      _InfoLine(
-                        icon: Icons.payments,
-                        label: 'تمديد $_extraDays يوم',
-                        value:
-                            '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
-                        valueColor: colors.accent,
-                        bold: true,
-                      ),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSwitchRow(
+                      title: 'تخصيص سعر الليلة',
+                      subtitle:
+                          'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
+                      icon: Icons.tune,
+                      value: _useCustomPrice,
+                      onChanged: (val) => setState(() => _useCustomPrice = val),
+                    ),
+                    if (_useCustomPrice) ...[
                       const SizedBox(height: 12),
-                      AppButton(
-                        label: 'تغيير تاريخ الخروج الجديد',
-                        icon: Icons.edit_calendar,
-                        variant: AppButtonVariant.outline,
-                        onPressed: () =>
-                            _selectDateTime(context, newCheckoutDate),
+                      AppTextField(
+                        label: 'سعر الليلة (ج.م)',
+                        prefixIcon: Icons.payments_outlined,
+                        controller: _customPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    _InfoLine(
+                      icon: Icons.calculate,
+                      label: 'حساب التمديد',
+                      value:
+                          '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
+                    ),
+                    Divider(color: colors.border),
+                    _InfoLine(
+                      icon: Icons.payments,
+                      label: 'تمديد $_extraDays يوم',
+                      value:
+                          '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
+                      valueColor: colors.accent,
+                      bold: true,
+                    ),
+                    const SizedBox(height: 12),
+                    AppButton(
+                      label: 'تغيير تاريخ الخروج الجديد',
+                      icon: Icons.edit_calendar,
+                      variant: AppButtonVariant.outline,
+                      onPressed: () =>
+                          _selectDateTime(context, newCheckoutDate),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -358,8 +358,9 @@ class _InfoLine extends StatelessWidget {
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: (bold ? AppTextStyles.title : AppTextStyles.label)
-                .copyWith(color: valueColor ?? colors.ink),
+            style: (bold ? AppTextStyles.title : AppTextStyles.label).copyWith(
+              color: valueColor ?? colors.ink,
+            ),
           ),
         ),
       ],

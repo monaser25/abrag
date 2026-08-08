@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
-import '../../../../core/database/tables.dart';
+import '../../../../core/utils/occupancy_utils.dart';
 import '../../../bookings/presentation/providers/bookings_provider.dart';
 import '../../../buildings/presentation/providers/buildings_controller.dart';
 import '../../../contracts/presentation/providers/contracts_provider.dart';
@@ -14,6 +14,10 @@ class ApartmentStatus {
   final bool needsCleaning;
   final bool isCheckingOutToday;
 
+  /// ميعاد الخروج عدّى ولسه الخروج مش متسجل في التطبيق — الشقة متاحة للتأجير
+  /// بس محتاجة تسجيل خروج.
+  final bool hasOverdueCheckout;
+
   const ApartmentStatus({
     required this.apartment,
     required this.buildingId,
@@ -21,6 +25,7 @@ class ApartmentStatus {
     required this.isOccupied,
     required this.needsCleaning,
     required this.isCheckingOutToday,
+    this.hasOverdueCheckout = false,
   });
 }
 
@@ -69,7 +74,6 @@ final apartmentsWithStatusProvider =
       final contracts = contractsAsync.value ?? [];
 
       final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
 
       final buildingMap = {for (var b in buildings) b.id: b.name};
 
@@ -90,34 +94,20 @@ final apartmentsWithStatusProvider =
 
         bool isOccupied = false;
         bool isCheckingOutToday = false;
+        bool hasOverdueCheckout = false;
 
-        // Check SummerBookings
+        // الحجوزات الصيفية: الشقة بتفضى بمجرد ما ميعاد الخروج يعدّي، حتى لو
+        // الخروج لسه مش متسجل — وبنعلّم على التسجيل المتأخر.
         for (var b in aptBookings) {
-          final end = b.earlyCheckoutDate ?? b.checkOutDate;
-          final checkInDay = _dateOnly(b.checkInDate);
-          if (!checkInDay.isAfter(today) &&
-              b.status != 'cancelled' &&
-              b.status != 'checked_out' &&
-              b.status != 'deleted' &&
-              b.syncStatus != SyncStatus.pendingDelete) {
-            isOccupied = true;
-            if (!_dateOnly(end).isAfter(today)) {
-              isCheckingOutToday = true;
-            }
-          }
+          if (summerBookingHoldsApartment(b, now)) isOccupied = true;
+          if (summerBookingChecksOutOn(b, now)) isCheckingOutToday = true;
+          if (summerBookingCheckoutIsOverdue(b, now)) hasOverdueCheckout = true;
         }
 
         // Check WinterContracts
         if (!isOccupied) {
           for (var c in aptContracts) {
-            final startDay = DateTime(
-              c.startDate.year,
-              c.startDate.month,
-              c.startDate.day,
-            );
-            if (c.isActive &&
-                !startDay.isAfter(today) &&
-                c.endDate.isAfter(now)) {
+            if (winterContractHoldsApartment(c, now)) {
               isOccupied = true;
               break;
             }
@@ -133,12 +123,9 @@ final apartmentsWithStatusProvider =
           isOccupied: isOccupied,
           needsCleaning: needsCleaning,
           isCheckingOutToday: isCheckingOutToday,
+          hasOverdueCheckout: hasOverdueCheckout,
         );
       }).toList();
 
       return AsyncValue.data(statuses);
     });
-
-DateTime _dateOnly(DateTime value) {
-  return DateTime(value.year, value.month, value.day);
-}

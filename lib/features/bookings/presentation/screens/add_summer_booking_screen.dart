@@ -855,9 +855,24 @@ class _AddSummerBookingScreenState
             context.go('/summer_bookings/list');
           }
         },
-        error: (error, _) => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString()))),
+        // رسائل أخطاء الفلوس بتبقى طويلة وبتشرح المطلوب — تدي وقت للقراية
+        // وتتقفل يدوي بدل ما تختفي في ثانيتين.
+        error: (error, _) => ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                error.toString().replaceFirst('Exception: ', ''),
+                maxLines: 6,
+              ),
+              duration: const Duration(seconds: 10),
+              action: SnackBarAction(
+                label: 'تمام',
+                onPressed: () =>
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+              ),
+            ),
+          ),
       );
     });
 

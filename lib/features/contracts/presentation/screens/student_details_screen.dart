@@ -66,80 +66,81 @@ class StudentDetailsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(18),
                     color: context.colors.winterSoft,
                     child: Row(
-                    children: [
-                      AppAvatar(
-                        name: contract.studentName,
-                        size: 56,
-                        tint: context.colors.winter,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              contract.studentName,
-                              style: theme.textTheme.titleLarge,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                            ),
-                            if (academicInfo.$1.isNotEmpty ||
-                                academicInfo.$2.isNotEmpty)
+                      children: [
+                        AppAvatar(
+                          name: contract.studentName,
+                          size: 56,
+                          tint: context.colors.winter,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                [
-                                  if (academicInfo.$1.isNotEmpty)
-                                    academicInfo.$1,
-                                  if (academicInfo.$2.isNotEmpty)
-                                    academicInfo.$2,
-                                ].join(' - '),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
+                                contract.studentName,
+                                style: theme.textTheme.titleLarge,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 2,
                               ),
-                            if (contract.parentPhone != null &&
-                                contract.parentPhone!.isNotEmpty)
-                              InkWell(
-                                onTap: () async {
-                                  final Uri launchUri = Uri(
-                                    scheme: 'tel',
-                                    path: contract.parentPhone!,
-                                  );
-                                  if (await canLaunchUrl(launchUri)) {
-                                    await launchUrl(launchUri);
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.call,
-                                        size: 16,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        contract.parentPhone!,
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: theme.colorScheme.primary,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                            ),
-                                      ),
-                                    ],
+                              if (academicInfo.$1.isNotEmpty ||
+                                  academicInfo.$2.isNotEmpty)
+                                Text(
+                                  [
+                                    if (academicInfo.$1.isNotEmpty)
+                                      academicInfo.$1,
+                                    if (academicInfo.$2.isNotEmpty)
+                                      academicInfo.$2,
+                                  ].join(' - '),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              if (contract.parentPhone != null &&
+                                  contract.parentPhone!.isNotEmpty)
+                                InkWell(
+                                  onTap: () async {
+                                    final Uri launchUri = Uri(
+                                      scheme: 'tel',
+                                      path: contract.parentPhone!,
+                                    );
+                                    if (await canLaunchUrl(launchUri)) {
+                                      await launchUrl(launchUri);
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.call,
+                                          size: 16,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          contract.parentPhone!,
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color:
+                                                    theme.colorScheme.primary,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -367,10 +368,7 @@ class StudentDetailsScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
-          ),
+          Text(label, style: AppTextStyles.bodyS.copyWith(color: colors.ink2)),
           const SizedBox(width: 12),
           Flexible(
             child: Text(
@@ -378,9 +376,7 @@ class StudentDetailsScreen extends ConsumerWidget {
               textAlign: TextAlign.end,
               style: AppTextStyles.tabular(
                 (isHighlight ? AppTextStyles.title : AppTextStyles.body)
-                    .copyWith(
-                  color: isHighlight ? colors.winter : colors.ink,
-                ),
+                    .copyWith(color: isHighlight ? colors.winter : colors.ink),
               ),
             ),
           ),

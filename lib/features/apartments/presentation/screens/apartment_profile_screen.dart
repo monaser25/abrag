@@ -107,6 +107,10 @@ class _ApartmentProfileScreenState
             statusColor = colors.warn;
             statusText = 'تحتاج نظافة';
             statusKind = StatusChipKind.warn;
+          } else if (data.hasOverdueCheckout) {
+            statusColor = colors.warn;
+            statusText = 'الخروج مش متسجل';
+            statusKind = StatusChipKind.warn;
           } else if (isCheckingOutToday) {
             statusColor = colors.summer;
             statusText = 'هتخرج النهاردة';

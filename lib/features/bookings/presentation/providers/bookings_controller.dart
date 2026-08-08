@@ -389,6 +389,31 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       final old = await (_db.select(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).getSingleOrNull();
+
+      // الدفعات المسجلة لازم تفضل مطابقة للمدفوع. لو التعديل هينزّل المدفوع
+      // تحت إجمالي الدفعات المسجلة، ده يا إما (أ) تعديل سعر بعد تسديد —
+      // فالمفروض تتعدّل/تتمسح الدفعة الأول، أو (ب) حد تاني سجّل تسديد على
+      // جهاز تاني والشاشة دي فاتحة من قبله فهتلغيه من غير ما حد ياخد باله.
+      // في الحالتين نرفض الحفظ ونوضّح السبب بدل ما نمسح فلوس بصمت.
+      final recordedPayments =
+          await (_db.select(_db.bookingPayments)..where(
+                (t) =>
+                    t.bookingId.equals(id) &
+                    t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+              ))
+              .get();
+      final recordedTotal = recordedPayments.fold<double>(
+        0,
+        (sum, payment) => sum + payment.amountEgp,
+      );
+      if (recordedTotal > amountPaidEgp + 0.01) {
+        throw Exception(
+          'فيه دفعات مسجلة على الحجز بإجمالي ${recordedTotal.toStringAsFixed(2)} ج.م، '
+          'أكبر من المدفوع اللي دخلته (${amountPaidEgp.toStringAsFixed(2)} ج.م). '
+          'امسح أو عدّل الدفعة من "تفاصيل الدفعات" الأول، أو اكتب مبلغ مدفوع مش أقل من إجمالي الدفعات.',
+        );
+      }
+
       await (_db.update(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).write(

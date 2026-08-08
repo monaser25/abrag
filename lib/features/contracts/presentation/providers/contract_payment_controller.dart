@@ -9,9 +9,12 @@ import '../../../dashboard/presentation/providers/database_provider.dart';
 final contractPaymentsProvider =
     StreamProvider.family<List<WinterPayment>, String>((ref, contractId) {
       final db = ref.watch(databaseProvider);
-      return (db.select(
-        db.winterPayments,
-      )..where((t) => t.contractId.equals(contractId))).watch();
+      return (db.select(db.winterPayments)
+            ..where((t) => t.contractId.equals(contractId))
+            ..where(
+              (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+            ))
+          .watch();
     });
 
 final contractPaymentControllerProvider =
@@ -107,6 +110,42 @@ class ContractPaymentController extends StateNotifier<AsyncValue<void>> {
           'paymentMethod': old?.paymentMethod,
         },
         newValues: {'amount': amount, 'paymentMethod': paymentMethod},
+      );
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  /// حذف دفعة شتوية اتسجلت بالغلط (مثلاً مرتين). soft-delete عشان المزامنة
+  /// تمسحها من السيرفر كمان زي باقي الجداول.
+  Future<void> deletePayment(String id) async {
+    state = const AsyncLoading();
+    try {
+      final old = await (_db.select(
+        _db.winterPayments,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (old == null || old.syncStatus == SyncStatus.pendingDelete) {
+        throw Exception('الدفعة غير موجودة أو محذوفة بالفعل');
+      }
+      await (_db.update(
+        _db.winterPayments,
+      )..where((t) => t.id.equals(id))).write(
+        const WinterPaymentsCompanion(
+          syncStatus: Value(SyncStatus.pendingDelete),
+        ),
+      );
+      await _auditLog.log(
+        action: 'delete_payment',
+        entityType: 'winter_payment',
+        entityId: id,
+        title: 'حذف دفعة شتوية',
+        description: 'تم حذف دفعة بقيمة ${old.amountEgp} ج.م',
+        route: '/winter_contracts/payments/${old.contractId}',
+        oldValues: {
+          'amount': old.amountEgp,
+          'paymentMethod': old.paymentMethod,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {

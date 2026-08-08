@@ -127,13 +127,13 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                         children: [
                           Text(
                             'النزيل الحالي',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ink2),
+                            style: AppTextStyles.label.copyWith(
+                              color: colors.ink2,
+                            ),
                           ),
                           Text(
                             booking.guestName,
-                            style:
-                                AppTextStyles.h2.copyWith(color: colors.ink),
+                            style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -146,8 +146,7 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                                 icon: Icons.calendar_month,
                               ),
                               StatusChip(
-                                label:
-                                    'المدفوع: ${booking.totalPriceEgp} ج.م',
+                                label: 'المدفوع: ${booking.totalPriceEgp} ج.م',
                                 kind: StatusChipKind.brand,
                                 icon: Icons.payments,
                               ),
@@ -162,92 +161,88 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
               const SectionTitle(title: 'حساب الاسترداد'),
               AppCard(
                 child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: MiniMetric(
-                              icon: Icons.check_circle_outline,
-                              value: '$usedDays',
-                              label: 'الأيام المستخدمة',
-                              tint: colors.ok,
-                            ),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: MiniMetric(
+                            icon: Icons.check_circle_outline,
+                            value: '$usedDays',
+                            label: 'الأيام المستخدمة',
+                            tint: colors.ok,
                           ),
-                          Container(
-                            width: 1,
-                            height: 38,
-                            color: colors.border,
-                          ),
-                          Expanded(
-                            child: MiniMetric(
-                              icon: Icons.hourglass_bottom,
-                              value: '$remainingDays',
-                              label: 'الأيام المتبقية',
-                              tint: colors.err,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Divider(color: colors.border),
-                      _CalcLine(
-                        label: 'الأيام المتبقية × سعر اليوم',
-                        value:
-                            '$remainingDays × ${dailyRate.toDouble().toCurrencyFormat()} = ${refundAmount.toDouble().toCurrencyFormat()} ج.م',
-                      ),
-                      if (brokerCommission > 0)
-                        _CalcLine(
-                          label: 'فلوس السمسار',
-                          value:
-                              '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
-                          valueColor: colors.err,
                         ),
-                      Divider(color: colors.border),
-                      _CalcLine(
-                        label: 'صافي مبلغ الاسترداد',
-                        value:
-                            '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
-                        valueColor: colors.accent,
-                        isTitle: true,
-                      ),
-                      const SizedBox(height: 16),
-                      AppSwitchRow(
-                        title: 'عدم استرداد نقود',
-                        subtitle: 'تسجيل الخروج المبكر بدون رجوع أي مبلغ',
-                        icon: Icons.money_off,
-                        tint: colors.err,
-                        value: _noRefund,
-                        onChanged: (val) {
-                          setState(() {
-                            _noRefund = val;
-                            if (val) {
-                              _customRefund = false;
-                              _refundController.text = '0.00';
-                            }
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      AppSwitchRow(
-                        title: 'استرداد مخصص',
-                        subtitle: 'تعديل مبلغ الاسترداد يدوياً',
-                        icon: Icons.tune,
-                        value: _customRefund,
-                        onChanged: _noRefund
-                            ? null
-                            : (val) => setState(() => _customRefund = val),
-                      ),
-                      if (_customRefund) ...[
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'مبلغ الاسترداد الفعلي (ج.م)',
-                          prefixIcon: Icons.payments_outlined,
-                          controller: _refundController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                        Container(width: 1, height: 38, color: colors.border),
+                        Expanded(
+                          child: MiniMetric(
+                            icon: Icons.hourglass_bottom,
+                            value: '$remainingDays',
+                            label: 'الأيام المتبقية',
+                            tint: colors.err,
                           ),
                         ),
                       ],
+                    ),
+                    Divider(color: colors.border),
+                    _CalcLine(
+                      label: 'الأيام المتبقية × سعر اليوم',
+                      value:
+                          '$remainingDays × ${dailyRate.toDouble().toCurrencyFormat()} = ${refundAmount.toDouble().toCurrencyFormat()} ج.م',
+                    ),
+                    if (brokerCommission > 0)
+                      _CalcLine(
+                        label: 'فلوس السمسار',
+                        value:
+                            '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
+                        valueColor: colors.err,
+                      ),
+                    Divider(color: colors.border),
+                    _CalcLine(
+                      label: 'صافي مبلغ الاسترداد',
+                      value:
+                          '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
+                      valueColor: colors.accent,
+                      isTitle: true,
+                    ),
+                    const SizedBox(height: 16),
+                    AppSwitchRow(
+                      title: 'عدم استرداد نقود',
+                      subtitle: 'تسجيل الخروج المبكر بدون رجوع أي مبلغ',
+                      icon: Icons.money_off,
+                      tint: colors.err,
+                      value: _noRefund,
+                      onChanged: (val) {
+                        setState(() {
+                          _noRefund = val;
+                          if (val) {
+                            _customRefund = false;
+                            _refundController.text = '0.00';
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    AppSwitchRow(
+                      title: 'استرداد مخصص',
+                      subtitle: 'تعديل مبلغ الاسترداد يدوياً',
+                      icon: Icons.tune,
+                      value: _customRefund,
+                      onChanged: _noRefund
+                          ? null
+                          : (val) => setState(() => _customRefund = val),
+                    ),
+                    if (_customRefund) ...[
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        label: 'مبلغ الاسترداد الفعلي (ج.م)',
+                        prefixIcon: Icons.payments_outlined,
+                        controller: _refundController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
                     ],
+                  ],
                 ),
               ),
             ],
@@ -342,8 +337,9 @@ class _CalcLine extends StatelessWidget {
               value,
               textAlign: TextAlign.end,
               style: AppTextStyles.tabular(
-                (isTitle ? AppTextStyles.h3 : AppTextStyles.label)
-                    .copyWith(color: valueColor ?? colors.ink),
+                (isTitle ? AppTextStyles.h3 : AppTextStyles.label).copyWith(
+                  color: valueColor ?? colors.ink,
+                ),
               ),
             ),
           ),

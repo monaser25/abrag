@@ -114,26 +114,30 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
                                     children: [
                                       Text(
                                         log.title,
-                                        style: AppTextStyles.title
-                                            .copyWith(color: colors.ink),
+                                        style: AppTextStyles.title.copyWith(
+                                          color: colors.ink,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         log.description,
-                                        style: AppTextStyles.bodyS
-                                            .copyWith(color: colors.ink2),
+                                        style: AppTextStyles.bodyS.copyWith(
+                                          color: colors.ink2,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         'بواسطة: ${log.actorName}',
-                                        style: AppTextStyles.bodyS
-                                            .copyWith(color: colors.ink2),
+                                        style: AppTextStyles.bodyS.copyWith(
+                                          color: colors.ink2,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         formatter.format(log.date.toLocal()),
-                                        style: AppTextStyles.caption
-                                            .copyWith(color: colors.ink3),
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: colors.ink3,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -176,7 +180,10 @@ class _SystemLogScreenState extends ConsumerState<SystemLogScreen> {
           controller: controller,
           padding: const EdgeInsets.all(16),
           children: [
-            Text(log.title, style: AppTextStyles.h3.copyWith(color: colors.ink)),
+            Text(
+              log.title,
+              style: AppTextStyles.h3.copyWith(color: colors.ink),
+            ),
             const SizedBox(height: 8),
             Text(
               log.description,

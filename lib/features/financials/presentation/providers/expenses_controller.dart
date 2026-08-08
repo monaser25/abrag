@@ -7,9 +7,10 @@ import '../../../../core/services/audit_log_service.dart';
 import '../../../../core/utils/season_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
-final expensesControllerProvider = StateNotifierProvider<ExpensesController, AsyncValue<void>>((ref) {
-  return ExpensesController(ref.watch(databaseProvider));
-});
+final expensesControllerProvider =
+    StateNotifierProvider<ExpensesController, AsyncValue<void>>((ref) {
+      return ExpensesController(ref.watch(databaseProvider));
+    });
 
 class ExpensesController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
@@ -35,25 +36,27 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final id = const Uuid().v4();
-      
-      await _db.into(_db.expenses).insert(
-        ExpensesCompanion.insert(
-          id: id,
-          buildingId: Value(buildingId),
-          apartmentId: Value(apartmentId),
-          expenseType: expenseType,
-          amountEgp: amount,
-          paymentMethod: Value(paymentMethod),
-          season: Value(season ?? currentSeasonKey()),
-          expenseDate: date,
-          description: Value(description),
-          installmentNumber: Value(installmentNumber),
-          discountEgp: Value(discountEgp),
-          discountReason: Value(discountReason),
-          syncStatus: const Value(SyncStatus.pendingInsert),
-          createdAt: DateTime.now(),
-        ),
-      );
+
+      await _db
+          .into(_db.expenses)
+          .insert(
+            ExpensesCompanion.insert(
+              id: id,
+              buildingId: Value(buildingId),
+              apartmentId: Value(apartmentId),
+              expenseType: expenseType,
+              amountEgp: amount,
+              paymentMethod: Value(paymentMethod),
+              season: Value(season ?? currentSeasonKey()),
+              expenseDate: date,
+              description: Value(description),
+              installmentNumber: Value(installmentNumber),
+              discountEgp: Value(discountEgp),
+              discountReason: Value(discountReason),
+              syncStatus: const Value(SyncStatus.pendingInsert),
+              createdAt: DateTime.now(),
+            ),
+          );
       await _auditLog.log(
         action: 'create',
         entityType: 'expense',
@@ -93,8 +96,7 @@ class ExpensesController extends StateNotifier<AsyncValue<void>> {
         entityType: 'expense',
         entityId: id,
         title: 'حذف مصروف',
-        description:
-            'تم حذف مصروف بقيمة ${old?.amountEgp ?? ''} ج.م',
+        description: 'تم حذف مصروف بقيمة ${old?.amountEgp ?? ''} ج.م',
         route: '/expenses',
         oldValues: old?.toJson(),
       );
