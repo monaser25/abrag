@@ -533,6 +533,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       await _db.transaction(() async {
+        if (amount <= 0) {
+          throw Exception('قيمة التسديد يجب أن تكون أكبر من صفر');
+        }
         final booking = await (_db.select(
           _db.summerBookings,
         )..where((t) => t.id.equals(bookingId))).getSingle();
@@ -580,6 +583,67 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           description: 'تم تسديد $amount ج.م',
           route: '/summer_bookings/details/$bookingId',
           oldValues: {'amountPaidEgp': booking.amountPaidEgp},
+          newValues: {'amountPaidEgp': newAmountPaidEgp},
+        );
+      });
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  /// حذف دفعة اتسجلت بالغلط (تسديد مكرر مثلاً): soft-delete لصف الدفعة
+  /// + خصم قيمتها من إجمالي المدفوع للحجز في نفس الـ transaction، والمزامنة
+  /// بتمسح الصف من السيرفر زي باقي الجداول.
+  Future<void> deleteBookingPayment({required String paymentId}) async {
+    state = const AsyncLoading();
+    try {
+      await _db.transaction(() async {
+        final payment = await (_db.select(
+          _db.bookingPayments,
+        )..where((t) => t.id.equals(paymentId))).getSingleOrNull();
+        if (payment == null || payment.syncStatus == SyncStatus.pendingDelete) {
+          throw Exception('الدفعة غير موجودة أو محذوفة بالفعل');
+        }
+        final booking = await (_db.select(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(payment.bookingId))).getSingle();
+        final newAmountPaidEgp = (booking.amountPaidEgp - payment.amountEgp)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+
+        await (_db.update(
+          _db.bookingPayments,
+        )..where((t) => t.id.equals(paymentId))).write(
+          const BookingPaymentsCompanion(
+            syncStatus: Value(SyncStatus.pendingDelete),
+          ),
+        );
+
+        await (_db.update(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(payment.bookingId))).write(
+          SummerBookingsCompanion(
+            amountPaidEgp: Value(newAmountPaidEgp),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+
+        await _auditLog.log(
+          action: 'delete_payment',
+          entityType: 'summer_booking',
+          entityId: payment.bookingId,
+          title: 'حذف دفعة حجز صيفي',
+          description:
+              'تم حذف دفعة بقيمة ${payment.amountEgp} ج.م وخصمها من المدفوع',
+          route: '/summer_bookings/details/${payment.bookingId}',
+          oldValues: {
+            'amountPaidEgp': booking.amountPaidEgp,
+            'paymentId': paymentId,
+            'paymentAmount': payment.amountEgp,
+            'paymentMethod': payment.paymentMethod,
+          },
           newValues: {'amountPaidEgp': newAmountPaidEgp},
         );
       });

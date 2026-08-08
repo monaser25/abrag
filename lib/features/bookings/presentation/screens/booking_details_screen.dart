@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import '../../../../core/database/database.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -329,10 +330,31 @@ class BookingDetailsScreen extends ConsumerWidget {
                                   'yyyy-MM-dd',
                                   'ar',
                                 ).format(p.paymentDate);
-                                return _buildDetailRow(
+                                final row = _buildDetailRow(
                                   context,
                                   '$methodLabel - $dateStr',
                                   '${p.amountEgp.toCurrencyFormat()} ج.م',
+                                );
+                                if (isViewer) return row;
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: row),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                      ),
+                                      color: context.colors.err,
+                                      visualDensity: VisualDensity.compact,
+                                      tooltip: 'حذف الدفعة',
+                                      onPressed: () => _confirmDeletePayment(
+                                        context,
+                                        ref,
+                                        payment: p,
+                                      ),
+                                    ),
+                                  ],
                                 );
                               }).toList(),
                       );
@@ -695,6 +717,10 @@ class BookingDetailsScreen extends ConsumerWidget {
       text: remainingAmount.toStringAsFixed(0),
     );
     String selectedMethod = 'cash';
+    // يمنع تسجيل نفس التسديد مرتين لو المستخدم داس "حفظ" بسرعة مرتين.
+    bool isSubmitting = false;
+    String? errorText;
+    final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -722,8 +748,9 @@ class BookingDetailsScreen extends ConsumerWidget {
                 keyboardType: TextInputType.number,
                 textDirection: TextDirection.ltr,
                 inputFormatters: const [ArabicDigitsInputFormatter()],
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'المبلغ اللي هيتسدد الآن',
+                  errorText: errorText,
                 ),
               ),
               const SizedBox(height: 12),
@@ -761,22 +788,65 @@ class BookingDetailsScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton(
-                      onPressed: () {
-                        final paidNow =
-                            double.tryParse(
-                              controller.text.replaceAll(',', '').trim(),
-                            ) ??
-                            0;
-                        ref
-                            .read(bookingsControllerProvider.notifier)
-                            .addBookingPayment(
-                              bookingId: bookingId,
-                              amount: paidNow,
-                              paymentMethod: selectedMethod,
-                            );
-                        Navigator.pop(sheetContext);
-                      },
-                      child: const Text('حفظ التسديد'),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              final paidNow =
+                                  double.tryParse(
+                                    controller.text.replaceAll(',', '').trim(),
+                                  ) ??
+                                  0;
+                              if (paidNow <= 0) {
+                                setState(
+                                  () => errorText = 'أدخل مبلغًا أكبر من صفر',
+                                );
+                                return;
+                              }
+                              if (paidNow > remainingAmount + 0.01) {
+                                setState(
+                                  () => errorText =
+                                      'المبلغ أكبر من المتبقي (${remainingAmount.toCurrencyFormat()} ج.م)',
+                                );
+                                return;
+                              }
+                              setState(() {
+                                errorText = null;
+                                isSubmitting = true;
+                              });
+                              await ref
+                                  .read(bookingsControllerProvider.notifier)
+                                  .addBookingPayment(
+                                    bookingId: bookingId,
+                                    amount: paidNow,
+                                    paymentMethod: selectedMethod,
+                                  );
+                              if (!sheetContext.mounted) return;
+                              final result = ref.read(
+                                bookingsControllerProvider,
+                              );
+                              if (result.hasError) {
+                                setState(() {
+                                  isSubmitting = false;
+                                  errorText = result.error
+                                      .toString()
+                                      .replaceFirst('Exception: ', '');
+                                });
+                                return;
+                              }
+                              Navigator.pop(sheetContext);
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('تم تسجيل التسديد بنجاح'),
+                                ),
+                              );
+                            },
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('حفظ التسديد'),
                     ),
                   ),
                 ],
@@ -784,6 +854,54 @@ class BookingDetailsScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// تأكيد حذف دفعة مسجلة بالغلط (مثلاً تسديد اتسجل مرتين): بيشيل صف
+  /// الدفعة وبيخصم قيمتها من إجمالي المدفوع في نفس العملية.
+  void _confirmDeletePayment(
+    BuildContext context,
+    WidgetRef ref, {
+    required BookingPayment payment,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('حذف الدفعة'),
+        content: Text(
+          'سيتم حذف دفعة بقيمة ${payment.amountEgp.toCurrencyFormat()} ج.م '
+          'وخصمها من إجمالي المدفوع للحجز. هل أنت متأكد؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await ref
+                  .read(bookingsControllerProvider.notifier)
+                  .deleteBookingPayment(paymentId: payment.id);
+              final result = ref.read(bookingsControllerProvider);
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result.hasError
+                        ? 'تعذر حذف الدفعة: ${result.error.toString().replaceFirst('Exception: ', '')}'
+                        : 'تم حذف الدفعة وتحديث إجمالي المدفوع',
+                  ),
+                ),
+              );
+            },
+            child: const Text('حذف'),
+          ),
+        ],
       ),
     );
   }

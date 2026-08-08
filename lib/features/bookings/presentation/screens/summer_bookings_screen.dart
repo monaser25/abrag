@@ -109,7 +109,9 @@ class SummerBookingsScreen extends ConsumerWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
                     _MetricTile(
-                      label: 'مؤجرة اليوم',
+                      // "حالياً" مش "اليوم": الرقم ده كل المقيمين دلوقتي،
+                      // أما "مؤجرة اليوم" في الأجندة فمعناها اللي دخلت النهاردة.
+                      label: 'مؤجرة حالياً',
                       value: '$occupiedToday',
                       icon: Icons.hotel_outlined,
                       tint: colors.summer,

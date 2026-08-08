@@ -13,7 +13,17 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../settings/presentation/providers/permissions_provider.dart';
 import '../providers/bookings_provider.dart';
 
-enum _CalendarFilter { all, occupied, upcomingCheckouts, upcoming, available }
+/// occupied = مقيمة في اليوم المحدد (دخلت قبله أو فيه ولسه ما خرجتش)؛
+/// checkIns = اللي **دخلت في اليوم المحدد نفسه** بس — دي اللي بيقصدها
+/// المالك بـ"مؤجرة اليوم".
+enum _CalendarFilter {
+  all,
+  occupied,
+  checkIns,
+  upcomingCheckouts,
+  upcoming,
+  available,
+}
 
 class CalendarViewScreen extends ConsumerStatefulWidget {
   const CalendarViewScreen({super.key});
@@ -48,6 +58,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     switch (filter) {
       case 'occupied':
         return _CalendarFilter.occupied;
+      case 'checkIns':
+        return _CalendarFilter.checkIns;
       case 'available':
         return _CalendarFilter.available;
       case 'upcomingCheckouts':
@@ -214,7 +226,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                 child: Row(
                   children: [
                     _filterChip('الكل', _CalendarFilter.all),
-                    _filterChip('مؤجرة اليوم', _CalendarFilter.occupied),
+                    _filterChip('مؤجرة اليوم', _CalendarFilter.checkIns),
                     _filterChip(
                       'خروجات قادمة',
                       _CalendarFilter.upcomingCheckouts,
@@ -259,6 +271,9 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
           return _isUpcomingCheckout(booking, from: DateTime.now());
         case _CalendarFilter.occupied:
           return _isBookingActiveOnDay(booking, _selectedDay);
+        case _CalendarFilter.checkIns:
+          // "مؤجرة اليوم": اللي دخلت في اليوم ده فقط، مش كل المقيمين.
+          return _isCheckInOnDay(booking, _selectedDay);
         case _CalendarFilter.upcoming:
           return _isFutureCheckIn(booking, after: _selectedDay);
         case _CalendarFilter.available:
@@ -586,6 +601,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
           return false;
         case _CalendarFilter.occupied:
           return _isBookingActiveOnDay(booking, day);
+        case _CalendarFilter.checkIns:
+          return _isCheckInOnDay(booking, day);
         case _CalendarFilter.all:
           return _isBookingActiveOnDay(booking, day) ||
               _isCheckoutOnDay(booking, day) ||
