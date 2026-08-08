@@ -491,6 +491,82 @@ void main() {
     );
   });
 
+  test('extension fee is owed, not silently counted as paid', () async {
+    // الباج اللي خلى الخزنة تقول 53,005 والمالك معاه 45,500: التمديد كان
+    // بيزوّد المدفوع تلقائيًا من غير ما العميل يدفع ومن غير صف دفعة.
+    final apartmentId = await seedApartment();
+
+    await controller.addBooking(
+      apartmentId: apartmentId,
+      guestName: 'أحمد',
+      guestPhone: '01000000000',
+      checkInDate: DateTime(2026, 7, 1, 14),
+      checkOutDate: DateTime(2026, 7, 5, 8),
+      totalPriceEgp: 1800,
+      amountPaidEgp: 1800,
+      paymentMethod: 'cash',
+      brokerCommissionType: 'none',
+      brokerCommissionFixedEgp: 0,
+      brokerCommissionPercentage: 10,
+    );
+    final booking = (await db.select(db.summerBookings).get()).single;
+
+    await controller.extendBooking(
+      id: booking.id,
+      newCheckoutDate: DateTime(2026, 7, 7, 8),
+      overstayDays: 2,
+      additionalFeeEgp: 800,
+    );
+
+    final extended = (await db.select(db.summerBookings).get()).single;
+    expect(extended.totalPriceEgp, 2600, reason: 'الرسوم بتتضاف للإجمالي');
+    expect(extended.amountPaidEgp, 1800, reason: 'ومش بتتحسب مدفوعة لوحدها');
+    expect(await db.select(db.bookingPayments).get(), isEmpty);
+  });
+
+  test(
+    'extension records a real payment row when collected on the spot',
+    () async {
+      final apartmentId = await seedApartment();
+
+      await controller.addBooking(
+        apartmentId: apartmentId,
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 7, 1, 14),
+        checkOutDate: DateTime(2026, 7, 5, 8),
+        totalPriceEgp: 1800,
+        amountPaidEgp: 1800,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      final booking = (await db.select(db.summerBookings).get()).single;
+
+      await controller.extendBooking(
+        id: booking.id,
+        newCheckoutDate: DateTime(2026, 7, 7, 8),
+        overstayDays: 2,
+        additionalFeeEgp: 800,
+        collectedNowEgp: 800,
+        paymentMethod: 'vodafone_cash',
+      );
+
+      final extended = (await db.select(db.summerBookings).get()).single;
+      expect(extended.totalPriceEgp, 2600);
+      expect(extended.amountPaidEgp, 2600);
+
+      final payment = (await db.select(db.bookingPayments).get()).single;
+      expect(payment.amountEgp, 800);
+      expect(
+        payment.paymentMethod,
+        'vodafone_cash',
+        reason: 'الرسوم بتتنسب لمحفظتها الصح مش للنقدي دايمًا',
+      );
+    },
+  );
+
   test(
     'one guest in two apartments logs two distinguishable settles',
     () async {

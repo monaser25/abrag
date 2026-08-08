@@ -746,41 +746,74 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  /// تمديد إقامة. رسوم التمديد بتتضاف لإجمالي الحجز (اللي العميل عليه)، ومش
+  /// بتتحسب مدفوعة إلا لو اتحصّلت فعلاً.
+  ///
+  /// قبل كده كان بيضيف الرسوم للمدفوع تلقائيًا من غير ما يسأل ومن غير صف دفعة،
+  /// فالخزنة كانت بتوريك فلوس نقدي مش في إيدك (٧ تمديدات = ٧٤٥٠ ج.م وهمية).
+  /// [collectedNowEgp] لو أكبر من صفر بيتسجل كدفعة حقيقية بالطريقة المختارة.
   Future<void> extendBooking({
     required String id,
     required DateTime newCheckoutDate,
     required int overstayDays,
     required double additionalFeeEgp,
+    double collectedNowEgp = 0,
+    String paymentMethod = 'cash',
   }) async {
     state = const AsyncLoading();
     try {
-      final booking = await (_db.select(
-        _db.summerBookings,
-      )..where((t) => t.id.equals(id))).getSingle();
+      if (collectedNowEgp < 0 || collectedNowEgp > additionalFeeEgp + 0.01) {
+        throw Exception('المبلغ المحصّل لا يمكن أن يزيد عن رسوم التمديد');
+      }
+      await _db.transaction(() async {
+        final booking = await (_db.select(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).getSingle();
 
-      await (_db.update(
-        _db.summerBookings,
-      )..where((t) => t.id.equals(id))).write(
-        SummerBookingsCompanion(
-          checkOutDate: Value(newCheckoutDate),
-          overstayDays: Value(booking.overstayDays + overstayDays),
-          overstayFeeEgp: Value(booking.overstayFeeEgp + additionalFeeEgp),
-          totalPriceEgp: Value(booking.totalPriceEgp + additionalFeeEgp),
-          amountPaidEgp: Value(booking.amountPaidEgp + additionalFeeEgp),
-          syncStatus: const Value(SyncStatus.pendingUpdate),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
-      await _auditLog.log(
-        action: 'extend',
-        entityType: 'summer_booking',
-        entityId: id,
-        title: 'تمديد حجز صيفي',
-        description:
-            'تم تمديد الحجز $overstayDays يوم بقيمة $additionalFeeEgp ج.م — '
-            '${await _bookingLabel(booking)}',
-        route: '/summer_bookings/details/$id',
-      );
+        if (collectedNowEgp > 0) {
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: id,
+                  amountEgp: collectedNowEgp,
+                  paymentMethod: Value(paymentMethod),
+                  paymentDate: DateTime.now(),
+                  notes: const Value('تحصيل رسوم تمديد'),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: DateTime.now(),
+                ),
+              );
+        }
+
+        await (_db.update(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).write(
+          SummerBookingsCompanion(
+            checkOutDate: Value(newCheckoutDate),
+            overstayDays: Value(booking.overstayDays + overstayDays),
+            overstayFeeEgp: Value(booking.overstayFeeEgp + additionalFeeEgp),
+            totalPriceEgp: Value(booking.totalPriceEgp + additionalFeeEgp),
+            amountPaidEgp: Value(booking.amountPaidEgp + collectedNowEgp),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
+        final remaining = additionalFeeEgp - collectedNowEgp;
+        await _auditLog.log(
+          action: 'extend',
+          entityType: 'summer_booking',
+          entityId: id,
+          title: 'تمديد حجز صيفي',
+          description:
+              'تم تمديد الحجز $overstayDays يوم بقيمة $additionalFeeEgp ج.م — '
+              '${await _bookingLabel(booking)}'
+              '${collectedNowEgp > 0 ? ' (اتحصّل $collectedNowEgp ج.م)' : ''}'
+              '${remaining > 0.01 ? ' (باقي $remaining ج.م على العميل)' : ''}',
+          route: '/summer_bookings/details/$id',
+        );
+      });
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);

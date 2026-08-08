@@ -26,6 +26,12 @@ class _OverstayExtensionScreenState
   bool _useCustomPrice = false;
   DateTime? _customCheckoutDate;
 
+  /// هل العميل دفع رسوم التمديد دلوقتي؟ الافتراضي **لأ** — الرسوم بتتضاف
+  /// لحسابه وبيتحصّلوا لما يتسدّدوا فعلاً. قبل كده كان التطبيق بيعتبرها
+  /// مدفوعة نقدي من غير ما يسأل، فالخزنة كانت بتوريك فلوس مش معاك.
+  bool _collectNow = false;
+  String _collectMethod = 'cash';
+
   @override
   void dispose() {
     _customPriceController.dispose();
@@ -266,6 +272,46 @@ class _OverstayExtensionScreenState
                   ],
                 ),
               ),
+              const SectionTitle(title: 'تحصيل رسوم التمديد'),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSwitchRow(
+                      title: 'العميل دفع الرسوم دلوقتي',
+                      subtitle: _collectNow
+                          ? 'هيتسجل تسديد ${additionalFee.toDouble().toCurrencyFormat()} ج.م'
+                          : 'الرسوم هتتضاف على حساب العميل ويتسدّدوا قبل الخروج',
+                      icon: Icons.account_balance_wallet_outlined,
+                      value: _collectNow,
+                      onChanged: (val) => setState(() => _collectNow = val),
+                    ),
+                    if (_collectNow) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'طريقة الدفع',
+                        style: AppTextStyles.label.copyWith(color: colors.ink2),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedTabs(
+                        labels: const ['نقدي', 'فودافون كاش', 'إنستاباي'],
+                        index: _collectMethod == 'vodafone_cash'
+                            ? 1
+                            : _collectMethod == 'instapay'
+                            ? 2
+                            : 0,
+                        onChanged: (i) => setState(() {
+                          _collectMethod = const [
+                            'cash',
+                            'vodafone_cash',
+                            'instapay',
+                          ][i];
+                        }),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           );
         },
@@ -309,6 +355,10 @@ class _OverstayExtensionScreenState
                                 newCheckoutDate: newCheckoutDate,
                                 overstayDays: _extraDays,
                                 additionalFeeEgp: additionalFee,
+                                collectedNowEgp: _collectNow
+                                    ? additionalFee.toDouble()
+                                    : 0,
+                                paymentMethod: _collectMethod,
                               );
                         },
                 ),
