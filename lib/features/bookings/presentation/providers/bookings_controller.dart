@@ -329,12 +329,19 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
       }
     }
 
+    final apartment = await (_db.select(
+      _db.apartments,
+    )..where((t) => t.id.equals(apartmentId))).getSingleOrNull();
+    final apartmentLabel = apartment == null
+        ? ''
+        : 'شقة ${apartment.apartmentNumber} — ';
     await _auditLog.log(
       action: 'create',
       entityType: 'summer_booking',
       entityId: id,
       title: 'إضافة حجز صيفي',
-      description: 'تم إضافة حجز صيفي باسم $guestName بقيمة $totalPriceEgp ج.م',
+      description:
+          'تم إضافة حجز صيفي — $apartmentLabel$guestName بقيمة $totalPriceEgp ج.م',
       route: '/summer_bookings/details/$id',
       newValues: {
         'guestName': guestName,
@@ -451,7 +458,8 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         entityType: 'summer_booking',
         entityId: id,
         title: 'تعديل حجز صيفي',
-        description: 'تم تعديل بيانات حجز $guestName',
+        description:
+            'تم تعديل بيانات حجز ${old == null ? guestName : await _bookingLabel(old)}',
         route: '/summer_bookings/details/$id',
         oldValues: old?.toJson(),
         newValues: {
@@ -476,6 +484,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     try {
+      final booking = await (_db.select(
+        _db.summerBookings,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).write(
@@ -490,7 +501,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         entityType: 'summer_booking',
         entityId: id,
         title: 'تسجيل خروج مصيف',
-        description: 'تم تسجيل خروج حجز صيفي',
+        description: booking == null
+            ? 'تم تسجيل خروج حجز صيفي'
+            : 'تم تسجيل خروج ${await _bookingLabel(booking)}',
         route: '/summer_bookings/details/$id',
       );
 
@@ -510,6 +523,21 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     } catch (e, st) {
       state = AsyncError(e, st);
     }
+  }
+
+  /// وصف مختصر للحجز عشان يظهر في سجل النظام: "شقة ٨ — محمود ماهر".
+  ///
+  /// من غيره، عميل واحد حاجز شقتين بيطلّع سطرين متطابقين حرف بحرف في السجل
+  /// ("تم تسديد ٣٣٥٠ ج.م" مرتين) فيبان كأن التسديد اتسجل مرتين بالغلط — وده
+  /// حصل فعلاً مع محمود ماهر (شقة ٨ وشقة ١١) وخض المالك.
+  Future<String> _bookingLabel(SummerBooking booking) async {
+    final apartment = await (_db.select(
+      _db.apartments,
+    )..where((t) => t.id.equals(booking.apartmentId))).getSingleOrNull();
+    final apartmentPart = apartment == null
+        ? ''
+        : 'شقة ${apartment.apartmentNumber} — ';
+    return '$apartmentPart${booking.guestName}';
   }
 
   Future<void> updateBookingPayment({
@@ -538,7 +566,8 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         entityType: 'summer_booking',
         entityId: id,
         title: 'تسديد حجز صيفي',
-        description: 'تم تحديث المدفوع إلى $newAmountPaidEgp ج.م',
+        description:
+            'تم تحديث المدفوع إلى $newAmountPaidEgp ج.م — ${await _bookingLabel(booking)}',
         route: '/summer_bookings/details/$id',
         oldValues: {'amountPaidEgp': booking.amountPaidEgp},
         newValues: {'amountPaidEgp': newAmountPaidEgp},
@@ -605,7 +634,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           entityType: 'summer_booking',
           entityId: bookingId,
           title: 'تسديد حجز صيفي',
-          description: 'تم تسديد $amount ج.م',
+          description:
+              'تم تسديد $amount ج.م — ${await _bookingLabel(booking)} '
+              '(المدفوع بقى $newAmountPaidEgp من ${booking.totalPriceEgp})',
           route: '/summer_bookings/details/$bookingId',
           oldValues: {'amountPaidEgp': booking.amountPaidEgp},
           newValues: {'amountPaidEgp': newAmountPaidEgp},
@@ -661,7 +692,8 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           entityId: payment.bookingId,
           title: 'حذف دفعة حجز صيفي',
           description:
-              'تم حذف دفعة بقيمة ${payment.amountEgp} ج.م وخصمها من المدفوع',
+              'تم حذف دفعة بقيمة ${payment.amountEgp} ج.م — '
+              '${await _bookingLabel(booking)} (المدفوع بقى $newAmountPaidEgp)',
           route: '/summer_bookings/details/${payment.bookingId}',
           oldValues: {
             'amountPaidEgp': booking.amountPaidEgp,
@@ -684,6 +716,9 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncLoading();
     try {
+      final booking = await (_db.select(
+        _db.summerBookings,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).write(
@@ -694,12 +729,15 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
           updatedAt: Value(DateTime.now()),
         ),
       );
+      final checkoutDay = newCheckoutDate.toLocal().toString().split(' ').first;
       await _auditLog.log(
         action: 'early_checkout',
         entityType: 'summer_booking',
         entityId: id,
         title: 'خروج مبكر',
-        description: 'تم تسجيل خروج مبكر بتاريخ $newCheckoutDate',
+        description: booking == null
+            ? 'تم تسجيل خروج مبكر بتاريخ $checkoutDay'
+            : 'تم تسجيل خروج مبكر بتاريخ $checkoutDay — ${await _bookingLabel(booking)}',
         route: '/summer_bookings/details/$id',
       );
       state = const AsyncData(null);
@@ -739,7 +777,8 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         entityId: id,
         title: 'تمديد حجز صيفي',
         description:
-            'تم تمديد الحجز $overstayDays يوم بقيمة $additionalFeeEgp ج.م',
+            'تم تمديد الحجز $overstayDays يوم بقيمة $additionalFeeEgp ج.م — '
+            '${await _bookingLabel(booking)}',
         route: '/summer_bookings/details/$id',
       );
       state = const AsyncData(null);
@@ -786,7 +825,7 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         entityType: 'summer_booking',
         entityId: id,
         title: 'حذف حجز صيفي',
-        description: 'تم حذف حجز ${booking.guestName}',
+        description: 'تم حذف حجز ${await _bookingLabel(booking)}',
         oldValues: booking.toJson(),
       );
       state = const AsyncData(null);

@@ -492,6 +492,58 @@ void main() {
   });
 
   test(
+    'one guest in two apartments logs two distinguishable settles',
+    () async {
+      // محمود ماهر حجز شقتين وسدّد كل واحدة مرة — السجل كان بيطلّع سطرين
+      // متطابقين ("تم تسديد 3350 ج.م") فبانوا كأنهم تسديد اتسجل مرتين بالغلط.
+      final apartmentIds = await seedApartments(2);
+
+      for (final apartmentId in apartmentIds) {
+        await controller.addBooking(
+          apartmentId: apartmentId,
+          guestName: 'محمود ماهر',
+          guestPhone: '01000000000',
+          checkInDate: DateTime(2026, 8, 7, 14),
+          checkOutDate: DateTime(2026, 8, 14, 8),
+          totalPriceEgp: 3850,
+          amountPaidEgp: 500,
+          paymentMethod: 'cash',
+          brokerCommissionType: 'none',
+          brokerCommissionFixedEgp: 0,
+          brokerCommissionPercentage: 10,
+        );
+      }
+
+      for (final booking in await db.select(db.summerBookings).get()) {
+        await controller.addBookingPayment(
+          bookingId: booking.id,
+          amount: 3350,
+          paymentMethod: 'cash',
+        );
+      }
+
+      final settleLogs = (await db.select(db.auditLogs).get())
+          .where((log) => log.action == 'payment')
+          .toList();
+
+      expect(settleLogs, hasLength(2));
+      expect(
+        settleLogs.map((log) => log.description).toSet(),
+        hasLength(2),
+        reason: 'كل سطر لازم يوضّح شقة مين عشان ما يبانوش تسديد مكرر',
+      );
+      expect(
+        settleLogs.every((log) => log.description.contains('شقة')),
+        isTrue,
+      );
+      expect(
+        settleLogs.every((log) => log.description.contains('محمود ماهر')),
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'refuses an edit that would drop paid below recorded payments',
     () async {
       final apartmentId = await seedApartment();
