@@ -421,6 +421,19 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         );
       }
 
+      // الحجز اللي عليه تمديد: الإجمالي لازم يفضل شامل رسوم التمديد. من غير
+      // الشرط ده، أي تعديل بعد التمديد بيرجّع الإجمالي لسعر الإقامة الأصلية
+      // ويسيب رسوم التمديد مكانها، فيطلع "سعر اليوم" بالسالب والحسابات تبوظ.
+      final existingOverstayFee = old?.overstayFeeEgp ?? 0;
+      if (existingOverstayFee > 0 &&
+          totalPriceEgp + 0.01 < existingOverstayFee) {
+        throw Exception(
+          'الحجز ده عليه تمديد بـ ${existingOverstayFee.toStringAsFixed(2)} ج.م، '
+          'فالإجمالي مينفعش يقل عن كده. الإجمالي المفروض يكون سعر الإقامة '
+          'الأصلية + رسوم التمديد.',
+        );
+      }
+
       await (_db.update(
         _db.summerBookings,
       )..where((t) => t.id.equals(id))).write(

@@ -96,16 +96,30 @@ class BookingDetailsScreen extends ConsumerWidget {
           final commissionAmount = _commissionAmount(booking);
           final actualReceived = (booking.amountPaidEgp - commissionAmount)
               .clamp(0, double.infinity);
+          // السعر اليومي = سعر الإقامة الأصلية ÷ ليالي الإقامة الأصلية.
+          // كان بيقسم سعر الأصل على **كل** الليالي (الأصلية + التمديد)، فحجز
+          // ٢٤٠٠ لأربع ليالي (٦٠٠ لليلة) بعد تمديد ٦ أيام كان بيبان ٢٤٠ لليلة.
           final baseBookingTotal =
-              booking.totalPriceEgp - booking.overstayFeeEgp;
+              (booking.totalPriceEgp - booking.overstayFeeEgp).clamp(
+                0,
+                double.infinity,
+              );
           final bookingDays = _calendarDays(
             booking.checkInDate,
             booking.earlyCheckoutDate ?? booking.checkOutDate,
           );
-          final dailyRate = baseBookingTotal / bookingDays;
-          final remainingAmount = (baseBookingTotal - booking.amountPaidEgp)
-              .clamp(0, double.infinity);
-          final isFullyPaid = booking.amountPaidEgp >= baseBookingTotal;
+          final baseDays = (bookingDays - booking.overstayDays).clamp(
+            1,
+            bookingDays,
+          );
+          final dailyRate = baseBookingTotal / baseDays;
+          // اللي على العميل = الإجمالي كله (شامل رسوم التمديد) ناقص المدفوع.
+          final remainingAmount =
+              (booking.totalPriceEgp - booking.amountPaidEgp).clamp(
+                0,
+                double.infinity,
+              );
+          final isFullyPaid = booking.amountPaidEgp >= booking.totalPriceEgp;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -152,7 +166,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                                 bookingId: booking.id,
                                 currentPaid: booking.amountPaidEgp,
                                 remainingAmount: remainingAmount.toDouble(),
-                                totalAmount: baseBookingTotal.toDouble(),
+                                totalAmount: booking.totalPriceEgp,
                               ),
                             ),
                           ],
@@ -253,11 +267,17 @@ class BookingDetailsScreen extends ConsumerWidget {
                     'السعر اليومي',
                     '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                   ),
+                  if (booking.overstayFeeEgp > 0)
+                    _buildDetailRow(
+                      context,
+                      'رسوم تمديد ${booking.overstayDays} يوم',
+                      '${booking.overstayFeeEgp.toCurrencyFormat()} ج.م',
+                    ),
                   if (!isFullyPaid)
                     _buildDetailRow(
                       context,
                       'فلوس الحجز',
-                      '${baseBookingTotal.toDouble().toCurrencyFormat()} ج.م',
+                      '${booking.totalPriceEgp.toCurrencyFormat()} ج.م',
                       isHighlight: true,
                     ),
                   _buildDetailRow(
@@ -510,7 +530,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                               bookingId: booking.id,
                               currentPaid: booking.amountPaidEgp,
                               remainingAmount: remainingAmount.toDouble(),
-                              totalAmount: baseBookingTotal.toDouble(),
+                              totalAmount: booking.totalPriceEgp,
                             );
                             return;
                           }

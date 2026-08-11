@@ -491,6 +491,64 @@ void main() {
     );
   });
 
+  test('an edit cannot wipe an extension off the total', () async {
+    // ده اللي بوّظ حجز شقة 9: تمديد 6 أيام بـ 3600، وبعدين تعديل رجّع
+    // الإجمالي لـ 2400 وساب رسوم التمديد مكانها → سعر اليوم طلع بالسالب.
+    final apartmentId = await seedApartment();
+
+    await controller.addBooking(
+      apartmentId: apartmentId,
+      guestName: 'أحمد',
+      guestPhone: '01000000000',
+      checkInDate: DateTime(2026, 8, 7, 14),
+      checkOutDate: DateTime(2026, 8, 11, 8),
+      totalPriceEgp: 2400,
+      amountPaidEgp: 2400,
+      paymentMethod: 'cash',
+      brokerCommissionType: 'none',
+      brokerCommissionFixedEgp: 0,
+      brokerCommissionPercentage: 10,
+    );
+    final booking = (await db.select(db.summerBookings).get()).single;
+
+    await controller.extendBooking(
+      id: booking.id,
+      newCheckoutDate: DateTime(2026, 8, 17, 8),
+      overstayDays: 6,
+      additionalFeeEgp: 3600,
+      collectedNowEgp: 3600,
+    );
+    expect(
+      (await db.select(db.summerBookings).get()).single.totalPriceEgp,
+      6000,
+    );
+
+    // تعديل بيحاول يرجّع الإجمالي 2400 وهو أقل من رسوم التمديد
+    await controller.updateBooking(
+      id: booking.id,
+      apartmentId: apartmentId,
+      guestName: 'أحمد',
+      guestPhone: '01000000000',
+      checkInDate: DateTime(2026, 8, 7, 14),
+      checkOutDate: DateTime(2026, 8, 11, 8),
+      totalPriceEgp: 2400,
+      amountPaidEgp: 6000,
+      paymentMethod: 'cash',
+      brokerCommissionType: 'none',
+      brokerCommissionFixedEgp: 0,
+      brokerCommissionPercentage: 10,
+    );
+
+    expect(controller.state, isA<AsyncError<void>>());
+    final unchanged = (await db.select(db.summerBookings).get()).single;
+    expect(unchanged.totalPriceEgp, 6000, reason: 'التعديل اترفض');
+    expect(
+      unchanged.totalPriceEgp - unchanged.overstayFeeEgp,
+      2400,
+      reason: 'سعر الإقامة الأصلية فضل سليم فالسعر اليومي مايطلعش بالسالب',
+    );
+  });
+
   test('extension fee is owed, not silently counted as paid', () async {
     // الباج اللي خلى الخزنة تقول 53,005 والمالك معاه 45,500: التمديد كان
     // بيزوّد المدفوع تلقائيًا من غير ما العميل يدفع ومن غير صف دفعة.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/database/database.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
@@ -37,6 +38,22 @@ class _OverstayExtensionScreenState
   void dispose() {
     _customPriceController.dispose();
     super.dispose();
+  }
+
+  /// سعر الليلة الأصلي للحجز = سعر الإقامة من غير رسوم التمديد ÷ الليالي
+  /// الأصلية من غير أيام التمديد. لو قسمنا على كل الليالي (زي ما كان بيحصل)
+  /// كل تمديد بينزّل السعر المقترح للي بعده ويبوّظه.
+  double _baseDailyRate(SummerBooking booking) {
+    final totalDays = booking.checkOutDate
+        .difference(booking.checkInDate)
+        .inDays
+        .clamp(1, 10000);
+    final baseDays = (totalDays - booking.overstayDays).clamp(1, totalDays);
+    final baseTotal = (booking.totalPriceEgp - booking.overstayFeeEgp).clamp(
+      0.0,
+      double.infinity,
+    );
+    return baseTotal / baseDays;
   }
 
   Future<void> _selectDateTime(
@@ -117,11 +134,7 @@ class _OverstayExtensionScreenState
       body: bookingsAsync.when(
         data: (bookings) {
           final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
-          final originalDays = booking.checkOutDate
-              .difference(booking.checkInDate)
-              .inDays
-              .clamp(1, 10000);
-          final automaticDailyRate = booking.totalPriceEgp / originalDays;
+          final automaticDailyRate = _baseDailyRate(booking);
           final dailyRate = _useCustomPrice
               ? (double.tryParse(_customPriceController.text) ?? 0)
               : automaticDailyRate;
@@ -327,11 +340,7 @@ class _OverstayExtensionScreenState
       bottomNavigationBar: bookingsAsync.maybeWhen(
         data: (bookings) {
           final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
-          final originalDays = booking.checkOutDate
-              .difference(booking.checkInDate)
-              .inDays
-              .clamp(1, 10000);
-          final automaticDailyRate = booking.totalPriceEgp / originalDays;
+          final automaticDailyRate = _baseDailyRate(booking);
           final dailyRate = _useCustomPrice
               ? (double.tryParse(_customPriceController.text) ?? 0)
               : automaticDailyRate;
