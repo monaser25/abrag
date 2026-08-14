@@ -8,6 +8,7 @@ import '../providers/bookings_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class OverstayExtensionScreen extends ConsumerStatefulWidget {
@@ -25,6 +26,7 @@ class _OverstayExtensionScreenState
   int _extraDays = 1;
   final _customPriceController = TextEditingController();
   bool _useCustomPrice = false;
+  int _customPriceMode = 0;
   DateTime? _customCheckoutDate;
 
   /// هل العميل دفع رسوم التمديد دلوقتي؟ الافتراضي **أيوه** لأن ده اللي بيحصل
@@ -40,20 +42,37 @@ class _OverstayExtensionScreenState
     super.dispose();
   }
 
-  /// سعر الليلة الأصلي للحجز = سعر الإقامة من غير رسوم التمديد ÷ الليالي
-  /// الأصلية من غير أيام التمديد. لو قسمنا على كل الليالي (زي ما كان بيحصل)
-  /// كل تمديد بينزّل السعر المقترح للي بعده ويبوّظه.
-  double _baseDailyRate(SummerBooking booking) {
-    final totalDays = booking.checkOutDate
-        .difference(booking.checkInDate)
-        .inDays
-        .clamp(1, 10000);
-    final baseDays = (totalDays - booking.overstayDays).clamp(1, totalDays);
-    final baseTotal = (booking.totalPriceEgp - booking.overstayFeeEgp).clamp(
-      0.0,
-      double.infinity,
+  ({double dailyRate, double additionalFee, DateTime newCheckoutDate})
+  _calculateExtension(SummerBooking booking) {
+    final automaticDailyRate = summerBookingBaseDailyRate(booking);
+    double parsedCustom = double.tryParse(_customPriceController.text) ?? 0.0;
+    if (parsedCustom < 0) parsedCustom = 0.0;
+
+    double dailyRate;
+    double additionalFee;
+
+    if (!_useCustomPrice) {
+      dailyRate = automaticDailyRate;
+      additionalFee = dailyRate * _extraDays;
+    } else {
+      if (_customPriceMode == 0) {
+        dailyRate = parsedCustom;
+        additionalFee = dailyRate * _extraDays;
+      } else {
+        additionalFee = parsedCustom;
+        dailyRate = _extraDays > 0 ? additionalFee / _extraDays : 0.0;
+      }
+    }
+
+    final newCheckoutDate =
+        _customCheckoutDate ??
+        booking.checkOutDate.add(Duration(days: _extraDays));
+
+    return (
+      dailyRate: dailyRate,
+      additionalFee: additionalFee,
+      newCheckoutDate: newCheckoutDate,
     );
-    return baseTotal / baseDays;
   }
 
   Future<void> _selectDateTime(
@@ -134,14 +153,11 @@ class _OverstayExtensionScreenState
       body: bookingsAsync.when(
         data: (bookings) {
           final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
-          final automaticDailyRate = _baseDailyRate(booking);
-          final dailyRate = _useCustomPrice
-              ? (double.tryParse(_customPriceController.text) ?? 0)
-              : automaticDailyRate;
-          final additionalFee = dailyRate * _extraDays;
-          final newCheckoutDate =
-              _customCheckoutDate ??
-              booking.checkOutDate.add(Duration(days: _extraDays));
+          final calc = _calculateExtension(booking);
+          final dailyRate = calc.dailyRate;
+          final additionalFee = calc.additionalFee;
+          final newCheckoutDate = calc.newCheckoutDate;
+          final automaticDailyRate = summerBookingBaseDailyRate(booking);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -240,7 +256,7 @@ class _OverstayExtensionScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     AppSwitchRow(
-                      title: 'تخصيص سعر الليلة',
+                      title: 'تخصيص السعر',
                       subtitle:
                           'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
                       icon: Icons.tune,
@@ -249,8 +265,17 @@ class _OverstayExtensionScreenState
                     ),
                     if (_useCustomPrice) ...[
                       const SizedBox(height: 12),
+                      SegmentedTabs(
+                        labels: const ['سعر الليلة', 'المبلغ الإجمالي'],
+                        index: _customPriceMode,
+                        onChanged: (val) =>
+                            setState(() => _customPriceMode = val),
+                      ),
+                      const SizedBox(height: 12),
                       AppTextField(
-                        label: 'سعر الليلة (ج.م)',
+                        label: _customPriceMode == 0
+                            ? 'سعر الليلة (ج.م)'
+                            : 'إجمالي مبلغ التمديد (ج.م)',
                         prefixIcon: Icons.payments_outlined,
                         controller: _customPriceController,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -263,8 +288,9 @@ class _OverstayExtensionScreenState
                     _InfoLine(
                       icon: Icons.calculate,
                       label: 'حساب التمديد',
-                      value:
-                          '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
+                      value: _useCustomPrice && _customPriceMode == 1
+                          ? '${dailyRate.toDouble().toCurrencyFormat()} ج.م/ليلة × $_extraDays'
+                          : '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                     ),
                     Divider(color: colors.border),
                     _InfoLine(
@@ -340,14 +366,9 @@ class _OverstayExtensionScreenState
       bottomNavigationBar: bookingsAsync.maybeWhen(
         data: (bookings) {
           final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
-          final automaticDailyRate = _baseDailyRate(booking);
-          final dailyRate = _useCustomPrice
-              ? (double.tryParse(_customPriceController.text) ?? 0)
-              : automaticDailyRate;
-          final additionalFee = dailyRate * _extraDays;
-          final newCheckoutDate =
-              _customCheckoutDate ??
-              booking.checkOutDate.add(Duration(days: _extraDays));
+          final calc = _calculateExtension(booking);
+          final additionalFee = calc.additionalFee;
+          final newCheckoutDate = calc.newCheckoutDate;
           return BottomActionBar(
             children: [
               Expanded(

@@ -16,6 +16,7 @@ import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/input_formatters.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
@@ -99,20 +100,8 @@ class BookingDetailsScreen extends ConsumerWidget {
           // السعر اليومي = سعر الإقامة الأصلية ÷ ليالي الإقامة الأصلية.
           // كان بيقسم سعر الأصل على **كل** الليالي (الأصلية + التمديد)، فحجز
           // ٢٤٠٠ لأربع ليالي (٦٠٠ لليلة) بعد تمديد ٦ أيام كان بيبان ٢٤٠ لليلة.
-          final baseBookingTotal =
-              (booking.totalPriceEgp - booking.overstayFeeEgp).clamp(
-                0,
-                double.infinity,
-              );
-          final bookingDays = _calendarDays(
-            booking.checkInDate,
-            booking.earlyCheckoutDate ?? booking.checkOutDate,
-          );
-          final baseDays = (bookingDays - booking.overstayDays).clamp(
-            1,
-            bookingDays,
-          );
-          final dailyRate = baseBookingTotal / baseDays;
+          final bookingDays = summerBookingStayDays(booking);
+          final dailyRate = summerBookingBaseDailyRate(booking);
           // اللي على العميل = الإجمالي كله (شامل رسوم التمديد) ناقص المدفوع.
           final remainingAmount =
               (booking.totalPriceEgp - booking.amountPaidEgp).clamp(
@@ -595,12 +584,6 @@ class BookingDetailsScreen extends ConsumerWidget {
     }
     // 'none' => the broker took no commission at all.
     return 0;
-  }
-
-  int _calendarDays(DateTime start, DateTime end) {
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day);
-    return endDate.difference(startDate).inDays.clamp(1, 10000);
   }
 
   Widget _buildImageCard(BuildContext context, String imagePath, String label) {

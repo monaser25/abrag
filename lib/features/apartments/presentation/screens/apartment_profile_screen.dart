@@ -7,6 +7,7 @@ import '../providers/apartments_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class ApartmentProfileScreen extends ConsumerStatefulWidget {
@@ -537,10 +538,7 @@ class _ApartmentProfileScreenState
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final booking = data.bookings[index];
                       final now = DateTime.now();
-                      final days = _calendarDays(
-                        booking.checkInDate,
-                        booking.earlyCheckoutDate ?? booking.checkOutDate,
-                      );
+                      final days = summerBookingStayDays(booking);
                       final effectiveCheckout =
                           booking.earlyCheckoutDate ?? booking.checkOutDate;
                       final isCurrentResident =
@@ -621,7 +619,7 @@ class _ApartmentProfileScreenState
                                   icon: Icons.price_change,
                                   label: 'السعر اليومي',
                                   value:
-                                      '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toDouble().toCurrencyFormat()} ج.م',
+                                      '${summerBookingBaseDailyRate(booking).toDouble().toCurrencyFormat()} ج.م',
                                 ),
                                 if (booking.brokerName != null &&
                                     booking.brokerName!.isNotEmpty) ...[
@@ -903,12 +901,6 @@ class _ApartmentProfileScreenState
         );
       },
     );
-  }
-
-  int _calendarDays(DateTime start, DateTime end) {
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day);
-    return endDate.difference(startDate).inDays.clamp(1, 10000);
   }
 
   String _statusLabel(String status) {

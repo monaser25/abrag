@@ -11,6 +11,7 @@ import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../settings/presentation/providers/permissions_provider.dart';
 
 class BookingListScreen extends ConsumerStatefulWidget {
@@ -142,11 +143,8 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                               (booking.brokerCommissionPercentage / 100)
                         : 0.0;
                     final netAmount = baseBookingTotal - commissionAmount;
-                    final daysCount = _calendarDays(
-                      booking.checkInDate,
-                      booking.earlyCheckoutDate ?? booking.checkOutDate,
-                    );
-                    final dailyRate = baseBookingTotal / daysCount;
+                    final daysCount = summerBookingStayDays(booking);
+                    final dailyRate = summerBookingBaseDailyRate(booking);
                     final remainingAmount =
                         (baseBookingTotal -
                                 (booking.amountPaidEgp -
@@ -297,12 +295,6 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
       default:
         return status;
     }
-  }
-
-  int _calendarDays(DateTime start, DateTime end) {
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day);
-    return endDate.difference(startDate).inDays.clamp(1, 10000);
   }
 }
 
