@@ -265,7 +265,7 @@ class GuestProfileScreen extends ConsumerWidget {
                         icon: Icons.price_change,
                         label: 'السعر اليومي',
                         value:
-                            '${summerBookingBaseDailyRate(booking).toDouble().toCurrencyFormat()} ج.م',
+                            '${summerBookingDailyRate(booking).toDouble().toCurrencyFormat()} ج.م',
                       ),
                       Divider(color: colors.border),
                       _InfoLine(

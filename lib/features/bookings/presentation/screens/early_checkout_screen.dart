@@ -89,7 +89,7 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
           final originalDays = _calendarDays(checkIn, checkOut);
           final usedDays = _calendarDays(checkIn, today).clamp(1, originalDays);
           final remainingDays = (originalDays - usedDays).clamp(0, 10000);
-          final dailyRate = summerBookingBaseDailyRate(booking);
+          final dailyRate = summerBookingDailyRate(booking);
           final brokerCommission = _commissionAmount(booking);
           final refundAmount = remainingDays > 0
               ? (dailyRate * remainingDays)

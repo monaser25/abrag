@@ -144,7 +144,7 @@ class _BookingListScreenState extends ConsumerState<BookingListScreen> {
                         : 0.0;
                     final netAmount = baseBookingTotal - commissionAmount;
                     final daysCount = summerBookingStayDays(booking);
-                    final dailyRate = summerBookingBaseDailyRate(booking);
+                    final dailyRate = summerBookingDailyRate(booking);
                     final remainingAmount =
                         (baseBookingTotal -
                                 (booking.amountPaidEgp -

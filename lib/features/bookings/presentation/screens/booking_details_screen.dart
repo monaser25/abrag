@@ -97,11 +97,9 @@ class BookingDetailsScreen extends ConsumerWidget {
           final commissionAmount = _commissionAmount(booking);
           final actualReceived = (booking.amountPaidEgp - commissionAmount)
               .clamp(0, double.infinity);
-          // السعر اليومي = سعر الإقامة الأصلية ÷ ليالي الإقامة الأصلية.
-          // كان بيقسم سعر الأصل على **كل** الليالي (الأصلية + التمديد)، فحجز
-          // ٢٤٠٠ لأربع ليالي (٦٠٠ لليلة) بعد تمديد ٦ أيام كان بيبان ٢٤٠ لليلة.
+          // السعر اليومي = الإجمالي كله ÷ كل الليالي (شوف booking_rate_utils).
           final bookingDays = summerBookingStayDays(booking);
-          final dailyRate = summerBookingBaseDailyRate(booking);
+          final dailyRate = summerBookingDailyRate(booking);
           // اللي على العميل = الإجمالي كله (شامل رسوم التمديد) ناقص المدفوع.
           final remainingAmount =
               (booking.totalPriceEgp - booking.amountPaidEgp).clamp(

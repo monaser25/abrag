@@ -1,28 +1,24 @@
 import '../database/database.dart';
 
-/// Calendar nights of the stay: checkInDate -> (earlyCheckoutDate ?? checkOutDate), minimum 1.
+/// ليالي الإقامة: من تاريخ الدخول لتاريخ الخروج (أو الخروج المبكر لو موجود).
+/// بنقارن بالتاريخ من غير الوقت لأن الدخول والخروج بيحملوا ساعة.
 int summerBookingStayDays(SummerBooking booking) {
   final checkIn = booking.checkInDate;
-  final startDate = DateTime(checkIn.year, checkIn.month, checkIn.day);
-
   final checkOut = booking.earlyCheckoutDate ?? booking.checkOutDate;
+  final startDate = DateTime(checkIn.year, checkIn.month, checkIn.day);
   final endDate = DateTime(checkOut.year, checkOut.month, checkOut.day);
-
   return endDate.difference(startDate).inDays.clamp(1, 10000);
 }
 
-/// Nights of the ORIGINAL stay, excluding extension days. Always >= 1.
-int summerBookingBaseDays(SummerBooking booking) {
-  final stayDays = summerBookingStayDays(booking);
-  return (stayDays - booking.overstayDays).clamp(1, stayDays);
-}
-
-/// Per-night price of the original stay = base total / base days.
-double summerBookingBaseDailyRate(SummerBooking booking) {
-  final baseTotal = (booking.totalPriceEgp - booking.overstayFeeEgp).clamp(
-    0.0,
-    double.infinity,
-  );
-  final baseDays = summerBookingBaseDays(booking);
-  return baseTotal / baseDays;
+/// السعر اليومي = **إجمالي الحجز كله ÷ كل الليالي**.
+///
+/// الإجمالي شامل رسوم التمديد، والليالي شاملة أيام التمديد — يعني الرقم ده
+/// متوسط اللي دفعه الضيف في الليلة. مثال شقة ١٦: ٧٤٠٠ ج.م على ١٨ ليلة = ٤١١.
+///
+/// مهم: مبنطرحش رسوم التمديد من الإجمالي. الطرح ده هو اللي كان بيخلّي كل
+/// تمديد ينزّل السعر (١٨٠٠ ÷ ١٨ = ١٠٠)، وبيطلّع سعر بالسالب لو تعديل ساب
+/// الرسوم مكانها وقلّل الإجمالي.
+double summerBookingDailyRate(SummerBooking booking) {
+  final total = booking.totalPriceEgp.clamp(0.0, double.infinity);
+  return total / summerBookingStayDays(booking);
 }

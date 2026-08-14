@@ -44,7 +44,7 @@ class _OverstayExtensionScreenState
 
   ({double dailyRate, double additionalFee, DateTime newCheckoutDate})
   _calculateExtension(SummerBooking booking) {
-    final automaticDailyRate = summerBookingBaseDailyRate(booking);
+    final automaticDailyRate = summerBookingDailyRate(booking);
     double parsedCustom = double.tryParse(_customPriceController.text) ?? 0.0;
     if (parsedCustom < 0) parsedCustom = 0.0;
 
@@ -157,7 +157,7 @@ class _OverstayExtensionScreenState
           final dailyRate = calc.dailyRate;
           final additionalFee = calc.additionalFee;
           final newCheckoutDate = calc.newCheckoutDate;
-          final automaticDailyRate = summerBookingBaseDailyRate(booking);
+          final automaticDailyRate = summerBookingDailyRate(booking);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),

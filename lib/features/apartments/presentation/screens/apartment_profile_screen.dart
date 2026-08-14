@@ -619,7 +619,7 @@ class _ApartmentProfileScreenState
                                   icon: Icons.price_change,
                                   label: 'السعر اليومي',
                                   value:
-                                      '${summerBookingBaseDailyRate(booking).toDouble().toCurrencyFormat()} ج.م',
+                                      '${summerBookingDailyRate(booking).toDouble().toCurrencyFormat()} ج.م',
                                 ),
                                 if (booking.brokerName != null &&
                                     booking.brokerName!.isNotEmpty) ...[
