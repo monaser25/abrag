@@ -733,6 +733,89 @@ void main() {
     },
   );
 
+  group('الإقفال التلقائي', () {
+    Future<String> seedStay({
+      required double totalPriceEgp,
+      required double amountPaidEgp,
+      String? apartmentId,
+    }) async {
+      final id = apartmentId ?? await seedApartment();
+      await controller.addBooking(
+        apartmentId: id,
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 8, 10, 12),
+        checkOutDate: DateTime(2026, 8, 14, 8),
+        totalPriceEgp: totalPriceEgp,
+        amountPaidEgp: amountPaidEgp,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      return (await db.select(db.summerBookings).get()).last.id;
+    }
+
+    test(
+      'closes a paid-up stay and frees the apartment for cleaning',
+      () async {
+        final apartmentId = await seedApartment();
+        await seedStay(
+          totalPriceEgp: 2000,
+          amountPaidEgp: 2000,
+          apartmentId: apartmentId,
+        );
+
+        final closed = await controller.runAutomaticCheckouts(
+          now: DateTime(2026, 8, 14, 10),
+        );
+
+        expect(closed, 1);
+        final booking = (await db.select(db.summerBookings).get()).single;
+        expect(booking.status, 'checked_out');
+        final apartment = await (db.select(
+          db.apartments,
+        )..where((t) => t.id.equals(apartmentId))).getSingle();
+        expect(apartment.cleaningStatus, 'needs_cleaning');
+      },
+    );
+
+    test('leaves a stay the guest still owes money on', () async {
+      await seedStay(totalPriceEgp: 2000, amountPaidEgp: 500);
+
+      final closed = await controller.runAutomaticCheckouts(
+        now: DateTime(2026, 8, 20),
+      );
+
+      expect(closed, 0);
+      final booking = (await db.select(db.summerBookings).get()).single;
+      expect(booking.status, isNot('checked_out'));
+    });
+
+    test('does nothing before the hour', () async {
+      await seedStay(totalPriceEgp: 2000, amountPaidEgp: 2000);
+
+      final closed = await controller.runAutomaticCheckouts(
+        now: DateTime(2026, 8, 14, 9),
+      );
+
+      expect(closed, 0);
+    });
+
+    test('running twice does not close the same stay twice', () async {
+      await seedStay(totalPriceEgp: 2000, amountPaidEgp: 2000);
+      final at = DateTime(2026, 8, 14, 11);
+
+      expect(await controller.runAutomaticCheckouts(now: at), 1);
+      expect(await controller.runAutomaticCheckouts(now: at), 0);
+
+      final logs = await (db.select(
+        db.auditLogs,
+      )..where((t) => t.action.equals('auto_checkout'))).get();
+      expect(logs, hasLength(1), reason: 'سطر واحد بس في سجل النظام');
+    });
+  });
+
   group('نقل الشقة', () {
     /// ضيف حجز ٥ ليالي بـ ٢٥٠٠ (٥٠٠ لليلة) ودفعهم كلهم.
     Future<(String, String)> seedTransferCase() async {

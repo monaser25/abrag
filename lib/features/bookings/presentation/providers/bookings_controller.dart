@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../core/utils/auto_checkout_utils.dart';
 import '../../../../core/utils/occupancy_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../apartments/presentation/providers/apartment_occupancy_rules_provider.dart';
@@ -495,6 +496,7 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     String id, {
     String cleaningStatus = 'needs_cleaning',
     String? apartmentId,
+    bool automatic = false,
   }) async {
     state = const AsyncLoading();
     try {
@@ -511,12 +513,15 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
         ),
       );
       await _auditLog.log(
-        action: 'checkout',
+        action: automatic ? 'auto_checkout' : 'checkout',
         entityType: 'summer_booking',
         entityId: id,
-        title: 'تسجيل خروج مصيف',
+        title: automatic ? 'تسجيل خروج تلقائي' : 'تسجيل خروج مصيف',
         description: booking == null
             ? 'تم تسجيل خروج حجز صيفي'
+            : automatic
+            ? 'تم تسجيل خروج ${await _bookingLabel(booking)} تلقائيًا بعد '
+                  'ميعاد الخروج'
             : 'تم تسجيل خروج ${await _bookingLabel(booking)}',
         route: '/summer_bookings/details/$id',
       );
@@ -832,6 +837,42 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     } catch (e, st) {
       state = AsyncError(e, st);
     }
+  }
+
+  /// تسجيل خروج تلقائي لكل حجز عدّى ميعاد خروجه.
+  ///
+  /// المالك بيستلم الشقة ٨ الصبح وساعات بينسى يسجّل الخروج، فالشقة بتفضل
+  /// ظاهرة مؤجرة وهي فاضية. بعد الساعة [hour] يوم الخروج التطبيق بيقفلها
+  /// لوحده ويحطها "محتاجة تنظيف".
+  ///
+  /// **بيسيب أي حجز العميل لسه عليه فيه فلوس** — الدين لازم يفضل قدام عين
+  /// المالك لحد ما يحصّله، ومينفعش الحجز يتقفل من ورا ظهره.
+  ///
+  /// بيرجّع عدد الحجوزات اللي اتقفلت.
+  Future<int> runAutomaticCheckouts({
+    DateTime? now,
+    int hour = kDefaultAutoCheckoutHour,
+  }) async {
+    final at = now ?? DateTime.now();
+    final candidates = await (_db.select(
+      _db.summerBookings,
+    )..where((t) => t.status.isNotIn(['cancelled', 'checked_out']))).get();
+
+    var closed = 0;
+    for (final booking in candidates) {
+      if (booking.syncStatus == SyncStatus.pendingDelete) continue;
+      if (booking.status == 'deleted') continue;
+      final skip = summerBookingAutoCheckoutSkipReason(booking, at, hour: hour);
+      if (skip != null) continue;
+
+      await checkoutBooking(
+        booking.id,
+        apartmentId: booking.apartmentId,
+        automatic: true,
+      );
+      closed++;
+    }
+    return closed;
   }
 
   /// نقل ضيف من شقة لشقة في نص إقامته.
