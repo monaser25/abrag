@@ -602,6 +602,8 @@ class SyncEngine {
           'national_id': item.nationalId,
           'id_front_image': uploadedIdfrontimage,
           'id_back_image': uploadedIdbackimage,
+          'transferred_from_booking_id': item.transferredFromBookingId,
+          'transferred_to_booking_id': item.transferredToBookingId,
           'created_at': item.createdAt.toUtc().toIso8601String(),
         };
 
@@ -1433,6 +1435,14 @@ class SyncEngine {
             idBackImage: row['id_back_image'] == null
                 ? const Value.absent()
                 : Value(row['id_back_image']),
+            // مش بنستخدم Value.absent() هنا: لو الرابط اتشال على السيرفر لازم
+            // يتشال محليًا كمان، مش يفضل بالقيمة القديمة.
+            transferredFromBookingId: Value(
+              row['transferred_from_booking_id'] as String?,
+            ),
+            transferredToBookingId: Value(
+              row['transferred_to_booking_id'] as String?,
+            ),
             createdAt: row['created_at'] == null
                 ? const Value.absent()
                 : Value(DateTime.parse(row['created_at'])),

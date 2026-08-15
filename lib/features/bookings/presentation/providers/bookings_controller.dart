@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
 import '../../../../core/services/audit_log_service.dart';
+import '../../../../core/utils/occupancy_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 import '../../../apartments/presentation/providers/apartment_occupancy_rules_provider.dart';
 
@@ -825,6 +826,264 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
               '${collectedNowEgp > 0 ? ' (اتحصّل $collectedNowEgp ج.م)' : ''}'
               '${remaining > 0.01 ? ' (باقي $remaining ج.م على العميل)' : ''}',
           route: '/summer_bookings/details/$id',
+        );
+      });
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  /// نقل ضيف من شقة لشقة في نص إقامته.
+  ///
+  /// الإقامة بتتقسم لحجزين: القديم بيتقفل على الليالي اللي قعدها فعلاً بسعرها،
+  /// والجديد بياخد باقي المدة في الشقة الجديدة بسعرها. الفلوس اللي دفعها
+  /// قبل كده بتترحّل مع الضيف.
+  ///
+  /// الترحيل بيتسجل كصفّين دفعة متقابلين: سالب على الحجز القديم وموجب على
+  /// الجديد بنفس الطريقة. ده بيخلي الخزنة **متتأثرش خالص** بالنقل — الفلوس
+  /// اتحصّلت مرة واحدة وفضلت في نفس الحساب — والوحيد اللي بيزوّد الخزنة هو
+  /// [collectedNowEgp] لو الشقة الجديدة أغلى ودفع الفرق.
+  ///
+  /// [refundedNowEgp] العكس: لو الشقة الجديدة أرخص ورجّعنا له فلوس.
+  Future<void> transferBooking({
+    required String id,
+    required String newApartmentId,
+    required DateTime transferDate,
+    required double newBookingTotalEgp,
+    double collectedNowEgp = 0,
+    double refundedNowEgp = 0,
+    String paymentMethod = 'cash',
+    String cleaningStatus = 'needs_cleaning',
+  }) async {
+    state = const AsyncLoading();
+    try {
+      if (collectedNowEgp < 0 || refundedNowEgp < 0) {
+        throw Exception('المبالغ لا يمكن أن تكون بالسالب');
+      }
+      if (collectedNowEgp > 0 && refundedNowEgp > 0) {
+        throw Exception('مينفعش تحصّل وترجّع فلوس في نفس النقل');
+      }
+      if (newBookingTotalEgp < 0) {
+        throw Exception('سعر الحجز الجديد لا يمكن أن يكون بالسالب');
+      }
+
+      final newBookingId = const Uuid().v4();
+      await _db.transaction(() async {
+        final old = await (_db.select(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).getSingle();
+
+        if (old.transferredToBookingId != null) {
+          throw Exception('الحجز ده اتنقل قبل كده لشقة تانية');
+        }
+        final transferDay = dateOnly(transferDate);
+        final checkInDay = dateOnly(old.checkInDate);
+        final checkOutDay = dateOnly(old.checkOutDate);
+        if (!transferDay.isAfter(checkInDay)) {
+          throw Exception(
+            'تاريخ النقل لازم يكون بعد تاريخ الدخول. لو الضيف مقعدش ولا ليلة، '
+            'عدّل الشقة في الحجز نفسه بدل النقل.',
+          );
+        }
+        if (!transferDay.isBefore(checkOutDay)) {
+          throw Exception(
+            'تاريخ النقل لازم يكون قبل تاريخ الخروج، وإلا مفيش مدة تتنقل.',
+          );
+        }
+        if (old.apartmentId == newApartmentId) {
+          throw Exception('اختار شقة غير اللي هو فيها');
+        }
+        await _occupancyRules.ensureApartmentIsFreeForPeriod(
+          apartmentId: newApartmentId,
+          checkInDate: transferDay,
+          checkOutDate: old.checkOutDate,
+        );
+
+        // سعر الليلة في الشقة القديمة من غير رسوم تمديد، عشان نحسب بيه
+        // الليالي اللي قعدها فعلاً.
+        final stayedNights = transferDay.difference(checkInDay).inDays;
+        final bookedNights = checkOutDay.difference(checkInDay).inDays;
+        final oldNightlyRate = bookedNights > 0
+            ? old.totalPriceEgp / bookedNights
+            : old.totalPriceEgp;
+        final oldNewTotal = oldNightlyRate * stayedNights;
+
+        // اللي اتحصّل فعلاً على الحجز القديم ناقص تمن الليالي اللي قعدها =
+        // الرصيد اللي بيمشي مع الضيف.
+        final carriedAmount = old.amountPaidEgp - oldNewTotal;
+        if (carriedAmount < -0.01) {
+          throw Exception(
+            'المدفوع على الحجز القديم (${old.amountPaidEgp.toStringAsFixed(0)} ج.م) '
+            'أقل من تمن الليالي اللي قعدها (${oldNewTotal.toStringAsFixed(0)} ج.م). '
+            'سجّل الباقي الأول قبل النقل.',
+          );
+        }
+
+        final now = DateTime.now();
+        final transferDayLabel = transferDay.toString().split(' ').first;
+
+        // صف سالب على القديم + صف موجب على الجديد = الخزنة متتأثرش.
+        if (carriedAmount.abs() > 0.01) {
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: id,
+                  amountEgp: -carriedAmount,
+                  paymentMethod: Value(old.paymentMethod),
+                  paymentDate: now,
+                  notes: Value(
+                    'مرحّل لحجز الشقة الجديدة (نقل بتاريخ $transferDayLabel)',
+                  ),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: now,
+                ),
+              );
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: newBookingId,
+                  amountEgp: carriedAmount,
+                  paymentMethod: Value(old.paymentMethod),
+                  paymentDate: now,
+                  notes: Value(
+                    'مرحّل من حجز الشقة القديمة (نقل بتاريخ $transferDayLabel)',
+                  ),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: now,
+                ),
+              );
+        }
+
+        if (collectedNowEgp > 0) {
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: newBookingId,
+                  amountEgp: collectedNowEgp,
+                  paymentMethod: Value(paymentMethod),
+                  paymentDate: now,
+                  notes: const Value('فرق سعر الشقة الجديدة'),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: now,
+                ),
+              );
+        }
+        if (refundedNowEgp > 0) {
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: newBookingId,
+                  amountEgp: -refundedNowEgp,
+                  paymentMethod: Value(paymentMethod),
+                  paymentDate: now,
+                  notes: const Value('مرتجع فرق سعر الشقة الجديدة'),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: now,
+                ),
+              );
+        }
+
+        // الحجز الجديد: نفس بيانات الضيف، باقي المدة، الشقة الجديدة.
+        // العمولة بتفضل على الحجز القديم لوحده — السمسار جاب الضيف مرة واحدة
+        // فمينفعش تتحسب عليه مرتين.
+        await _db
+            .into(_db.summerBookings)
+            .insert(
+              SummerBookingsCompanion.insert(
+                id: newBookingId,
+                apartmentId: newApartmentId,
+                guestName: old.guestName,
+                guestPhone: Value(old.guestPhone),
+                checkInDate: transferDay,
+                checkOutDate: old.checkOutDate,
+                status: const Value('confirmed'),
+                totalPriceEgp: newBookingTotalEgp,
+                amountPaidEgp: Value(
+                  carriedAmount + collectedNowEgp - refundedNowEgp,
+                ),
+                paymentMethod: Value(old.paymentMethod),
+                nationalId: Value(old.nationalId),
+                idFrontImage: Value(old.idFrontImage),
+                idBackImage: Value(old.idBackImage),
+                transferredFromBookingId: Value(id),
+                createdAt: now,
+                updatedAt: now,
+                syncStatus: const Value(SyncStatus.pendingInsert),
+              ),
+            );
+
+        // الحجز القديم بيتقفل على اللي قعده فعلاً.
+        await (_db.update(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).write(
+          SummerBookingsCompanion(
+            checkOutDate: Value(transferDay),
+            totalPriceEgp: Value(oldNewTotal),
+            amountPaidEgp: Value(oldNewTotal),
+            status: const Value('checked_out'),
+            transferredToBookingId: Value(newBookingId),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(now),
+          ),
+        );
+
+        await (_db.update(
+          _db.apartments,
+        )..where((t) => t.id.equals(old.apartmentId))).write(
+          ApartmentsCompanion(
+            cleaningStatus: Value(cleaningStatus),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(now),
+          ),
+        );
+
+        final newApartment = await (_db.select(
+          _db.apartments,
+        )..where((t) => t.id.equals(newApartmentId))).getSingleOrNull();
+        final newApartmentLabel = newApartment == null
+            ? 'الشقة الجديدة'
+            : 'شقة ${newApartment.apartmentNumber}';
+
+        await _auditLog.log(
+          action: 'transfer',
+          entityType: 'summer_booking',
+          entityId: id,
+          title: 'نقل ضيف لشقة تانية',
+          description:
+              'تم نقل ${await _bookingLabel(old)} إلى $newApartmentLabel بتاريخ '
+              '$transferDayLabel. '
+              'الحجز القديم اتقفل على $stayedNights ليلة بـ '
+              '${oldNewTotal.toStringAsFixed(0)} ج.م، والحجز الجديد بـ '
+              '${newBookingTotalEgp.toStringAsFixed(0)} ج.م'
+              '${carriedAmount.abs() > 0.01 ? ' (اترحّل ${carriedAmount.toStringAsFixed(0)} ج.م من المدفوع)' : ''}'
+              '${collectedNowEgp > 0 ? ' (اتحصّل فرق ${collectedNowEgp.toStringAsFixed(0)} ج.م)' : ''}'
+              '${refundedNowEgp > 0 ? ' (اترجّع ${refundedNowEgp.toStringAsFixed(0)} ج.م)' : ''}',
+          route: '/summer_bookings/details/$newBookingId',
+          oldValues: {
+            'apartmentId': old.apartmentId,
+            'checkOutDate': old.checkOutDate.toIso8601String(),
+            'totalPriceEgp': old.totalPriceEgp,
+            'amountPaidEgp': old.amountPaidEgp,
+          },
+          newValues: {
+            'newBookingId': newBookingId,
+            'newApartmentId': newApartmentId,
+            'transferDate': transferDay.toIso8601String(),
+            'oldBookingTotalEgp': oldNewTotal,
+            'newBookingTotalEgp': newBookingTotalEgp,
+            'carriedAmountEgp': carriedAmount,
+            'collectedNowEgp': collectedNowEgp,
+            'refundedNowEgp': refundedNowEgp,
+          },
         );
       });
       state = const AsyncData(null);

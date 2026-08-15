@@ -2408,6 +2408,28 @@ class $SummerBookingsTable extends SummerBookings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _transferredFromBookingIdMeta =
+      const VerificationMeta('transferredFromBookingId');
+  @override
+  late final GeneratedColumn<String> transferredFromBookingId =
+      GeneratedColumn<String>(
+        'transferred_from_booking_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _transferredToBookingIdMeta =
+      const VerificationMeta('transferredToBookingId');
+  @override
+  late final GeneratedColumn<String> transferredToBookingId =
+      GeneratedColumn<String>(
+        'transferred_to_booking_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2459,6 +2481,8 @@ class $SummerBookingsTable extends SummerBookings
     nationalId,
     idFrontImage,
     idBackImage,
+    transferredFromBookingId,
+    transferredToBookingId,
     createdAt,
     updatedAt,
   ];
@@ -2696,6 +2720,24 @@ class $SummerBookingsTable extends SummerBookings
         ),
       );
     }
+    if (data.containsKey('transferred_from_booking_id')) {
+      context.handle(
+        _transferredFromBookingIdMeta,
+        transferredFromBookingId.isAcceptableOrUnknown(
+          data['transferred_from_booking_id']!,
+          _transferredFromBookingIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('transferred_to_booking_id')) {
+      context.handle(
+        _transferredToBookingIdMeta,
+        transferredToBookingId.isAcceptableOrUnknown(
+          data['transferred_to_booking_id']!,
+          _transferredToBookingIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2831,6 +2873,14 @@ class $SummerBookingsTable extends SummerBookings
         DriftSqlType.string,
         data['${effectivePrefix}id_back_image'],
       ),
+      transferredFromBookingId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transferred_from_booking_id'],
+      ),
+      transferredToBookingId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transferred_to_booking_id'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2879,6 +2929,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
   final String? nationalId;
   final String? idFrontImage;
   final String? idBackImage;
+
+  /// نقل الشقة: الضيف بيتنقل من شقة لشقة في نص إقامته، فالإقامة بتتقسم
+  /// لحجزين — القديم بيتقفل على الليالي اللي قعدها فعلاً، والجديد بياخد باقي
+  /// المدة. العمودين دول بيربطوا الاتنين ببعض في الاتجاهين.
+  final String? transferredFromBookingId;
+  final String? transferredToBookingId;
   final DateTime createdAt;
   final DateTime updatedAt;
   const SummerBooking({
@@ -2909,6 +2965,8 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     this.nationalId,
     this.idFrontImage,
     this.idBackImage,
+    this.transferredFromBookingId,
+    this.transferredToBookingId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -2974,6 +3032,16 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     if (!nullToAbsent || idBackImage != null) {
       map['id_back_image'] = Variable<String>(idBackImage);
     }
+    if (!nullToAbsent || transferredFromBookingId != null) {
+      map['transferred_from_booking_id'] = Variable<String>(
+        transferredFromBookingId,
+      );
+    }
+    if (!nullToAbsent || transferredToBookingId != null) {
+      map['transferred_to_booking_id'] = Variable<String>(
+        transferredToBookingId,
+      );
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -3025,6 +3093,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       idBackImage: idBackImage == null && nullToAbsent
           ? const Value.absent()
           : Value(idBackImage),
+      transferredFromBookingId: transferredFromBookingId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transferredFromBookingId),
+      transferredToBookingId: transferredToBookingId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transferredToBookingId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -3083,6 +3157,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       nationalId: serializer.fromJson<String?>(json['nationalId']),
       idFrontImage: serializer.fromJson<String?>(json['idFrontImage']),
       idBackImage: serializer.fromJson<String?>(json['idBackImage']),
+      transferredFromBookingId: serializer.fromJson<String?>(
+        json['transferredFromBookingId'],
+      ),
+      transferredToBookingId: serializer.fromJson<String?>(
+        json['transferredToBookingId'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -3132,6 +3212,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       'nationalId': serializer.toJson<String?>(nationalId),
       'idFrontImage': serializer.toJson<String?>(idFrontImage),
       'idBackImage': serializer.toJson<String?>(idBackImage),
+      'transferredFromBookingId': serializer.toJson<String?>(
+        transferredFromBookingId,
+      ),
+      'transferredToBookingId': serializer.toJson<String?>(
+        transferredToBookingId,
+      ),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -3165,6 +3251,8 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     Value<String?> nationalId = const Value.absent(),
     Value<String?> idFrontImage = const Value.absent(),
     Value<String?> idBackImage = const Value.absent(),
+    Value<String?> transferredFromBookingId = const Value.absent(),
+    Value<String?> transferredToBookingId = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => SummerBooking(
@@ -3204,6 +3292,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     nationalId: nationalId.present ? nationalId.value : this.nationalId,
     idFrontImage: idFrontImage.present ? idFrontImage.value : this.idFrontImage,
     idBackImage: idBackImage.present ? idBackImage.value : this.idBackImage,
+    transferredFromBookingId: transferredFromBookingId.present
+        ? transferredFromBookingId.value
+        : this.transferredFromBookingId,
+    transferredToBookingId: transferredToBookingId.present
+        ? transferredToBookingId.value
+        : this.transferredToBookingId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -3284,6 +3378,12 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
       idBackImage: data.idBackImage.present
           ? data.idBackImage.value
           : this.idBackImage,
+      transferredFromBookingId: data.transferredFromBookingId.present
+          ? data.transferredFromBookingId.value
+          : this.transferredFromBookingId,
+      transferredToBookingId: data.transferredToBookingId.present
+          ? data.transferredToBookingId.value
+          : this.transferredToBookingId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -3323,6 +3423,8 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           ..write('nationalId: $nationalId, ')
           ..write('idFrontImage: $idFrontImage, ')
           ..write('idBackImage: $idBackImage, ')
+          ..write('transferredFromBookingId: $transferredFromBookingId, ')
+          ..write('transferredToBookingId: $transferredToBookingId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3358,6 +3460,8 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
     nationalId,
     idFrontImage,
     idBackImage,
+    transferredFromBookingId,
+    transferredToBookingId,
     createdAt,
     updatedAt,
   ]);
@@ -3395,6 +3499,8 @@ class SummerBooking extends DataClass implements Insertable<SummerBooking> {
           other.nationalId == this.nationalId &&
           other.idFrontImage == this.idFrontImage &&
           other.idBackImage == this.idBackImage &&
+          other.transferredFromBookingId == this.transferredFromBookingId &&
+          other.transferredToBookingId == this.transferredToBookingId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -3427,6 +3533,8 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
   final Value<String?> nationalId;
   final Value<String?> idFrontImage;
   final Value<String?> idBackImage;
+  final Value<String?> transferredFromBookingId;
+  final Value<String?> transferredToBookingId;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -3458,6 +3566,8 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     this.nationalId = const Value.absent(),
     this.idFrontImage = const Value.absent(),
     this.idBackImage = const Value.absent(),
+    this.transferredFromBookingId = const Value.absent(),
+    this.transferredToBookingId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3490,6 +3600,8 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     this.nationalId = const Value.absent(),
     this.idFrontImage = const Value.absent(),
     this.idBackImage = const Value.absent(),
+    this.transferredFromBookingId = const Value.absent(),
+    this.transferredToBookingId = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -3529,6 +3641,8 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     Expression<String>? nationalId,
     Expression<String>? idFrontImage,
     Expression<String>? idBackImage,
+    Expression<String>? transferredFromBookingId,
+    Expression<String>? transferredToBookingId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -3568,6 +3682,10 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
       if (nationalId != null) 'national_id': nationalId,
       if (idFrontImage != null) 'id_front_image': idFrontImage,
       if (idBackImage != null) 'id_back_image': idBackImage,
+      if (transferredFromBookingId != null)
+        'transferred_from_booking_id': transferredFromBookingId,
+      if (transferredToBookingId != null)
+        'transferred_to_booking_id': transferredToBookingId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3602,6 +3720,8 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     Value<String?>? nationalId,
     Value<String?>? idFrontImage,
     Value<String?>? idBackImage,
+    Value<String?>? transferredFromBookingId,
+    Value<String?>? transferredToBookingId,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -3642,6 +3762,10 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
       nationalId: nationalId ?? this.nationalId,
       idFrontImage: idFrontImage ?? this.idFrontImage,
       idBackImage: idBackImage ?? this.idBackImage,
+      transferredFromBookingId:
+          transferredFromBookingId ?? this.transferredFromBookingId,
+      transferredToBookingId:
+          transferredToBookingId ?? this.transferredToBookingId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -3748,6 +3872,16 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
     if (idBackImage.present) {
       map['id_back_image'] = Variable<String>(idBackImage.value);
     }
+    if (transferredFromBookingId.present) {
+      map['transferred_from_booking_id'] = Variable<String>(
+        transferredFromBookingId.value,
+      );
+    }
+    if (transferredToBookingId.present) {
+      map['transferred_to_booking_id'] = Variable<String>(
+        transferredToBookingId.value,
+      );
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3794,6 +3928,8 @@ class SummerBookingsCompanion extends UpdateCompanion<SummerBooking> {
           ..write('nationalId: $nationalId, ')
           ..write('idFrontImage: $idFrontImage, ')
           ..write('idBackImage: $idBackImage, ')
+          ..write('transferredFromBookingId: $transferredFromBookingId, ')
+          ..write('transferredToBookingId: $transferredToBookingId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -15071,6 +15207,8 @@ typedef $$SummerBookingsTableCreateCompanionBuilder =
       Value<String?> nationalId,
       Value<String?> idFrontImage,
       Value<String?> idBackImage,
+      Value<String?> transferredFromBookingId,
+      Value<String?> transferredToBookingId,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -15104,6 +15242,8 @@ typedef $$SummerBookingsTableUpdateCompanionBuilder =
       Value<String?> nationalId,
       Value<String?> idFrontImage,
       Value<String?> idBackImage,
+      Value<String?> transferredFromBookingId,
+      Value<String?> transferredToBookingId,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -15299,6 +15439,16 @@ class $$SummerBookingsTableFilterComposer
 
   ColumnFilters<String> get idBackImage => $composableBuilder(
     column: $table.idBackImage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transferredFromBookingId => $composableBuilder(
+    column: $table.transferredFromBookingId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transferredToBookingId => $composableBuilder(
+    column: $table.transferredToBookingId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15502,6 +15652,16 @@ class $$SummerBookingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get transferredFromBookingId => $composableBuilder(
+    column: $table.transferredFromBookingId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transferredToBookingId => $composableBuilder(
+    column: $table.transferredToBookingId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -15670,6 +15830,16 @@ class $$SummerBookingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get transferredFromBookingId => $composableBuilder(
+    column: $table.transferredFromBookingId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transferredToBookingId => $composableBuilder(
+    column: $table.transferredToBookingId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -15785,6 +15955,8 @@ class $$SummerBookingsTableTableManager
                 Value<String?> nationalId = const Value.absent(),
                 Value<String?> idFrontImage = const Value.absent(),
                 Value<String?> idBackImage = const Value.absent(),
+                Value<String?> transferredFromBookingId = const Value.absent(),
+                Value<String?> transferredToBookingId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15818,6 +15990,8 @@ class $$SummerBookingsTableTableManager
                 nationalId: nationalId,
                 idFrontImage: idFrontImage,
                 idBackImage: idBackImage,
+                transferredFromBookingId: transferredFromBookingId,
+                transferredToBookingId: transferredToBookingId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -15854,6 +16028,8 @@ class $$SummerBookingsTableTableManager
                 Value<String?> nationalId = const Value.absent(),
                 Value<String?> idFrontImage = const Value.absent(),
                 Value<String?> idBackImage = const Value.absent(),
+                Value<String?> transferredFromBookingId = const Value.absent(),
+                Value<String?> transferredToBookingId = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -15887,6 +16063,8 @@ class $$SummerBookingsTableTableManager
                 nationalId: nationalId,
                 idFrontImage: idFrontImage,
                 idBackImage: idBackImage,
+                transferredFromBookingId: transferredFromBookingId,
+                transferredToBookingId: transferredToBookingId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

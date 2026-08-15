@@ -11,6 +11,7 @@ import '../../features/bookings/presentation/screens/calendar_view_screen.dart';
 import '../../features/bookings/presentation/screens/booking_list_screen.dart';
 import '../../features/bookings/presentation/screens/booking_details_screen.dart';
 import '../../features/bookings/presentation/screens/add_summer_booking_screen.dart';
+import '../../features/bookings/presentation/screens/apartment_transfer_screen.dart';
 import '../../features/bookings/presentation/screens/early_checkout_screen.dart';
 import '../../features/bookings/presentation/screens/overstay_extension_screen.dart';
 import '../../features/bookings/presentation/screens/guest_profile_screen.dart';
@@ -218,6 +219,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'overstay/:id',
                 builder: (context, state) => OverstayExtensionScreen(
+                  bookingId: state.pathParameters['id']!,
+                ),
+              ),
+              GoRoute(
+                path: 'transfer/:id',
+                builder: (context, state) => ApartmentTransferScreen(
                   bookingId: state.pathParameters['id']!,
                 ),
               ),

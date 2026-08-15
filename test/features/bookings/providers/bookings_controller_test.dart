@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show AsyncError;
 import 'package:abrag/core/database/database.dart';
 import 'package:abrag/core/database/tables.dart';
+import 'package:abrag/core/utils/summer_booking_payment_utils.dart';
 import 'package:abrag/features/bookings/presentation/providers/bookings_controller.dart';
 
 void main() {
@@ -731,4 +732,235 @@ void main() {
       expect(unchanged.totalPriceEgp, 5000);
     },
   );
+
+  group('نقل الشقة', () {
+    /// ضيف حجز ٥ ليالي بـ ٢٥٠٠ (٥٠٠ لليلة) ودفعهم كلهم.
+    Future<(String, String)> seedTransferCase() async {
+      final apartmentIds = await seedApartments(2);
+      await controller.addBooking(
+        apartmentId: apartmentIds[0],
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 7, 1, 12),
+        checkOutDate: DateTime(2026, 7, 6, 8),
+        totalPriceEgp: 2500,
+        amountPaidEgp: 2500,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      final booking = (await db.select(db.summerBookings).get()).single;
+      return (booking.id, apartmentIds[1]);
+    }
+
+    Future<SummerBooking> fetch(String id) => (db.select(
+      db.summerBookings,
+    )..where((t) => t.id.equals(id))).getSingle();
+
+    /// النقدي في الخزنة محسوب بنفس منطق التطبيق بالظبط: صفوف الدفعات زائد
+    /// الباقي المنسوب لطريقة دفع الحجز.
+    Future<double> cashInTreasury() async {
+      final payments = indexActiveBookingPayments(
+        await db.select(db.bookingPayments).get(),
+      );
+      var cash = 0.0;
+      for (final booking in await db.select(db.summerBookings).get()) {
+        final breakdown = summerBookingPaymentBreakdown(
+          booking,
+          payments[booking.id] ?? const <BookingPayment>[],
+        );
+        cash += breakdown['cash'] ?? 0;
+      }
+      return cash;
+    }
+
+    test('splits the stay and carries the money across', () async {
+      final (oldId, newApartmentId) = await seedTransferCase();
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: newApartmentId,
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 2800,
+        collectedNowEgp: 800,
+        paymentMethod: 'cash',
+      );
+      expect(controller.state, isNot(isA<AsyncError>()));
+
+      final bookings = await db.select(db.summerBookings).get();
+      expect(bookings, hasLength(2));
+      final old = bookings.firstWhere((b) => b.id == oldId);
+      final fresh = bookings.firstWhere((b) => b.id != oldId);
+
+      // القديم اتقفل على ليلة واحدة بسعرها.
+      expect(old.checkOutDate, DateTime(2026, 7, 2));
+      expect(old.totalPriceEgp, 500);
+      expect(old.amountPaidEgp, 500);
+      expect(old.status, 'checked_out');
+
+      // والجديد أخد باقي المدة كاملة، مدفوعة بالكامل.
+      expect(fresh.apartmentId, newApartmentId);
+      expect(fresh.checkInDate, DateTime(2026, 7, 2));
+      expect(fresh.checkOutDate, DateTime(2026, 7, 6, 8));
+      expect(fresh.totalPriceEgp, 2800);
+      expect(fresh.amountPaidEgp, 2800);
+      expect(fresh.guestName, 'أحمد');
+
+      expect(old.transferredToBookingId, fresh.id);
+      expect(fresh.transferredFromBookingId, oldId);
+    });
+
+    test('the treasury only moves by what was actually collected', () async {
+      final (oldId, newApartmentId) = await seedTransferCase();
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: newApartmentId,
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 2800,
+        collectedNowEgp: 800,
+        paymentMethod: 'cash',
+      );
+
+      // الخزنة زي ما التطبيق بيحسبها: ٢٥٠٠ اللي اتحصلت الأول + ٨٠٠ الفرق.
+      // صفّي الترحيل (سالب على القديم وموجب على الجديد) بيلغوا بعض، فالنقل
+      // نفسه مبيخلقش ولا بيمسح مليم.
+      expect(await cashInTreasury(), closeTo(3300, 0.001));
+    });
+
+    test('a cheaper apartment refunds the difference', () async {
+      final (oldId, newApartmentId) = await seedTransferCase();
+
+      // ليلة بـ ٥٠٠، وباقي ٤ ليالي بـ ١٢٠٠ بس ← يترجع له ٨٠٠.
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: newApartmentId,
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 1200,
+        refundedNowEgp: 800,
+        paymentMethod: 'cash',
+      );
+      expect(controller.state, isNot(isA<AsyncError>()));
+
+      final fresh = (await db.select(db.summerBookings).get()).firstWhere(
+        (b) => b.id != oldId,
+      );
+      expect(fresh.totalPriceEgp, 1200);
+      expect(fresh.amountPaidEgp, 1200);
+
+      expect(
+        await cashInTreasury(),
+        closeTo(1700, 0.001),
+        reason: '٢٥٠٠ اتحصلت ناقص ٨٠٠ رجعت',
+      );
+    });
+
+    test('refuses a transfer date outside the stay', () async {
+      final (oldId, newApartmentId) = await seedTransferCase();
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: newApartmentId,
+        transferDate: DateTime(2026, 7, 6),
+        newBookingTotalEgp: 1000,
+      );
+      expect(controller.state, isA<AsyncError>());
+      expect(await db.select(db.summerBookings).get(), hasLength(1));
+    });
+
+    test('refuses to transfer into an occupied apartment', () async {
+      final (oldId, newApartmentId) = await seedTransferCase();
+      await controller.addBooking(
+        apartmentId: newApartmentId,
+        guestName: 'سالم',
+        guestPhone: '01222222222',
+        checkInDate: DateTime(2026, 7, 3, 12),
+        checkOutDate: DateTime(2026, 7, 8, 8),
+        totalPriceEgp: 3000,
+        amountPaidEgp: 3000,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      expect(await db.select(db.summerBookings).get(), hasLength(2));
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: newApartmentId,
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 2800,
+      );
+      expect(controller.state, isA<AsyncError>());
+
+      // النقل اترفض بالكامل — لا حجز جديد ولا الحجز القديم اتغير.
+      expect(await db.select(db.summerBookings).get(), hasLength(2));
+      final old = await fetch(oldId);
+      expect(old.totalPriceEgp, 2500);
+      expect(old.transferredToBookingId, null);
+    });
+
+    test('refuses a second transfer of the same booking', () async {
+      final apartmentIds = await seedApartments(3);
+      await controller.addBooking(
+        apartmentId: apartmentIds[0],
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 7, 1, 12),
+        checkOutDate: DateTime(2026, 7, 6, 8),
+        totalPriceEgp: 2500,
+        amountPaidEgp: 2500,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      final oldId = (await db.select(db.summerBookings).get()).single.id;
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: apartmentIds[1],
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 2000,
+      );
+      expect(controller.state, isNot(isA<AsyncError>()));
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: apartmentIds[2],
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 2000,
+      );
+      expect(controller.state, isA<AsyncError>());
+      expect(await db.select(db.summerBookings).get(), hasLength(2));
+    });
+
+    test('refuses when the nights stayed are not paid for', () async {
+      final apartmentIds = await seedApartments(2);
+      await controller.addBooking(
+        apartmentId: apartmentIds[0],
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 7, 1, 12),
+        checkOutDate: DateTime(2026, 7, 6, 8),
+        totalPriceEgp: 2500,
+        amountPaidEgp: 300, // أقل من تمن الليلة الواحدة (٥٠٠)
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      final oldId = (await db.select(db.summerBookings).get()).single.id;
+
+      await controller.transferBooking(
+        id: oldId,
+        newApartmentId: apartmentIds[1],
+        transferDate: DateTime(2026, 7, 2),
+        newBookingTotalEgp: 2800,
+      );
+      expect(controller.state, isA<AsyncError>());
+      expect(await db.select(db.summerBookings).get(), hasLength(1));
+    });
+  });
 }

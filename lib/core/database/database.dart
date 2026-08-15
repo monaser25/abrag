@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration {
@@ -236,6 +236,16 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(
             summerBookings,
             summerBookings.brokerCommissionPaidInstapayEgp,
+          );
+        }
+        if (from < 24) {
+          await m.addColumn(
+            summerBookings,
+            summerBookings.transferredFromBookingId,
+          );
+          await m.addColumn(
+            summerBookings,
+            summerBookings.transferredToBookingId,
           );
         }
       },

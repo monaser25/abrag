@@ -164,6 +164,16 @@ class BookingDetailsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
               ],
+              if (booking.transferredToBookingId != null ||
+                  booking.transferredFromBookingId != null) ...[
+                _TransferBanner(
+                  isSource: booking.transferredToBookingId != null,
+                  otherBookingId:
+                      booking.transferredToBookingId ??
+                      booking.transferredFromBookingId!,
+                ),
+                const SizedBox(height: 16),
+              ],
               _buildSection(
                 context,
                 title: 'معلومات الضيف',
@@ -535,6 +545,17 @@ class BookingDetailsScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      context.push('/summer_bookings/transfer/$bookingId');
+                    },
+                    icon: const Icon(Icons.swap_horiz, size: 18),
+                    label: const Text('نقل الشقة'),
+                  ),
                 ),
               ] else if (booking.status == 'checked_out' && !isViewer) ...[
                 ElevatedButton.icon(
@@ -1001,6 +1022,48 @@ class _MissingImageBox extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// شريط بيربط نص الإقامة التاني لما الضيف يتنقل من شقة لشقة.
+class _TransferBanner extends ConsumerWidget {
+  /// `true` لو ده الحجز اللي اتنقل **منه** (الشقة القديمة).
+  final bool isSource;
+  final String otherBookingId;
+
+  const _TransferBanner({required this.isSource, required this.otherBookingId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apartments = ref.watch(apartmentsProvider).value ?? const [];
+    final other = ref
+        .watch(allSummerBookingsProvider)
+        .value
+        ?.where((b) => b.id == otherBookingId)
+        .firstOrNull;
+    final apartmentNumber = other == null
+        ? null
+        : apartments
+              .where((a) => a.id == other.apartmentId)
+              .firstOrNull
+              ?.apartmentNumber;
+    final label = apartmentNumber == null
+        ? (isSource ? 'الشقة الجديدة' : 'الشقة القديمة')
+        : 'شقة $apartmentNumber';
+
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.swap_horiz),
+        title: Text(isSource ? 'الضيف اتنقل لـ $label' : 'الضيف جه من $label'),
+        subtitle: Text(
+          isSource
+              ? 'ده نص الإقامة الأول. اضغط تشوف باقي المدة.'
+              : 'ده نص الإقامة التاني. اضغط تشوف الحجز الأصلي.',
+        ),
+        trailing: const Icon(Icons.chevron_left),
+        onTap: () => context.push('/summer_bookings/details/$otherBookingId'),
       ),
     );
   }
