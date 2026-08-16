@@ -365,6 +365,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                   earlyCheckoutBookingId:
                       state.uri.queryParameters['earlyCheckoutBookingId'],
                   newCheckoutDate: state.uri.queryParameters['newCheckoutDate'],
+                  refundAmount: state.uri.queryParameters['refundAmount'],
+                  refundMethod: state.uri.queryParameters['refundMethod'],
                 ),
               ),
             ],

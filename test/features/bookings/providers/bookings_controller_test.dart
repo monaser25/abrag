@@ -733,6 +733,96 @@ void main() {
     },
   );
 
+  group('الخروج المبكر', () {
+    Future<String> seedPaidStay() async {
+      final apartmentId = await seedApartment();
+      await controller.addBooking(
+        apartmentId: apartmentId,
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 8, 2, 12),
+        checkOutDate: DateTime(2026, 8, 20, 8),
+        totalPriceEgp: 7400,
+        amountPaidEgp: 7400,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      return (await db.select(db.summerBookings).get()).single.id;
+    }
+
+    test('a refund leaves the treasury and the booking total', () async {
+      final id = await seedPaidStay();
+
+      await controller.earlyCheckoutBooking(
+        id: id,
+        newCheckoutDate: DateTime(2026, 8, 16),
+        refundAmountEgp: 1444,
+        paymentMethod: 'cash',
+      );
+      expect(controller.state, isNot(isA<AsyncError>()));
+
+      final booking = (await db.select(db.summerBookings).get()).single;
+      expect(booking.status, 'checked_out');
+      expect(booking.earlyCheckoutDate, DateTime(2026, 8, 16));
+      // اللي المالك مسكه فعلاً، مش اللي اتحجز.
+      expect(booking.totalPriceEgp, closeTo(5956, 0.001));
+      expect(booking.amountPaidEgp, closeTo(5956, 0.001));
+
+      // وصف دفعة بالسالب عشان الخزنة تنزل.
+      final payments = await db.select(db.bookingPayments).get();
+      final refunds = payments.where((p) => p.amountEgp < 0).toList();
+      expect(refunds, hasLength(1));
+      expect(refunds.single.amountEgp, closeTo(-1444, 0.001));
+      expect(refunds.single.paymentMethod, 'cash');
+    });
+
+    test('no refund leaves the money exactly as it was', () async {
+      final id = await seedPaidStay();
+
+      await controller.earlyCheckoutBooking(
+        id: id,
+        newCheckoutDate: DateTime(2026, 8, 16),
+      );
+
+      final booking = (await db.select(db.summerBookings).get()).single;
+      expect(booking.status, 'checked_out');
+      expect(booking.totalPriceEgp, 7400);
+      expect(booking.amountPaidEgp, 7400);
+      expect(await db.select(db.bookingPayments).get(), isEmpty);
+    });
+
+    test('refuses a refund bigger than what the guest paid', () async {
+      final apartmentId = await seedApartment();
+      await controller.addBooking(
+        apartmentId: apartmentId,
+        guestName: 'أحمد',
+        guestPhone: '01000000000',
+        checkInDate: DateTime(2026, 8, 2, 12),
+        checkOutDate: DateTime(2026, 8, 20, 8),
+        totalPriceEgp: 7400,
+        amountPaidEgp: 1000,
+        paymentMethod: 'cash',
+        brokerCommissionType: 'none',
+        brokerCommissionFixedEgp: 0,
+        brokerCommissionPercentage: 10,
+      );
+      final id = (await db.select(db.summerBookings).get()).single.id;
+
+      await controller.earlyCheckoutBooking(
+        id: id,
+        newCheckoutDate: DateTime(2026, 8, 16),
+        refundAmountEgp: 5000,
+      );
+
+      expect(controller.state, isA<AsyncError>());
+      final booking = (await db.select(db.summerBookings).get()).single;
+      expect(booking.status, isNot('checked_out'));
+      expect(booking.amountPaidEgp, 1000);
+    });
+  });
+
   group('الإقفال التلقائي', () {
     Future<String> seedStay({
       required double totalPriceEgp,

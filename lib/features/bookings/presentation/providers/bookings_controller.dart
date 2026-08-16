@@ -729,41 +729,112 @@ class BookingsController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  /// خروج مبكر، والفلوس اللي رجعت للعميل بتتسجل معاه.
+  ///
+  /// قبل كده الشاشة كانت بتحسب مبلغ الاسترداد وتوريه وتخلّي المالك يعدّله،
+  /// وبعدين تقفل الحجز **من غير ما تسجّله في أي حتة** — فالخزنة والتقارير
+  /// تفضل شايفة الفلوس كإيراد وهي راجعة لجيب العميل.
+  ///
+  /// [refundAmountEgp] بيتسجّل كصف دفعة بالسالب، وبيتخصم من المدفوع ومن
+  /// إجمالي الحجز — يعني الحجز بيفضل مقفول (المدفوع = الإجمالي) والإيراد
+  /// بيبقى اللي المالك مسكه فعلاً.
   Future<void> earlyCheckoutBooking({
     required String id,
     required DateTime newCheckoutDate,
+    double refundAmountEgp = 0,
+    String paymentMethod = 'cash',
   }) async {
     state = const AsyncLoading();
     try {
-      final booking = await (_db.select(
-        _db.summerBookings,
-      )..where((t) => t.id.equals(id))).getSingleOrNull();
-      await (_db.update(
-        _db.summerBookings,
-      )..where((t) => t.id.equals(id))).write(
-        SummerBookingsCompanion(
-          status: const Value('checked_out'),
-          earlyCheckoutDate: Value(newCheckoutDate),
-          syncStatus: const Value(SyncStatus.pendingUpdate),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
-      final checkoutDay = newCheckoutDate.toLocal().toString().split(' ').first;
-      await _auditLog.log(
-        action: 'early_checkout',
-        entityType: 'summer_booking',
-        entityId: id,
-        title: 'خروج مبكر',
-        description: booking == null
-            ? 'تم تسجيل خروج مبكر بتاريخ $checkoutDay'
-            : 'تم تسجيل خروج مبكر بتاريخ $checkoutDay — ${await _bookingLabel(booking)}',
-        route: '/summer_bookings/details/$id',
-      );
+      if (refundAmountEgp < 0) {
+        throw Exception('مبلغ الاسترداد لا يمكن أن يكون بالسالب');
+      }
+      await _db.transaction(() async {
+        final booking = await (_db.select(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).getSingle();
+
+        if (refundAmountEgp > booking.amountPaidEgp + 0.01) {
+          throw Exception(
+            'مبلغ الاسترداد (${refundAmountEgp.toStringAsFixed(0)} ج.م) أكبر من '
+            'المدفوع على الحجز (${booking.amountPaidEgp.toStringAsFixed(0)} ج.م)',
+          );
+        }
+
+        final now = DateTime.now();
+        if (refundAmountEgp > 0.01) {
+          await _db
+              .into(_db.bookingPayments)
+              .insert(
+                BookingPaymentsCompanion.insert(
+                  id: const Uuid().v4(),
+                  bookingId: id,
+                  amountEgp: -refundAmountEgp,
+                  paymentMethod: Value(paymentMethod),
+                  paymentDate: now,
+                  notes: const Value('مرتجع خروج مبكر'),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: now,
+                ),
+              );
+        }
+
+        await (_db.update(
+          _db.summerBookings,
+        )..where((t) => t.id.equals(id))).write(
+          SummerBookingsCompanion(
+            status: const Value('checked_out'),
+            earlyCheckoutDate: Value(newCheckoutDate),
+            totalPriceEgp: Value(
+              (booking.totalPriceEgp - refundAmountEgp).clamp(
+                0,
+                double.infinity,
+              ),
+            ),
+            amountPaidEgp: Value(
+              (booking.amountPaidEgp - refundAmountEgp).clamp(
+                0,
+                double.infinity,
+              ),
+            ),
+            syncStatus: const Value(SyncStatus.pendingUpdate),
+            updatedAt: Value(now),
+          ),
+        );
+
+        final checkoutDay = newCheckoutDate.toLocal().toString().split(' ')[0];
+        await _auditLog.log(
+          action: 'early_checkout',
+          entityType: 'summer_booking',
+          entityId: id,
+          title: 'خروج مبكر',
+          description:
+              'تم تسجيل خروج مبكر بتاريخ $checkoutDay — '
+              '${await _bookingLabel(booking)}'
+              '${refundAmountEgp > 0.01 ? ' (اترجّع للعميل ${refundAmountEgp.toStringAsFixed(0)} ج.م ${_methodLabel(paymentMethod)})' : ' (من غير استرداد)'}',
+          route: '/summer_bookings/details/$id',
+          oldValues: {
+            'totalPriceEgp': booking.totalPriceEgp,
+            'amountPaidEgp': booking.amountPaidEgp,
+          },
+          newValues: {
+            'earlyCheckoutDate': newCheckoutDate.toIso8601String(),
+            'refundAmountEgp': refundAmountEgp,
+            'paymentMethod': paymentMethod,
+          },
+        );
+      });
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
   }
+
+  static String _methodLabel(String method) => switch (method) {
+    'vodafone_cash' => 'فودافون كاش',
+    'instapay' => 'إنستا باي',
+    _ => 'نقدي',
+  };
 
   /// تمديد إقامة. رسوم التمديد بتتضاف لإجمالي الحجز (اللي العميل عليه)، ومش
   /// بتتحسب مدفوعة إلا لو اتحصّلت فعلاً.

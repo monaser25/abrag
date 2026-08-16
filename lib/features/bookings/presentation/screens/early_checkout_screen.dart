@@ -23,6 +23,9 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
   final _refundController = TextEditingController();
   bool _customRefund = false;
   bool _noRefund = false;
+  String _refundMethod = 'cash';
+
+  static const _methods = ['cash', 'vodafone_cash', 'instapay'];
 
   @override
   void dispose() {
@@ -34,6 +37,28 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
     final startDate = DateTime(start.year, start.month, start.day);
     final endDate = DateTime(end.year, end.month, end.day);
     return endDate.difference(startDate).inDays.clamp(1, 10000);
+  }
+
+  /// المبلغ اللي هيترجع فعلاً — نفس اللي الكارت بيعرضه بالظبط.
+  double _effectiveRefund(dynamic booking) {
+    if (_noRefund) return 0;
+    if (_customRefund) {
+      final typed = double.tryParse(_refundController.text) ?? 0;
+      return typed < 0 ? 0 : typed;
+    }
+    final today = DateTime.now();
+    final originalDays = _calendarDays(
+      booking.checkInDate,
+      booking.checkOutDate,
+    );
+    final usedDays = _calendarDays(
+      booking.checkInDate,
+      today,
+    ).clamp(1, originalDays);
+    final remainingDays = (originalDays - usedDays).clamp(0, 10000);
+    final refund = summerBookingDailyRate(booking) * remainingDays;
+    final commission = _commissionAmount(booking);
+    return refund > commission ? refund - commission : 0;
   }
 
   double _commissionAmount(dynamic booking) {
@@ -240,6 +265,21 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ],
+                    if (!_noRefund) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'رجّعت الفلوس منين؟',
+                        style: AppTextStyles.label.copyWith(color: colors.ink2),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedTabs(
+                        labels: const ['نقدي', 'فودافون كاش', 'إنستا باي'],
+                        index: _methods.indexOf(_refundMethod).clamp(0, 2),
+                        onChanged: (val) =>
+                            setState(() => _refundMethod = _methods[val]),
                       ),
                     ],
                   ],
@@ -286,6 +326,10 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                                 'apartmentId': booking.apartmentId,
                                 'earlyCheckoutBookingId': booking.id,
                                 'newCheckoutDate': today.toIso8601String(),
+                                'refundAmount': _effectiveRefund(
+                                  booking,
+                                ).toStringAsFixed(2),
+                                'refundMethod': _refundMethod,
                               },
                             ).toString(),
                           );
