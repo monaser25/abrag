@@ -248,8 +248,7 @@ class _HeaderCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       dateRange,
-                      style:
-                          AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                      style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
                     ),
                   ],
                 ),
@@ -348,7 +347,10 @@ class _MiniTotal extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
+          ),
           Text(
             value,
             style: AppTextStyles.tabular(
@@ -485,7 +487,10 @@ class _MetricPill extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
+          ),
           Text(
             value,
             style: AppTextStyles.tabular(

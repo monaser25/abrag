@@ -60,7 +60,8 @@ class AppTextField extends StatelessWidget {
     // Numeric/phone fields: auto-convert Arabic digits to ASCII and render the
     // content left-to-right so pasted numbers don't appear reversed in RTL.
     final kt = keyboardType;
-    final isNumeric = kt != null &&
+    final isNumeric =
+        kt != null &&
         (kt.index == TextInputType.number.index ||
             kt.index == TextInputType.phone.index);
     final effectiveFormatters = <TextInputFormatter>[
@@ -80,8 +81,7 @@ class AppTextField extends StatelessWidget {
       maxLines: maxLines,
       onTap: onTap,
       focusNode: focusNode,
-      textDirection:
-          textDirection ?? (isNumeric ? TextDirection.ltr : null),
+      textDirection: textDirection ?? (isNumeric ? TextDirection.ltr : null),
       autofocus: autofocus,
       autovalidateMode: autovalidateMode,
       style: AppTextStyles.body.copyWith(fontSize: 15, color: colors.ink),

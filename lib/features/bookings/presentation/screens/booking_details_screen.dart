@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import '../../../../core/database/database.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
@@ -15,6 +16,7 @@ import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/input_formatters.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
@@ -95,16 +97,16 @@ class BookingDetailsScreen extends ConsumerWidget {
           final commissionAmount = _commissionAmount(booking);
           final actualReceived = (booking.amountPaidEgp - commissionAmount)
               .clamp(0, double.infinity);
-          final baseBookingTotal =
-              booking.totalPriceEgp - booking.overstayFeeEgp;
-          final bookingDays = _calendarDays(
-            booking.checkInDate,
-            booking.earlyCheckoutDate ?? booking.checkOutDate,
-          );
-          final dailyRate = baseBookingTotal / bookingDays;
-          final remainingAmount = (baseBookingTotal - booking.amountPaidEgp)
-              .clamp(0, double.infinity);
-          final isFullyPaid = booking.amountPaidEgp >= baseBookingTotal;
+          // السعر اليومي = الإجمالي كله ÷ كل الليالي (شوف booking_rate_utils).
+          final bookingDays = summerBookingStayDays(booking);
+          final dailyRate = summerBookingDailyRate(booking);
+          // اللي على العميل = الإجمالي كله (شامل رسوم التمديد) ناقص المدفوع.
+          final remainingAmount =
+              (booking.totalPriceEgp - booking.amountPaidEgp).clamp(
+                0,
+                double.infinity,
+              );
+          final isFullyPaid = booking.amountPaidEgp >= booking.totalPriceEgp;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -151,7 +153,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                                 bookingId: booking.id,
                                 currentPaid: booking.amountPaidEgp,
                                 remainingAmount: remainingAmount.toDouble(),
-                                totalAmount: baseBookingTotal.toDouble(),
+                                totalAmount: booking.totalPriceEgp,
                               ),
                             ),
                           ],
@@ -159,6 +161,16 @@ class BookingDetailsScreen extends ConsumerWidget {
                       ),
                     );
                   },
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (booking.transferredToBookingId != null ||
+                  booking.transferredFromBookingId != null) ...[
+                _TransferBanner(
+                  isSource: booking.transferredToBookingId != null,
+                  otherBookingId:
+                      booking.transferredToBookingId ??
+                      booking.transferredFromBookingId!,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -252,11 +264,17 @@ class BookingDetailsScreen extends ConsumerWidget {
                     'السعر اليومي',
                     '${dailyRate.toDouble().toCurrencyFormat()} ج.م',
                   ),
+                  if (booking.overstayFeeEgp > 0)
+                    _buildDetailRow(
+                      context,
+                      'رسوم تمديد ${booking.overstayDays} يوم',
+                      '${booking.overstayFeeEgp.toCurrencyFormat()} ج.م',
+                    ),
                   if (!isFullyPaid)
                     _buildDetailRow(
                       context,
                       'فلوس الحجز',
-                      '${baseBookingTotal.toDouble().toCurrencyFormat()} ج.م',
+                      '${booking.totalPriceEgp.toCurrencyFormat()} ج.م',
                       isHighlight: true,
                     ),
                   _buildDetailRow(
@@ -329,10 +347,31 @@ class BookingDetailsScreen extends ConsumerWidget {
                                   'yyyy-MM-dd',
                                   'ar',
                                 ).format(p.paymentDate);
-                                return _buildDetailRow(
+                                final row = _buildDetailRow(
                                   context,
                                   '$methodLabel - $dateStr',
                                   '${p.amountEgp.toCurrencyFormat()} ج.م',
+                                );
+                                if (isViewer) return row;
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: row),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                      ),
+                                      color: context.colors.err,
+                                      visualDensity: VisualDensity.compact,
+                                      tooltip: 'حذف الدفعة',
+                                      onPressed: () => _confirmDeletePayment(
+                                        context,
+                                        ref,
+                                        payment: p,
+                                      ),
+                                    ),
+                                  ],
                                 );
                               }).toList(),
                       );
@@ -488,7 +527,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                               bookingId: booking.id,
                               currentPaid: booking.amountPaidEgp,
                               remainingAmount: remainingAmount.toDouble(),
-                              totalAmount: baseBookingTotal.toDouble(),
+                              totalAmount: booking.totalPriceEgp,
                             );
                             return;
                           }
@@ -506,6 +545,17 @@ class BookingDetailsScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      context.push('/summer_bookings/transfer/$bookingId');
+                    },
+                    icon: const Icon(Icons.swap_horiz, size: 18),
+                    label: const Text('نقل الشقة'),
+                  ),
                 ),
               ] else if (booking.status == 'checked_out' && !isViewer) ...[
                 ElevatedButton.icon(
@@ -553,12 +603,6 @@ class BookingDetailsScreen extends ConsumerWidget {
     }
     // 'none' => the broker took no commission at all.
     return 0;
-  }
-
-  int _calendarDays(DateTime start, DateTime end) {
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day);
-    return endDate.difference(startDate).inDays.clamp(1, 10000);
   }
 
   Widget _buildImageCard(BuildContext context, String imagePath, String label) {
@@ -695,6 +739,10 @@ class BookingDetailsScreen extends ConsumerWidget {
       text: remainingAmount.toStringAsFixed(0),
     );
     String selectedMethod = 'cash';
+    // يمنع تسجيل نفس التسديد مرتين لو المستخدم داس "حفظ" بسرعة مرتين.
+    bool isSubmitting = false;
+    String? errorText;
+    final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -722,8 +770,9 @@ class BookingDetailsScreen extends ConsumerWidget {
                 keyboardType: TextInputType.number,
                 textDirection: TextDirection.ltr,
                 inputFormatters: const [ArabicDigitsInputFormatter()],
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'المبلغ اللي هيتسدد الآن',
+                  errorText: errorText,
                 ),
               ),
               const SizedBox(height: 12),
@@ -761,22 +810,65 @@ class BookingDetailsScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton(
-                      onPressed: () {
-                        final paidNow =
-                            double.tryParse(
-                              controller.text.replaceAll(',', '').trim(),
-                            ) ??
-                            0;
-                        ref
-                            .read(bookingsControllerProvider.notifier)
-                            .addBookingPayment(
-                              bookingId: bookingId,
-                              amount: paidNow,
-                              paymentMethod: selectedMethod,
-                            );
-                        Navigator.pop(sheetContext);
-                      },
-                      child: const Text('حفظ التسديد'),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              final paidNow =
+                                  double.tryParse(
+                                    controller.text.replaceAll(',', '').trim(),
+                                  ) ??
+                                  0;
+                              if (paidNow <= 0) {
+                                setState(
+                                  () => errorText = 'أدخل مبلغًا أكبر من صفر',
+                                );
+                                return;
+                              }
+                              if (paidNow > remainingAmount + 0.01) {
+                                setState(
+                                  () => errorText =
+                                      'المبلغ أكبر من المتبقي (${remainingAmount.toCurrencyFormat()} ج.م)',
+                                );
+                                return;
+                              }
+                              setState(() {
+                                errorText = null;
+                                isSubmitting = true;
+                              });
+                              await ref
+                                  .read(bookingsControllerProvider.notifier)
+                                  .addBookingPayment(
+                                    bookingId: bookingId,
+                                    amount: paidNow,
+                                    paymentMethod: selectedMethod,
+                                  );
+                              if (!sheetContext.mounted) return;
+                              final result = ref.read(
+                                bookingsControllerProvider,
+                              );
+                              if (result.hasError) {
+                                setState(() {
+                                  isSubmitting = false;
+                                  errorText = result.error
+                                      .toString()
+                                      .replaceFirst('Exception: ', '');
+                                });
+                                return;
+                              }
+                              Navigator.pop(sheetContext);
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('تم تسجيل التسديد بنجاح'),
+                                ),
+                              );
+                            },
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('حفظ التسديد'),
                     ),
                   ),
                 ],
@@ -784,6 +876,54 @@ class BookingDetailsScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// تأكيد حذف دفعة مسجلة بالغلط (مثلاً تسديد اتسجل مرتين): بيشيل صف
+  /// الدفعة وبيخصم قيمتها من إجمالي المدفوع في نفس العملية.
+  void _confirmDeletePayment(
+    BuildContext context,
+    WidgetRef ref, {
+    required BookingPayment payment,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('حذف الدفعة'),
+        content: Text(
+          'سيتم حذف دفعة بقيمة ${payment.amountEgp.toCurrencyFormat()} ج.م '
+          'وخصمها من إجمالي المدفوع للحجز. هل أنت متأكد؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await ref
+                  .read(bookingsControllerProvider.notifier)
+                  .deleteBookingPayment(paymentId: payment.id);
+              final result = ref.read(bookingsControllerProvider);
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result.hasError
+                        ? 'تعذر حذف الدفعة: ${result.error.toString().replaceFirst('Exception: ', '')}'
+                        : 'تم حذف الدفعة وتحديث إجمالي المدفوع',
+                  ),
+                ),
+              );
+            },
+            child: const Text('حذف'),
+          ),
+        ],
       ),
     );
   }
@@ -882,6 +1022,48 @@ class _MissingImageBox extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// شريط بيربط نص الإقامة التاني لما الضيف يتنقل من شقة لشقة.
+class _TransferBanner extends ConsumerWidget {
+  /// `true` لو ده الحجز اللي اتنقل **منه** (الشقة القديمة).
+  final bool isSource;
+  final String otherBookingId;
+
+  const _TransferBanner({required this.isSource, required this.otherBookingId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apartments = ref.watch(apartmentsProvider).value ?? const [];
+    final other = ref
+        .watch(allSummerBookingsProvider)
+        .value
+        ?.where((b) => b.id == otherBookingId)
+        .firstOrNull;
+    final apartmentNumber = other == null
+        ? null
+        : apartments
+              .where((a) => a.id == other.apartmentId)
+              .firstOrNull
+              ?.apartmentNumber;
+    final label = apartmentNumber == null
+        ? (isSource ? 'الشقة الجديدة' : 'الشقة القديمة')
+        : 'شقة $apartmentNumber';
+
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.swap_horiz),
+        title: Text(isSource ? 'الضيف اتنقل لـ $label' : 'الضيف جه من $label'),
+        subtitle: Text(
+          isSource
+              ? 'ده نص الإقامة الأول. اضغط تشوف باقي المدة.'
+              : 'ده نص الإقامة التاني. اضغط تشوف الحجز الأصلي.',
+        ),
+        trailing: const Icon(Icons.chevron_left),
+        onTap: () => context.push('/summer_bookings/details/$otherBookingId'),
       ),
     );
   }

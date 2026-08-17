@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/database/database.dart';
 import '../providers/bookings_provider.dart';
 import '../providers/bookings_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class OverstayExtensionScreen extends ConsumerStatefulWidget {
@@ -24,12 +26,53 @@ class _OverstayExtensionScreenState
   int _extraDays = 1;
   final _customPriceController = TextEditingController();
   bool _useCustomPrice = false;
+  int _customPriceMode = 0;
   DateTime? _customCheckoutDate;
+
+  /// هل العميل دفع رسوم التمديد دلوقتي؟ الافتراضي **أيوه** لأن ده اللي بيحصل
+  /// عادةً — بس بقى ظاهر قدامك وبتختار طريقة الدفع، وبيتسجل صف دفعة حقيقي.
+  /// قبل كده كان بيفترض إنها اتدفعت نقدي من غير ما يسأل ومن غير أي صف دفعة،
+  /// فلو العميل مادفعش (أو دفع بفودافون) الخزنة تطلع غلط ومحدش ياخد باله.
+  bool _collectNow = true;
+  String _collectMethod = 'cash';
 
   @override
   void dispose() {
     _customPriceController.dispose();
     super.dispose();
+  }
+
+  ({double dailyRate, double additionalFee, DateTime newCheckoutDate})
+  _calculateExtension(SummerBooking booking) {
+    final automaticDailyRate = summerBookingDailyRate(booking);
+    double parsedCustom = double.tryParse(_customPriceController.text) ?? 0.0;
+    if (parsedCustom < 0) parsedCustom = 0.0;
+
+    double dailyRate;
+    double additionalFee;
+
+    if (!_useCustomPrice) {
+      dailyRate = automaticDailyRate;
+      additionalFee = dailyRate * _extraDays;
+    } else {
+      if (_customPriceMode == 0) {
+        dailyRate = parsedCustom;
+        additionalFee = dailyRate * _extraDays;
+      } else {
+        additionalFee = parsedCustom;
+        dailyRate = _extraDays > 0 ? additionalFee / _extraDays : 0.0;
+      }
+    }
+
+    final newCheckoutDate =
+        _customCheckoutDate ??
+        booking.checkOutDate.add(Duration(days: _extraDays));
+
+    return (
+      dailyRate: dailyRate,
+      additionalFee: additionalFee,
+      newCheckoutDate: newCheckoutDate,
+    );
   }
 
   Future<void> _selectDateTime(
@@ -110,18 +153,11 @@ class _OverstayExtensionScreenState
       body: bookingsAsync.when(
         data: (bookings) {
           final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
-          final originalDays = booking.checkOutDate
-              .difference(booking.checkInDate)
-              .inDays
-              .clamp(1, 10000);
-          final automaticDailyRate = booking.totalPriceEgp / originalDays;
-          final dailyRate = _useCustomPrice
-              ? (double.tryParse(_customPriceController.text) ?? 0)
-              : automaticDailyRate;
-          final additionalFee = dailyRate * _extraDays;
-          final newCheckoutDate =
-              _customCheckoutDate ??
-              booking.checkOutDate.add(Duration(days: _extraDays));
+          final calc = _calculateExtension(booking);
+          final dailyRate = calc.dailyRate;
+          final additionalFee = calc.additionalFee;
+          final newCheckoutDate = calc.newCheckoutDate;
+          final automaticDailyRate = summerBookingDailyRate(booking);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -143,13 +179,13 @@ class _OverstayExtensionScreenState
                         children: [
                           Text(
                             'النزيل الحالي',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ink2),
+                            style: AppTextStyles.label.copyWith(
+                              color: colors.ink2,
+                            ),
                           ),
                           Text(
                             booking.guestName,
-                            style:
-                                AppTextStyles.h2.copyWith(color: colors.ink),
+                            style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
                           const SizedBox(height: 12),
                           _InfoLine(
@@ -177,93 +213,143 @@ class _OverstayExtensionScreenState
                   vertical: 8,
                 ),
                 child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppIconButton(
-                        onPressed: () => setState(() {
-                          _extraDays++;
-                          _customCheckoutDate = null;
-                        }),
-                        icon: Icons.add,
-                      ),
-                      Column(
-                        children: [
-                          Text(
-                            '$_extraDays',
-                            style: AppTextStyles.tabular(
-                              AppTextStyles.h1.copyWith(color: colors.ink),
-                            ),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppIconButton(
+                      onPressed: () => setState(() {
+                        _extraDays++;
+                        _customCheckoutDate = null;
+                      }),
+                      icon: Icons.add,
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          '$_extraDays',
+                          style: AppTextStyles.tabular(
+                            AppTextStyles.h1.copyWith(color: colors.ink),
                           ),
-                          Text(
-                            'أيام',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ink2),
+                        ),
+                        Text(
+                          'أيام',
+                          style: AppTextStyles.label.copyWith(
+                            color: colors.ink2,
                           ),
-                        ],
-                      ),
-                      AppIconButton(
-                        onPressed: _extraDays > 1
-                            ? () => setState(() {
-                                _extraDays--;
-                                _customCheckoutDate = null;
-                              })
-                            : null,
-                        icon: Icons.remove,
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                    AppIconButton(
+                      onPressed: _extraDays > 1
+                          ? () => setState(() {
+                              _extraDays--;
+                              _customCheckoutDate = null;
+                            })
+                          : null,
+                      icon: Icons.remove,
+                    ),
+                  ],
                 ),
               ),
               const SectionTitle(title: 'السعر والحساب'),
               AppCard(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AppSwitchRow(
-                        title: 'تخصيص سعر الليلة',
-                        subtitle:
-                            'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
-                        icon: Icons.tune,
-                        value: _useCustomPrice,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSwitchRow(
+                      title: 'تخصيص السعر',
+                      subtitle:
+                          'السعر التلقائي: ${automaticDailyRate.toDouble().toCurrencyFormat()} ج.م',
+                      icon: Icons.tune,
+                      value: _useCustomPrice,
+                      onChanged: (val) => setState(() => _useCustomPrice = val),
+                    ),
+                    if (_useCustomPrice) ...[
+                      const SizedBox(height: 12),
+                      SegmentedTabs(
+                        labels: const ['سعر الليلة', 'المبلغ الإجمالي'],
+                        index: _customPriceMode,
                         onChanged: (val) =>
-                            setState(() => _useCustomPrice = val),
-                      ),
-                      if (_useCustomPrice) ...[
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'سعر الليلة (ج.م)',
-                          prefixIcon: Icons.payments_outlined,
-                          controller: _customPriceController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          onChanged: (_) => setState(() {}),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      _InfoLine(
-                        icon: Icons.calculate,
-                        label: 'حساب التمديد',
-                        value:
-                            '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
-                      ),
-                      Divider(color: colors.border),
-                      _InfoLine(
-                        icon: Icons.payments,
-                        label: 'تمديد $_extraDays يوم',
-                        value:
-                            '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
-                        valueColor: colors.accent,
-                        bold: true,
+                            setState(() => _customPriceMode = val),
                       ),
                       const SizedBox(height: 12),
-                      AppButton(
-                        label: 'تغيير تاريخ الخروج الجديد',
-                        icon: Icons.edit_calendar,
-                        variant: AppButtonVariant.outline,
-                        onPressed: () =>
-                            _selectDateTime(context, newCheckoutDate),
+                      AppTextField(
+                        label: _customPriceMode == 0
+                            ? 'سعر الليلة (ج.م)'
+                            : 'إجمالي مبلغ التمديد (ج.م)',
+                        prefixIcon: Icons.payments_outlined,
+                        controller: _customPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    _InfoLine(
+                      icon: Icons.calculate,
+                      label: 'حساب التمديد',
+                      value: _useCustomPrice && _customPriceMode == 1
+                          ? '${dailyRate.toDouble().toCurrencyFormat()} ج.م/ليلة × $_extraDays'
+                          : '$_extraDays × ${dailyRate.toDouble().toCurrencyFormat()} ج.م',
+                    ),
+                    Divider(color: colors.border),
+                    _InfoLine(
+                      icon: Icons.payments,
+                      label: 'تمديد $_extraDays يوم',
+                      value:
+                          '${additionalFee.toDouble().toCurrencyFormat()} ج.م',
+                      valueColor: colors.accent,
+                      bold: true,
+                    ),
+                    const SizedBox(height: 12),
+                    AppButton(
+                      label: 'تغيير تاريخ الخروج الجديد',
+                      icon: Icons.edit_calendar,
+                      variant: AppButtonVariant.outline,
+                      onPressed: () =>
+                          _selectDateTime(context, newCheckoutDate),
+                    ),
+                  ],
+                ),
+              ),
+              const SectionTitle(title: 'تحصيل رسوم التمديد'),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppSwitchRow(
+                      title: 'العميل دفع الرسوم دلوقتي',
+                      subtitle: _collectNow
+                          ? 'هيتسجل تسديد ${additionalFee.toDouble().toCurrencyFormat()} ج.م'
+                          : 'الرسوم هتتضاف على حساب العميل ويتسدّدوا قبل الخروج',
+                      icon: Icons.account_balance_wallet_outlined,
+                      value: _collectNow,
+                      onChanged: (val) => setState(() => _collectNow = val),
+                    ),
+                    if (_collectNow) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'طريقة الدفع',
+                        style: AppTextStyles.label.copyWith(color: colors.ink2),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedTabs(
+                        labels: const ['نقدي', 'فودافون كاش', 'إنستاباي'],
+                        index: _collectMethod == 'vodafone_cash'
+                            ? 1
+                            : _collectMethod == 'instapay'
+                            ? 2
+                            : 0,
+                        onChanged: (i) => setState(() {
+                          _collectMethod = const [
+                            'cash',
+                            'vodafone_cash',
+                            'instapay',
+                          ][i];
+                        }),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -280,18 +366,9 @@ class _OverstayExtensionScreenState
       bottomNavigationBar: bookingsAsync.maybeWhen(
         data: (bookings) {
           final booking = bookings.firstWhere((b) => b.id == widget.bookingId);
-          final originalDays = booking.checkOutDate
-              .difference(booking.checkInDate)
-              .inDays
-              .clamp(1, 10000);
-          final automaticDailyRate = booking.totalPriceEgp / originalDays;
-          final dailyRate = _useCustomPrice
-              ? (double.tryParse(_customPriceController.text) ?? 0)
-              : automaticDailyRate;
-          final additionalFee = dailyRate * _extraDays;
-          final newCheckoutDate =
-              _customCheckoutDate ??
-              booking.checkOutDate.add(Duration(days: _extraDays));
+          final calc = _calculateExtension(booking);
+          final additionalFee = calc.additionalFee;
+          final newCheckoutDate = calc.newCheckoutDate;
           return BottomActionBar(
             children: [
               Expanded(
@@ -309,6 +386,10 @@ class _OverstayExtensionScreenState
                                 newCheckoutDate: newCheckoutDate,
                                 overstayDays: _extraDays,
                                 additionalFeeEgp: additionalFee,
+                                collectedNowEgp: _collectNow
+                                    ? additionalFee.toDouble()
+                                    : 0,
+                                paymentMethod: _collectMethod,
                               );
                         },
                 ),
@@ -358,8 +439,9 @@ class _InfoLine extends StatelessWidget {
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: (bold ? AppTextStyles.title : AppTextStyles.label)
-                .copyWith(color: valueColor ?? colors.ink),
+            style: (bold ? AppTextStyles.title : AppTextStyles.label).copyWith(
+              color: valueColor ?? colors.ink,
+            ),
           ),
         ),
       ],

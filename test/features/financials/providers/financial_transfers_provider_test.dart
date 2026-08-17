@@ -1,4 +1,5 @@
 import 'package:abrag/core/database/database.dart';
+import 'package:abrag/core/database/tables.dart';
 import 'package:abrag/features/financials/presentation/providers/expenses_controller.dart';
 import 'package:abrag/features/financials/presentation/providers/financial_transfers_provider.dart';
 import 'package:drift/drift.dart';
@@ -213,7 +214,14 @@ void main() {
 
     await controller.deleteTransfer(transfer.id);
 
-    expect(await db.select(db.financialTransfers).get(), isEmpty);
+    // Soft-delete: the row stays locally marked pendingDelete (the sync engine
+    // is what removes it from Supabase then locally), but it must vanish from
+    // the treasury balances immediately.
+    final remaining = (await db.select(db.financialTransfers).get()).single;
+    expect(remaining.syncStatus, SyncStatus.pendingDelete);
+    final balances = await buildTreasuryBalances(db, 'summer_2026');
+    expect(balances['cash'], closeTo(1000, 0.001));
+    expect(balances['instapay'], closeTo(0, 0.001));
     final logs = await db.select(db.auditLogs).get();
     expect(logs.any((log) => log.action == 'delete_transfer'), isTrue);
   });

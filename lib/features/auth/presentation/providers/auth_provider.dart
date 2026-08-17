@@ -7,9 +7,10 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return authRepository.authStateChanges;
 });
 
-final loginControllerProvider = StateNotifierProvider<LoginController, AsyncValue<void>>((ref) {
-  return LoginController(ref.watch(authRepositoryProvider));
-});
+final loginControllerProvider =
+    StateNotifierProvider<LoginController, AsyncValue<void>>((ref) {
+      return LoginController(ref.watch(authRepositoryProvider));
+    });
 
 class LoginController extends StateNotifier<AsyncValue<void>> {
   final AuthRepository _authRepository;
@@ -20,13 +21,13 @@ class LoginController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       await _authRepository.signInWithEmailPassword(email, password);
-      
+
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
   }
-  
+
   Future<void> logout() async {
     await _authRepository.signOut();
   }

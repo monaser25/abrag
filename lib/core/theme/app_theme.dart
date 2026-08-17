@@ -14,7 +14,8 @@ class AppTheme {
 
   static ThemeData get darkTheme => _build(AbragColors.dark, Brightness.dark);
 
-  static ThemeData get lightTheme => _build(AbragColors.light, Brightness.light);
+  static ThemeData get lightTheme =>
+      _build(AbragColors.light, Brightness.light);
 
   static ThemeData _build(AbragColors c, Brightness brightness) {
     final colorScheme = ColorScheme(
@@ -140,8 +141,10 @@ class AppTheme {
         // `.field`: surface3 fill, hairline border, brand focus.
         filled: true,
         fillColor: c.surface3,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: AppRadius.rSm,
           borderSide: BorderSide(color: c.border),
@@ -165,11 +168,7 @@ class AppTheme {
         labelStyle: TextStyle(color: c.ink2),
         hintStyle: TextStyle(color: c.ink3),
       ),
-      dividerTheme: DividerThemeData(
-        color: c.border,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: c.border, thickness: 1, space: 1),
       switchTheme: SwitchThemeData(
         thumbColor: const WidgetStatePropertyAll(Colors.white),
         trackColor: WidgetStateProperty.resolveWith(
@@ -229,7 +228,9 @@ class AppTheme {
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.lg),
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(

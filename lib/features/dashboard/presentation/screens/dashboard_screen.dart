@@ -11,6 +11,7 @@ import '../../../../core/utils/season_utils.dart';
 import '../../../users/presentation/providers/users_provider.dart';
 import '../../../settings/presentation/providers/notifications_provider.dart';
 import '../../../../shared/widgets/widgets.dart';
+import '../../../bookings/presentation/providers/auto_checkout_provider.dart';
 import '../providers/sync_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -20,6 +21,8 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final syncState = ref.watch(syncControllerProvider);
+    // بيخلي جولة الإقفال التلقائي شغالة طول ما التطبيق فاتح.
+    ref.watch(autoCheckoutRunnerProvider);
     final buildingsCount = ref.watch(buildingsCountProvider);
     final apartmentsCount = ref.watch(apartmentsCountProvider);
 

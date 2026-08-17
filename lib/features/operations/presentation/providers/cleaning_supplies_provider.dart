@@ -11,9 +11,10 @@ final cleaningSuppliesProvider = StreamProvider<List<CleaningSupply>>((ref) {
   return db.select(db.cleaningSupplies).watch();
 });
 
-final cleaningSuppliesControllerProvider = StateNotifierProvider<CleaningSuppliesController, AsyncValue<void>>((ref) {
-  return CleaningSuppliesController(ref.watch(databaseProvider));
-});
+final cleaningSuppliesControllerProvider =
+    StateNotifierProvider<CleaningSuppliesController, AsyncValue<void>>((ref) {
+      return CleaningSuppliesController(ref.watch(databaseProvider));
+    });
 
 class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
@@ -27,16 +28,18 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final id = const Uuid().v4();
-      await _db.into(_db.cleaningSupplies).insert(
-        CleaningSuppliesCompanion.insert(
-          id: id,
-          name: name,
-          unit: Value(unit),
-          syncStatus: const Value(SyncStatus.pendingInsert),
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+      await _db
+          .into(_db.cleaningSupplies)
+          .insert(
+            CleaningSuppliesCompanion.insert(
+              id: id,
+              name: name,
+              unit: Value(unit),
+              syncStatus: const Value(SyncStatus.pendingInsert),
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
       await _auditLog.log(
         action: 'create',
         entityType: 'cleaning_supply',
@@ -55,7 +58,9 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
   Future<void> updateSupply(String id, String name, String unit) async {
     state = const AsyncLoading();
     try {
-      await (_db.update(_db.cleaningSupplies)..where((t) => t.id.equals(id))).write(
+      await (_db.update(
+        _db.cleaningSupplies,
+      )..where((t) => t.id.equals(id))).write(
         CleaningSuppliesCompanion(
           name: Value(name),
           unit: Value(unit),
@@ -91,25 +96,33 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
       await _db.transaction(() async {
         // Add transaction
         transactionId = const Uuid().v4();
-        await _db.into(_db.cleaningTransactions).insert(
-          CleaningTransactionsCompanion.insert(
-            id: transactionId,
-            supplyId: supplyId,
-            transactionType: type,
-            quantity: quantity,
-            costEgp: Value(costEgp),
-            transactionDate: DateTime.now(),
-            notes: Value(notes),
-            syncStatus: const Value(SyncStatus.pendingInsert),
-            createdAt: DateTime.now(),
-          ),
-        );
+        await _db
+            .into(_db.cleaningTransactions)
+            .insert(
+              CleaningTransactionsCompanion.insert(
+                id: transactionId,
+                supplyId: supplyId,
+                transactionType: type,
+                quantity: quantity,
+                costEgp: Value(costEgp),
+                transactionDate: DateTime.now(),
+                notes: Value(notes),
+                syncStatus: const Value(SyncStatus.pendingInsert),
+                createdAt: DateTime.now(),
+              ),
+            );
 
         // Update stock
-        final supply = await (_db.select(_db.cleaningSupplies)..where((t) => t.id.equals(supplyId))).getSingle();
-        final newStock = type == 'purchase' ? supply.stockQuantity + quantity : supply.stockQuantity - quantity;
-        
-        await (_db.update(_db.cleaningSupplies)..where((t) => t.id.equals(supplyId))).write(
+        final supply = await (_db.select(
+          _db.cleaningSupplies,
+        )..where((t) => t.id.equals(supplyId))).getSingle();
+        final newStock = type == 'purchase'
+            ? supply.stockQuantity + quantity
+            : supply.stockQuantity - quantity;
+
+        await (_db.update(
+          _db.cleaningSupplies,
+        )..where((t) => t.id.equals(supplyId))).write(
           CleaningSuppliesCompanion(
             stockQuantity: Value(newStock),
             updatedAt: Value(DateTime.now()),
@@ -119,17 +132,21 @@ class CleaningSuppliesController extends StateNotifier<AsyncValue<void>> {
 
         // If it's a purchase and has cost, log expense
         if (type == 'purchase' && costEgp > 0) {
-          await _db.into(_db.expenses).insert(
-            ExpensesCompanion.insert(
-              id: const Uuid().v4(),
-              expenseType: 'cleaning',
-              amountEgp: costEgp,
-              expenseDate: DateTime.now(),
-              description: Value('شراء أدوات نظافة: ${supply.name} - الكمية $quantity ${supply.unit}'),
-              syncStatus: const Value(SyncStatus.pendingInsert),
-              createdAt: DateTime.now(),
-            ),
-          );
+          await _db
+              .into(_db.expenses)
+              .insert(
+                ExpensesCompanion.insert(
+                  id: const Uuid().v4(),
+                  expenseType: 'cleaning',
+                  amountEgp: costEgp,
+                  expenseDate: DateTime.now(),
+                  description: Value(
+                    'شراء أدوات نظافة: ${supply.name} - الكمية $quantity ${supply.unit}',
+                  ),
+                  syncStatus: const Value(SyncStatus.pendingInsert),
+                  createdAt: DateTime.now(),
+                ),
+              );
         }
       });
       await _auditLog.log(

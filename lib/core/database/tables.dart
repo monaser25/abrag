@@ -89,6 +89,12 @@ class SummerBookings extends Table with SyncableTable {
   TextColumn get nationalId => text().nullable()();
   TextColumn get idFrontImage => text().nullable()();
   TextColumn get idBackImage => text().nullable()();
+
+  /// نقل الشقة: الضيف بيتنقل من شقة لشقة في نص إقامته، فالإقامة بتتقسم
+  /// لحجزين — القديم بيتقفل على الليالي اللي قعدها فعلاً، والجديد بياخد باقي
+  /// المدة. العمودين دول بيربطوا الاتنين ببعض في الاتجاهين.
+  TextColumn get transferredFromBookingId => text().nullable()();
+  TextColumn get transferredToBookingId => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

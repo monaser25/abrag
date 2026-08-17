@@ -58,11 +58,11 @@ void main() {
 
   testWidgets('golden: login screen', (tester) async {
     final repo = _MockAuthRepository();
-    when(() => repo.authStateChanges)
-        .thenAnswer((_) => const Stream.empty());
+    when(() => repo.authStateChanges).thenAnswer((_) => const Stream.empty());
     final storage = _MockSecureStorage();
-    when(() => storage.read(key: any(named: 'key')))
-        .thenAnswer((_) async => null);
+    when(
+      () => storage.read(key: any(named: 'key')),
+    ).thenAnswer((_) async => null);
 
     await pumpPhone(
       tester,

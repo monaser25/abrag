@@ -6,6 +6,7 @@ import '../providers/bookings_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class EarlyCheckoutScreen extends ConsumerStatefulWidget {
@@ -22,6 +23,9 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
   final _refundController = TextEditingController();
   bool _customRefund = false;
   bool _noRefund = false;
+  String _refundMethod = 'cash';
+
+  static const _methods = ['cash', 'vodafone_cash', 'instapay'];
 
   @override
   void dispose() {
@@ -33,6 +37,28 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
     final startDate = DateTime(start.year, start.month, start.day);
     final endDate = DateTime(end.year, end.month, end.day);
     return endDate.difference(startDate).inDays.clamp(1, 10000);
+  }
+
+  /// المبلغ اللي هيترجع فعلاً — نفس اللي الكارت بيعرضه بالظبط.
+  double _effectiveRefund(dynamic booking) {
+    if (_noRefund) return 0;
+    if (_customRefund) {
+      final typed = double.tryParse(_refundController.text) ?? 0;
+      return typed < 0 ? 0 : typed;
+    }
+    final today = DateTime.now();
+    final originalDays = _calendarDays(
+      booking.checkInDate,
+      booking.checkOutDate,
+    );
+    final usedDays = _calendarDays(
+      booking.checkInDate,
+      today,
+    ).clamp(1, originalDays);
+    final remainingDays = (originalDays - usedDays).clamp(0, 10000);
+    final refund = summerBookingDailyRate(booking) * remainingDays;
+    final commission = _commissionAmount(booking);
+    return refund > commission ? refund - commission : 0;
   }
 
   double _commissionAmount(dynamic booking) {
@@ -88,8 +114,7 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
           final originalDays = _calendarDays(checkIn, checkOut);
           final usedDays = _calendarDays(checkIn, today).clamp(1, originalDays);
           final remainingDays = (originalDays - usedDays).clamp(0, 10000);
-          final dailyRate =
-              (booking.totalPriceEgp - booking.overstayFeeEgp) / originalDays;
+          final dailyRate = summerBookingDailyRate(booking);
           final brokerCommission = _commissionAmount(booking);
           final refundAmount = remainingDays > 0
               ? (dailyRate * remainingDays)
@@ -127,13 +152,13 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                         children: [
                           Text(
                             'النزيل الحالي',
-                            style: AppTextStyles.label
-                                .copyWith(color: colors.ink2),
+                            style: AppTextStyles.label.copyWith(
+                              color: colors.ink2,
+                            ),
                           ),
                           Text(
                             booking.guestName,
-                            style:
-                                AppTextStyles.h2.copyWith(color: colors.ink),
+                            style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -146,8 +171,7 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                                 icon: Icons.calendar_month,
                               ),
                               StatusChip(
-                                label:
-                                    'المدفوع: ${booking.totalPriceEgp} ج.م',
+                                label: 'المدفوع: ${booking.totalPriceEgp} ج.م',
                                 kind: StatusChipKind.brand,
                                 icon: Icons.payments,
                               ),
@@ -162,92 +186,103 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
               const SectionTitle(title: 'حساب الاسترداد'),
               AppCard(
                 child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: MiniMetric(
-                              icon: Icons.check_circle_outline,
-                              value: '$usedDays',
-                              label: 'الأيام المستخدمة',
-                              tint: colors.ok,
-                            ),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: MiniMetric(
+                            icon: Icons.check_circle_outline,
+                            value: '$usedDays',
+                            label: 'الأيام المستخدمة',
+                            tint: colors.ok,
                           ),
-                          Container(
-                            width: 1,
-                            height: 38,
-                            color: colors.border,
-                          ),
-                          Expanded(
-                            child: MiniMetric(
-                              icon: Icons.hourglass_bottom,
-                              value: '$remainingDays',
-                              label: 'الأيام المتبقية',
-                              tint: colors.err,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Divider(color: colors.border),
-                      _CalcLine(
-                        label: 'الأيام المتبقية × سعر اليوم',
-                        value:
-                            '$remainingDays × ${dailyRate.toDouble().toCurrencyFormat()} = ${refundAmount.toDouble().toCurrencyFormat()} ج.م',
-                      ),
-                      if (brokerCommission > 0)
-                        _CalcLine(
-                          label: 'فلوس السمسار',
-                          value:
-                              '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
-                          valueColor: colors.err,
                         ),
-                      Divider(color: colors.border),
-                      _CalcLine(
-                        label: 'صافي مبلغ الاسترداد',
-                        value:
-                            '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
-                        valueColor: colors.accent,
-                        isTitle: true,
-                      ),
-                      const SizedBox(height: 16),
-                      AppSwitchRow(
-                        title: 'عدم استرداد نقود',
-                        subtitle: 'تسجيل الخروج المبكر بدون رجوع أي مبلغ',
-                        icon: Icons.money_off,
-                        tint: colors.err,
-                        value: _noRefund,
-                        onChanged: (val) {
-                          setState(() {
-                            _noRefund = val;
-                            if (val) {
-                              _customRefund = false;
-                              _refundController.text = '0.00';
-                            }
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      AppSwitchRow(
-                        title: 'استرداد مخصص',
-                        subtitle: 'تعديل مبلغ الاسترداد يدوياً',
-                        icon: Icons.tune,
-                        value: _customRefund,
-                        onChanged: _noRefund
-                            ? null
-                            : (val) => setState(() => _customRefund = val),
-                      ),
-                      if (_customRefund) ...[
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'مبلغ الاسترداد الفعلي (ج.م)',
-                          prefixIcon: Icons.payments_outlined,
-                          controller: _refundController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                        Container(width: 1, height: 38, color: colors.border),
+                        Expanded(
+                          child: MiniMetric(
+                            icon: Icons.hourglass_bottom,
+                            value: '$remainingDays',
+                            label: 'الأيام المتبقية',
+                            tint: colors.err,
                           ),
                         ),
                       ],
+                    ),
+                    Divider(color: colors.border),
+                    _CalcLine(
+                      label: 'الأيام المتبقية × سعر اليوم',
+                      value:
+                          '$remainingDays × ${dailyRate.toDouble().toCurrencyFormat()} = ${refundAmount.toDouble().toCurrencyFormat()} ج.م',
+                    ),
+                    if (brokerCommission > 0)
+                      _CalcLine(
+                        label: 'فلوس السمسار',
+                        value:
+                            '- ${brokerCommission.toDouble().toCurrencyFormat()} ج.م',
+                        valueColor: colors.err,
+                      ),
+                    Divider(color: colors.border),
+                    _CalcLine(
+                      label: 'صافي مبلغ الاسترداد',
+                      value:
+                          '${visibleNetRefund.toDouble().toCurrencyFormat()} ج.م',
+                      valueColor: colors.accent,
+                      isTitle: true,
+                    ),
+                    const SizedBox(height: 16),
+                    AppSwitchRow(
+                      title: 'عدم استرداد نقود',
+                      subtitle: 'تسجيل الخروج المبكر بدون رجوع أي مبلغ',
+                      icon: Icons.money_off,
+                      tint: colors.err,
+                      value: _noRefund,
+                      onChanged: (val) {
+                        setState(() {
+                          _noRefund = val;
+                          if (val) {
+                            _customRefund = false;
+                            _refundController.text = '0.00';
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    AppSwitchRow(
+                      title: 'استرداد مخصص',
+                      subtitle: 'تعديل مبلغ الاسترداد يدوياً',
+                      icon: Icons.tune,
+                      value: _customRefund,
+                      onChanged: _noRefund
+                          ? null
+                          : (val) => setState(() => _customRefund = val),
+                    ),
+                    if (_customRefund) ...[
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        label: 'مبلغ الاسترداد الفعلي (ج.م)',
+                        prefixIcon: Icons.payments_outlined,
+                        controller: _refundController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
                     ],
+                    if (!_noRefund) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'رجّعت الفلوس منين؟',
+                        style: AppTextStyles.label.copyWith(color: colors.ink2),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedTabs(
+                        labels: const ['نقدي', 'فودافون كاش', 'إنستا باي'],
+                        index: _methods.indexOf(_refundMethod).clamp(0, 2),
+                        onChanged: (val) =>
+                            setState(() => _refundMethod = _methods[val]),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -291,6 +326,10 @@ class _EarlyCheckoutScreenState extends ConsumerState<EarlyCheckoutScreen> {
                                 'apartmentId': booking.apartmentId,
                                 'earlyCheckoutBookingId': booking.id,
                                 'newCheckoutDate': today.toIso8601String(),
+                                'refundAmount': _effectiveRefund(
+                                  booking,
+                                ).toStringAsFixed(2),
+                                'refundMethod': _refundMethod,
                               },
                             ).toString(),
                           );
@@ -342,8 +381,9 @@ class _CalcLine extends StatelessWidget {
               value,
               textAlign: TextAlign.end,
               style: AppTextStyles.tabular(
-                (isTitle ? AppTextStyles.h3 : AppTextStyles.label)
-                    .copyWith(color: valueColor ?? colors.ink),
+                (isTitle ? AppTextStyles.h3 : AppTextStyles.label).copyWith(
+                  color: valueColor ?? colors.ink,
+                ),
               ),
             ),
           ),

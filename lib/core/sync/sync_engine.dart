@@ -28,6 +28,11 @@ String formatLocalDateOnly(DateTime value) {
 
 class SyncEngine {
   static const _lastPullAtKey = 'sync_last_pull_at';
+  static const _lastReconcileAtKey = 'sync_last_reconcile_at';
+
+  /// كل قد إيه نعمل كشف على الصفوف المحذوفة من على السيرفر. مش كل مزامنة
+  /// عشان دي بتجيب كل الـ ids من كل جدول.
+  static const _reconcileInterval = Duration(minutes: 15);
 
   final AppDatabase db;
   final SupabaseClient supabase;
@@ -69,7 +74,115 @@ class SyncEngine {
       }
       await _pushLocalChanges();
       await _pullRemoteChanges();
+      // زي رفع الصور: لو الكشف ده فشل مايبوظش المزامنة كلها.
+      try {
+        await reconcileRemoteDeletions();
+      } catch (e) {
+        debugPrint('Delete reconciliation skipped (will retry next sync): $e');
+      }
     });
+  }
+
+  /// جداول الكشف: الاسم على السيرفر + الجدول المحلي المقابل.
+  /// `audit_logs` مستثنى عن قصد — سجل بيتضاف عليه بس وعمره ما بيتمسح.
+  List<({String remote, TableInfo<Table, dynamic> local})>
+  get _reconcilableTables => [
+    (remote: 'user_profiles', local: db.userProfiles),
+    (remote: 'buildings', local: db.buildings),
+    (remote: 'apartments', local: db.apartments),
+    (remote: 'summer_bookings', local: db.summerBookings),
+    (remote: 'booking_payments', local: db.bookingPayments),
+    (remote: 'winter_contracts', local: db.winterContracts),
+    (remote: 'winter_payments', local: db.winterPayments),
+    (remote: 'meter_readings', local: db.meterReadings),
+    (remote: 'expenses', local: db.expenses),
+    (remote: 'financial_transfers', local: db.financialTransfers),
+    (remote: 'technicians', local: db.technicians),
+    (remote: 'cleaning_supplies', local: db.cleaningSupplies),
+    (remote: 'cleaning_transactions', local: db.cleaningTransactions),
+    (remote: 'apartment_inspections', local: db.apartmentInspections),
+    (remote: 'maintenance_requests', local: db.maintenanceRequests),
+  ];
+
+  /// الحذف اللي بيتم على جهاز مبيوصلش لباقي الأجهزة: الـ pull بيجيب الصفوف
+  /// اللي `updated_at` بتاعها اتغيّر، والصف المتمسوح مش موجود أصلاً عشان
+  /// يرجع. فالجهاز التاني بيفضل شايف الحجز/المصروف المحذوف — والأخطر إنه لو
+  /// عدّله بيرفعه تاني للسيرفر (upsert) فيرجع يعيش من جديد.
+  ///
+  /// الحل: نجيب الـ ids الموجودة فعلاً على السيرفر ونمسح محليًا أي صف إحنا
+  /// مسجلينه `synced` ومش موجود هناك. بيشتغل بعد الـ push، يعني أي شغل محلي
+  /// لسه مترفعش يكون اترفع خلاص — وبنعدّي أي صف لسه `pending` مهما كان.
+  Future<void> reconcileRemoteDeletions({bool force = false}) async {
+    if (!force) {
+      final lastRun = preferences.getString(_lastReconcileAtKey);
+      if (lastRun != null) {
+        final elapsed = DateTime.now().toUtc().difference(
+          DateTime.parse(lastRun).toUtc(),
+        );
+        if (elapsed < _reconcileInterval) return;
+      }
+    }
+
+    for (final entry in _reconcilableTables) {
+      try {
+        await _reconcileTableDeletions(entry.remote, entry.local);
+      } catch (e) {
+        debugPrint('Reconcile skipped for ${entry.remote}: $e');
+      }
+    }
+
+    await preferences.setString(
+      _lastReconcileAtKey,
+      DateTime.now().toUtc().toIso8601String(),
+    );
+  }
+
+  Future<void> _reconcileTableDeletions(
+    String remoteTable,
+    TableInfo<Table, dynamic> localTable,
+  ) async {
+    final remoteRows = await supabase.from(remoteTable).select('id');
+    final remoteIds = <String>{
+      for (final row in remoteRows)
+        if (row['id'] != null) row['id'].toString(),
+    };
+
+    // احتياطي مهم: لو السيرفر رجّع صفر صفوف مانمسحش حاجة. ده ممكن يكون RLS
+    // قافل الجدول أو رد ناقص — ومسح كل البيانات المحلية وقتها كارثة.
+    //
+    // ⚠️ ده شغال صح دلوقتي لأن الـ RLS إما بيدي الجدول كله أو ولا حاجة
+    // (admin/staff = كل الصفوف، والـ viewer عنده SELECT على جداول بعينها).
+    // لو اتحطت سياسة بتفلتر **صفوف** معيّنة لمستخدم، لازم الكشف ده يتقفل
+    // للمستخدم ده وإلا هيمسح محليًا الصفوف اللي هو مش شايفها.
+    if (remoteIds.isEmpty) return;
+
+    final tableName = localTable.actualTableName;
+    final localSynced = await db
+        .customSelect(
+          'SELECT id FROM $tableName WHERE sync_status = ${SyncStatus.synced.index}',
+        )
+        .get();
+
+    final staleIds = [
+      for (final row in localSynced)
+        if (!remoteIds.contains(row.read<String>('id'))) row.read<String>('id'),
+    ];
+    if (staleIds.isEmpty) return;
+
+    // على دفعات عشان مانوصلش لحد الـ variables في SQLite.
+    const chunkSize = 200;
+    for (var start = 0; start < staleIds.length; start += chunkSize) {
+      final chunk = staleIds.skip(start).take(chunkSize).toList();
+      final placeholders = List.filled(chunk.length, '?').join(', ');
+      await db.customStatement(
+        'DELETE FROM $tableName WHERE id IN ($placeholders) '
+        'AND sync_status = ${SyncStatus.synced.index}',
+        chunk,
+      );
+    }
+    debugPrint(
+      'Reconciled ${staleIds.length} row(s) deleted remotely from $remoteTable',
+    );
   }
 
   Future<void> _runWithNetworkRetry(Future<void> Function() action) async {
@@ -310,6 +423,10 @@ class SyncEngine {
     }
   }
 
+  // ملحوظة مهمة: مفيش أي payload هنا بيبعت updated_at — السيرفر هو اللي بيملكه
+  // (DEFAULT now() عند الإدراج + trigger trg_set_updated_at عند التعديل، ملف
+  // supabase/16). لو بعتنا قيمة الجهاز، صف اتعمل وهو أوفلاين هيتسجل بتوقيت قديم
+  // والأجهزة التانية مش هتشوفه في الـ incremental pull (اللي بيفلتر على updated_at).
   Future<void> _pushLocalChanges() async {
     final pendingUserProfiles = await (db.select(
       db.userProfiles,
@@ -331,7 +448,6 @@ class SyncEngine {
           'secondary_phone': item.secondaryPhone,
           'role': item.role,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -404,7 +520,6 @@ class SyncEngine {
           'landline_owner_name': item.landlineOwnerName,
           'landline_notes': item.landlineNotes,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -487,8 +602,9 @@ class SyncEngine {
           'national_id': item.nationalId,
           'id_front_image': uploadedIdfrontimage,
           'id_back_image': uploadedIdbackimage,
+          'transferred_from_booking_id': item.transferredFromBookingId,
+          'transferred_to_booking_id': item.transferredToBookingId,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         await supabase.from('summer_bookings').upsert(payload);
@@ -570,7 +686,6 @@ class SyncEngine {
           'contract_front_image': uploadedContractfrontimage,
           'contract_back_image': uploadedContractbackimage,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -850,7 +965,6 @@ class SyncEngine {
           'stock_quantity': item.stockQuantity,
           'unit': item.unit,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -935,7 +1049,6 @@ class SyncEngine {
           'inspector_name': item.inspectorName,
           'notes': item.notes,
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -979,7 +1092,6 @@ class SyncEngine {
           'cost_egp': item.costEgp,
           'resolved_at': item.resolvedAt?.toUtc().toIso8601String(),
           'created_at': item.createdAt.toUtc().toIso8601String(),
-          'updated_at': item.updatedAt.toUtc().toIso8601String(),
         };
 
         if (item.syncStatus == SyncStatus.pendingDelete) {
@@ -1323,6 +1435,14 @@ class SyncEngine {
             idBackImage: row['id_back_image'] == null
                 ? const Value.absent()
                 : Value(row['id_back_image']),
+            // مش بنستخدم Value.absent() هنا: لو الرابط اتشال على السيرفر لازم
+            // يتشال محليًا كمان، مش يفضل بالقيمة القديمة.
+            transferredFromBookingId: Value(
+              row['transferred_from_booking_id'] as String?,
+            ),
+            transferredToBookingId: Value(
+              row['transferred_to_booking_id'] as String?,
+            ),
             createdAt: row['created_at'] == null
                 ? const Value.absent()
                 : Value(DateTime.parse(row['created_at'])),

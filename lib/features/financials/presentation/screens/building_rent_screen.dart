@@ -226,8 +226,7 @@ class BuildingRentScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'مواعيد الأقساط:',
-                        style:
-                            AppTextStyles.label.copyWith(color: colors.ink2),
+                        style: AppTextStyles.label.copyWith(color: colors.ink2),
                       ),
                       AppButton(
                         label: 'إضافة موعد',
@@ -259,8 +258,7 @@ class BuildingRentScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         'لم يتم تحديد مواعيد',
-                        style:
-                            AppTextStyles.bodyS.copyWith(color: colors.ink3),
+                        style: AppTextStyles.bodyS.copyWith(color: colors.ink3),
                       ),
                     )
                   else
@@ -276,8 +274,9 @@ class BuildingRentScreen extends ConsumerWidget {
                             contentPadding: EdgeInsets.zero,
                             title: Text(
                               'القسط ${index + 1}: ${date.toLocal().toString().split(' ')[0]}',
-                              style: AppTextStyles.body
-                                  .copyWith(color: colors.ink),
+                              style: AppTextStyles.body.copyWith(
+                                color: colors.ink,
+                              ),
                             ),
                             trailing: AppIconButton(
                               icon: Icons.delete_outline,
@@ -370,8 +369,7 @@ class _RentRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       date,
-                      style:
-                          AppTextStyles.caption.copyWith(color: colors.ink3),
+                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
                     ),
                   ],
                 ),

@@ -71,7 +71,7 @@ void main() {
   });
 
   test(
-    'keeps summer booking occupied after checkout time until checkout',
+    'keeps summer booking occupied while the stay is still running',
     () async {
       final apartmentId = await seedApartment();
       final today = DateTime.now();
@@ -79,10 +79,42 @@ void main() {
       await seedSummerBooking(
         apartmentId: apartmentId,
         checkInDate: today.subtract(const Duration(days: 4)),
-        checkOutDate: today.subtract(const Duration(hours: 1)),
+        checkOutDate: today.add(const Duration(days: 3)),
       );
 
       expect(await rules.isApartmentOccupiedNow(apartmentId), isTrue);
+    },
+  );
+
+  test('frees the apartment once the checkout day arrives', () async {
+    // المالك بيستلم ٨ صباحاً وبيأجّرها لعميل جديد نفس اليوم ٢ الضهر، وساعات
+    // بيسجّل الخروج في التطبيق متأخر — فالشقة مالهاش تفضل "مشغولة" مستنية
+    // زرار تسجيل الخروج.
+    final apartmentId = await seedApartment();
+    final today = DateTime.now();
+
+    await seedSummerBooking(
+      apartmentId: apartmentId,
+      checkInDate: today.subtract(const Duration(days: 4)),
+      checkOutDate: today.subtract(const Duration(hours: 1)),
+    );
+
+    expect(await rules.isApartmentOccupiedNow(apartmentId), isFalse);
+  });
+
+  test(
+    'a checkout never registered does not lock the apartment forever',
+    () async {
+      final apartmentId = await seedApartment();
+      final today = DateTime.now();
+
+      await seedSummerBooking(
+        apartmentId: apartmentId,
+        checkInDate: today.subtract(const Duration(days: 40)),
+        checkOutDate: today.subtract(const Duration(days: 33)),
+      );
+
+      expect(await rules.isApartmentOccupiedNow(apartmentId), isFalse);
     },
   );
 

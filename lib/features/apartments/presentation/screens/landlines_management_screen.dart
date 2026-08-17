@@ -76,11 +76,7 @@ class _LandlinesManagementScreenState
                               tint: colors.ok,
                             ),
                           ),
-                          Container(
-                            width: 1,
-                            height: 38,
-                            color: colors.border,
-                          ),
+                          Container(width: 1, height: 38, color: colors.border),
                           Expanded(
                             child: MiniMetric(
                               icon: Icons.phone_disabled,
@@ -236,44 +232,43 @@ class _LandlineRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 9),
       padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
       child: Row(
-          children: [
-            IconTile(
-              icon: hasLine ? Icons.phone : Icons.phone_disabled,
-              tint: hasLine ? colors.brand : colors.ink3,
-            ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'شقة ${apartment.apartmentNumber}',
-                    style: AppTextStyles.title.copyWith(color: colors.ink),
+        children: [
+          IconTile(
+            icon: hasLine ? Icons.phone : Icons.phone_disabled,
+            tint: hasLine ? colors.brand : colors.ink3,
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'شقة ${apartment.apartmentNumber}',
+                  style: AppTextStyles.title.copyWith(color: colors.ink),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hasLine ? 'رقم الخط: $number' : 'لا يوجد رقم أرضي مسجل',
+                  style: AppTextStyles.caption.copyWith(
+                    color: hasLine ? colors.ink2 : colors.ink3,
                   ),
-                  const SizedBox(height: 2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (owner.isNotEmpty)
                   Text(
-                    hasLine ? 'رقم الخط: $number' : 'لا يوجد رقم أرضي مسجل',
-                    style: AppTextStyles.caption.copyWith(
-                      color: hasLine ? colors.ink2 : colors.ink3,
-                    ),
+                    'صاحب الخط: $owner',
+                    style: AppTextStyles.caption.copyWith(color: colors.ink3),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (owner.isNotEmpty)
-                    Text(
-                      'صاحب الخط: $owner',
-                      style:
-                          AppTextStyles.caption.copyWith(color: colors.ink3),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Icon(Icons.edit_outlined, size: 18, color: colors.ink3),
-          ],
-        ),
-      );
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.edit_outlined, size: 18, color: colors.ink3),
+        ],
+      ),
+    );
   }
 }

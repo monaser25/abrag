@@ -42,12 +42,25 @@ class SummerBookingsScreen extends ConsumerWidget {
             }
             final checkout = booking.earlyCheckoutDate ?? booking.checkOutDate;
             final target = DateTime(today.year, today.month, today.day);
-            final checkoutDay = DateTime(checkout.year, checkout.month, checkout.day);
+            final checkoutDay = DateTime(
+              checkout.year,
+              checkout.month,
+              checkout.day,
+            );
             return !checkoutDay.isBefore(target);
           }).length;
+          // "قادمة" = يبدأ في يوم بعد النهاردة. المقارنة باليوم (مش بالساعة) عشان
+          // حجز بيبدأ النهاردة الساعة ٢ الضهر ما يتحسبش حجز مستقبلي.
+          final todayOnly = DateTime(today.year, today.month, today.day);
           final upcoming = bookings.where((booking) {
-            return booking.checkInDate.isAfter(today) &&
-                booking.status != 'cancelled';
+            final checkInDay = DateTime(
+              booking.checkInDate.year,
+              booking.checkInDate.month,
+              booking.checkInDate.day,
+            );
+            return checkInDay.isAfter(todayOnly) &&
+                booking.status != 'cancelled' &&
+                booking.status != 'checked_out';
           }).length;
           final availableToday = (apartments.length - occupiedToday).clamp(
             0,
@@ -68,8 +81,7 @@ class SummerBookingsScreen extends ConsumerWidget {
                         Flexible(
                           child: Text(
                             'إدارة حجوزات الصيف',
-                            style: AppTextStyles.h2
-                                .copyWith(color: colors.ink),
+                            style: AppTextStyles.h2.copyWith(color: colors.ink),
                           ),
                         ),
                         StatusChip(
@@ -84,13 +96,6 @@ class SummerBookingsScreen extends ConsumerWidget {
                       'تابع الإشغال، مواعيد الخروج، والحجوزات القادمة لهذا الموسم فقط.',
                       style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
                     ),
-                    const SizedBox(height: 16),
-                    AppButton(
-                      label: 'حجز جديد',
-                      icon: Icons.add,
-                      expand: true,
-                      onPressed: () => context.push('/summer_bookings/add'),
-                    ),
                   ],
                 ),
               ),
@@ -99,25 +104,29 @@ class SummerBookingsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(6),
                 child: GridView.count(
                   crossAxisCount: 2,
-                  childAspectRatio: 2.5,
+                  childAspectRatio: 2.1,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
                     _MetricTile(
-                      label: 'مؤجرة اليوم',
+                      // "حالياً" مش "اليوم": الرقم ده كل المقيمين دلوقتي،
+                      // أما "مؤجرة اليوم" في الأجندة فمعناها اللي دخلت النهاردة.
+                      label: 'مؤجرة حالياً',
                       value: '$occupiedToday',
                       icon: Icons.hotel_outlined,
                       tint: colors.summer,
-                      onTap: () => context
-                          .push('/summer_bookings/calendar?filter=occupied'),
+                      onTap: () => context.push(
+                        '/summer_bookings/calendar?filter=occupied',
+                      ),
                     ),
                     _MetricTile(
                       label: 'متاحة اليوم',
                       value: '$availableToday',
                       icon: Icons.meeting_room_outlined,
                       tint: colors.ok,
-                      onTap: () => context
-                          .push('/summer_bookings/calendar?filter=available'),
+                      onTap: () => context.push(
+                        '/summer_bookings/calendar?filter=available',
+                      ),
                     ),
                     _MetricTile(
                       label: 'خروجات قادمة',
@@ -125,15 +134,17 @@ class SummerBookingsScreen extends ConsumerWidget {
                       icon: Icons.logout,
                       tint: colors.err,
                       onTap: () => context.push(
-                          '/summer_bookings/calendar?filter=upcomingCheckouts'),
+                        '/summer_bookings/calendar?filter=upcomingCheckouts',
+                      ),
                     ),
                     _MetricTile(
                       label: 'حجوزات قادمة',
                       value: '$upcoming',
                       icon: Icons.event_available_outlined,
                       tint: colors.brand,
-                      onTap: () => context
-                          .push('/summer_bookings/calendar?filter=upcoming'),
+                      onTap: () => context.push(
+                        '/summer_bookings/calendar?filter=upcoming',
+                      ),
                     ),
                   ],
                 ),
@@ -142,14 +153,14 @@ class SummerBookingsScreen extends ConsumerWidget {
               NavRow(
                 icon: Icons.calendar_month,
                 title: 'الأجندة الذكية',
-                sub: 'عرض شهري مع فلاتر، إحصائيات اليوم، وحركات مواعيد الخروج.',
+                sub: 'عرض شهري بالفلاتر وإحصائيات اليوم',
                 tint: colors.brand,
                 onTap: () => context.push('/summer_bookings/calendar'),
               ),
               NavRow(
                 icon: Icons.view_agenda_outlined,
                 title: 'قائمة الحجوزات',
-                sub: 'بحث وفلاتر وكروت تفصيلية لكل الحجزات.',
+                sub: 'بحث وفلاتر لكل الحجوزات',
                 tint: colors.accent,
                 onTap: () => context.push('/summer_bookings/list'),
               ),

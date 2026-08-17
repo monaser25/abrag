@@ -5,7 +5,7 @@ import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final maintenanceProvider = StreamProvider<List<MaintenanceRequest>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.maintenanceRequests)
-        ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
-      .watch();
+  return (db.select(
+    db.maintenanceRequests,
+  )..orderBy([(t) => OrderingTerm(expression: t.createdAt)])).watch();
 });

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/utils/occupancy_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final apartmentOccupancyRulesProvider = Provider<ApartmentOccupancyRules>((
@@ -117,7 +118,6 @@ class ApartmentOccupancyRules {
 
   Future<bool> isApartmentOccupiedNow(String apartmentId) async {
     final now = DateTime.now();
-    final today = _dateOnly(now);
     final summerBookings =
         await (_db.select(_db.summerBookings)
               ..where((t) => t.apartmentId.equals(apartmentId))
@@ -129,9 +129,11 @@ class ApartmentOccupancyRules {
                 (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
               ))
             .get();
-    final hasSummer = summerBookings.any((booking) {
-      return !_dateOnly(booking.checkInDate).isAfter(today);
-    });
+    // كان بيقول "مشغولة" لمجرد إن الدخول عدّى — من غير أي حد لتاريخ الخروج،
+    // فحجز قديم ما اتسجلش خروجه كان بيقفل الشقة للأبد.
+    final hasSummer = summerBookings.any(
+      (booking) => summerBookingHoldsApartment(booking, now),
+    );
     if (hasSummer) return true;
 
     final winterContracts =
@@ -140,11 +142,7 @@ class ApartmentOccupancyRules {
               ..where((t) => t.isActive.equals(true)))
             .get();
     return winterContracts.any(
-      (contract) => _periodContainsDayAwareStart(
-        now,
-        contract.startDate,
-        contract.endDate,
-      ),
+      (contract) => winterContractHoldsApartment(contract, now),
     );
   }
 
@@ -155,17 +153,5 @@ class ApartmentOccupancyRules {
     DateTime endB,
   ) {
     return startA.isBefore(endB) && endA.isAfter(startB);
-  }
-
-  bool _periodContainsDayAwareStart(
-    DateTime target,
-    DateTime start,
-    DateTime end,
-  ) {
-    return !_dateOnly(start).isAfter(_dateOnly(target)) && target.isBefore(end);
-  }
-
-  DateTime _dateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
   }
 }

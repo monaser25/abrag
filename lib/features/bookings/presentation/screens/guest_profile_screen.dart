@@ -11,6 +11,7 @@ import '../../../apartments/presentation/providers/apartments_controller.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/booking_rate_utils.dart';
 import '../../../../shared/widgets/widgets.dart';
 
 class GuestProfileScreen extends ConsumerWidget {
@@ -75,10 +76,7 @@ class GuestProfileScreen extends ConsumerWidget {
                 now.isBefore(checkout);
           });
           final totalNights = guestBookings.fold<int>(0, (sum, booking) {
-            final days = _calendarDays(
-              booking.checkInDate,
-              booking.earlyCheckoutDate ?? booking.checkOutDate,
-            );
+            final days = summerBookingStayDays(booking);
             return sum + days;
           });
           final totalPaid = guestBookings.fold<double>(
@@ -218,10 +216,7 @@ class GuestProfileScreen extends ConsumerWidget {
                   },
                   orElse: () => booking.apartmentId,
                 );
-                final days = _calendarDays(
-                  booking.checkInDate,
-                  booking.earlyCheckoutDate ?? booking.checkOutDate,
-                );
+                final days = summerBookingStayDays(booking);
                 return AppCard(
                   onTap: () =>
                       context.push('/summer_bookings/details/${booking.id}'),
@@ -270,7 +265,7 @@ class GuestProfileScreen extends ConsumerWidget {
                         icon: Icons.price_change,
                         label: 'السعر اليومي',
                         value:
-                            '${((booking.totalPriceEgp - booking.overstayFeeEgp) / days).toDouble().toCurrencyFormat()} ج.م',
+                            '${summerBookingDailyRate(booking).toDouble().toCurrencyFormat()} ج.م',
                       ),
                       Divider(color: colors.border),
                       _InfoLine(
@@ -407,12 +402,6 @@ class GuestProfileScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  int _calendarDays(DateTime start, DateTime end) {
-    final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day);
-    return endDate.difference(startDate).inDays.clamp(1, 10000);
   }
 
   String? _latestExistingImage(Iterable<String?> paths) {

@@ -70,8 +70,7 @@ class AbragAppBar extends StatelessWidget implements PreferredSizeWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style:
-                          AppTextStyles.caption.copyWith(color: colors.ink3),
+                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

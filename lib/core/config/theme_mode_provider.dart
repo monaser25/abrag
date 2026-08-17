@@ -8,10 +8,11 @@ const _kThemeModeKey = 'theme_mode';
 
 /// App theme mode, persisted to SharedPreferences. Dark-first: defaults to
 /// [ThemeMode.dark] when nothing is stored.
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
-  return ThemeModeController(ref.watch(sharedPreferencesProvider));
-});
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
+  (ref) {
+    return ThemeModeController(ref.watch(sharedPreferencesProvider));
+  },
+);
 
 class ThemeModeController extends StateNotifier<ThemeMode> {
   ThemeModeController(this._prefs) : super(_load(_prefs));

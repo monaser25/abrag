@@ -62,3 +62,6 @@ abrag_supabase.txt
 # Build artifacts from compiling the drift web worker
 web/drift_worker.dart.js.deps
 web/drift_worker.dart.js.map
+
+# Supabase CLI local state (leaks project ref / db host)
+supabase/.temp/

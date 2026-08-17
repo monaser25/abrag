@@ -51,41 +51,45 @@ class AppButton extends StatelessWidget {
     final colors = context.colors;
     final enabled = onPressed != null || loading;
 
-    final (Color bg, Color fg, BoxBorder? side, List<BoxShadow>? shadow) =
-        switch (variant) {
+    final (
+      Color bg,
+      Color fg,
+      BoxBorder? side,
+      List<BoxShadow>? shadow,
+    ) = switch (variant) {
       AppButtonVariant.primary => (
-          colors.accent,
-          colors.accentInk,
-          null,
-          [
-            BoxShadow(
-              color: colors.accent,
-              offset: const Offset(0, 6),
-              blurRadius: 18,
-              spreadRadius: -8,
-            ),
-          ],
-        ),
+        colors.accent,
+        colors.accentInk,
+        null,
+        [
+          BoxShadow(
+            color: colors.accent,
+            offset: const Offset(0, 6),
+            blurRadius: 18,
+            spreadRadius: -8,
+          ),
+        ],
+      ),
       AppButtonVariant.royal => (
-          colors.brand,
-          colors.brandInk,
-          null,
-          [
-            BoxShadow(
-              color: colors.brand,
-              offset: const Offset(0, 6),
-              blurRadius: 18,
-              spreadRadius: -8,
-            ),
-          ],
-        ),
+        colors.brand,
+        colors.brandInk,
+        null,
+        [
+          BoxShadow(
+            color: colors.brand,
+            offset: const Offset(0, 6),
+            blurRadius: 18,
+            spreadRadius: -8,
+          ),
+        ],
+      ),
       AppButtonVariant.ghost => (colors.surface3, colors.ink, null, null),
       AppButtonVariant.outline => (
-          Colors.transparent,
-          colors.ink,
-          Border.all(color: colors.border2),
-          null,
-        ),
+        Colors.transparent,
+        colors.ink,
+        Border.all(color: colors.border2),
+        null,
+      ),
     };
 
     final height = small ? 38.0 : 48.0;
@@ -117,10 +121,7 @@ class AppButton extends StatelessWidget {
                   child: SizedBox(
                     width: small ? 16 : 20,
                     height: small ? 16 : 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: fg,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: fg),
                   ),
                 )
               : Row(

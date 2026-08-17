@@ -85,22 +85,22 @@ class _AddApartmentScreenState extends ConsumerState<AddApartmentScreen> {
       final controller = ref.read(apartmentsControllerProvider.notifier);
       if (widget.apartment == null) {
         controller.addApartment(
-            _selectedBuildingId!,
-            _numberController.text.trim(),
-            int.tryParse(_floorController.text.trim()) ?? 1,
-            inventory: _inventoryController.text.trim().isEmpty
-                ? null
-                : _inventoryController.text.trim(),
-            landlineNumber: _landlineNumberController.text.trim().isEmpty
-                ? null
-                : _landlineNumberController.text.trim(),
-            landlineOwnerName: _landlineOwnerController.text.trim().isEmpty
-                ? null
-                : _landlineOwnerController.text.trim(),
-            landlineNotes: _landlineNotesController.text.trim().isEmpty
-                ? null
-                : _landlineNotesController.text.trim(),
-          );
+          _selectedBuildingId!,
+          _numberController.text.trim(),
+          int.tryParse(_floorController.text.trim()) ?? 1,
+          inventory: _inventoryController.text.trim().isEmpty
+              ? null
+              : _inventoryController.text.trim(),
+          landlineNumber: _landlineNumberController.text.trim().isEmpty
+              ? null
+              : _landlineNumberController.text.trim(),
+          landlineOwnerName: _landlineOwnerController.text.trim().isEmpty
+              ? null
+              : _landlineOwnerController.text.trim(),
+          landlineNotes: _landlineNotesController.text.trim().isEmpty
+              ? null
+              : _landlineNotesController.text.trim(),
+        );
       } else {
         controller.updateApartment(
           id: widget.apartment!.id,

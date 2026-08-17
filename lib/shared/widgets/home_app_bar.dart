@@ -47,8 +47,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     const SizedBox(height: 1),
                     Text(
                       subtitle!,
-                      style:
-                          AppTextStyles.caption.copyWith(color: colors.ink3),
+                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

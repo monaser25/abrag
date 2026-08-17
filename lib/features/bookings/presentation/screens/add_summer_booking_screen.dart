@@ -183,6 +183,16 @@ class _AddSummerBookingScreenState
     }
   }
 
+  /// ترتيب رقمي لأرقام الشقق (زي شاشة الشقق) عشان ٢ تيجي قبل ١٠.
+  int _compareApartmentNumbers(String a, String b) {
+    final numA = int.tryParse(a);
+    final numB = int.tryParse(b);
+    if (numA != null && numB != null) return numA.compareTo(numB);
+    if (numA != null) return -1;
+    if (numB != null) return 1;
+    return a.compareTo(b);
+  }
+
   void _applyInitialApartmentSelection(List<Apartment> apartments) {
     if (widget.bookingId != null || _initialApartmentSelectionApplied) return;
     final apartmentId = widget.initialApartmentId;
@@ -845,9 +855,24 @@ class _AddSummerBookingScreenState
             context.go('/summer_bookings/list');
           }
         },
-        error: (error, _) => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString()))),
+        // رسائل أخطاء الفلوس بتبقى طويلة وبتشرح المطلوب — تدي وقت للقراية
+        // وتتقفل يدوي بدل ما تختفي في ثانيتين.
+        error: (error, _) => ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                error.toString().replaceFirst('Exception: ', ''),
+                maxLines: 6,
+              ),
+              duration: const Duration(seconds: 10),
+              action: SnackBarAction(
+                label: 'تمام',
+                onPressed: () =>
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+              ),
+            ),
+          ),
       );
     });
 
@@ -951,6 +976,71 @@ class _AddSummerBookingScreenState
                 loading: () => const LinearProgressIndicator(),
                 error: (error, stack) => const SizedBox.shrink(),
               ),
+            // التواريخ الأول: الشقق المتاحة بتتحسب على أساس الفترة، فلازم
+            // تتحدد قبل ما نعرض قائمة الشقق (بدل ما الاختيار يتلغي بعدين).
+            const SectionTitle(title: 'الإقامة'),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: AppDateField(
+                    label: 'تاريخ الدخول',
+                    value: _checkInDate != null
+                        ? DateFormat(
+                            'EEEE yyyy-MM-dd hh:mm a',
+                            'ar',
+                          ).format(_checkInDate!)
+                        : null,
+                    placeholder: 'اختر التاريخ',
+                    onTap: () => _selectDate(context, true),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: AppTextField(
+                    label: 'عدد الأيام',
+                    controller: _daysController,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => _calculateCheckoutDate(),
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
+                  ),
+                ),
+              ],
+            ),
+            if (_checkOutDate != null) ...[
+              const SizedBox(height: 12),
+              AppCard(
+                color: colors.okSoft,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.event_available, size: 18, color: colors.ok),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'تاريخ الخروج: ${DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar').format(_checkOutDate!)}',
+                        style: AppTextStyles.bodyS.copyWith(color: colors.ink),
+                      ),
+                    ),
+                    if (_checkInDate != null &&
+                        _dateOnly(
+                          _checkInDate!,
+                        ).isAfter(_dateOnly(DateTime.now()))) ...[
+                      const SizedBox(width: 8),
+                      const StatusChip(
+                        label: 'حجز مستقبلي',
+                        kind: StatusChipKind.warn,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SectionTitle(title: 'الشقة'),
             buildingsAsync.when(
               data: (buildings) {
@@ -1042,81 +1132,116 @@ class _AddSummerBookingScreenState
                   }
                 }
 
+                filteredApts.sort(
+                  (a, b) => _compareApartmentNumbers(
+                    a.apartmentNumber,
+                    b.apartmentNumber,
+                  ),
+                );
+
+                final datesChosen =
+                    _checkInDate != null && _checkOutDate != null;
+
+                // من غير فترة محددة مفيش معنى لعرض الشقق: الاختيار هيتلغي
+                // أول ما التواريخ تتحدد ويطلع شقق محجوزة.
+                if (!datesChosen) {
+                  return AppCard(
+                    color: colors.warnSoft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock_clock, size: 18, color: colors.warn),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'حدّد تاريخ الدخول وعدد الأيام الأول، وبعدين هتظهر الشقق المتاحة في الفترة دي بس.',
+                            style: AppTextStyles.bodyS.copyWith(
+                              color: colors.ink2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (!isAddMode) {
+                  return AppDropdownField<String>(
+                    label: 'اختر الشقة',
+                    prefixIcon: Icons.door_front_door_outlined,
+                    initialValue: _selectedApartmentId,
+                    items: filteredApts
+                        .map(
+                          (a) => DropdownMenuItem(
+                            value: a.id,
+                            child: Text('شقة ${a.apartmentNumber}'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedApartmentId = v),
+                    validator: (v) => v == null ? 'مطلوب' : null,
+                  );
+                }
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (isAddMode)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             'اختر الشقة',
                             style: AppTextStyles.label.copyWith(
                               color: colors.ink2,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          if (filteredApts.isEmpty)
-                            EmptyState(
-                              icon: Icons.door_front_door_outlined,
-                              title:
-                                  _checkInDate == null || _checkOutDate == null
-                                  ? 'اختر التواريخ أولًا'
-                                  : 'لا توجد شقق متاحة',
-                            )
-                          else
-                            AppCard(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Column(
-                                children: filteredApts.map((a) {
-                                  final selected = _selectedApartmentIds
-                                      .contains(a.id);
-                                  return CheckboxListTile(
-                                    value: selected,
-                                    dense: true,
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
-                                    title: Text('شقة ${a.apartmentNumber}'),
-                                    onChanged: (checked) {
-                                      setState(() {
-                                        if (checked == true) {
-                                          _selectedApartmentIds.add(a.id);
-                                        } else {
-                                          _selectedApartmentIds.remove(a.id);
-                                        }
-                                      });
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                        ],
+                        ),
+                        Text(
+                          _selectedApartmentIds.isEmpty
+                              ? '${filteredApts.length} متاحة'
+                              : 'مختار ${_selectedApartmentIds.length} من ${filteredApts.length}',
+                          style: AppTextStyles.caption.copyWith(
+                            color: colors.ink3,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (filteredApts.isEmpty)
+                      const EmptyState(
+                        icon: Icons.door_front_door_outlined,
+                        title: 'لا توجد شقق متاحة في الفترة دي',
                       )
                     else
-                      AppDropdownField<String>(
-                        label: 'اختر الشقة',
-                        prefixIcon: Icons.door_front_door_outlined,
-                        initialValue: _selectedApartmentId,
-                        items: filteredApts
-                            .map(
-                              (a) => DropdownMenuItem(
-                                value: a.id,
-                                child: Text('شقة ${a.apartmentNumber}'),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedApartmentId = v),
-                        validator: (v) => v == null ? 'مطلوب' : null,
-                      ),
-                    if (_checkInDate == null || _checkOutDate == null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, right: 12),
-                        child: Text(
-                          'اختر تاريخ الدخول والخروج لعرض الشقق المتاحة فقط',
-                          style: AppTextStyles.bodyS.copyWith(
-                            color: colors.ink2,
-                          ),
+                      AppCard(
+                        padding: const EdgeInsets.all(10),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: filteredApts.map((a) {
+                            final selected = _selectedApartmentIds.contains(
+                              a.id,
+                            );
+                            return FilterChip(
+                              label: Text('شقة ${a.apartmentNumber}'),
+                              selected: selected,
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              onSelected: (checked) {
+                                setState(() {
+                                  if (checked) {
+                                    _selectedApartmentIds.add(a.id);
+                                  } else {
+                                    _selectedApartmentIds.remove(a.id);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
                         ),
                       ),
                   ],
@@ -1205,69 +1330,6 @@ class _AddSummerBookingScreenState
                 ),
               ],
             ),
-            const SectionTitle(title: 'الإقامة'),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: AppDateField(
-                    label: 'تاريخ الدخول',
-                    value: _checkInDate != null
-                        ? DateFormat(
-                            'EEEE yyyy-MM-dd hh:mm a',
-                            'ar',
-                          ).format(_checkInDate!)
-                        : null,
-                    placeholder: 'اختر التاريخ',
-                    onTap: () => _selectDate(context, true),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: AppTextField(
-                    label: 'عدد الأيام',
-                    controller: _daysController,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateCheckoutDate(),
-                    validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
-                  ),
-                ),
-              ],
-            ),
-            if (_checkOutDate != null) ...[
-              const SizedBox(height: 12),
-              AppCard(
-                color: colors.okSoft,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.event_available, size: 18, color: colors.ok),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'تاريخ الخروج: ${DateFormat('EEEE yyyy-MM-dd hh:mm a', 'ar').format(_checkOutDate!)}',
-                        style: AppTextStyles.bodyS.copyWith(color: colors.ink),
-                      ),
-                    ),
-                    if (_checkInDate != null &&
-                        _dateOnly(
-                          _checkInDate!,
-                        ).isAfter(_dateOnly(DateTime.now()))) ...[
-                      const SizedBox(width: 8),
-                      const StatusChip(
-                        label: 'حجز مستقبلي',
-                        kind: StatusChipKind.warn,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
             const SectionTitle(title: 'المبلغ والدفع'),
             AppCard(
               child: Column(

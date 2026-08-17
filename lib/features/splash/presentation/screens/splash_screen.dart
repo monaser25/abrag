@@ -87,9 +87,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             bottom: 54,
             start: 0,
             end: 0,
-            child: Center(
-              child: SpinningIcon(size: 20, color: colors.brand),
-            ),
+            child: Center(child: SpinningIcon(size: 20, color: colors.brand)),
           ),
           const PositionedDirectional(
             bottom: 0,

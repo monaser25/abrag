@@ -50,8 +50,10 @@ class AppIconButton extends StatelessWidget {
                 top: 4,
                 end: 4,
                 child: Container(
-                  constraints:
-                      const BoxConstraints(minWidth: 16, minHeight: 16),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: colors.accent,
