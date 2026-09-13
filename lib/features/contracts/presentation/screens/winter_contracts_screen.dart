@@ -86,8 +86,7 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
                               vertical: 14,
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 StatusChip(
                                   kind: StatusChipKind.winter,
@@ -162,15 +161,20 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
                             padding: const EdgeInsets.only(bottom: 14),
                             child: SegmentedTabs(
                               labels: const ['الكل', 'نشط', 'منتهي', 'شواغر'],
-                              index: const ['all', 'active', 'expired', 'empty']
-                                  .indexOf(_filter),
-                              onChanged: (i) => setState(() => _filter =
-                                  const [
-                                    'all',
-                                    'active',
-                                    'expired',
-                                    'empty'
-                                  ][i]),
+                              index: const [
+                                'all',
+                                'active',
+                                'expired',
+                                'empty',
+                              ].indexOf(_filter),
+                              onChanged: (i) => setState(
+                                () => _filter = const [
+                                  'all',
+                                  'active',
+                                  'expired',
+                                  'empty',
+                                ][i],
+                              ),
                             ),
                           ),
                         ),
@@ -472,7 +476,8 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
                                             StatusChip(
                                               kind: StatusChipKind.neutral,
                                               icon: Icons.bolt,
-                                              label: contract
+                                              label:
+                                                  contract
                                                       .isElectricityOnStudent
                                                   ? 'كهرباء: على الطالب'
                                                   : 'كهرباء: على المبنى',
@@ -540,7 +545,9 @@ class _WinterContractsScreenState extends ConsumerState<WinterContractsScreen> {
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isHighlight ? colors.winter.withValues(alpha: 0.4) : colors.border,
+          color: isHighlight
+              ? colors.winter.withValues(alpha: 0.4)
+              : colors.border,
         ),
       ),
       child: Column(

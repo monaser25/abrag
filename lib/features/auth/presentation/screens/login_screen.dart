@@ -93,7 +93,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -105,15 +107,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             const SizedBox(height: 14),
                             Text(
                               l10n.loginTitle,
-                              style: AppTextStyles.h1
-                                  .copyWith(color: colors.ink),
+                              style: AppTextStyles.h1.copyWith(
+                                color: colors.ink,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               l10n.loginSubtitle,
-                              style: AppTextStyles.bodyS
-                                  .copyWith(color: colors.ink2),
+                              style: AppTextStyles.bodyS.copyWith(
+                                color: colors.ink2,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -127,8 +131,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           prefixIcon: Icons.mail_outline,
                           validator: (value) =>
                               value != null && value.isNotEmpty
-                                  ? null
-                                  : l10n.requiredField,
+                              ? null
+                              : l10n.requiredField,
                         ),
                         const SizedBox(height: 12),
                         AppTextField(
@@ -137,22 +141,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           obscureText: !_showPassword,
                           prefixIcon: Icons.lock_outline,
                           suffix: IconButton(
-                            onPressed: () => setState(
-                                () => _showPassword = !_showPassword),
+                            onPressed: () =>
+                                setState(() => _showPassword = !_showPassword),
                             icon: Icon(
                               _showPassword
                                   ? Icons.visibility
                                   : Icons.visibility_off_outlined,
                               size: 20,
-                              color: _showPassword
-                                  ? colors.brand
-                                  : colors.ink3,
+                              color: _showPassword ? colors.brand : colors.ink3,
                             ),
                           ),
                           validator: (value) =>
                               value != null && value.isNotEmpty
-                                  ? null
-                                  : l10n.requiredField,
+                              ? null
+                              : l10n.requiredField,
                         ),
                         const SizedBox(height: 10),
                         Row(
@@ -160,20 +162,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           children: [
                             GestureDetector(
                               behavior: HitTestBehavior.opaque,
-                              onTap: () => setState(
-                                  () => _rememberMe = !_rememberMe),
+                              onTap: () =>
+                                  setState(() => _rememberMe = !_rememberMe),
                               child: Row(
                                 children: [
                                   Switch(
                                     value: _rememberMe,
-                                    onChanged: (val) => setState(
-                                        () => _rememberMe = val),
+                                    onChanged: (val) =>
+                                        setState(() => _rememberMe = val),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     'تذكر بيانات الدخول',
-                                    style: AppTextStyles.bodyS
-                                        .copyWith(color: colors.ink2),
+                                    style: AppTextStyles.bodyS.copyWith(
+                                      color: colors.ink2,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -182,8 +185,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               behavior: HitTestBehavior.opaque,
                               onTap: () => context.go('/forgot_password'),
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                                 child: Text(
                                   'نسيت كلمة المرور؟',
                                   style: AppTextStyles.bodyS.copyWith(

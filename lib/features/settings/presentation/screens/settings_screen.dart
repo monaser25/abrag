@@ -15,9 +15,7 @@ class SettingsScreen extends ConsumerWidget {
     final roleAsync = ref.watch(currentUserRoleProvider);
 
     if (roleAsync.isLoading) {
-      return const AppScaffold(
-        body: SafeArea(child: LoadingSkeleton()),
-      );
+      return const AppScaffold(body: SafeArea(child: LoadingSkeleton()));
     }
 
     if (roleAsync.valueOrNull != 'admin') {

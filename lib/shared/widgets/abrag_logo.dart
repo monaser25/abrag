@@ -6,12 +6,7 @@ import '../../core/theme/abrag_colors.dart';
 /// optional royal-blue glow. Falls back to a tinted icon if the asset is
 /// unavailable.
 class AbragLogo extends StatelessWidget {
-  const AbragLogo({
-    super.key,
-    this.size = 64,
-    this.radius,
-    this.glow = false,
-  });
+  const AbragLogo({super.key, this.size = 64, this.radius, this.glow = false});
 
   final double size;
   final double? radius;

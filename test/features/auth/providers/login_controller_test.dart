@@ -13,9 +13,7 @@ void main() {
   setUp(() {
     mockAuthRepository = MockAuthRepository();
     container = ProviderContainer(
-      overrides: [
-        authRepositoryProvider.overrideWithValue(mockAuthRepository),
-      ],
+      overrides: [authRepositoryProvider.overrideWithValue(mockAuthRepository)],
     );
   });
 
@@ -24,13 +22,19 @@ void main() {
   });
 
   test('login successful', () async {
-    when(() => mockAuthRepository.signInWithEmailPassword(any(), any()))
-        .thenAnswer((_) async => throw Exception('Stub')); // Need to return AuthResponse but we can just mock a void or mock throwing exception to test loading state. Wait, AuthResponse is hard to mock. Let's just mock it to return dynamic or throw exception and see if state updates.
-        
+    when(
+      () => mockAuthRepository.signInWithEmailPassword(any(), any()),
+    ).thenAnswer(
+      (_) async => throw Exception('Stub'),
+    ); // Need to return AuthResponse but we can just mock a void or mock throwing exception to test loading state. Wait, AuthResponse is hard to mock. Let's just mock it to return dynamic or throw exception and see if state updates.
+
     // For simplicity, we just test if state starts with AsyncData
     final controller = container.read(loginControllerProvider.notifier);
-    expect(container.read(loginControllerProvider), const AsyncData<void>(null));
-    
+    expect(
+      container.read(loginControllerProvider),
+      const AsyncData<void>(null),
+    );
+
     // Test that logout calls signOut
     when(() => mockAuthRepository.signOut()).thenAnswer((_) async {});
     await controller.logout();

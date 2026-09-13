@@ -38,8 +38,12 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   @override
   void initState() {
     super.initState();
-    _amountController = TextEditingController(text: widget.expense?.amountEgp.toString() ?? '');
-    _descriptionController = TextEditingController(text: widget.expense?.description ?? '');
+    _amountController = TextEditingController(
+      text: widget.expense?.amountEgp.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.expense?.description ?? '',
+    );
     _date = widget.expense?.expenseDate ?? DateTime.now();
     _selectedBuildingId = widget.expense?.buildingId;
     _selectedApartmentId = widget.expense?.apartmentId;
@@ -87,23 +91,35 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   void _submit() {
     if (_formKey.currentState!.validate() && _date != null) {
       if (widget.expense == null) {
-        ref.read(expensesControllerProvider.notifier).addExpense(
+        ref
+            .read(expensesControllerProvider.notifier)
+            .addExpense(
               buildingId: _selectedBuildingId,
               apartmentId: _selectedApartmentId,
               expenseType: _selectedExpenseType,
-              amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
+              amount:
+                  double.tryParse(
+                    _amountController.text.replaceAll(',', '').trim(),
+                  ) ??
+                  0,
               paymentMethod: _selectedPaymentMethod,
               season: _selectedSeason,
               date: _date!,
               description: _descriptionController.text.trim(),
             );
       } else {
-        ref.read(expensesControllerProvider.notifier).updateExpense(
+        ref
+            .read(expensesControllerProvider.notifier)
+            .updateExpense(
               id: widget.expense!.id,
               buildingId: _selectedBuildingId,
               apartmentId: _selectedApartmentId,
               expenseType: _selectedExpenseType,
-              amount: double.tryParse(_amountController.text.replaceAll(',', '').trim()) ?? 0,
+              amount:
+                  double.tryParse(
+                    _amountController.text.replaceAll(',', '').trim(),
+                  ) ??
+                  0,
               paymentMethod: _selectedPaymentMethod,
               season: _selectedSeason,
               date: _date!,
@@ -126,7 +142,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     final settingsAsync = ref.watch(appSettingsProvider);
     final activeSeason = ref.watch(activeSeasonKeyProvider);
 
-    if (widget.expense == null && !_didApplyActiveSeason && settingsAsync.hasValue) {
+    if (widget.expense == null &&
+        !_didApplyActiveSeason &&
+        settingsAsync.hasValue) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _didApplyActiveSeason) return;
         setState(() {
@@ -267,9 +285,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                           ),
                         )
                         .toList(),
-                    onChanged: (v) => setState(
-                      () => _selectedSeason = v ?? _selectedSeason,
-                    ),
+                    onChanged: (v) =>
+                        setState(() => _selectedSeason = v ?? _selectedSeason),
                   ),
                 ),
               ],

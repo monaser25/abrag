@@ -25,8 +25,12 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.building?.name ?? '');
-    _addressController = TextEditingController(text: widget.building?.address ?? '');
-    _totalApartmentsController = TextEditingController(text: widget.building?.totalApartments.toString() ?? '15');
+    _addressController = TextEditingController(
+      text: widget.building?.address ?? '',
+    );
+    _totalApartmentsController = TextEditingController(
+      text: widget.building?.totalApartments.toString() ?? '15',
+    );
   }
 
   @override
@@ -40,18 +44,22 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (widget.building == null) {
-        ref.read(buildingsControllerProvider.notifier).addBuilding(
-          _nameController.text.trim(),
-          _addressController.text.trim(),
-          int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
-        );
+        ref
+            .read(buildingsControllerProvider.notifier)
+            .addBuilding(
+              _nameController.text.trim(),
+              _addressController.text.trim(),
+              int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
+            );
       } else {
-        ref.read(buildingsControllerProvider.notifier).updateBuilding(
-          widget.building!.id,
-          _nameController.text.trim(),
-          _addressController.text.trim(),
-          int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
-        );
+        ref
+            .read(buildingsControllerProvider.notifier)
+            .updateBuilding(
+              widget.building!.id,
+              _nameController.text.trim(),
+              _addressController.text.trim(),
+              int.tryParse(_totalApartmentsController.text.trim()) ?? 15,
+            );
       }
     }
   }
@@ -60,17 +68,14 @@ class _AddBuildingScreenState extends ConsumerState<AddBuildingScreen> {
   Widget build(BuildContext context) {
     final controllerState = ref.watch(buildingsControllerProvider);
 
-    ref.listen<AsyncValue<void>>(
-      buildingsControllerProvider,
-      (_, state) {
-        state.whenOrNull(
-          data: (_) => context.pop(),
-          error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          ),
-        );
-      },
-    );
+    ref.listen<AsyncValue<void>>(buildingsControllerProvider, (_, state) {
+      state.whenOrNull(
+        data: (_) => context.pop(),
+        error: (error, _) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString()))),
+      );
+    });
 
     return AppScaffold(
       appBar: AbragAppBar(

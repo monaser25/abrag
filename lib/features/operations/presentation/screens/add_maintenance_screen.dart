@@ -17,7 +17,8 @@ class AddMaintenanceScreen extends ConsumerStatefulWidget {
   const AddMaintenanceScreen({super.key, this.request});
 
   @override
-  ConsumerState<AddMaintenanceScreen> createState() => _AddMaintenanceScreenState();
+  ConsumerState<AddMaintenanceScreen> createState() =>
+      _AddMaintenanceScreenState();
 }
 
 class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
@@ -25,7 +26,7 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _reportedByController;
   late final TextEditingController _costController;
-  
+
   String? _selectedBuildingId;
   String? _selectedApartmentId;
   String? _selectedTechnicianId;
@@ -33,9 +34,15 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
   @override
   void initState() {
     super.initState();
-    _descriptionController = TextEditingController(text: widget.request?.issueDescription ?? '');
-    _reportedByController = TextEditingController(text: widget.request?.reportedBy ?? '');
-    _costController = TextEditingController(text: widget.request?.costEgp.toString() ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.request?.issueDescription ?? '',
+    );
+    _reportedByController = TextEditingController(
+      text: widget.request?.reportedBy ?? '',
+    );
+    _costController = TextEditingController(
+      text: widget.request?.costEgp.toString() ?? '',
+    );
     _selectedApartmentId = widget.request?.apartmentId;
     _selectedTechnicianId = widget.request?.technicianId;
   }
@@ -51,20 +58,28 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
   void _submit() {
     if (_formKey.currentState!.validate() && _selectedApartmentId != null) {
       if (widget.request == null) {
-        ref.read(maintenanceControllerProvider.notifier).addRequest(
-          apartmentId: _selectedApartmentId!,
-          reportedBy: _reportedByController.text.trim(),
-          description: _descriptionController.text.trim(),
-          technicianId: _selectedTechnicianId,
-        );
+        ref
+            .read(maintenanceControllerProvider.notifier)
+            .addRequest(
+              apartmentId: _selectedApartmentId!,
+              reportedBy: _reportedByController.text.trim(),
+              description: _descriptionController.text.trim(),
+              technicianId: _selectedTechnicianId,
+            );
       } else {
-        ref.read(maintenanceControllerProvider.notifier).updateRequest(
-          id: widget.request!.id,
-          reportedBy: _reportedByController.text.trim(),
-          description: _descriptionController.text.trim(),
-          technicianId: _selectedTechnicianId,
-          costEgp: widget.request!.status == 'resolved' ? double.tryParse(_costController.text.replaceAll(',', '').trim()) : null,
-        );
+        ref
+            .read(maintenanceControllerProvider.notifier)
+            .updateRequest(
+              id: widget.request!.id,
+              reportedBy: _reportedByController.text.trim(),
+              description: _descriptionController.text.trim(),
+              technicianId: _selectedTechnicianId,
+              costEgp: widget.request!.status == 'resolved'
+                  ? double.tryParse(
+                      _costController.text.replaceAll(',', '').trim(),
+                    )
+                  : null,
+            );
       }
     }
   }
@@ -76,17 +91,14 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final techniciansAsync = ref.watch(techniciansProvider);
 
-    ref.listen<AsyncValue<void>>(
-      maintenanceControllerProvider,
-      (_, state) {
-        state.whenOrNull(
-          data: (_) => context.pop(),
-          error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          ),
-        );
-      },
-    );
+    ref.listen<AsyncValue<void>>(maintenanceControllerProvider, (_, state) {
+      state.whenOrNull(
+        data: (_) => context.pop(),
+        error: (error, _) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString()))),
+      );
+    });
 
     return AppScaffold(
       appBar: AbragAppBar(
@@ -103,7 +115,10 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                 if (widget.request != null && _selectedBuildingId == null) {
                   // We need to find the building ID for the apartment
                   apartmentsAsync.whenData((apts) {
-                    final apt = apts.firstWhere((a) => a.id == _selectedApartmentId, orElse: () => apts.first);
+                    final apt = apts.firstWhere(
+                      (a) => a.id == _selectedApartmentId,
+                      orElse: () => apts.first,
+                    );
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (!mounted) return;
                       setState(() {
@@ -111,7 +126,8 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                       });
                     });
                   });
-                } else if (buildings.isNotEmpty && _selectedBuildingId == null) {
+                } else if (buildings.isNotEmpty &&
+                    _selectedBuildingId == null) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (!mounted || _selectedBuildingId != null) return;
                     setState(() {
@@ -123,13 +139,20 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                   label: 'اختر المبنى',
                   prefixIcon: Icons.apartment,
                   initialValue: _selectedBuildingId,
-                  items: buildings.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))).toList(),
-                  onChanged: widget.request != null ? null : (v) {
-                    setState(() {
-                      _selectedBuildingId = v;
-                      _selectedApartmentId = null;
-                    });
-                  },
+                  items: buildings
+                      .map(
+                        (b) =>
+                            DropdownMenuItem(value: b.id, child: Text(b.name)),
+                      )
+                      .toList(),
+                  onChanged: widget.request != null
+                      ? null
+                      : (v) {
+                          setState(() {
+                            _selectedBuildingId = v;
+                            _selectedApartmentId = null;
+                          });
+                        },
                 );
               },
               loading: () => const LinearProgressIndicator(),
@@ -139,15 +162,26 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
             apartmentsAsync.when(
               data: (apartments) {
                 final filteredApts = _selectedBuildingId != null
-                    ? apartments.where((a) => a.buildingId == _selectedBuildingId).toList()
+                    ? apartments
+                          .where((a) => a.buildingId == _selectedBuildingId)
+                          .toList()
                     : apartments;
 
                 return AppDropdownField<String>(
                   label: 'الشقة',
                   prefixIcon: Icons.door_front_door_outlined,
                   initialValue: _selectedApartmentId,
-                  items: filteredApts.map((a) => DropdownMenuItem(value: a.id, child: Text('شقة ${a.apartmentNumber}'))).toList(),
-                  onChanged: widget.request != null ? null : (v) => setState(() => _selectedApartmentId = v),
+                  items: filteredApts
+                      .map(
+                        (a) => DropdownMenuItem(
+                          value: a.id,
+                          child: Text('شقة ${a.apartmentNumber}'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: widget.request != null
+                      ? null
+                      : (v) => setState(() => _selectedApartmentId = v),
                   validator: (v) => v == null ? 'مطلوب' : null,
                 );
               },
@@ -157,14 +191,20 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
             const SectionTitle(title: 'تفاصيل العطل'),
             techniciansAsync.when(
               data: (technicians) {
-                final activeTechs = technicians.where((t) => t.syncStatus != SyncStatus.pendingDelete).toList();
+                final activeTechs = technicians
+                    .where((t) => t.syncStatus != SyncStatus.pendingDelete)
+                    .toList();
 
                 // Ensure the selected technician is in the list, if not, add it temporarily
-                if (_selectedTechnicianId != null && !activeTechs.any((t) => t.id == _selectedTechnicianId)) {
-                   final oldTech = technicians.firstWhere((t) => t.id == _selectedTechnicianId, orElse: () => technicians.first);
-                   if (oldTech.id == _selectedTechnicianId) {
-                     activeTechs.add(oldTech);
-                   }
+                if (_selectedTechnicianId != null &&
+                    !activeTechs.any((t) => t.id == _selectedTechnicianId)) {
+                  final oldTech = technicians.firstWhere(
+                    (t) => t.id == _selectedTechnicianId,
+                    orElse: () => technicians.first,
+                  );
+                  if (oldTech.id == _selectedTechnicianId) {
+                    activeTechs.add(oldTech);
+                  }
                 }
 
                 return AppDropdownField<String>(
@@ -172,8 +212,16 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                   prefixIcon: Icons.engineering_outlined,
                   initialValue: _selectedTechnicianId,
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('بدون فني')),
-                    ...activeTechs.map((t) => DropdownMenuItem(value: t.id, child: Text('${t.name} (${t.specialty})'))),
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('بدون فني'),
+                    ),
+                    ...activeTechs.map(
+                      (t) => DropdownMenuItem(
+                        value: t.id,
+                        child: Text('${t.name} (${t.specialty})'),
+                      ),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _selectedTechnicianId = v),
                 );
@@ -202,7 +250,9 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                 label: 'التكلفة (ج.م)',
                 prefixIcon: Icons.payments_outlined,
                 controller: _costController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [CurrencyInputFormatter()],
                 validator: (v) => v == null || v.isEmpty ? 'مطلوب' : null,
               ),

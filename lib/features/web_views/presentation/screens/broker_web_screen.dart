@@ -31,8 +31,9 @@ class BrokerWebScreen extends ConsumerWidget {
       body: apartmentsAsync.when(
         data: (apartments) {
           // Broker only sees apartments with brokerVisibility == true
-          final availableApartments =
-              apartments.where((a) => a.brokerVisibility).toList();
+          final availableApartments = apartments
+              .where((a) => a.brokerVisibility)
+              .toList();
 
           if (availableApartments.isEmpty) {
             return const EmptyState(
@@ -53,15 +54,15 @@ class BrokerWebScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'شقق متاحة للعرض',
-                          style: AppTextStyles.caption
-                              .copyWith(color: colors.ink3),
+                          style: AppTextStyles.caption.copyWith(
+                            color: colors.ink3,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${availableApartments.length}',
                           style: AppTextStyles.tabular(
-                            AppTextStyles.display
-                                .copyWith(color: colors.ink),
+                            AppTextStyles.display.copyWith(color: colors.ink),
                           ),
                         ),
                       ],
@@ -99,8 +100,11 @@ class BrokerWebScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.meeting_room_outlined,
-                              size: 20, color: colors.accent),
+                          Icon(
+                            Icons.meeting_room_outlined,
+                            size: 20,
+                            color: colors.accent,
+                          ),
                           const SizedBox(height: 6),
                           Text(
                             apt.apartmentNumber,

@@ -80,9 +80,7 @@ class _TimelineRow extends StatelessWidget {
                   ),
                 ),
                 if (!isLast)
-                  Expanded(
-                    child: Container(width: 2, color: colors.border),
-                  ),
+                  Expanded(child: Container(width: 2, color: colors.border)),
               ],
             ),
           ),
@@ -99,15 +97,17 @@ class _TimelineRow extends StatelessWidget {
                       children: [
                         Text(
                           entry.title,
-                          style:
-                              AppTextStyles.title.copyWith(color: colors.ink),
+                          style: AppTextStyles.title.copyWith(
+                            color: colors.ink,
+                          ),
                         ),
                         if (entry.subtitle != null) ...[
                           const SizedBox(height: 2),
                           Text(
                             entry.subtitle!,
-                            style: AppTextStyles.caption
-                                .copyWith(color: colors.ink3),
+                            style: AppTextStyles.caption.copyWith(
+                              color: colors.ink3,
+                            ),
                           ),
                         ],
                       ],

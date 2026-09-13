@@ -146,10 +146,7 @@ class _GalleryScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: AppButton(
-                    label: 'حفظ',
-                    onPressed: () {},
-                  ),
+                  child: AppButton(label: 'حفظ', onPressed: () {}),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -200,7 +197,11 @@ class _GalleryScreen extends StatelessWidget {
                   Divider(),
                   DetailRow(label: 'المدة', value: '5 ليالٍ'),
                   Divider(),
-                  DetailRow(label: 'الإجمالي', value: '3,500 ج.م', strong: true),
+                  DetailRow(
+                    label: 'الإجمالي',
+                    value: '3,500 ج.م',
+                    strong: true,
+                  ),
                 ],
               ),
             ),
@@ -341,10 +342,7 @@ class _GalleryScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: AppFab(
-        label: 'إضافة',
-        onPressed: () {},
-      ),
+      floatingActionButton: AppFab(label: 'إضافة', onPressed: () {}),
     );
   }
 }

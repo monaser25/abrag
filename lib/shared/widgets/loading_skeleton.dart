@@ -79,7 +79,8 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
       animation: _controller,
       builder: (context, _) {
         final pulse =
-            0.55 + 0.45 * (0.5 + 0.5 * math.sin(_controller.value * 2 * math.pi));
+            0.55 +
+            0.45 * (0.5 + 0.5 * math.sin(_controller.value * 2 * math.pi));
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -121,8 +122,7 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
                     const SizedBox(width: 8),
                     Text(
                       widget.label!,
-                      style:
-                          AppTextStyles.caption.copyWith(color: colors.ink3),
+                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
                     ),
                   ],
                 ),

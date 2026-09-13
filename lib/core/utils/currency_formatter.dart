@@ -20,7 +20,7 @@ class CurrencyInputFormatter extends TextInputFormatter {
 
     // Remove all non-digit characters except for decimal point
     final text = newValue.text.replaceAll(RegExp(r'[^0-9.]'), '');
-    
+
     // Prevent multiple decimal points
     if (text.split('.').length > 2) {
       return oldValue;
@@ -47,4 +47,3 @@ class CurrencyInputFormatter extends TextInputFormatter {
     );
   }
 }
-

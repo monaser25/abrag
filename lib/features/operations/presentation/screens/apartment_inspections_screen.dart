@@ -116,9 +116,7 @@ class _InspectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final tint = hasDamages
-        ? colors.err
-        : (isClean ? colors.ok : colors.warn);
+    final tint = hasDamages ? colors.err : (isClean ? colors.ok : colors.warn);
     final icon = hasDamages
         ? Icons.warning_amber_rounded
         : (isClean ? Icons.check_circle : Icons.cleaning_services);
@@ -160,9 +158,7 @@ class _InspectionCard extends StatelessWidget {
                     children: [
                       StatusChip(
                         label: isClean ? 'نظيفة' : 'تحتاج نظافة',
-                        kind: isClean
-                            ? StatusChipKind.ok
-                            : StatusChipKind.warn,
+                        kind: isClean ? StatusChipKind.ok : StatusChipKind.warn,
                       ),
                       const SizedBox(width: 8),
                       AppButton(
@@ -237,10 +233,7 @@ class _InspectionCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$label:',
-          style: AppTextStyles.body.copyWith(color: colors.ink2),
-        ),
+        Text('$label:', style: AppTextStyles.body.copyWith(color: colors.ink2)),
         const SizedBox(width: 12),
         Flexible(
           child: Text(

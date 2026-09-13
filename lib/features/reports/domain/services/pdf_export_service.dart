@@ -42,6 +42,9 @@ class PdfExportService {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         textDirection: pw.TextDirection.rtl, // CRITICAL FOR ARABIC
+        // الافتراضي في مكتبة pdf هو 20 صفحة فقط؛ كشف حساب موسم كامل بيعدّيها
+        // فيرمي TooManyPagesException — فبنرفع السقف لحد آمن.
+        maxPages: 1000,
         theme: pw.ThemeData.withFont(base: ttf, bold: ttfBold).copyWith(
           defaultTextStyle: pw.TextStyle(
             font: ttf,
@@ -382,6 +385,7 @@ class PdfExportService {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         textDirection: pw.TextDirection.rtl,
+        maxPages: 1000,
         theme: pw.ThemeData.withFont(base: ttf, bold: ttfBold).copyWith(
           defaultTextStyle: pw.TextStyle(
             font: ttf,

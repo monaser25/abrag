@@ -257,13 +257,15 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                               children: [
                                 Text(
                                   'بيانات التسليم',
-                                  style: AppTextStyles.label
-                                      .copyWith(color: colors.ink2),
+                                  style: AppTextStyles.label.copyWith(
+                                    color: colors.ink2,
+                                  ),
                                 ),
                                 Text(
                                   contract.studentName,
-                                  style: AppTextStyles.h2
-                                      .copyWith(color: colors.ink),
+                                  style: AppTextStyles.h2.copyWith(
+                                    color: colors.ink,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Wrap(
@@ -296,10 +298,9 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                         Expanded(
                           child: AppDateField(
                             label: 'تاريخ التسليم / الفحص',
-                            value: _inspectionDate
-                                .toLocal()
-                                .toString()
-                                .split(' ')[0],
+                            value: _inspectionDate.toLocal().toString().split(
+                              ' ',
+                            )[0],
                             onTap: _selectDate,
                           ),
                         ),
@@ -398,54 +399,56 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                       AppCard(
                         color: colors.brandSoft,
                         child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'قائمة الفحص (الجرد):',
-                                style: AppTextStyles.title
-                                    .copyWith(color: colors.brand),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'قائمة الفحص (الجرد):',
+                              style: AppTextStyles.title.copyWith(
+                                color: colors.brand,
                               ),
-                              const SizedBox(height: 8),
-                              ...(() {
-                                final isNewFormat =
-                                    apt.inventory!.contains('\n') ||
-                                    apt.inventory!.contains(':');
-                                final separator = isNewFormat ? '\n' : ',';
-                                final items = apt.inventory!
-                                    .split(separator)
-                                    .map((e) => e.trim())
-                                    .where((e) => e.isNotEmpty)
-                                    .toList();
-                                return items.map((item) {
-                                  if (item.endsWith(':')) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: 12.0,
-                                        bottom: 4.0,
+                            ),
+                            const SizedBox(height: 8),
+                            ...(() {
+                              final isNewFormat =
+                                  apt.inventory!.contains('\n') ||
+                                  apt.inventory!.contains(':');
+                              final separator = isNewFormat ? '\n' : ',';
+                              final items = apt.inventory!
+                                  .split(separator)
+                                  .map((e) => e.trim())
+                                  .where((e) => e.isNotEmpty)
+                                  .toList();
+                              return items.map((item) {
+                                if (item.endsWith(':')) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 12.0,
+                                      bottom: 4.0,
+                                    ),
+                                    child: Text(
+                                      item,
+                                      style: AppTextStyles.label.copyWith(
+                                        color: colors.brand,
                                       ),
-                                      child: Text(
-                                        item,
-                                        style: AppTextStyles.label
-                                            .copyWith(color: colors.brand),
-                                      ),
-                                    );
-                                  }
-                                  return CheckboxListTile(
-                                    title: Text(item),
-                                    value: _inventoryChecks[item] ?? false,
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _inventoryChecks[item] = val ?? false;
-                                      });
-                                    },
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
+                                    ),
                                   );
-                                });
-                              })(),
-                            ],
+                                }
+                                return CheckboxListTile(
+                                  title: Text(item),
+                                  value: _inventoryChecks[item] ?? false,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _inventoryChecks[item] = val ?? false;
+                                    });
+                                  },
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                );
+                              });
+                            })(),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -538,52 +541,54 @@ class _WinterCheckoutScreenState extends ConsumerState<WinterCheckoutScreen> {
                         ),
                       ),
                       child: Column(
-                          children: [
-                            Text(
-                              'تسوية التأمين',
-                              style: AppTextStyles.title
-                                  .copyWith(color: colors.ink),
+                        children: [
+                          Text(
+                            'تسوية التأمين',
+                            style: AppTextStyles.title.copyWith(
+                              color: colors.ink,
                             ),
-                            Divider(color: colors.border),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('إجمالي الخصومات:'),
-                                Text(
-                                  '${totalDeduction.toCurrencyFormat()} ج.م',
-                                  style: AppTextStyles.tabular(
-                                    AppTextStyles.title
-                                        .copyWith(color: colors.err),
+                          ),
+                          Divider(color: colors.border),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('إجمالي الخصومات:'),
+                              Text(
+                                '${totalDeduction.toCurrencyFormat()} ج.م',
+                                style: AppTextStyles.tabular(
+                                  AppTextStyles.title.copyWith(
+                                    color: colors.err,
                                   ),
-                                ),
-                              ],
-                            ),
-                            if (_isEarlyCheckout && !_broughtReplacement)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text(
-                                  'تم مصادرة التأمين بالكامل بسبب الخروج المبكر بدون بديل.',
-                                  style: AppTextStyles.label
-                                      .copyWith(color: colors.err),
                                 ),
                               ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('المبلغ المسترد للطالب:'),
-                                Text(
-                                  '${refund.toCurrencyFormat()} ج.م',
-                                  style: AppTextStyles.tabular(
-                                    AppTextStyles.h3.copyWith(color: colors.ok),
-                                  ),
+                            ],
+                          ),
+                          if (_isEarlyCheckout && !_broughtReplacement)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'تم مصادرة التأمين بالكامل بسبب الخروج المبكر بدون بديل.',
+                                style: AppTextStyles.label.copyWith(
+                                  color: colors.err,
                                 ),
-                              ],
+                              ),
                             ),
-                          ],
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('المبلغ المسترد للطالب:'),
+                              Text(
+                                '${refund.toCurrencyFormat()} ج.م',
+                                style: AppTextStyles.tabular(
+                                  AppTextStyles.h3.copyWith(color: colors.ok),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-
                   ],
                 ),
               );

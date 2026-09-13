@@ -359,8 +359,7 @@ class _SummaryCard extends StatelessWidget {
                     ),
                     Text(
                       subtitle,
-                      style:
-                          AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                      style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
                     ),
                   ],
                 ),
@@ -402,7 +401,10 @@ class _DetailPill extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.ink3),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
@@ -488,9 +490,7 @@ class _RentalsSection extends StatelessWidget {
       emptyText: 'لا توجد حجوزات مرتبطة',
       children: rentals.map((rental) {
         return ListTile(
-          title: Text(
-            '${seasonLabel(rental.season)} - ${rental.customerName}',
-          ),
+          title: Text('${seasonLabel(rental.season)} - ${rental.customerName}'),
           subtitle: Text(
             '${rental.buildingName ?? ''} شقة ${rental.apartmentNumber} - ${rental.date.toLocal().toString().split(' ')[0]}',
           ),

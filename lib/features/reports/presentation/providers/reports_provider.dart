@@ -382,7 +382,13 @@ final financialReportProvider = StreamProvider<FinancialSummary>((ref) {
 });
 
 Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
-  final expenses = await db.select(db.expenses).get();
+  // مصروف/تحويل متعلّم عليه pendingDelete = محذوف من وجهة نظر المستخدم؛
+  // لازم يخرج من الإجماليات فورًا مش بعد ما المزامنة تلحق تمسحه.
+  final expenses =
+      await (db.select(db.expenses)..where(
+            (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+          ))
+          .get();
   final summerBookings =
       await (db.select(db.summerBookings)
             ..where((t) => t.status.isNotIn(['deleted', 'cancelled']))
@@ -397,11 +403,19 @@ Future<FinancialSummary> _buildFinancialSummary(AppDatabase db) async {
   )..where((t) => t.id.isNotValue(kSettingsBuildingId))).get();
   final apartments = await db.select(db.apartments).get();
   final winterContracts = await db.select(db.winterContracts).get();
-  final winterPayments = await db.select(db.winterPayments).get();
+  final winterPayments =
+      await (db.select(db.winterPayments)..where(
+            (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+          ))
+          .get();
   final technicians = await db.select(db.technicians).get();
   final maintenanceRequests = await db.select(db.maintenanceRequests).get();
   final users = await db.select(db.userProfiles).get();
-  final financialTransfers = await db.select(db.financialTransfers).get();
+  final financialTransfers =
+      await (db.select(db.financialTransfers)..where(
+            (t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index]),
+          ))
+          .get();
 
   final buildingNameById = {for (final b in buildings) b.id: b.name};
   final apartmentById = {for (final a in apartments) a.id: a};

@@ -111,8 +111,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                         children: [
                           Text(
                             'إجمالي الأشخاص: ${filtered.length}',
-                            style: AppTextStyles.title
-                                .copyWith(color: colors.ink),
+                            style: AppTextStyles.title.copyWith(
+                              color: colors.ink,
+                            ),
                           ),
                         ],
                       ),
@@ -129,8 +130,8 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           final avatarTint = customer.isMixed
                               ? colors.brand
                               : customer.hasSummer
-                                  ? colors.summer
-                                  : colors.winter;
+                              ? colors.summer
+                              : colors.winter;
 
                           return AppCard(
                             onTap: () {
@@ -147,7 +148,10 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                             margin: const EdgeInsets.only(bottom: 10),
                             child: Row(
                               children: [
-                                AppAvatar(name: customer.name, tint: avatarTint),
+                                AppAvatar(
+                                  name: customer.name,
+                                  tint: avatarTint,
+                                ),
                                 const SizedBox(width: 13),
                                 Expanded(
                                   child: Column(
@@ -156,8 +160,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                     children: [
                                       Text(
                                         customer.name,
-                                        style: AppTextStyles.title
-                                            .copyWith(color: colors.ink),
+                                        style: AppTextStyles.title.copyWith(
+                                          color: colors.ink,
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -191,21 +196,24 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                           ),
                                         ],
                                       ),
-                                      if ((customer.phone ?? '').isNotEmpty) ...[
+                                      if ((customer.phone ?? '')
+                                          .isNotEmpty) ...[
                                         const SizedBox(height: 6),
                                         Text(
                                           customer.phone!,
                                           textDirection: TextDirection.ltr,
-                                          style: AppTextStyles.caption
-                                              .copyWith(color: colors.ink2),
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: colors.ink2,
+                                          ),
                                         ),
                                       ],
                                       if ((customer.nationalId ?? '')
                                           .isNotEmpty)
                                         Text(
                                           'الرقم القومي: ${customer.nationalId}',
-                                          style: AppTextStyles.caption
-                                              .copyWith(color: colors.ink3),
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: colors.ink3,
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -254,9 +262,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         decoration: BoxDecoration(
           color: isSelected ? colors.brandSoft : colors.surface,
           borderRadius: AppRadius.rPill,
-          border: Border.all(
-            color: isSelected ? colors.brand : colors.border,
-          ),
+          border: Border.all(color: isSelected ? colors.brand : colors.border),
         ),
         child: Text(
           label,

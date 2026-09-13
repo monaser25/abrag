@@ -34,7 +34,9 @@ class TechniciansController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final normalizedPhone = _normalizeEgyptianMobile(phone ?? '');
-      final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
+      final normalizedSecondary = _normalizeEgyptianMobile(
+        secondaryPhone ?? '',
+      );
       final id = const Uuid().v4();
       await _db
           .into(_db.technicians)
@@ -80,7 +82,9 @@ class TechniciansController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final normalizedPhone = _normalizeEgyptianMobile(phone ?? '');
-      final normalizedSecondary = _normalizeEgyptianMobile(secondaryPhone ?? '');
+      final normalizedSecondary = _normalizeEgyptianMobile(
+        secondaryPhone ?? '',
+      );
       final old = await (_db.select(
         _db.technicians,
       )..where((t) => t.id.equals(id))).getSingleOrNull();

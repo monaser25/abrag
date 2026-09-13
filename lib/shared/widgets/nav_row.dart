@@ -61,8 +61,7 @@ class NavRow extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       sub!,
-                      style:
-                          AppTextStyles.caption.copyWith(color: colors.ink3),
+                      style: AppTextStyles.caption.copyWith(color: colors.ink3),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -70,20 +69,13 @@ class NavRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              trailing!,
-            ],
+            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
             if (badge != null) ...[
               const SizedBox(width: 8),
               StatusChip(label: badge!, kind: StatusChipKind.brand),
             ],
             const SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: colors.ink3,
-            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: colors.ink3),
           ],
         ),
       ),

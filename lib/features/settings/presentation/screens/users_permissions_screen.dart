@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drift/drift.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/services/audit_log_service.dart';
 import '../../../../core/theme/abrag_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_shadows.dart';
@@ -72,8 +73,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                     const SizedBox(height: 16),
                     Text(
                       'الصلاحيات المتاحة:',
-                      style: AppTextStyles.label
-                          .copyWith(color: context.colors.ink2),
+                      style: AppTextStyles.label.copyWith(
+                        color: context.colors.ink2,
+                      ),
                     ),
                     ...kAppPermissions.entries.map((e) {
                       return CheckboxListTile(
@@ -148,8 +150,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                       const SizedBox(height: 16),
                       Text(
                         'الصلاحيات المتاحة:',
-                        style: AppTextStyles.label
-                            .copyWith(color: context.colors.ink2),
+                        style: AppTextStyles.label.copyWith(
+                          color: context.colors.ink2,
+                        ),
                       ),
                       ...kAppPermissions.entries.map((entry) {
                         return CheckboxListTile(
@@ -318,6 +321,20 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                       await ref
                           .read(rolesConfigControllerProvider)
                           .assignUserRole(userId, selectedTemplate);
+                      await AuditLogService(db).log(
+                        action: 'create',
+                        entityType: 'user',
+                        entityId: userId,
+                        title: 'إضافة مستخدم',
+                        description:
+                            'تم إنشاء حساب $email بصلاحيات $selectedTemplate',
+                        route: '/settings/users',
+                        newValues: {
+                          'email': email,
+                          'fullName': name,
+                          'template': selectedTemplate,
+                        },
+                      );
                       ref.invalidate(allUsersProvider);
 
                       if (mounted) {
@@ -448,6 +465,21 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
       await ref
           .read(rolesConfigControllerProvider)
           .assignUserRole(user.id, null);
+      // حذف مستخدم كان بيعدي من غير أي أثر في سجل النظام خالص.
+      await AuditLogService(db).log(
+        action: 'delete',
+        entityType: 'user',
+        entityId: user.id,
+        title: 'حذف مستخدم',
+        description:
+            'تم حذف حساب ${user.fullName?.isNotEmpty == true ? user.fullName : user.email}',
+        route: '/settings/users',
+        oldValues: {
+          'email': user.email,
+          'fullName': user.fullName,
+          'role': user.role,
+        },
+      );
 
       if (mounted) {
         showErrorDialog(context, 'تم حذف المستخدم بنجاح.');
@@ -741,8 +773,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                                         children: [
                                           Text(
                                             displayName,
-                                            style: AppTextStyles.title
-                                                .copyWith(color: colors.ink),
+                                            style: AppTextStyles.title.copyWith(
+                                              color: colors.ink,
+                                            ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -803,9 +836,9 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: EdgeInsets.zero,
                               child: Theme(
-                                data: Theme.of(context).copyWith(
-                                  dividerColor: Colors.transparent,
-                                ),
+                                data: Theme.of(
+                                  context,
+                                ).copyWith(dividerColor: Colors.transparent),
                                 child: ExpansionTile(
                                   shape: const Border(),
                                   collapsedShape: const Border(),
@@ -817,13 +850,15 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                                   collapsedIconColor: colors.ink3,
                                   title: Text(
                                     '💼 ${entry.key}',
-                                    style: AppTextStyles.title
-                                        .copyWith(color: colors.ink),
+                                    style: AppTextStyles.title.copyWith(
+                                      color: colors.ink,
+                                    ),
                                   ),
                                   subtitle: Text(
                                     '${entry.value.length} صلاحيات',
-                                    style: AppTextStyles.caption
-                                        .copyWith(color: colors.ink3),
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: colors.ink3,
+                                    ),
                                   ),
                                   children: [
                                     Padding(
@@ -860,14 +895,14 @@ class _UsersPermissionsScreenState extends ConsumerState<UsersPermissionsScreen>
                                         ),
                                         TextButton.icon(
                                           onPressed: () async {
-                                            final confirm =
-                                                await showDialog<bool>(
+                                            final confirm = await showDialog<bool>(
                                               context: context,
                                               builder: (ctx) => AlertDialog(
                                                 backgroundColor:
                                                     ctx.colors.surface,
-                                                title:
-                                                    const Text('تأكيد الحذف'),
+                                                title: const Text(
+                                                  'تأكيد الحذف',
+                                                ),
                                                 content: Text(
                                                   'هل تريد حذف النموذج "${entry.key}"؟ سيتم تجريد المستخدمين المرتبطين به من الصلاحيات.',
                                                 ),

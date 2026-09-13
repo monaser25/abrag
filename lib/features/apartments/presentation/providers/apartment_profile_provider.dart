@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/database/tables.dart';
+import '../../../../core/utils/occupancy_utils.dart';
 import '../../../dashboard/presentation/providers/database_provider.dart';
 
 class ApartmentProfileData {
@@ -22,42 +23,24 @@ class ApartmentProfileData {
 
   bool get isOccupied {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final hasActiveBooking = bookings.any((b) {
-      final checkInDay = DateTime(
-        b.checkInDate.year,
-        b.checkInDate.month,
-        b.checkInDate.day,
-      );
-      return !checkInDay.isAfter(today) &&
-          b.status != 'cancelled' &&
-          b.status != 'checked_out' &&
-          b.status != 'deleted' &&
-          b.syncStatus != SyncStatus.pendingDelete;
-    });
+    final hasActiveBooking = bookings.any(
+      (b) => summerBookingHoldsApartment(b, now),
+    );
     final hasActiveContract = contracts.any(
-      (c) => c.isActive && c.startDate.isBefore(now) && c.endDate.isAfter(now),
+      (c) => winterContractHoldsApartment(c, now),
     );
     return hasActiveBooking || hasActiveContract;
   }
 
+  /// ميعاد خروج عدّى ولسه مش متسجل — الشقة فاضية بس محتاجة تسجيل خروج.
+  bool get hasOverdueCheckout {
+    final now = DateTime.now();
+    return bookings.any((b) => summerBookingCheckoutIsOverdue(b, now));
+  }
+
   bool get isCheckingOutToday {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return bookings.any((b) {
-      final checkInDay = DateTime(
-        b.checkInDate.year,
-        b.checkInDate.month,
-        b.checkInDate.day,
-      );
-      final end = b.earlyCheckoutDate ?? b.checkOutDate;
-      return !checkInDay.isAfter(today) &&
-          b.status != 'cancelled' &&
-          b.status != 'checked_out' &&
-          b.status != 'deleted' &&
-          b.syncStatus != SyncStatus.pendingDelete &&
-          !DateTime(end.year, end.month, end.day).isAfter(today);
-    });
+    return bookings.any((b) => summerBookingChecksOutOn(b, now));
   }
 
   double get totalRevenue {

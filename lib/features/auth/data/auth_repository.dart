@@ -12,8 +12,14 @@ class AuthRepository {
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
   User? get currentUser => _supabase.auth.currentUser;
 
-  Future<AuthResponse> signInWithEmailPassword(String email, String password) async {
-    return await _supabase.auth.signInWithPassword(email: email, password: password);
+  Future<AuthResponse> signInWithEmailPassword(
+    String email,
+    String password,
+  ) async {
+    return await _supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
   }
 
   Future<void> signOut() async {

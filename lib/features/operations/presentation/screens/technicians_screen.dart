@@ -123,7 +123,8 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                       controller: nameController,
                       label: 'الاسم',
                       prefixIcon: Icons.person_outline,
-                      validator: (value) => value == null || value.trim().isEmpty
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
                           ? 'مطلوب'
                           : null,
                     ),
@@ -133,8 +134,9 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                       prefixIcon: Icons.handyman_outlined,
                       initialValue: initialSpecialty,
                       items: _specialties
-                          .map((s) =>
-                              DropdownMenuItem(value: s, child: Text(s)))
+                          .map(
+                            (s) => DropdownMenuItem(value: s, child: Text(s)),
+                          )
                           .toList(),
                       onChanged: (v) => specialtyController.text = v ?? 'أخرى',
                     ),
@@ -284,8 +286,7 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                 child: AppTextField(
                   hint: 'ابحث بالاسم، التخصص، أو رقم الهاتف...',
                   prefixIcon: Icons.search,
-                  onChanged: (value) =>
-                      setState(() => _search = value.trim()),
+                  onChanged: (value) => setState(() => _search = value.trim()),
                 ),
               ),
               if (filtered.isEmpty)
@@ -302,57 +303,62 @@ class _TechniciansScreenState extends ConsumerState<TechniciansScreen> {
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final tech = filtered[index];
-              final hasPhone = tech.phone != null && tech.phone!.isNotEmpty;
-              return AppCard(
-                onTap: () => context.go('/technicians/details/${tech.id}'),
-                margin: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    IconTile(
-                      icon: _getIconForSpecialty(tech.specialty),
-                      tint: colors.brand,
-                    ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tech.name,
-                            style: AppTextStyles.title
-                                .copyWith(color: colors.ink),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'التخصص: ${tech.specialty}',
-                            style: AppTextStyles.caption
-                                .copyWith(color: colors.ink2),
-                          ),
-                          if (hasPhone)
-                            Text(
-                              'الهاتف: ${tech.phone}',
-                              style: AppTextStyles.caption
-                                  .copyWith(color: colors.ink3),
+                      final hasPhone =
+                          tech.phone != null && tech.phone!.isNotEmpty;
+                      return AppCard(
+                        onTap: () =>
+                            context.go('/technicians/details/${tech.id}'),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            IconTile(
+                              icon: _getIconForSpecialty(tech.specialty),
+                              tint: colors.brand,
                             ),
-                        ],
-                      ),
-                    ),
-                    if (hasPhone)
-                      AppIconButton(
-                        icon: Icons.call,
-                        onPressed: () => _makePhoneCall(tech.phone!),
-                      ),
-                    AppIconButton(
-                      icon: Icons.edit_outlined,
-                      onPressed: () => _showAddEditDialog(tech),
-                    ),
-                    AppIconButton(
-                      icon: Icons.delete_outline,
-                      onPressed: () => _confirmDelete(tech),
-                    ),
-                  ],
-                ),
-              );
+                            const SizedBox(width: 13),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    tech.name,
+                                    style: AppTextStyles.title.copyWith(
+                                      color: colors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'التخصص: ${tech.specialty}',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: colors.ink2,
+                                    ),
+                                  ),
+                                  if (hasPhone)
+                                    Text(
+                                      'الهاتف: ${tech.phone}',
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: colors.ink3,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (hasPhone)
+                              AppIconButton(
+                                icon: Icons.call,
+                                onPressed: () => _makePhoneCall(tech.phone!),
+                              ),
+                            AppIconButton(
+                              icon: Icons.edit_outlined,
+                              onPressed: () => _showAddEditDialog(tech),
+                            ),
+                            AppIconButton(
+                              icon: Icons.delete_outline,
+                              onPressed: () => _confirmDelete(tech),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
                 ),

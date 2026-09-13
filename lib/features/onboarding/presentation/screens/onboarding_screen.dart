@@ -21,22 +21,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     {
       'title': 'مرحباً بك في أبراج',
       'description': 'النظام المتكامل لإدارة الأملاك بذكاء وسهولة.',
-      'icon': 'domain'
+      'icon': 'domain',
     },
     {
       'title': 'إدارة الحجوزات الصيفية',
       'description': 'نظم الحجوزات اليومية وتابع حالة الشقق بشكل فوري.',
-      'icon': 'calendar_month'
+      'icon': 'calendar_month',
     },
     {
       'title': 'متابعة عقود الشتاء',
       'description': 'إدارة عقود الطلاب، وتتبع المدفوعات والكهرباء بكل دقة.',
-      'icon': 'school'
+      'icon': 'school',
     },
     {
       'title': 'التقارير والإحصائيات',
       'description': 'احصل على تقارير مالية مفصلة وقم بتصديرها بسهولة.',
-      'icon': 'analytics'
+      'icon': 'analytics',
     },
   ];
 
@@ -100,7 +100,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   final tint = _tintFor(index, colors);
                   return Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 18),
+                      horizontal: 24,
+                      vertical: 18,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,8 +119,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         const SizedBox(height: 12),
                         Text(
                           _onboardingData[index]['description']!,
-                          style:
-                              AppTextStyles.body.copyWith(color: colors.ink2),
+                          style: AppTextStyles.body.copyWith(
+                            color: colors.ink2,
+                          ),
                         ),
                       ],
                     ),
@@ -130,10 +133,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               padding: const EdgeInsetsDirectional.fromSTEB(24, 0, 24, 30),
               child: Column(
                 children: [
-                  _Dots(
-                    count: _onboardingData.length,
-                    index: _currentPage,
-                  ),
+                  _Dots(count: _onboardingData.length, index: _currentPage),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -175,11 +175,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   IconData _getIcon(String name) {
     switch (name) {
-      case 'domain': return Icons.domain;
-      case 'calendar_month': return Icons.calendar_month;
-      case 'school': return Icons.school;
-      case 'analytics': return Icons.analytics;
-      default: return Icons.info;
+      case 'domain':
+        return Icons.domain;
+      case 'calendar_month':
+        return Icons.calendar_month;
+      case 'school':
+        return Icons.school;
+      case 'analytics':
+        return Icons.analytics;
+      default:
+        return Icons.info;
     }
   }
 }

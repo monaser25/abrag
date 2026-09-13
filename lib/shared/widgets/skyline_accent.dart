@@ -37,8 +37,24 @@ class _SkylinePainter extends CustomPainter {
 
   // Tower height fractions from the prototype.
   static const _heights = [
-    0.42, 0.70, 0.55, 0.92, 0.60, 1.00, 0.50, 0.78, 0.46,
-    0.66, 0.55, 0.85, 0.50, 0.72, 0.44, 0.60, 0.80, 0.50,
+    0.42,
+    0.70,
+    0.55,
+    0.92,
+    0.60,
+    1.00,
+    0.50,
+    0.78,
+    0.46,
+    0.66,
+    0.55,
+    0.85,
+    0.50,
+    0.72,
+    0.44,
+    0.60,
+    0.80,
+    0.50,
   ];
 
   @override
@@ -58,6 +74,5 @@ class _SkylinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SkylinePainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(_SkylinePainter oldDelegate) => oldDelegate.color != color;
 }

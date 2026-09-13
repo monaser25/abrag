@@ -8,12 +8,16 @@ import '../../../dashboard/presentation/providers/database_provider.dart';
 
 final buildingsProvider = StreamProvider<List<Building>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.buildings)..where((t) => t.id.isNotValue('ffffffff-ffff-ffff-ffff-ffffffffffff'))).watch();
+  return (db.select(db.buildings)
+        ..where((t) => t.id.isNotValue('ffffffff-ffff-ffff-ffff-ffffffffffff'))
+        ..where((t) => t.syncStatus.isNotIn([SyncStatus.pendingDelete.index])))
+      .watch();
 });
 
-final buildingsControllerProvider = StateNotifierProvider<BuildingsController, AsyncValue<void>>((ref) {
-  return BuildingsController(ref.watch(databaseProvider));
-});
+final buildingsControllerProvider =
+    StateNotifierProvider<BuildingsController, AsyncValue<void>>((ref) {
+      return BuildingsController(ref.watch(databaseProvider));
+    });
 
 class BuildingsController extends StateNotifier<AsyncValue<void>> {
   final AppDatabase _db;
@@ -23,19 +27,38 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
     _auditLog = AuditLogService(_db);
   }
 
-  Future<void> addBuilding(String name, String address, int totalApartments) async {
+  Future<void> addBuilding(
+    String name,
+    String address,
+    int totalApartments,
+  ) async {
     state = const AsyncLoading();
     try {
       final id = const Uuid().v4();
-      await _db.into(_db.buildings).insert(
-        BuildingsCompanion.insert(
-          id: id,
-          name: name,
-          address: Value(address),
-          totalApartments: Value(totalApartments),
-          syncStatus: const Value(SyncStatus.pendingInsert),
-          createdAt: DateTime.now(),
-        ),
+      await _db
+          .into(_db.buildings)
+          .insert(
+            BuildingsCompanion.insert(
+              id: id,
+              name: name,
+              address: Value(address),
+              totalApartments: Value(totalApartments),
+              syncStatus: const Value(SyncStatus.pendingInsert),
+              createdAt: DateTime.now(),
+            ),
+          );
+      await _auditLog.log(
+        action: 'create',
+        entityType: 'building',
+        entityId: id,
+        title: 'إضافة مبنى',
+        description: 'تم إضافة مبنى $name',
+        route: '/buildings',
+        newValues: {
+          'name': name,
+          'address': address,
+          'totalApartments': totalApartments,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {
@@ -43,9 +66,17 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> updateBuilding(String id, String name, String address, int totalApartments) async {
+  Future<void> updateBuilding(
+    String id,
+    String name,
+    String address,
+    int totalApartments,
+  ) async {
     state = const AsyncLoading();
     try {
+      final old = await (_db.select(
+        _db.buildings,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       await (_db.update(_db.buildings)..where((t) => t.id.equals(id))).write(
         BuildingsCompanion(
           name: Value(name),
@@ -53,6 +84,20 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
           totalApartments: Value(totalApartments),
           syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
+      );
+      await _auditLog.log(
+        action: 'update',
+        entityType: 'building',
+        entityId: id,
+        title: 'تعديل مبنى',
+        description: 'تم تعديل بيانات مبنى $name',
+        route: '/buildings',
+        oldValues: old?.toJson(),
+        newValues: {
+          'name': name,
+          'address': address,
+          'totalApartments': totalApartments,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {
@@ -67,15 +112,15 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
   Future<void> deleteBuilding(String id) async {
     state = const AsyncLoading();
     try {
-      final apartments = await (_db.select(_db.apartments)
-            ..where((t) => t.buildingId.equals(id)))
-          .get();
-      final meterReadings = await (_db.select(_db.meterReadings)
-            ..where((t) => t.buildingId.equals(id)))
-          .get();
-      final expenses = await (_db.select(_db.expenses)
-            ..where((t) => t.buildingId.equals(id)))
-          .get();
+      final apartments = await (_db.select(
+        _db.apartments,
+      )..where((t) => t.buildingId.equals(id))).get();
+      final meterReadings = await (_db.select(
+        _db.meterReadings,
+      )..where((t) => t.buildingId.equals(id))).get();
+      final expenses = await (_db.select(
+        _db.expenses,
+      )..where((t) => t.buildingId.equals(id))).get();
       if (apartments.isNotEmpty ||
           meterReadings.isNotEmpty ||
           expenses.isNotEmpty) {
@@ -83,7 +128,11 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
           'مينفعش حذف المبنى لأنه مرتبط بشقق أو قراءات عدادات أو مصروفات. احذف المرتبط بيه الأول أو عدّل بياناته.',
         );
       }
-      await (_db.delete(_db.buildings)..where((t) => t.id.equals(id))).go();
+      // soft-delete: الحذف النهائي المحلي كان بيسيب الصف عايش على السيرفر،
+      // فيرجع تاني مع أول مزامنة كاملة ويفضل ظاهر على الأجهزة التانية.
+      await (_db.update(_db.buildings)..where((t) => t.id.equals(id))).write(
+        const BuildingsCompanion(syncStatus: Value(SyncStatus.pendingDelete)),
+      );
       await _auditLog.log(
         action: 'delete',
         entityType: 'building',
@@ -97,15 +146,41 @@ class BuildingsController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> updateRentSettings(String buildingId, double annualRent, String installmentsDates) async {
+  Future<void> updateRentSettings(
+    String buildingId,
+    double annualRent,
+    String installmentsDates,
+  ) async {
     state = const AsyncLoading();
     try {
-      await (_db.update(_db.buildings)..where((t) => t.id.equals(buildingId))).write(
+      final old = await (_db.select(
+        _db.buildings,
+      )..where((t) => t.id.equals(buildingId))).getSingleOrNull();
+      await (_db.update(
+        _db.buildings,
+      )..where((t) => t.id.equals(buildingId))).write(
         BuildingsCompanion(
           annualRentEgp: Value(annualRent),
           rentInstallmentsDates: Value(installmentsDates),
           syncStatus: const Value(SyncStatus.pendingUpdate),
         ),
+      );
+      await _auditLog.log(
+        action: 'update_rent_settings',
+        entityType: 'building',
+        entityId: buildingId,
+        title: 'تعديل إيجار المبنى',
+        description:
+            'تم تعديل الإيجار السنوي لمبنى ${old?.name ?? ''} إلى $annualRent ج.م',
+        route: '/building_rent',
+        oldValues: {
+          'annualRentEgp': old?.annualRentEgp,
+          'rentInstallmentsDates': old?.rentInstallmentsDates,
+        },
+        newValues: {
+          'annualRentEgp': annualRent,
+          'rentInstallmentsDates': installmentsDates,
+        },
       );
       state = const AsyncData(null);
     } catch (e, st) {

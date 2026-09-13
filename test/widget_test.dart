@@ -22,7 +22,9 @@ void main() {
     final mockAuthRepository = MockAuthRepository();
 
     // Just need a basic stream to prevent StreamProvider from crashing
-    when(() => mockAuthRepository.authStateChanges).thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockAuthRepository.authStateChanges,
+    ).thenAnswer((_) => const Stream.empty());
 
     await tester.pumpWidget(
       ProviderScope(

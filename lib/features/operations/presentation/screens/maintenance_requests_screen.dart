@@ -41,10 +41,7 @@ class _MaintenanceRequestsScreenState
       body: maintenanceAsync.when(
         data: (requests) {
           if (requests.isEmpty) {
-            return EmptyState(
-              icon: Icons.build_outlined,
-              title: l10n.noData,
-            );
+            return EmptyState(icon: Icons.build_outlined, title: l10n.noData);
           }
 
           final now = DateTime.now();
@@ -94,10 +91,7 @@ class _MaintenanceRequestsScreenState
               ),
               Expanded(
                 child: filteredRequests.isEmpty
-                    ? EmptyState(
-                        icon: Icons.build_outlined,
-                        title: l10n.noData,
-                      )
+                    ? EmptyState(icon: Icons.build_outlined, title: l10n.noData)
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                         itemCount: filteredRequests.length,
@@ -127,10 +121,9 @@ class _MaintenanceRequestsScreenState
 
                           return _RequestCard(
                             isOpen: isOpen,
-                            date: req.createdAt
-                                .toLocal()
-                                .toString()
-                                .split(' ')[0],
+                            date: req.createdAt.toLocal().toString().split(
+                              ' ',
+                            )[0],
                             issue: req.issueDescription,
                             techName: techName,
                             apartmentNumber: apartmentNumber,
@@ -139,8 +132,10 @@ class _MaintenanceRequestsScreenState
                                 ? () => _showResolveDialog(context, ref, req)
                                 : null,
                             onEdit: isOpen
-                                ? () =>
-                                    context.go('/maintenance/edit', extra: req)
+                                ? () => context.go(
+                                    '/maintenance/edit',
+                                    extra: req,
+                                  )
                                 : null,
                           );
                         },
@@ -199,7 +194,7 @@ class _MaintenanceRequestsScreenState
               onPressed: () {
                 final cost =
                     double.tryParse(costController.text.replaceAll(',', '')) ??
-                        0.0;
+                    0.0;
                 ref
                     .read(maintenanceControllerProvider.notifier)
                     .updateStatus(req.id, 'resolved', cost: cost);
@@ -261,10 +256,7 @@ class _RequestCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            issue,
-            style: AppTextStyles.body.copyWith(color: colors.ink),
-          ),
+          Text(issue, style: AppTextStyles.body.copyWith(color: colors.ink)),
           if (techName != null) ...[
             const SizedBox(height: 8),
             Row(
@@ -328,9 +320,7 @@ class _FilterPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? colors.brandSoft : colors.surface,
           borderRadius: AppRadius.rPill,
-          border: Border.all(
-            color: isSelected ? colors.brand : colors.border,
-          ),
+          border: Border.all(color: isSelected ? colors.brand : colors.border),
         ),
         child: Text(
           label,

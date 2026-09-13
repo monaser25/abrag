@@ -25,7 +25,8 @@ class SeasonTransitionScreen extends ConsumerWidget {
         data: (settings) {
           final activeSeason =
               (settings['active_season_key'] as String?) ?? currentSeasonKey();
-          final hiddenSeasons = (settings['hidden_season_keys'] as List?)
+          final hiddenSeasons =
+              (settings['hidden_season_keys'] as List?)
                   ?.map((item) => item.toString())
                   .toSet() ??
               <String>{};
@@ -111,17 +112,14 @@ class SeasonTransitionScreen extends ConsumerWidget {
                     Row(
                       children: [
                         IconTile(
-                          icon: isSummerActive
-                              ? Icons.wb_sunny
-                              : Icons.ac_unit,
+                          icon: isSummerActive ? Icons.wb_sunny : Icons.ac_unit,
                           tint: isSummerActive ? colors.summer : colors.winter,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             'الموسم النشط: ${seasonLabel(activeSeason)}',
-                            style:
-                                AppTextStyles.h3.copyWith(color: colors.ink),
+                            style: AppTextStyles.h3.copyWith(color: colors.ink),
                           ),
                         ),
                       ],
@@ -166,20 +164,22 @@ class SeasonTransitionScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   option.label,
-                                  style: AppTextStyles.title
-                                      .copyWith(color: colors.ink),
+                                  style: AppTextStyles.title.copyWith(
+                                    color: colors.ink,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   isActive
                                       ? 'نشط حاليًا — أي بيانات جديدة ستدخل هنا'
                                       : count == null
-                                          ? 'جاري فحص بيانات الموسم...'
-                                          : count == 0
-                                              ? 'فارغ — يمكن حذفه من القائمة'
-                                              : 'أرشيف يحتوي على $count عملية',
-                                  style: AppTextStyles.caption
-                                      .copyWith(color: colors.ink3),
+                                      ? 'جاري فحص بيانات الموسم...'
+                                      : count == 0
+                                      ? 'فارغ — يمكن حذفه من القائمة'
+                                      : 'أرشيف يحتوي على $count عملية',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: colors.ink3,
+                                  ),
                                 ),
                               ],
                             ),
@@ -203,8 +203,8 @@ class SeasonTransitionScreen extends ConsumerWidget {
                             icon: Icons.delete_outline,
                             onPressed:
                                 count == 0 && option.key != currentSeasonKey()
-                                    ? () => hideSeason(option.key)
-                                    : null,
+                                ? () => hideSeason(option.key)
+                                : null,
                           ),
                         ],
                       ),

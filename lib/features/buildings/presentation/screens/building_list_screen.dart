@@ -88,7 +88,9 @@ class BuildingListScreen extends ConsumerWidget {
     await ref
         .read(buildingsControllerProvider.notifier)
         .deleteBuilding(building.id);
-    ref.read(buildingsControllerProvider).whenOrNull(
+    ref
+        .read(buildingsControllerProvider)
+        .whenOrNull(
           data: (_) => messenger.showSnackBar(
             const SnackBar(content: Text('تم حذف المبنى')),
           ),
@@ -156,10 +158,7 @@ class _BuildingRow extends StatelessWidget {
             icon: Icons.edit_outlined,
             onPressed: () => context.go('/buildings/edit', extra: building),
           ),
-          AppIconButton(
-            icon: Icons.delete_outline,
-            onPressed: onDelete,
-          ),
+          AppIconButton(icon: Icons.delete_outline, onPressed: onDelete),
         ],
       ),
     );

@@ -134,212 +134,199 @@ class _ReportsFilterScreenState extends ConsumerState<ReportsFilterScreen> {
         children: [
           AppCard(
             child: Column(
-                children: [
-                  buildingsAsync.when(
-                    data: (buildings) => DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: 'المبنى'),
-                      initialValue: _selectedBuildingId,
-                      items: [
-                        const DropdownMenuItem(
-                          value: null,
-                          child: Text('جميع المباني'),
+              children: [
+                buildingsAsync.when(
+                  data: (buildings) => DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'المبنى'),
+                    initialValue: _selectedBuildingId,
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('جميع المباني'),
+                      ),
+                      ...buildings.map(
+                        (building) => DropdownMenuItem(
+                          value: building.id,
+                          child: Text(building.name),
                         ),
-                        ...buildings.map(
-                          (building) => DropdownMenuItem(
-                            value: building.id,
-                            child: Text(building.name),
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) => setState(() {
-                        _selectedBuildingId = value;
-                        _selectedApartmentId = null;
-                      }),
-                    ),
-                    loading: () => const LinearProgressIndicator(),
-                    error: (error, stack) => const SizedBox.shrink(),
-                  ),
-                  const SizedBox(height: 12),
-                  apartmentsAsync.when(
-                    data: (apartments) {
-                      var filteredApartments = apartments;
-                      if (_selectedBuildingId != null) {
-                        filteredApartments = apartments
-                            .where(
-                              (apartment) =>
-                                  apartment.buildingId == _selectedBuildingId,
-                            )
-                            .toList();
-                      }
-                      return DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'الشقة'),
-                        initialValue: _selectedApartmentId,
-                        items: [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('جميع الشقق'),
-                          ),
-                          ...filteredApartments.map(
-                            (apartment) => DropdownMenuItem(
-                              value: apartment.id,
-                              child: Text('شقة ${apartment.apartmentNumber}'),
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) =>
-                            setState(() => _selectedApartmentId = value),
-                      );
-                    },
-                    loading: () => const LinearProgressIndicator(),
-                    error: (error, stack) => const SizedBox.shrink(),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'النوع'),
-                    initialValue: _transactionType,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'all',
-                        child: Text('إيرادات ومصروفات'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'revenue',
-                        child: Text('إيرادات فقط'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'expense',
-                        child: Text('مصروفات فقط'),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _transactionType = value ?? 'all'),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'طريقة الدفع'),
-                    initialValue: _paymentMethod,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'all',
-                        child: Text('كل طرق الدفع'),
-                      ),
-                      DropdownMenuItem(value: 'cash', child: Text('نقدي')),
-                      DropdownMenuItem(
-                        value: 'vodafone_cash',
-                        child: Text('فودافون كاش'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'instapay',
-                        child: Text('إنستاباي'),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _paymentMethod = value ?? 'all'),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'الموسم'),
-                    initialValue: _season,
-                    items: seasonOptionsAround()
-                        .map(
-                          (option) => DropdownMenuItem(
-                            value: option.key,
-                            child: Text(option.label),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => _season = value ?? 'all'),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'نوع المصروف'),
-                    initialValue: _expenseType,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'all',
-                        child: Text('كل المصروفات'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'maintenance',
-                        child: Text('صيانة / إصلاحات'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'building_rent',
-                        child: Text('إيجار المبنى'),
-                      ),
-                      DropdownMenuItem(value: 'water', child: Text('مياه')),
-                      DropdownMenuItem(
-                        value: 'electricity',
-                        child: Text('كهرباء'),
-                      ),
-                      DropdownMenuItem(value: 'gas', child: Text('غاز')),
-                      DropdownMenuItem(value: 'cleaning', child: Text('نظافة')),
-                      DropdownMenuItem(value: 'other', child: Text('أخرى')),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _expenseType = value ?? 'all'),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'نوع الحساب'),
-                    initialValue: _partyType,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'all',
-                        child: Text('كل الحسابات'),
-                      ),
-                      DropdownMenuItem(value: 'customer', child: Text('عميل')),
-                      DropdownMenuItem(value: 'broker', child: Text('سمسار')),
-                      DropdownMenuItem(
-                        value: 'technician',
-                        child: Text('عامل'),
                       ),
                     ],
                     onChanged: (value) => setState(() {
-                      _partyType = value ?? 'all';
-                      _selectedPartyKey = 'all';
+                      _selectedBuildingId = value;
+                      _selectedApartmentId = null;
                     }),
                   ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('filter-party-$_partyType'),
-                    decoration: const InputDecoration(labelText: 'اختر الحساب'),
-                    initialValue: selectedPartyKey,
-                    items: partyOptions.entries
-                        .map(
-                          (entry) => DropdownMenuItem(
-                            value: entry.key,
-                            child: Text(entry.value),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (error, stack) => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 12),
+                apartmentsAsync.when(
+                  data: (apartments) {
+                    var filteredApartments = apartments;
+                    if (_selectedBuildingId != null) {
+                      filteredApartments = apartments
+                          .where(
+                            (apartment) =>
+                                apartment.buildingId == _selectedBuildingId,
+                          )
+                          .toList();
+                    }
+                    return DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(labelText: 'الشقة'),
+                      initialValue: _selectedApartmentId,
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('جميع الشقق'),
+                        ),
+                        ...filteredApartments.map(
+                          (apartment) => DropdownMenuItem(
+                            value: apartment.id,
+                            child: Text('شقة ${apartment.apartmentNumber}'),
                           ),
-                        )
-                        .toList(),
-                    onChanged: _partyType == 'all'
-                        ? null
-                        : (value) => setState(
-                            () => _selectedPartyKey = value ?? 'all',
-                          ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _personController,
-                    decoration: const InputDecoration(
-                      labelText: 'بحث في العملاء/السماسرة/العمال',
-                      prefixIcon: Icon(Icons.search),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _selectedApartmentId = value),
+                    );
+                  },
+                  loading: () => const LinearProgressIndicator(),
+                  error: (error, stack) => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'النوع'),
+                  initialValue: _transactionType,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'all',
+                      child: Text('إيرادات ومصروفات'),
                     ),
+                    DropdownMenuItem(
+                      value: 'revenue',
+                      child: Text('إيرادات فقط'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'expense',
+                      child: Text('مصروفات فقط'),
+                    ),
+                  ],
+                  onChanged: (value) =>
+                      setState(() => _transactionType = value ?? 'all'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'طريقة الدفع'),
+                  initialValue: _paymentMethod,
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('كل طرق الدفع')),
+                    DropdownMenuItem(value: 'cash', child: Text('نقدي')),
+                    DropdownMenuItem(
+                      value: 'vodafone_cash',
+                      child: Text('فودافون كاش'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'instapay',
+                      child: Text('إنستاباي'),
+                    ),
+                  ],
+                  onChanged: (value) =>
+                      setState(() => _paymentMethod = value ?? 'all'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'الموسم'),
+                  initialValue: _season,
+                  items: seasonOptionsAround()
+                      .map(
+                        (option) => DropdownMenuItem(
+                          value: option.key,
+                          child: Text(option.label),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) =>
+                      setState(() => _season = value ?? 'all'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'نوع المصروف'),
+                  initialValue: _expenseType,
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('كل المصروفات')),
+                    DropdownMenuItem(
+                      value: 'maintenance',
+                      child: Text('صيانة / إصلاحات'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'building_rent',
+                      child: Text('إيجار المبنى'),
+                    ),
+                    DropdownMenuItem(value: 'water', child: Text('مياه')),
+                    DropdownMenuItem(
+                      value: 'electricity',
+                      child: Text('كهرباء'),
+                    ),
+                    DropdownMenuItem(value: 'gas', child: Text('غاز')),
+                    DropdownMenuItem(value: 'cleaning', child: Text('نظافة')),
+                    DropdownMenuItem(value: 'other', child: Text('أخرى')),
+                  ],
+                  onChanged: (value) =>
+                      setState(() => _expenseType = value ?? 'all'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'نوع الحساب'),
+                  initialValue: _partyType,
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('كل الحسابات')),
+                    DropdownMenuItem(value: 'customer', child: Text('عميل')),
+                    DropdownMenuItem(value: 'broker', child: Text('سمسار')),
+                    DropdownMenuItem(value: 'technician', child: Text('عامل')),
+                  ],
+                  onChanged: (value) => setState(() {
+                    _partyType = value ?? 'all';
+                    _selectedPartyKey = 'all';
+                  }),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: ValueKey('filter-party-$_partyType'),
+                  decoration: const InputDecoration(labelText: 'اختر الحساب'),
+                  initialValue: selectedPartyKey,
+                  items: partyOptions.entries
+                      .map(
+                        (entry) => DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _partyType == 'all'
+                      ? null
+                      : (value) =>
+                            setState(() => _selectedPartyKey = value ?? 'all'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _personController,
+                  decoration: const InputDecoration(
+                    labelText: 'بحث في العملاء/السماسرة/العمال',
+                    prefixIcon: Icon(Icons.search),
                   ),
-                  const SizedBox(height: 12),
-                  AppButton(
-                    label: _startDate == null
-                        ? 'اختيار الفترة'
-                        : '${_startDate!.month}/${_startDate!.year} - ${_endDate!.month}/${_endDate!.year}',
-                    icon: Icons.date_range,
-                    variant: AppButtonVariant.outline,
-                    expand: true,
-                    onPressed: _selectDateRange,
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 12),
+                AppButton(
+                  label: _startDate == null
+                      ? 'اختيار الفترة'
+                      : '${_startDate!.month}/${_startDate!.year} - ${_endDate!.month}/${_endDate!.year}',
+                  icon: Icons.date_range,
+                  variant: AppButtonVariant.outline,
+                  expand: true,
+                  onPressed: _selectDateRange,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           AppButton(

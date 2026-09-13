@@ -14,6 +14,7 @@ const kAppPermissions = {
   'manage_cleaning_status': 'تعديل حالة النظافة للشقق',
   'manage_bookings': 'إضافة وإدارة الحجوزات الصيفي',
   'view_bookings': 'رؤية الحجوزات الصيفي (قراءة فقط)',
+  'view_bookings_list': 'فتح قائمة الحجوزات في حجوزات الصيف',
   'manage_contracts': 'إضافة وإدارة عقود الشتوي',
   'view_contract_documents': 'رؤية صور العقود والبطاقات',
   'checkout_winter': 'تسليم واستلام الشقق',
@@ -43,6 +44,7 @@ const kDefaultRoleTemplates = {
     'manage_customers',
     'view_apartments',
     'manage_bookings',
+    'view_bookings_list',
     'manage_contracts',
     'view_contract_documents',
   ],
@@ -235,4 +237,23 @@ final canManageBookingsProvider = Provider<bool>((ref) {
 final canViewBookingsProvider = Provider<bool>((ref) {
   final perms = ref.watch(currentUserPermissionsProvider);
   return perms.contains('manage_bookings') || perms.contains('view_bookings');
+});
+
+/// `true` when the current user may open the full bookings list from the
+/// summer-bookings screen. Deliberately separate from [canViewBookingsProvider]
+/// so a user can work the agenda without browsing every booking on record.
+/// The base-role viewer keeps the list: its read-only home links straight to it.
+final canViewBookingsListProvider = Provider<bool>((ref) {
+  if (ref.watch(currentUserRoleProvider).value == 'viewer') return true;
+  return ref
+      .watch(currentUserPermissionsProvider)
+      .contains('view_bookings_list');
+});
+
+/// `true` when the current user may open the system activity log. Split off
+/// from `view_reports` so the log can be granted without the financial
+/// reports; `view_reports` still opens it so older templates lose nothing.
+final canViewSystemLogProvider = Provider<bool>((ref) {
+  final perms = ref.watch(currentUserPermissionsProvider);
+  return perms.contains('view_system_log') || perms.contains('view_reports');
 });

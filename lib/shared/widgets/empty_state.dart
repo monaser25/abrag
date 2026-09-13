@@ -52,10 +52,7 @@ class EmptyState extends StatelessWidget {
                 ),
               ),
             ],
-            if (action != null) ...[
-              const SizedBox(height: 20),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 20), action!],
             const SizedBox(height: 26),
             const SizedBox(width: 180, child: SkylineAccent(height: 34)),
           ],

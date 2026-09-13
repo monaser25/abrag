@@ -168,307 +168,305 @@ class _StatementScreenState extends ConsumerState<StatementScreen> {
         children: [
           AppCard(
             child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'اختار فلاتر كشف الحساب',
-                    style: AppTextStyles.h3.copyWith(color: colors.ink),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'بعد اختيار الفلاتر اضغط عرض PDF لمعاينة الكشف ومشاركته أو طباعته.',
-                    style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
-                  ),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final fieldWidth = constraints.maxWidth < 720
-                          ? constraints.maxWidth
-                          : (constraints.maxWidth - 24) / 3;
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'اختار فلاتر كشف الحساب',
+                  style: AppTextStyles.h3.copyWith(color: colors.ink),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'بعد اختيار الفلاتر اضغط عرض PDF لمعاينة الكشف ومشاركته أو طباعته.',
+                  style: AppTextStyles.bodyS.copyWith(color: colors.ink2),
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final fieldWidth = constraints.maxWidth < 720
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 24) / 3;
 
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: fieldWidth,
-                            child: buildingsAsync.when(
-                              data: (buildings) =>
-                                  DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                      labelText: 'المبنى',
-                                      isDense: true,
-                                    ),
-                                    initialValue: _selectedBuildingId,
-                                    items: [
-                                      const DropdownMenuItem(
-                                        value: null,
-                                        child: Text('جميع المباني'),
-                                      ),
-                                      ...buildings.map(
-                                        (b) => DropdownMenuItem(
-                                          value: b.id,
-                                          child: Text(b.name),
-                                        ),
-                                      ),
-                                    ],
-                                    onChanged: (val) => setState(() {
-                                      _selectedBuildingId = val;
-                                      _selectedApartmentId = null;
-                                    }),
-                                  ),
-                              loading: () => const LinearProgressIndicator(),
-                              error: (e, _) => const SizedBox.shrink(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: apartmentsAsync.when(
-                              data: (apartments) {
-                                var apts = apartments;
-                                if (_selectedBuildingId != null) {
-                                  apts = apts
-                                      .where(
-                                        (a) =>
-                                            a.buildingId == _selectedBuildingId,
-                                      )
-                                      .toList();
-                                }
-                                return DropdownButtonFormField<String>(
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        SizedBox(
+                          width: fieldWidth,
+                          child: buildingsAsync.when(
+                            data: (buildings) =>
+                                DropdownButtonFormField<String>(
                                   decoration: const InputDecoration(
-                                    labelText: 'الشقة',
+                                    labelText: 'المبنى',
                                     isDense: true,
                                   ),
-                                  initialValue: _selectedApartmentId,
+                                  initialValue: _selectedBuildingId,
                                   items: [
                                     const DropdownMenuItem(
                                       value: null,
-                                      child: Text('جميع الشقق'),
+                                      child: Text('جميع المباني'),
                                     ),
-                                    ...apts.map(
-                                      (a) => DropdownMenuItem(
-                                        value: a.id,
-                                        child: Text('شقة ${a.apartmentNumber}'),
+                                    ...buildings.map(
+                                      (b) => DropdownMenuItem(
+                                        value: b.id,
+                                        child: Text(b.name),
                                       ),
                                     ),
                                   ],
-                                  onChanged: (val) => setState(
-                                    () => _selectedApartmentId = val,
+                                  onChanged: (val) => setState(() {
+                                    _selectedBuildingId = val;
+                                    _selectedApartmentId = null;
+                                  }),
+                                ),
+                            loading: () => const LinearProgressIndicator(),
+                            error: (e, _) => const SizedBox.shrink(),
+                          ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: apartmentsAsync.when(
+                            data: (apartments) {
+                              var apts = apartments;
+                              if (_selectedBuildingId != null) {
+                                apts = apts
+                                    .where(
+                                      (a) =>
+                                          a.buildingId == _selectedBuildingId,
+                                    )
+                                    .toList();
+                              }
+                              return DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  labelText: 'الشقة',
+                                  isDense: true,
+                                ),
+                                initialValue: _selectedApartmentId,
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: null,
+                                    child: Text('جميع الشقق'),
                                   ),
-                                );
-                              },
-                              loading: () => const LinearProgressIndicator(),
-                              error: (e, _) => const SizedBox.shrink(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                labelText: 'النوع',
-                                isDense: true,
-                              ),
-                              initialValue: _transactionType,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('إيرادات ومصروفات'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'revenue',
-                                  child: Text('إيرادات فقط'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'expense',
-                                  child: Text('مصروفات فقط'),
-                                ),
-                              ],
-                              onChanged: (val) => setState(
-                                () => _transactionType = val ?? 'all',
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                labelText: 'طريقة الدفع',
-                                isDense: true,
-                              ),
-                              initialValue: _paymentMethod,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('كل طرق الدفع'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'cash',
-                                  child: Text('نقدي'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'vodafone_cash',
-                                  child: Text('فودافون كاش'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'instapay',
-                                  child: Text('إنستاباي'),
-                                ),
-                              ],
-                              onChanged: (val) =>
-                                  setState(() => _paymentMethod = val ?? 'all'),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                labelText: 'الموسم',
-                                isDense: true,
-                              ),
-                              initialValue: _season,
-                              items: seasonOptionsAround()
-                                  .map(
-                                    (option) => DropdownMenuItem(
-                                      value: option.key,
-                                      child: Text(option.label),
+                                  ...apts.map(
+                                    (a) => DropdownMenuItem(
+                                      value: a.id,
+                                      child: Text('شقة ${a.apartmentNumber}'),
                                     ),
-                                  )
-                                  .toList(),
-                              onChanged: (val) =>
-                                  setState(() => _season = val ?? 'all'),
-                            ),
+                                  ),
+                                ],
+                                onChanged: (val) =>
+                                    setState(() => _selectedApartmentId = val),
+                              );
+                            },
+                            loading: () => const LinearProgressIndicator(),
+                            error: (e, _) => const SizedBox.shrink(),
                           ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                labelText: 'نوع المصروف',
-                                isDense: true,
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'النوع',
+                              isDense: true,
+                            ),
+                            initialValue: _transactionType,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'all',
+                                child: Text('إيرادات ومصروفات'),
                               ),
-                              initialValue: _expenseType,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('كل المصروفات'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'maintenance',
-                                  child: Text('صيانة / إصلاحات'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'building_rent',
-                                  child: Text('إيجار المبنى'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'water',
-                                  child: Text('مياه'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'electricity',
-                                  child: Text('كهرباء'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'gas',
-                                  child: Text('غاز'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'cleaning',
-                                  child: Text('نظافة'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'other',
-                                  child: Text('أخرى'),
-                                ),
-                              ],
-                              onChanged: (val) =>
-                                  setState(() => _expenseType = val ?? 'all'),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                labelText: 'نوع الحساب',
-                                isDense: true,
+                              DropdownMenuItem(
+                                value: 'revenue',
+                                child: Text('إيرادات فقط'),
                               ),
-                              initialValue: _partyType,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'all',
-                                  child: Text('كل الحسابات'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'customer',
-                                  child: Text('عميل'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'broker',
-                                  child: Text('سمسار'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'technician',
-                                  child: Text('عامل'),
-                                ),
-                              ],
-                              onChanged: (val) => setState(() {
-                                _partyType = val ?? 'all';
-                                _selectedPartyKey = 'all';
-                              }),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: DropdownButtonFormField<String>(
-                              key: ValueKey('statement-party-$_partyType'),
-                              decoration: const InputDecoration(
-                                labelText: 'اختر الحساب',
-                                isDense: true,
+                              DropdownMenuItem(
+                                value: 'expense',
+                                child: Text('مصروفات فقط'),
                               ),
-                              initialValue: selectedPartyKey,
-                              items: partyOptions.entries
-                                  .map(
-                                    (entry) => DropdownMenuItem(
-                                      value: entry.key,
-                                      child: Text(entry.value),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: _partyType == 'all'
-                                  ? null
-                                  : (val) => setState(
-                                      () => _selectedPartyKey = val ?? 'all',
-                                    ),
-                            ),
+                            ],
+                            onChanged: (val) =>
+                                setState(() => _transactionType = val ?? 'all'),
                           ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextField(
-                              controller: _personController,
-                              decoration: const InputDecoration(
-                                labelText: 'بحث في العملاء/السماسرة/العمال',
-                                isDense: true,
-                                prefixIcon: Icon(Icons.search),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'طريقة الدفع',
+                              isDense: true,
+                            ),
+                            initialValue: _paymentMethod,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'all',
+                                child: Text('كل طرق الدفع'),
                               ),
+                              DropdownMenuItem(
+                                value: 'cash',
+                                child: Text('نقدي'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'vodafone_cash',
+                                child: Text('فودافون كاش'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'instapay',
+                                child: Text('إنستاباي'),
+                              ),
+                            ],
+                            onChanged: (val) =>
+                                setState(() => _paymentMethod = val ?? 'all'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'الموسم',
+                              isDense: true,
+                            ),
+                            initialValue: _season,
+                            items: seasonOptionsAround()
+                                .map(
+                                  (option) => DropdownMenuItem(
+                                    value: option.key,
+                                    child: Text(option.label),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => _season = val ?? 'all'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'نوع المصروف',
+                              isDense: true,
+                            ),
+                            initialValue: _expenseType,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'all',
+                                child: Text('كل المصروفات'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'maintenance',
+                                child: Text('صيانة / إصلاحات'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'building_rent',
+                                child: Text('إيجار المبنى'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'water',
+                                child: Text('مياه'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'electricity',
+                                child: Text('كهرباء'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'gas',
+                                child: Text('غاز'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'cleaning',
+                                child: Text('نظافة'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'other',
+                                child: Text('أخرى'),
+                              ),
+                            ],
+                            onChanged: (val) =>
+                                setState(() => _expenseType = val ?? 'all'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'نوع الحساب',
+                              isDense: true,
+                            ),
+                            initialValue: _partyType,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'all',
+                                child: Text('كل الحسابات'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'customer',
+                                child: Text('عميل'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'broker',
+                                child: Text('سمسار'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'technician',
+                                child: Text('عامل'),
+                              ),
+                            ],
+                            onChanged: (val) => setState(() {
+                              _partyType = val ?? 'all';
+                              _selectedPartyKey = 'all';
+                            }),
+                          ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: DropdownButtonFormField<String>(
+                            key: ValueKey('statement-party-$_partyType'),
+                            decoration: const InputDecoration(
+                              labelText: 'اختر الحساب',
+                              isDense: true,
+                            ),
+                            initialValue: selectedPartyKey,
+                            items: partyOptions.entries
+                                .map(
+                                  (entry) => DropdownMenuItem(
+                                    value: entry.key,
+                                    child: Text(entry.value),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _partyType == 'all'
+                                ? null
+                                : (val) => setState(
+                                    () => _selectedPartyKey = val ?? 'all',
+                                  ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: TextField(
+                            controller: _personController,
+                            decoration: const InputDecoration(
+                              labelText: 'بحث في العملاء/السماسرة/العمال',
+                              isDense: true,
+                              prefixIcon: Icon(Icons.search),
                             ),
                           ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: AppButton(
-                              label: _startDate != null
-                                  ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
-                                  : 'اختيار الفترة الزمنية',
-                              icon: Icons.date_range,
-                              variant: AppButtonVariant.outline,
-                              expand: true,
-                              onPressed: _selectDateRange,
-                            ),
+                        ),
+                        SizedBox(
+                          width: fieldWidth,
+                          child: AppButton(
+                            label: _startDate != null
+                                ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
+                                : 'اختيار الفترة الزمنية',
+                            icon: Icons.date_range,
+                            variant: AppButtonVariant.outline,
+                            expand: true,
+                            onPressed: _selectDateRange,
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           AppButton(

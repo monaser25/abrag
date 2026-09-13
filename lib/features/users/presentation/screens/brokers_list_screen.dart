@@ -72,22 +72,25 @@ class BrokersListScreen extends ConsumerWidget {
             );
           }
 
-          final filtered = brokers.where((broker) {
-            if (query.isEmpty) return true;
-            final name = (broker.fullName ?? broker.email).toLowerCase();
-            final phone = (broker.phoneNumber ?? '').toLowerCase();
-            final phone2 = (broker.secondaryPhone ?? '').toLowerCase();
-            return name.contains(query) ||
-                phone.contains(query) ||
-                phone2.contains(query);
-          }).toList()
-            // Most-dealt-with first, then by name.
-            ..sort((a, b) {
-              final ca = dealCounts[a.id] ?? 0;
-              final cb = dealCounts[b.id] ?? 0;
-              if (cb != ca) return cb.compareTo(ca);
-              return (a.fullName ?? a.email).compareTo(b.fullName ?? b.email);
-            });
+          final filtered =
+              brokers.where((broker) {
+                  if (query.isEmpty) return true;
+                  final name = (broker.fullName ?? broker.email).toLowerCase();
+                  final phone = (broker.phoneNumber ?? '').toLowerCase();
+                  final phone2 = (broker.secondaryPhone ?? '').toLowerCase();
+                  return name.contains(query) ||
+                      phone.contains(query) ||
+                      phone2.contains(query);
+                }).toList()
+                // Most-dealt-with first, then by name.
+                ..sort((a, b) {
+                  final ca = dealCounts[a.id] ?? 0;
+                  final cb = dealCounts[b.id] ?? 0;
+                  if (cb != ca) return cb.compareTo(ca);
+                  return (a.fullName ?? a.email).compareTo(
+                    b.fullName ?? b.email,
+                  );
+                });
 
           return Column(
             children: [
@@ -114,7 +117,8 @@ class BrokersListScreen extends ConsumerWidget {
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final broker = filtered[index];
-                      final hasPhone = broker.phoneNumber != null &&
+                      final hasPhone =
+                          broker.phoneNumber != null &&
                           broker.phoneNumber!.isNotEmpty;
                       final showEmail =
                           !hasPhone && !broker.email.startsWith('broker-');
@@ -134,8 +138,9 @@ class BrokersListScreen extends ConsumerWidget {
                                 children: [
                                   Text(
                                     name,
-                                    style: AppTextStyles.title
-                                        .copyWith(color: colors.ink),
+                                    style: AppTextStyles.title.copyWith(
+                                      color: colors.ink,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -143,14 +148,16 @@ class BrokersListScreen extends ConsumerWidget {
                                     Text(
                                       broker.phoneNumber!,
                                       textDirection: TextDirection.ltr,
-                                      style: AppTextStyles.caption
-                                          .copyWith(color: colors.ink2),
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: colors.ink2,
+                                      ),
                                     ),
                                   if (showEmail)
                                     Text(
                                       broker.email,
-                                      style: AppTextStyles.caption
-                                          .copyWith(color: colors.ink3),
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: colors.ink3,
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -180,8 +187,11 @@ class BrokersListScreen extends ConsumerWidget {
                               onPressed: () =>
                                   _confirmDeleteBroker(context, ref, broker),
                             ),
-                            Icon(Icons.arrow_forward_ios,
-                                size: 14, color: colors.ink3),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: colors.ink3,
+                            ),
                           ],
                         ),
                       );
@@ -237,10 +247,10 @@ class BrokersListScreen extends ConsumerWidget {
     );
     if (confirmed != true) return;
     try {
-      await ref.read(brokersControllerProvider.notifier).deleteBroker(broker.id);
-      messenger.showSnackBar(
-        SnackBar(content: Text('تم حذف $name')),
-      );
+      await ref
+          .read(brokersControllerProvider.notifier)
+          .deleteBroker(broker.id);
+      messenger.showSnackBar(SnackBar(content: Text('تم حذف $name')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('تعذّر الحذف: $e')));
     }

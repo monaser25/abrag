@@ -17,7 +17,8 @@ String seasonKeyForDate(DateTime date) {
   return 'winter_${date.year - 1}_${date.year}';
 }
 
-String currentSeasonKey([DateTime? now]) => seasonKeyForDate(now ?? DateTime.now());
+String currentSeasonKey([DateTime? now]) =>
+    seasonKeyForDate(now ?? DateTime.now());
 
 String nextSeasonKey(String key) {
   if (key.startsWith('summer_')) {
@@ -81,8 +82,12 @@ bool seasonMatchesKey(String? storedSeason, String filter) {
   if (filter == 'all') return true;
   final season = storedSeason ?? 'all';
   if (season == 'all') return filter == 'all';
-  if (filter == 'summer') return season == 'summer' || season.startsWith('summer_');
-  if (filter == 'winter') return season == 'winter' || season.startsWith('winter_');
+  if (filter == 'summer') {
+    return season == 'summer' || season.startsWith('summer_');
+  }
+  if (filter == 'winter') {
+    return season == 'winter' || season.startsWith('winter_');
+  }
   return season == filter;
 }
 
@@ -95,7 +100,9 @@ bool seasonMatchesDate(DateTime date, String filter) {
 }
 
 String normalizeStoredSeason(String? storedSeason, DateTime fallbackDate) {
-  if (storedSeason == null || storedSeason == 'all') return seasonKeyForDate(fallbackDate);
+  if (storedSeason == null || storedSeason == 'all') {
+    return seasonKeyForDate(fallbackDate);
+  }
   if (storedSeason == 'summer' || storedSeason == 'winter') {
     return seasonKeyForDate(fallbackDate);
   }

@@ -267,7 +267,9 @@ class _ModeOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? effectiveTint.withValues(alpha: 0.10) : colors.surface,
+          color: selected
+              ? effectiveTint.withValues(alpha: 0.10)
+              : colors.surface,
           borderRadius: AppRadius.rMd,
           border: Border.all(
             color: selected ? effectiveTint : colors.border,

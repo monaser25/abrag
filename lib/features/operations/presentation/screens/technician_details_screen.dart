@@ -14,10 +14,7 @@ class TechnicianDetailsScreen extends ConsumerWidget {
   const TechnicianDetailsScreen({super.key, required this.technicianId});
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     }
@@ -62,7 +59,10 @@ class TechnicianDetailsScreen extends ConsumerWidget {
                       style: AppTextStyles.h2.copyWith(color: colors.ink),
                     ),
                     const SizedBox(height: 6),
-                    StatusChip(label: tech.specialty, kind: StatusChipKind.brand),
+                    StatusChip(
+                      label: tech.specialty,
+                      kind: StatusChipKind.brand,
+                    ),
                     if (hasPhone) ...[
                       const SizedBox(height: 16),
                       AppButton(
@@ -86,8 +86,9 @@ class TechnicianDetailsScreen extends ConsumerWidget {
                         alignment: AlignmentDirectional.centerStart,
                         child: Text(
                           'تقييم / ملاحظات:',
-                          style:
-                              AppTextStyles.label.copyWith(color: colors.ink2),
+                          style: AppTextStyles.label.copyWith(
+                            color: colors.ink2,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -122,7 +123,9 @@ class TechnicianDetailsScreen extends ConsumerWidget {
                     );
                   }
 
-                  techRequests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                  techRequests.sort(
+                    (a, b) => b.createdAt.compareTo(a.createdAt),
+                  );
                   final completedRequests = techRequests
                       .where((r) => r.status == 'resolved')
                       .toList();
@@ -150,8 +153,7 @@ class TechnicianDetailsScreen extends ConsumerWidget {
                             Expanded(
                               child: _StatCol(
                                 label: 'نسبته من الشغل',
-                                value:
-                                    '${sharePercentage.toStringAsFixed(1)}%',
+                                value: '${sharePercentage.toStringAsFixed(1)}%',
                                 tint: colors.ok,
                               ),
                             ),
@@ -170,10 +172,9 @@ class TechnicianDetailsScreen extends ConsumerWidget {
                       for (final req in techRequests)
                         _HistoryRow(
                           issue: req.issueDescription,
-                          date: req.createdAt
-                              .toLocal()
-                              .toString()
-                              .split(' ')[0],
+                          date: req.createdAt.toLocal().toString().split(
+                            ' ',
+                          )[0],
                           isResolved: req.status == 'resolved',
                           cost: req.costEgp > 0
                               ? '${req.costEgp.toCurrencyFormat()} ج.م'
@@ -202,12 +203,15 @@ class TechnicianDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _divider(Color color) =>
-      Container(width: 1, height: 40, color: color);
+  Widget _divider(Color color) => Container(width: 1, height: 40, color: color);
 }
 
 class _StatCol extends StatelessWidget {
-  const _StatCol({required this.label, required this.value, required this.tint});
+  const _StatCol({
+    required this.label,
+    required this.value,
+    required this.tint,
+  });
 
   final String label;
   final String value;
@@ -223,9 +227,7 @@ class _StatCol extends StatelessWidget {
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.tabular(
-            AppTextStyles.h3.copyWith(color: tint),
-          ),
+          style: AppTextStyles.tabular(AppTextStyles.h3.copyWith(color: tint)),
         ),
         const SizedBox(height: 4),
         Text(

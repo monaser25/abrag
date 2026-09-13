@@ -170,22 +170,25 @@ class NotificationsScreen extends ConsumerWidget {
                                 Expanded(
                                   child: Text(
                                     notif.title,
-                                    style: AppTextStyles.title
-                                        .copyWith(color: colors.ink),
+                                    style: AppTextStyles.title.copyWith(
+                                      color: colors.ink,
+                                    ),
                                   ),
                                 ),
                                 Text(
                                   formatter.format(notif.date),
-                                  style: AppTextStyles.caption
-                                      .copyWith(color: colors.ink3),
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: colors.ink3,
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 4),
                             Text(
                               notif.body,
-                              style: AppTextStyles.bodyS
-                                  .copyWith(color: colors.ink2),
+                              style: AppTextStyles.bodyS.copyWith(
+                                color: colors.ink2,
+                              ),
                             ),
                           ],
                         ),

@@ -101,7 +101,12 @@ class ApartmentsGridScreen extends ConsumerWidget {
 
                       Color statusColor = colors.ok;
                       String statusText = 'متاحة';
-                      if (aptStatus.needsCleaning) {
+                      if (aptStatus.hasOverdueCheckout) {
+                        // الشقة فاضية فعليًا بس الخروج لسه مش متسجل — لازم
+                        // يبان عشان الحسابات والنظافة تتقفل.
+                        statusColor = colors.warn;
+                        statusText = 'سجّل الخروج';
+                      } else if (aptStatus.needsCleaning) {
                         statusColor = colors.warn;
                         statusText = 'نظافة';
                       } else if (aptStatus.isCheckingOutToday) {

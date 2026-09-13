@@ -12,7 +12,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -35,7 +36,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني')),
+            const SnackBar(
+              content: Text(
+                'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
+              ),
+            ),
           );
           context.pop();
         }
@@ -74,11 +79,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     height: 84,
                     decoration: BoxDecoration(
                       color: colors.brandSoft,
-                      borderRadius:
-                          BorderRadius.circular(AppRadius.emptyOrb),
+                      borderRadius: BorderRadius.circular(AppRadius.emptyOrb),
                     ),
-                    child: Icon(Icons.lock_reset,
-                        size: 34, color: colors.brand),
+                    child: Icon(
+                      Icons.lock_reset,
+                      size: 34,
+                      color: colors.brand,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -110,12 +117,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     onTap: () => context.go('/login'),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.arrow_back_ios_new,
-                              size: 14, color: colors.brand),
+                          Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 14,
+                            color: colors.brand,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             l10n.backToLogin,

@@ -150,9 +150,8 @@ class _FinancialTransfersScreenState
                                 ),
                               )
                               .toList(),
-                          onChanged: (value) => setSheetState(
-                            () => _season = value ?? _season,
-                          ),
+                          onChanged: (value) =>
+                              setSheetState(() => _season = value ?? _season),
                         ),
                         const SizedBox(height: 12),
                         AppDropdownField<String>(
@@ -170,8 +169,8 @@ class _FinancialTransfersScreenState
                           onChanged: _transferType == 'cash_deposit'
                               ? null
                               : (value) => setSheetState(
-                                    () => _fromAccount = value ?? _fromAccount,
-                                  ),
+                                  () => _fromAccount = value ?? _fromAccount,
+                                ),
                         ),
                         const SizedBox(height: 12),
                         if (_transferType == 'internal')
@@ -215,8 +214,8 @@ class _FinancialTransfersScreenState
                           inputFormatters: [CurrencyInputFormatter()],
                           validator: (value) =>
                               value == null || value.trim().isEmpty
-                                  ? 'مطلوب'
-                                  : null,
+                              ? 'مطلوب'
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         AppTextField(
@@ -236,7 +235,8 @@ class _FinancialTransfersScreenState
                               ? null
                               : () {
                                   if (_formKey.currentState!.validate()) {
-                                    final amount = double.tryParse(
+                                    final amount =
+                                        double.tryParse(
                                           _amountController.text
                                               .replaceAll(',', '')
                                               .trim(),
@@ -333,16 +333,19 @@ class _FinancialTransfersScreenState
       });
     }
 
-    ref.listen<AsyncValue<void>>(financialTransfersControllerProvider, (_, state) {
+    ref.listen<AsyncValue<void>>(financialTransfersControllerProvider, (
+      _,
+      state,
+    ) {
       state.whenOrNull(
         data: (_) {
           if (Navigator.of(context).canPop()) Navigator.of(context).pop();
           _amountController.clear();
           _notesController.clear();
         },
-        error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        ),
+        error: (error, _) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString()))),
       );
     });
 
@@ -367,21 +370,28 @@ class _FinancialTransfersScreenState
         children: [
           balancesAsync.when(
             data: (balances) {
-              final total = balances.values.fold<double>(0, (sum, v) => sum + v);
+              final total = balances.values.fold<double>(
+                0,
+                (sum, v) => sum + v,
+              );
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _TreasuryHeroCard(
                     total: total,
                     companyVault: balances['company_vault'] ?? 0,
-                    season: _seasonLabel(ref.watch(selectedFinancialSeasonProvider)),
+                    season: _seasonLabel(
+                      ref.watch(selectedFinancialSeasonProvider),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _SeasonSelector(
                     value: ref.watch(selectedFinancialSeasonProvider),
-                    onChanged: (value) => ref
-                        .read(selectedFinancialSeasonProvider.notifier)
-                        .state = value,
+                    onChanged: (value) =>
+                        ref
+                                .read(selectedFinancialSeasonProvider.notifier)
+                                .state =
+                            value,
                   ),
                   const SizedBox(height: 12),
                   LayoutBuilder(
@@ -392,25 +402,29 @@ class _FinancialTransfersScreenState
                       final cards = [
                         _BalanceCard(
                           title: 'نقدية حاليًا',
-                          value: '${(balances['cash'] ?? 0).toCurrencyFormat()} ج.م',
+                          value:
+                              '${(balances['cash'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.money,
                           color: colors.ok,
                         ),
                         _BalanceCard(
                           title: 'فودافون كاش',
-                          value: '${(balances['vodafone_cash'] ?? 0).toCurrencyFormat()} ج.م',
+                          value:
+                              '${(balances['vodafone_cash'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.phone_android,
                           color: colors.err,
                         ),
                         _BalanceCard(
                           title: 'إنستا باي',
-                          value: '${(balances['instapay'] ?? 0).toCurrencyFormat()} ج.م',
+                          value:
+                              '${(balances['instapay'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.bolt,
                           color: colors.brand,
                         ),
                         _BalanceCard(
                           title: 'خزنة الشركة',
-                          value: '${(balances['company_vault'] ?? 0).toCurrencyFormat()} ج.م',
+                          value:
+                              '${(balances['company_vault'] ?? 0).toCurrencyFormat()} ج.م',
                           icon: Icons.account_balance,
                           color: colors.accent,
                           isWide: true,
@@ -473,14 +487,16 @@ class _FinancialTransfersScreenState
                             children: [
                               Text(
                                 title,
-                                style: AppTextStyles.title
-                                    .copyWith(color: colors.ink),
+                                style: AppTextStyles.title.copyWith(
+                                  color: colors.ink,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 subtitle,
-                                style: AppTextStyles.bodyS
-                                    .copyWith(color: colors.ink2),
+                                style: AppTextStyles.bodyS.copyWith(
+                                  color: colors.ink2,
+                                ),
                               ),
                             ],
                           ),
@@ -588,27 +604,19 @@ class _TreasuryHeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            colors.brand.withValues(alpha: 0.22),
-            colors.surface2,
-          ],
+          colors: [colors.brand.withValues(alpha: 0.22), colors.surface2],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: AppRadius.rMd,
-        border: Border.all(
-          color: colors.brand.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: colors.brand.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              IconTile(
-                icon: Icons.account_balance_wallet,
-                tint: colors.brand,
-              ),
+              IconTile(icon: Icons.account_balance_wallet, tint: colors.brand),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -695,10 +703,8 @@ class _SeasonSelector extends StatelessWidget {
       initialValue: value,
       items: seasonOptionsAround()
           .map(
-            (option) => DropdownMenuItem(
-              value: option.key,
-              child: Text(option.label),
-            ),
+            (option) =>
+                DropdownMenuItem(value: option.key, child: Text(option.label)),
           )
           .toList(),
       onChanged: (next) => onChanged(next ?? 'all'),

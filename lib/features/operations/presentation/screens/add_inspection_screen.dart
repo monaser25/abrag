@@ -15,6 +15,8 @@ class AddInspectionScreen extends ConsumerStatefulWidget {
   final String? checkoutBookingId;
   final String? earlyCheckoutBookingId;
   final String? newCheckoutDate;
+  final String? refundAmount;
+  final String? refundMethod;
 
   const AddInspectionScreen({
     super.key,
@@ -22,6 +24,8 @@ class AddInspectionScreen extends ConsumerStatefulWidget {
     this.checkoutBookingId,
     this.earlyCheckoutBookingId,
     this.newCheckoutDate,
+    this.refundAmount,
+    this.refundMethod,
   });
 
   @override
@@ -164,6 +168,8 @@ class _AddInspectionScreenState extends ConsumerState<AddInspectionScreen> {
           .earlyCheckoutBooking(
             id: widget.earlyCheckoutBookingId!,
             newCheckoutDate: DateTime.parse(widget.newCheckoutDate!),
+            refundAmountEgp: double.tryParse(widget.refundAmount ?? '') ?? 0,
+            paymentMethod: widget.refundMethod ?? 'cash',
           );
       if (!mounted) return;
 

@@ -37,8 +37,11 @@ class ErrorState extends StatelessWidget {
                 color: colors.errSoft,
                 borderRadius: BorderRadius.circular(AppRadius.emptyOrb),
               ),
-              child: Icon(Icons.warning_amber_rounded,
-                  size: 28, color: colors.err),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                size: 28,
+                color: colors.err,
+              ),
             ),
             const SizedBox(height: 18),
             Text(

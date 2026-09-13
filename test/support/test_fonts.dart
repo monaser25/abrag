@@ -17,8 +17,9 @@ Future<void> loadAppFonts() async {
   await loader.load();
 
   // Produced by `flutter test` asset assembly; skip if absent.
-  final iconFont =
-      File('build/unit_test_assets/fonts/MaterialIcons-Regular.otf');
+  final iconFont = File(
+    'build/unit_test_assets/fonts/MaterialIcons-Regular.otf',
+  );
   if (iconFont.existsSync()) {
     final bytes = iconFont.readAsBytesSync();
     final iconLoader = FontLoader('MaterialIcons')

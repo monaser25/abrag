@@ -535,8 +535,7 @@ class _AddWinterContractScreenState
           padding: const EdgeInsets.only(top: 26),
           child: AppIconButton(
             tooltip: 'حذف الاختيار الحالي',
-            onPressed:
-                selectedValue == null || !options.contains(selectedValue)
+            onPressed: selectedValue == null || !options.contains(selectedValue)
                 ? null
                 : () => _deleteAcademicOption(
                     value: selectedValue,
@@ -854,101 +853,102 @@ class _AddWinterContractScreenState
                 AppCard(
                   color: colors.surface2,
                   child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppTextField(
-                          label: 'اسم الزميل',
-                          prefixIcon: Icons.person_outline,
-                          controller: _roommateNameController,
-                        ),
-                        const SizedBox(height: 8),
-                        _customAcademicDropdown(
-                          controller: _roommateUniversityController,
-                          options: _customUniversities,
-                          label: 'جامعة الزميل',
-                          addTitle: 'إضافة جامعة',
-                          addLabel: 'اسم الجامعة',
-                          onSaved: (values) => _customUniversities = values,
-                          linkedControllers: [
-                            _universityController,
-                            _roommateUniversityController,
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        _customAcademicDropdown(
-                          controller: _roommateFacultyController,
-                          options: _customFaculties,
-                          label: 'كلية الزميل',
-                          addTitle: 'إضافة كلية',
-                          addLabel: 'اسم الكلية',
-                          onSaved: (values) => _customFaculties = values,
-                          linkedControllers: [
-                            _facultyController,
-                            _roommateFacultyController,
-                          ],
-                        ),
-                        if (_customUniversities.isEmpty ||
-                            _customFaculties.isEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            'أضف اختياراتك من زر + ثم اختار منها.',
-                            style: AppTextStyles.caption
-                                .copyWith(color: colors.ink3),
-                          ),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppTextField(
+                        label: 'اسم الزميل',
+                        prefixIcon: Icons.person_outline,
+                        controller: _roommateNameController,
+                      ),
+                      const SizedBox(height: 8),
+                      _customAcademicDropdown(
+                        controller: _roommateUniversityController,
+                        options: _customUniversities,
+                        label: 'جامعة الزميل',
+                        addTitle: 'إضافة جامعة',
+                        addLabel: 'اسم الجامعة',
+                        onSaved: (values) => _customUniversities = values,
+                        linkedControllers: [
+                          _universityController,
+                          _roommateUniversityController,
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      _customAcademicDropdown(
+                        controller: _roommateFacultyController,
+                        options: _customFaculties,
+                        label: 'كلية الزميل',
+                        addTitle: 'إضافة كلية',
+                        addLabel: 'اسم الكلية',
+                        onSaved: (values) => _customFaculties = values,
+                        linkedControllers: [
+                          _facultyController,
+                          _roommateFacultyController,
+                        ],
+                      ),
+                      if (_customUniversities.isEmpty ||
+                          _customFaculties.isEmpty) ...[
                         const SizedBox(height: 8),
-                        AppTextField(
-                          label: 'الرقم القومي للزميل',
-                          prefixIcon: Icons.badge_outlined,
-                          controller: _roommateNationalIdController,
-                          keyboardType: TextInputType.number,
-                          validator: _optionalNationalIdValidator,
-                          onChanged: (_) => setState(() {}),
-                        ),
-                        _NationalIdInfoCard(
-                          info: _nationalIdInfo(
-                            _roommateNationalIdController.text,
+                        Text(
+                          'أضف اختياراتك من زر + ثم اختار منها.',
+                          style: AppTextStyles.caption.copyWith(
+                            color: colors.ink3,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _pickImage('roommateIdFront'),
-                                icon: const Icon(Icons.camera_alt),
-                                label: Text(
-                                  _roommateIdFrontImage != null
-                                      ? 'تم الأمام'
-                                      : 'بطاقة الزميل (أمام)',
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _roommateIdFrontImage != null
-                                      ? colors.ok
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _pickImage('roommateIdBack'),
-                                icon: const Icon(Icons.camera_alt),
-                                label: Text(
-                                  _roommateIdBackImage != null
-                                      ? 'تم الخلف'
-                                      : 'بطاقة الزميل (خلف)',
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _roommateIdBackImage != null
-                                      ? colors.ok
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ],
+                      const SizedBox(height: 8),
+                      AppTextField(
+                        label: 'الرقم القومي للزميل',
+                        prefixIcon: Icons.badge_outlined,
+                        controller: _roommateNationalIdController,
+                        keyboardType: TextInputType.number,
+                        validator: _optionalNationalIdValidator,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      _NationalIdInfoCard(
+                        info: _nationalIdInfo(
+                          _roommateNationalIdController.text,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _pickImage('roommateIdFront'),
+                              icon: const Icon(Icons.camera_alt),
+                              label: Text(
+                                _roommateIdFrontImage != null
+                                    ? 'تم الأمام'
+                                    : 'بطاقة الزميل (أمام)',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _roommateIdFrontImage != null
+                                    ? colors.ok
+                                    : null,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _pickImage('roommateIdBack'),
+                              icon: const Icon(Icons.camera_alt),
+                              label: Text(
+                                _roommateIdBackImage != null
+                                    ? 'تم الخلف'
+                                    : 'بطاقة الزميل (خلف)',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _roommateIdBackImage != null
+                                    ? colors.ok
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -983,9 +983,7 @@ class _AddWinterContractScreenState
                           : 'بطاقة (أمام)',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _idFrontImage != null
-                          ? colors.ok
-                          : null,
+                      foregroundColor: _idFrontImage != null ? colors.ok : null,
                     ),
                   ),
                 ),
@@ -998,9 +996,7 @@ class _AddWinterContractScreenState
                       _idBackImage != null ? 'تم التقاط الخلف' : 'بطاقة (خلف)',
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _idBackImage != null
-                          ? colors.ok
-                          : null,
+                      foregroundColor: _idBackImage != null ? colors.ok : null,
                     ),
                   ),
                 ),
@@ -1134,9 +1130,7 @@ class _NationalIdInfoCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: colors.brandSoft,
-          border: Border.all(
-            color: colors.brand.withValues(alpha: 0.25),
-          ),
+          border: Border.all(color: colors.brand.withValues(alpha: 0.25)),
         ),
         child: Wrap(
           spacing: 12,
@@ -1166,14 +1160,8 @@ class _IdChip extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(color: colors.ink3),
-        ),
-        Text(
-          value,
-          style: AppTextStyles.label.copyWith(color: colors.ink),
-        ),
+        Text(label, style: AppTextStyles.caption.copyWith(color: colors.ink3)),
+        Text(value, style: AppTextStyles.label.copyWith(color: colors.ink)),
       ],
     );
   }

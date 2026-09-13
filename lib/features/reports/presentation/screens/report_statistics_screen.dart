@@ -30,7 +30,9 @@ class ReportStatisticsScreen extends ConsumerWidget {
           final rentals = ReportCalculator.filteredRentals(report, filters);
           final apartments = ReportCalculator.apartmentMetrics(rentals);
           final summerApartments = ReportCalculator.apartmentMetrics(
-            rentals.where((rental) => seasonMatchesKey(rental.season, 'summer')).toList(),
+            rentals
+                .where((rental) => seasonMatchesKey(rental.season, 'summer'))
+                .toList(),
           );
           final floors = ReportCalculator.floorMetrics(rentals);
           final topSummerApartment = ReportCalculator.topByCount(
