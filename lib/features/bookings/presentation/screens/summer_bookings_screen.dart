@@ -9,6 +9,7 @@ import '../../../../core/utils/season_utils.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/widgets.dart';
 import '../providers/bookings_provider.dart';
+import '../../../settings/presentation/providers/permissions_provider.dart';
 import '../../../apartments/presentation/providers/apartments_controller.dart';
 
 class SummerBookingsScreen extends ConsumerWidget {
@@ -20,6 +21,7 @@ class SummerBookingsScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(summerBookingsProvider);
     final apartmentsAsync = ref.watch(apartmentsProvider);
     final activeSeason = ref.watch(activeSeasonKeyProvider);
+    final canViewBookingsList = ref.watch(canViewBookingsListProvider);
     final colors = context.colors;
 
     return AppScaffold(
@@ -157,13 +159,14 @@ class SummerBookingsScreen extends ConsumerWidget {
                 tint: colors.brand,
                 onTap: () => context.push('/summer_bookings/calendar'),
               ),
-              NavRow(
-                icon: Icons.view_agenda_outlined,
-                title: 'قائمة الحجوزات',
-                sub: 'بحث وفلاتر لكل الحجوزات',
-                tint: colors.accent,
-                onTap: () => context.push('/summer_bookings/list'),
-              ),
+              if (canViewBookingsList)
+                NavRow(
+                  icon: Icons.view_agenda_outlined,
+                  title: 'قائمة الحجوزات',
+                  sub: 'بحث وفلاتر لكل الحجوزات',
+                  tint: colors.accent,
+                  onTap: () => context.push('/summer_bookings/list'),
+                ),
             ],
           );
         },

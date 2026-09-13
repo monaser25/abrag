@@ -41,7 +41,7 @@ class GuestProfileScreen extends ConsumerWidget {
           if (context.canPop()) {
             context.pop();
           } else {
-            context.go('/summer_bookings/list');
+            context.go('/summer_bookings');
           }
         },
       ),

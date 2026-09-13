@@ -69,6 +69,7 @@ import '../../features/users/presentation/screens/broker_details_screen.dart';
 import '../../features/users/presentation/screens/broker_visibility_control_screen.dart';
 import '../../features/users/presentation/screens/customers_screen.dart';
 import '../../features/users/presentation/providers/users_provider.dart';
+import '../../features/settings/presentation/providers/permissions_provider.dart';
 import '../config/shared_prefs_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -203,7 +204,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'list',
-                builder: (context, state) => const BookingListScreen(),
+                builder: (context, state) => _PermissionRoute(
+                  allowed: canViewBookingsListProvider,
+                  child: const BookingListScreen(),
+                ),
               ),
               GoRoute(
                 path: 'details/:id',
@@ -450,7 +454,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: 'log',
-                builder: (context, state) => const SystemLogScreen(),
+                builder: (context, state) => _PermissionRoute(
+                  allowed: canViewSystemLogProvider,
+                  child: const SystemLogScreen(),
+                ),
               ),
             ],
           ),
@@ -546,6 +553,31 @@ class _AdminOnlyRoute extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(title: const Text('غير مصرح')),
         body: const Center(child: Text('غير مصرح لك بفتح الإعدادات')),
+      );
+    }
+
+    return child;
+  }
+}
+
+/// Route-level gate for a template permission. Hiding the entry point is not
+/// enough: back-button fallbacks and notifications can still land on a route.
+class _PermissionRoute extends ConsumerWidget {
+  final ProviderListenable<bool> allowed;
+  final Widget child;
+
+  const _PermissionRoute({required this.allowed, required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(currentUserRoleProvider).isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (!ref.watch(allowed)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('غير مصرح')),
+        body: const Center(child: Text('غير مصرح لك بفتح هذه الصفحة')),
       );
     }
 

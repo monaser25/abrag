@@ -852,7 +852,7 @@ class _AddSummerBookingScreenState
           } else if (widget.bookingId != null) {
             context.go('/summer_bookings/details/${widget.bookingId}');
           } else {
-            context.go('/summer_bookings/list');
+            context.go('/summer_bookings');
           }
         },
         // رسائل أخطاء الفلوس بتبقى طويلة وبتشرح المطلوب — تدي وقت للقراية
@@ -886,7 +886,7 @@ class _AddSummerBookingScreenState
           } else if (widget.bookingId != null) {
             context.go('/summer_bookings/details/${widget.bookingId}');
           } else {
-            context.go('/summer_bookings/list');
+            context.go('/summer_bookings');
           }
         },
         actions: [
